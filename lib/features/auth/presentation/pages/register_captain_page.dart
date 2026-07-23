@@ -1,0 +1,1038 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/glass_box.dart';
+import '../../../../core/widgets/laffah_logo.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
+import 'phone_number_input_page.dart';
+import 'otp_verification_page.dart';
+
+// ============================================================
+// MOTORCYCLE-SPECIFIC DOMAIN DATA (EXCLUSIVELY MOTORCYCLES)
+// ============================================================
+
+/// Motorcycle brands that are commonly used in Yemen.
+const List<String> _kMotorcycleBrands = [
+  'هوندا (Honda)',
+  'ياماها (Yamaha)',
+  'سوزوكي (Suzuki)',
+  'كاواساكي (Kawasaki)',
+  'TVS',
+  'ليفان (Lifan)',
+  'هيرو (Hero)',
+  'رونكي (Ronki)',
+  'أخرى',
+];
+
+/// Engine displacement options available on the registration form.
+const List<String> _kEngineSizes = [
+  '100cc – 110cc',
+  '125cc',
+  '150cc',
+  '160cc – 175cc',
+  '200cc',
+  '250cc فأكثر',
+];
+
+// ============================================================
+// PAGE CLASS
+// ============================================================
+
+class RegisterCaptainPage extends StatefulWidget {
+  const RegisterCaptainPage({super.key});
+
+  @override
+  State<RegisterCaptainPage> createState() => _RegisterCaptainPageState();
+}
+
+class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
+  // ──────────────────────────────────────────
+  // FORM KEY
+  // ──────────────────────────────────────────
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  // ──────────────────────────────────────────
+  // TEXT CONTROLLERS
+  // ──────────────────────────────────────────
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+  TextEditingController();
+  final TextEditingController _modelController = TextEditingController();
+  final TextEditingController _yearController = TextEditingController();
+  final TextEditingController _plateController = TextEditingController();
+
+  // ──────────────────────────────────────────
+  // DROPDOWN / CHIP STATE
+  // ──────────────────────────────────────────
+  String _selectedBrand = _kMotorcycleBrands[0];
+  String _selectedEngineSize = _kEngineSizes[1]; // Default: 125cc
+
+  // ──────────────────────────────────────────
+  // VISIBILITY & AGREEMENT TOGGLES
+  // ──────────────────────────────────────────
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _agreeToTerms = false;
+
+  // ──────────────────────────────────────────
+  // FOCUS NODES
+  // ──────────────────────────────────────────
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _phoneFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
+  final FocusNode _confirmPasswordFocusNode = FocusNode();
+  final FocusNode _modelFocusNode = FocusNode();
+  final FocusNode _yearFocusNode = FocusNode();
+  final FocusNode _plateFocusNode = FocusNode();
+
+  bool _isNameFocused = false;
+  bool _isPhoneFocused = false;
+  bool _isPasswordFocused = false;
+  bool _isConfirmPasswordFocused = false;
+  bool _isModelFocused = false;
+  bool _isYearFocused = false;
+  bool _isPlateFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFocusNode.addListener(
+            () => setState(() => _isNameFocused = _nameFocusNode.hasFocus));
+    _phoneFocusNode.addListener(
+            () => setState(() => _isPhoneFocused = _phoneFocusNode.hasFocus));
+    _passwordFocusNode.addListener(() =>
+        setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
+    _confirmPasswordFocusNode.addListener(() => setState(
+            () => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
+    _modelFocusNode.addListener(
+            () => setState(() => _isModelFocused = _modelFocusNode.hasFocus));
+    _yearFocusNode.addListener(
+            () => setState(() => _isYearFocused = _yearFocusNode.hasFocus));
+    _plateFocusNode.addListener(
+            () => setState(() => _isPlateFocused = _plateFocusNode.hasFocus));
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _modelController.dispose();
+    _yearController.dispose();
+    _plateController.dispose();
+    _nameFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
+    _modelFocusNode.dispose();
+    _yearFocusNode.dispose();
+    _plateFocusNode.dispose();
+    super.dispose();
+  }
+
+  // ──────────────────────────────────────────
+  // FORM SUBMISSION
+  // ──────────────────────────────────────────
+  void _handleRegister() {
+    if (_formKey.currentState == null) return;
+    final bool isFormValid = _formKey.currentState!.validate();
+    if (!isFormValid) return;
+
+    if (!_agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'يرجى الموافقة على شروط وأحكام منصة لَفَّة قبل المتابعة.',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape:
+          RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+      return;
+    }
+
+    final String fullPhone = '+967${_phoneController.text.trim()}';
+
+    context.read<AuthBloc>().add(
+      RegisterCaptainRequested(
+        name: _nameController.text.trim(),
+        phone: fullPhone,
+        password: _passwordController.text,
+        vehicleType: 'دراجة نارية', // ✅ نوع ثابت ومباشر بدون تعقيد
+        vehicleModel:
+        '${_selectedBrand.split(' ').first} ${_modelController.text.trim()} • $_selectedEngineSize',
+        vehicleYear: int.tryParse(_yearController.text.trim()) ?? 0,
+        vehiclePlate: _plateController.text.trim(),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────
+  // BUILD
+  // ──────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor:
+        isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: isDark ? AppColors.white : AppColors.gray900,
+              size: 20,
+            ),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          centerTitle: true,
+          title: Text(
+            'تسجيل كابتن لَفَّة',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+              color: isDark ? AppColors.white : AppColors.gray900,
+            ),
+          ),
+        ),
+        body: BlocConsumer<AuthBloc, AuthState>(
+          listener: (BuildContext context, AuthState state) {
+            if (state is AuthCodeSent) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      OTPVerificationPage(phoneNumber: state.phone),
+                ),
+              );
+            }
+            if (state is AuthFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.message,
+                    style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: AppColors.danger,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: AppSpacing.radiusMD),
+                  margin: const EdgeInsets.all(16),
+                ),
+              );
+            }
+          },
+          builder: (BuildContext context, AuthState state) {
+            final bool isLoading = state is AuthLoading;
+
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s24,
+                vertical: AppSpacing.s16,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // ─── Header ─────────────
+                  const LaffahLogo(height: 80, width: 80, showSubtitle: false),
+                  AppSpacing.h8,
+                  Text(
+                    'انضم ككابتن لَفَّة',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: isDark ? AppColors.white : AppColors.gray900,
+                    ),
+                  ),
+                  Text(
+                    'سجّل بياناتك وبيانات دراجتك النارية وابدأ بجني الأرباح فوراً',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 11.5,
+                      color: isDark ? AppColors.gray500 : AppColors.gray600,
+                      height: 1.4,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ─── Registration Form ───
+                  GlassBox(
+                    borderRadius: AppSpacing.radiusXL,
+                    padding: const EdgeInsets.all(AppSpacing.s24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // SECTION 1: بيانات شخصية
+                          _buildSectionHeader('1. البيانات الشخصية للكابتن:'),
+                          const SizedBox(height: 12),
+
+                          _buildLabel('الاسم الرباعي الكامل:'),
+                          _buildNameField(isDark),
+                          const SizedBox(height: 16),
+
+                          _buildLabel('رقم الهاتف الجوال:'),
+                          _buildPhoneField(isDark),
+                          const SizedBox(height: 16),
+
+                          _buildLabel('كلمة المرور الجديدة:'),
+                          _buildPasswordField(isDark),
+                          const SizedBox(height: 16),
+
+                          _buildLabel('تأكيد كلمة المرور:'),
+                          _buildConfirmPasswordField(isDark),
+
+                          const SizedBox(height: 28),
+
+                          // SECTION 2: بيانات الدراجة النارية
+                          _buildSectionHeader('2. بيانات الدراجة النارية:'),
+                          const SizedBox(height: 12),
+
+                          _buildLabel('ماركة الدراجة النارية:'),
+                          _buildBrandDropdown(isDark),
+                          const SizedBox(height: 16),
+
+                          _buildLabel('موديل الدراجة (مثال: Wave, R15):'),
+                          _buildModelField(isDark),
+                          const SizedBox(height: 16),
+
+                          _buildLabel('سعة المحرك (cc):'),
+                          _buildEngineSizeChips(isDark),
+                          const SizedBox(height: 16),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('سنة الصنع:'),
+                                    _buildYearField(isDark),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.s16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('رقم اللوحة:'),
+                                    _buildPlateField(isDark),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // SECTION 3: الموافقة على الشروط
+                          _buildTermsCheckbox(isDark),
+
+                          const SizedBox(height: 28),
+
+                          // SUBMIT BUTTON
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: isLoading ? null : _handleRegister,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF6B00),
+                                foregroundColor: AppColors.white,
+                                elevation: 2,
+                                shadowColor: const Color(0xFFFF6B00)
+                                    .withOpacity(0.35),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: AppSpacing.radiusMD),
+                              ),
+                              child: isLoading
+                                  ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                                  : const Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'تقديم الطلب وتأكيد رقم الهاتف',
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                  AppSpacing.w8,
+                                  Icon(Icons.two_wheeler_rounded,
+                                      size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // Back to login link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'لديك حساب كابتن مسجل بالفعل؟',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 13.5,
+                          color:
+                          isDark ? AppColors.gray400 : AppColors.gray600,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PhoneNumberInputPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'سجّل دخولك',
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFFFF6B00),
+                            decoration: TextDecoration.underline,
+                            decorationColor: Color(0xFFFF6B00),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // HELPERS & INPUT FIELDS
+  // ============================================================
+  Widget _buildSectionHeader(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF6B00).withOpacity(0.08),
+        borderRadius: AppSpacing.radiusSM,
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: 13.5,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFFFF6B00),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: AppColors.gray600,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration({
+    required bool isDark,
+    required bool isFocused,
+    required String hintText,
+    Widget? suffixIcon,
+    Widget? prefixIcon,
+    double hintFontSize = 12,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        fontFamily: 'IBM Plex Sans Arabic',
+        fontSize: hintFontSize,
+        color: isDark ? AppColors.gray600 : AppColors.gray400,
+      ),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+      filled: true,
+      fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+      suffixIcon: suffixIcon,
+      prefixIcon: prefixIcon,
+      enabledBorder: OutlineInputBorder(
+        borderRadius: AppSpacing.radiusSM,
+        borderSide: BorderSide(
+          color:
+          isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: AppSpacing.radiusSM,
+        borderSide: const BorderSide(color: Color(0xFFFF6B00), width: 1.8),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: AppSpacing.radiusSM,
+        borderSide: const BorderSide(color: AppColors.danger),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: AppSpacing.radiusSM,
+        borderSide: const BorderSide(color: AppColors.danger, width: 1.8),
+      ),
+    );
+  }
+
+  Widget _buildNameField(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: AppSpacing.radiusSM,
+        boxShadow: [
+          if (_isNameFocused)
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _nameController,
+        focusNode: _nameFocusNode,
+        textCapitalization: TextCapitalization.words,
+        style: TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+        decoration: _buildInputDecoration(
+          isDark: isDark,
+          isFocused: _isNameFocused,
+          hintText: 'مثال: محمد علي أحمد الحاشدي',
+          suffixIcon: Icon(
+            Icons.person_rounded,
+            color: _isNameFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            size: 20,
+          ),
+        ),
+        validator: (String? value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'يرجى إدخال اسم الكابتن بالكامل';
+          }
+          if (value.trim().split(' ').length < 3) {
+            return 'يرجى إدخال الاسم الثلاثي أو الرباعي الكامل';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildPhoneField(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: AppSpacing.radiusSM,
+        boxShadow: [
+          if (_isPhoneFocused)
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _phoneController,
+        focusNode: _phoneFocusNode,
+        keyboardType: TextInputType.phone,
+        textDirection: TextDirection.ltr,
+        style: const TextStyle(
+          fontFamily: 'monospace',
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          letterSpacing: 1.5,
+        ),
+        inputFormatters: [
+          LengthLimitingTextInputFormatter(9),
+          FilteringTextInputFormatter.digitsOnly,
+        ],
+        decoration: _buildInputDecoration(
+          isDark: isDark,
+          isFocused: _isPhoneFocused,
+          hintText: '77XXXXXXX',
+          hintFontSize: 14,
+          suffixIcon: Icon(
+            Icons.phone_iphone_rounded,
+            color:
+            _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            size: 20,
+          ),
+          prefixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(width: AppSpacing.s16),
+              const Text(
+                '+967',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  color: Color(0xFFFF6B00),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Container(
+                height: 22,
+                width: 1,
+                color: isDark
+                    ? AppColors.white.withOpacity(0.1)
+                    : AppColors.gray300,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+            ],
+          ),
+        ),
+        validator: (String? value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'يرجى إدخال رقم الجوال';
+          }
+          if (value.trim().length != 9) {
+            return 'رقم الهاتف يجب أن يتكون من 9 خانات';
+          }
+          if (!value.trim().startsWith('7')) {
+            return 'رقم الجوال اليمني يبدأ بـ 7';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: AppSpacing.radiusSM,
+        boxShadow: [
+          if (_isPasswordFocused)
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _passwordController,
+        focusNode: _passwordFocusNode,
+        obscureText: _obscurePassword,
+        style: TextStyle(
+          fontFamily:
+          _obscurePassword ? 'monospace' : 'IBM Plex Sans Arabic',
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+        decoration: _buildInputDecoration(
+          isDark: isDark,
+          isFocused: _isPasswordFocused,
+          hintText: 'يجب ألا تقل عن 6 خانات',
+          suffixIcon: Icon(
+            Icons.lock_open_rounded,
+            color: _isPasswordFocused
+                ? const Color(0xFFFF6B00)
+                : AppColors.gray600,
+            size: 20,
+          ),
+          prefixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
+              color: AppColors.gray600,
+              size: 20,
+            ),
+            onPressed: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
+          ),
+        ),
+        validator: (String? value) {
+          if (value == null || value.isEmpty) {
+            return 'يرجى تعيين كلمة المرور';
+          }
+          if (value.length < 6) {
+            return 'أدخل 6 خانات على الأقل';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildConfirmPasswordField(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: AppSpacing.radiusSM,
+        boxShadow: [
+          if (_isConfirmPasswordFocused)
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _confirmPasswordController,
+        focusNode: _confirmPasswordFocusNode,
+        obscureText: _obscureConfirmPassword,
+        style: TextStyle(
+          fontFamily:
+          _obscureConfirmPassword ? 'monospace' : 'IBM Plex Sans Arabic',
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+        decoration: _buildInputDecoration(
+          isDark: isDark,
+          isFocused: _isConfirmPasswordFocused,
+          hintText: 'تأكيد كلمة المرور السابقة',
+          suffixIcon: Icon(
+            Icons.lock_rounded,
+            color: _isConfirmPasswordFocused
+                ? const Color(0xFFFF6B00)
+                : AppColors.gray600,
+            size: 20,
+          ),
+          prefixIcon: IconButton(
+            icon: Icon(
+              _obscureConfirmPassword
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
+              color: AppColors.gray600,
+              size: 20,
+            ),
+            onPressed: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword),
+          ),
+        ),
+        validator: (String? value) {
+          if (value == null || value.isEmpty) {
+            return 'يرجى تأكيد كلمة المرور';
+          }
+          if (value != _passwordController.text) {
+            return 'كلمة المرور غير مطابقة';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildBrandDropdown(bool isDark) {
+    return DropdownButtonFormField<String>(
+      value: _selectedBrand,
+      dropdownColor: isDark
+          ? AppColors.surfaceElevatedDark
+          : AppColors.surfaceElevatedLight,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded),
+      decoration: _buildInputDecoration(
+        isDark: isDark,
+        isFocused: false,
+        hintText: 'اختر الماركة',
+      ),
+      items: _kMotorcycleBrands.map((String brand) {
+        return DropdownMenuItem<String>(
+          value: brand,
+          child: Text(
+            brand,
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.white : AppColors.gray900,
+            ),
+          ),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() => _selectedBrand = newValue);
+        }
+      },
+    );
+  }
+
+  Widget _buildModelField(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: AppSpacing.radiusSM,
+        boxShadow: [
+          if (_isModelFocused)
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _modelController,
+        focusNode: _modelFocusNode,
+        style: TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: 13.5,
+          fontWeight: FontWeight.bold,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+        decoration: _buildInputDecoration(
+          isDark: isDark,
+          isFocused: _isModelFocused,
+          hintText: 'مثال: CG 125, Boxer 150',
+          suffixIcon: Icon(
+            Icons.two_wheeler_rounded,
+            color: _isModelFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            size: 20,
+          ),
+        ),
+        validator: (String? value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'يرجى إدخال موديل الدراجة';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildEngineSizeChips(bool isDark) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _kEngineSizes.map((String size) {
+        final bool isSelected = _selectedEngineSize == size;
+        return ChoiceChip(
+          label: Text(
+            size,
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 11.5,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
+              color: isSelected
+                  ? AppColors.white
+                  : (isDark ? AppColors.gray300 : AppColors.gray700),
+            ),
+          ),
+          selected: isSelected,
+          selectedColor: const Color(0xFFFF6B00),
+          backgroundColor:
+          isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppSpacing.radiusSM,
+            side: BorderSide(
+              color: isSelected
+                  ? const Color(0xFFFF6B00)
+                  : (isDark
+                  ? AppColors.white.withOpacity(0.08)
+                  : AppColors.gray300),
+            ),
+          ),
+          onSelected: (bool selected) {
+            if (selected) {
+              setState(() => _selectedEngineSize = size);
+            }
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildYearField(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: AppSpacing.radiusSM,
+        boxShadow: [
+          if (_isYearFocused)
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _yearController,
+        focusNode: _yearFocusNode,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          LengthLimitingTextInputFormatter(4),
+          FilteringTextInputFormatter.digitsOnly,
+        ],
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+        decoration: _buildInputDecoration(
+          isDark: isDark,
+          isFocused: _isYearFocused,
+          hintText: '2022',
+        ),
+        validator: (String? value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'مطلوب';
+          }
+          final int? year = int.tryParse(value.trim());
+          if (year == null || year < 2000 || year > DateTime.now().year + 1) {
+            return 'سنة غير صحيحة';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildPlateField(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: AppSpacing.radiusSM,
+        boxShadow: [
+          if (_isPlateFocused)
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _plateController,
+        focusNode: _plateFocusNode,
+        style: TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: 13.5,
+          fontWeight: FontWeight.bold,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+        decoration: _buildInputDecoration(
+          isDark: isDark,
+          isFocused: _isPlateFocused,
+          hintText: 'أ ب ج 1234',
+        ),
+        validator: (String? value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'مطلوب';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildTermsCheckbox(bool isDark) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Checkbox(
+          value: _agreeToTerms,
+          activeColor: const Color(0xFFFF6B00),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppSpacing.radiusXS,
+          ),
+          onChanged: (bool? val) {
+            setState(() => _agreeToTerms = val ?? false);
+          },
+        ),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _agreeToTerms = !_agreeToTerms),
+            child: Text.rich(
+              TextSpan(
+                text: 'أوافق على ',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 11.5,
+                  color: isDark ? AppColors.gray400 : AppColors.gray700,
+                ),
+                children: const [
+                  TextSpan(
+                    text: 'الشروط والأحكام وسياسة الخصوصية',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFFF6B00),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                  TextSpan(text: ' الخاصة بكباتن لَفَّة.'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

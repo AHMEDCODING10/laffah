@@ -1,0 +1,8 @@
+{
+  "name": "Laffah Design System Hub",
+  "description": "Interactive design system showcase and Flutter code viewer for Laffah (لفّة) - the premium ride-hailing and parcel delivery platform with Yemeni identity.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
