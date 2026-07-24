@@ -418,14 +418,14 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                           children: [
                             const Icon(Icons.info_outline_rounded, color: Color(0xFFFF6B00), size: 18),
                             AppSpacing.w12,
-                            Expanded(
+                            const Expanded(
                               child: Text(
-                                'تلميح المحاكاة: أدخل الكود "1234" أو "0000" للتحقق السريع وتجاوز هذه الشاشة بنجاح.',
+                                'وضع الاختبار: أدخل أي رمز مكوّن من 4 أرقام لتجاوز هذه الشاشة.',
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 11,
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? AppColors.gray400 : AppColors.gray700,
+                                  color: Color(0xFFFF6B00),
                                   height: 1.4,
                                 ),
                               ),
