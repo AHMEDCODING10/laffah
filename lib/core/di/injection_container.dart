@@ -1,6 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../network/dio_client.dart';
+import '../network/websocket_client.dart';
+import '../storage/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/send_otp_usecase.dart';
 import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
@@ -38,31 +40,58 @@ import '../../features/profile/data/repositories/profile_repository_impl.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  // Core / Network
+  // ==========================
+  // Core / Network / Storage
+  // ==========================
   sl.registerLazySingleton<DioClient>(() => DioClient());
-  sl.registerLazySingleton<FlutterSecureStorage>(() => const FlutterSecureStorage());
 
-  // Auth Feature
-  // Data Sources
-  sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(sl()),
+  // Web-safe options for FlutterSecureStorage to prevent browser hanging
+  sl.registerLazySingleton<FlutterSecureStorage>(
+        () => const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      webOptions: WebOptions(dbName: 'laffah_secure_store', publicKey: 'laffah_app'),
+    ),
   );
 
-  // Repositories
+  sl.registerLazySingleton<SecureStorageService>(
+        () => SecureStorageService(sl()),
+  );
+
+  sl.registerLazySingleton<LaffahWebSocketClient>(
+        () => LaffahWebSocketClient(
+      baseWsUrl: 'wss://api.laffah.com',
+      storage: sl(),
+    ),
+  );
+
+  // ==========================
+  // Parcel Feature (Registered early because RideBloc depends on SubmitParcelOrderUseCase)
+  // ==========================
+  sl.registerLazySingleton<ParcelRemoteDataSource>(
+        () => ParcelRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<ParcelRepository>(
+        () => ParcelRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton(() => SubmitParcelOrderUseCase(sl()));
+
+  // ==========================
+  // Auth Feature
+  // ==========================
+  sl.registerLazySingleton<AuthRemoteDataSource>(
+        () => AuthRemoteDataSourceImpl(sl()),
+  );
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
+        () => AuthRepositoryImpl(
       remoteDataSource: sl(),
       secureStorage: sl(),
     ),
   );
-
-  // UseCases
   sl.registerLazySingleton(() => SendOtpUseCase(sl()));
   sl.registerLazySingleton(() => VerifyOtpUseCase(sl()));
 
-  // BLoC
   sl.registerFactory(
-    () => AuthBloc(
+        () => AuthBloc(
       sendOtpUseCase: sl(),
       verifyOtpUseCase: sl(),
     ),
@@ -71,25 +100,17 @@ Future<void> init() async {
   // ==========================
   // Ride Feature
   // ==========================
-  // Data Sources
   sl.registerLazySingleton<RideRemoteDataSource>(
-    () => RideRemoteDataSourceImpl(sl()),
+        () => RideRemoteDataSourceImpl(sl()),
   );
-
-  // Repositories
   sl.registerLazySingleton<RideRepository>(
-    () => RideRepositoryImpl(
-      remoteDataSource: sl(),
-    ),
+        () => RideRepositoryImpl(remoteDataSource: sl()),
   );
-
-  // UseCases
   sl.registerLazySingleton(() => RequestRideUseCase(sl()));
   sl.registerLazySingleton(() => CancelRideUseCase(sl()));
 
-  // BLoC
   sl.registerFactory(
-    () => RideBloc(
+        () => RideBloc(
       requestRideUseCase: sl(),
       cancelRideUseCase: sl(),
       submitParcelOrderUseCase: sl(),
@@ -99,54 +120,28 @@ Future<void> init() async {
   // ==========================
   // Captain Feature
   // ==========================
-  // Data Sources
   sl.registerLazySingleton<CaptainRemoteDataSource>(
-    () => CaptainRemoteDataSourceImpl(sl()),
+        () => CaptainRemoteDataSourceImpl(sl()),
   );
-
-  // Repositories
   sl.registerLazySingleton<CaptainRepository>(
-    () => CaptainRepositoryImpl(
-      remoteDataSource: sl(),
-    ),
+        () => CaptainRepositoryImpl(remoteDataSource: sl()),
   );
-
-  // UseCases
   sl.registerLazySingleton(() => ToggleCaptainStatusUseCase(sl()));
 
-  // BLoC 
   sl.registerFactory(
-    () => CaptainBloc(
+        () => CaptainBloc(
       toggleCaptainStatusUseCase: sl(),
     ),
   );
 
   // ==========================
-  // Parcel Feature
-  // ==========================
-  // Data Sources
-  sl.registerLazySingleton<ParcelRemoteDataSource>(
-    () => ParcelRemoteDataSourceImpl(sl()),
-  );
-
-  // Repositories
-  sl.registerLazySingleton<ParcelRepository>(
-    () => ParcelRepositoryImpl(
-      remoteDataSource: sl(),
-    ),
-  );
-
-  // UseCases
-  sl.registerLazySingleton(() => SubmitParcelOrderUseCase(sl()));
-
-  // ==========================
   // Wallet Feature
   // ==========================
   sl.registerLazySingleton<WalletRemoteDataSource>(
-    () => WalletRemoteDataSourceImpl(sl()),
+        () => WalletRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<WalletRepository>(
-    () => WalletRepositoryImpl(remoteDataSource: sl()),
+        () => WalletRepositoryImpl(remoteDataSource: sl()),
   );
   sl.registerLazySingleton(() => GetWalletBalanceUseCase(sl()));
 
@@ -154,9 +149,9 @@ Future<void> init() async {
   // Profile Feature
   // ==========================
   sl.registerLazySingleton<ProfileRemoteDataSource>(
-    () => ProfileRemoteDataSourceImpl(sl()),
+        () => ProfileRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepositoryImpl(remoteDataSource: sl()),
+        () => ProfileRepositoryImpl(remoteDataSource: sl()),
   );
 }

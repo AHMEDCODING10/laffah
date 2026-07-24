@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../../../../core/network/base_response_model.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/wallet_model.dart';

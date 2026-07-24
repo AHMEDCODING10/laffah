@@ -13,9 +13,6 @@ class SOSEmergencyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Force dark background for this critical screen to make red pop
-    const isDark = true; 
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(

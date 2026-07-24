@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/captain_action_button.dart';
 
 /// CaptainNotificationsPage - Dynamic notification logs and nearby trip requests panel.
-/// Contains segmented tabs, accept/reject quick triggers, and system alert layouts.
 class CaptainNotificationsPage extends StatefulWidget {
   const CaptainNotificationsPage({super.key});
 
@@ -39,6 +40,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
             icon: const Icon(Icons.done_all_rounded, color: AppColors.primary500),
             tooltip: 'تحديد الكل كمقروء',
             onPressed: () {
+              HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('تم تحديد جميع التنبيهات كمقروءة')),
               );
@@ -50,7 +52,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
         textDirection: TextDirection.rtl,
         child: Column(
           children: [
-            // 1. Segmented control tabs (Yemeni-styled pills)
+            // Segmented control tabs
             Padding(
               padding: const EdgeInsets.all(AppSpacing.s16),
               child: Container(
@@ -66,6 +68,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                     return Expanded(
                       child: GestureDetector(
                         onTap: () {
+                          HapticFeedback.selectionClick();
                           setState(() {
                             _activeCategoryIndex = index;
                           });
@@ -107,7 +110,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
               ),
             ),
 
-            // 2. Notifications List
+            // Notifications List
             Expanded(
               child: _activeCategoryIndex == 0
                   ? _buildTripRequestsList(isDark)
@@ -169,7 +172,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
         _buildAlertCard(
           isDark: isDark,
           title: 'صيانة خوادم النظام',
-          description: 'تنبيه: سيتم إجراء أعمال صيانة دورية مجدولة لخوادم التطبيق يوم الجمعة القادم بين الساعة 2:00 صباحاً و3:00 صباحاً. قد تتأثر الخدمة مؤقتاً.',
+          description: 'تنبيه: سيتم إجراء أعمال صيانة دورية مجدولة لخوادم التطبيق يوم الجمعة القادم بين الساعة 2:00 صباحاً و3:00 صباحاً.',
           timeTag: 'أمس',
           icon: Icons.settings_rounded,
           iconBg: AppColors.gray500.withOpacity(0.12),
@@ -191,15 +194,6 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
           icon: Icons.military_tech_rounded,
           iconBg: AppColors.success.withOpacity(0.12),
           iconColor: AppColors.success,
-        ),
-        _buildAlertCard(
-          isDark: isDark,
-          title: 'تقييم ركاب ممتاز',
-          description: 'لقد حصلت على تقييم 5 نجوم من آخر 8 ركاب لك. نشكرك على معاملتك الراقية وأمانتك التي تمثل هوية لفة!',
-          timeTag: 'قبل يومين',
-          icon: Icons.star_rounded,
-          iconBg: Colors.amber.withOpacity(0.12),
-          iconColor: Colors.amber,
         ),
       ],
     );
@@ -227,18 +221,10 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
           color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
           width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary500.withOpacity(isDark ? 0.0 : 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with Icon and time
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -277,7 +263,6 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
 
           AppSpacing.h12,
 
-          // Description content
           Text(
             description,
             style: const TextStyle(
@@ -290,12 +275,12 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
 
           AppSpacing.h12,
 
-          // Info Badges Row
+          // Info Badges Row with Dark Mode support
           Row(
             children: [
-              _buildSmallBadge(Icons.navigation_rounded, distance),
+              _buildSmallBadge(isDark, Icons.navigation_rounded, distance),
               AppSpacing.w8,
-              _buildSmallBadge(Icons.timer_rounded, eta),
+              _buildSmallBadge(isDark, Icons.timer_rounded, eta),
               const Spacer(),
               Text(
                 price,
@@ -311,59 +296,30 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
 
           AppSpacing.h16,
 
-          // Action Buttons
+          // Ergonomic Action Buttons
           Row(
             children: [
               Expanded(
                 flex: 2,
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: AppSpacing.radiusMD,
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _showTripAcceptanceNotification(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
-                    ),
-                    child: const Text(
-                      'قبول الطلب والبدء',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                      ),
-                    ),
-                  ),
+                child: CaptainActionButton(
+                  label: 'قبول الطلب والبدء',
+                  height: 48,
+                  onPressed: () {
+                    HapticFeedback.heavyImpact();
+                    _showTripAcceptanceNotification(context);
+                  },
                 ),
               ),
               AppSpacing.w10,
               Expanded(
                 flex: 1,
-                child: SizedBox(
-                  height: 40,
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: isDark ? AppColors.white.withOpacity(0.12) : AppColors.gray300),
-                      shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
-                    ),
-                    child: const Text(
-                      'التفاصيل',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.gray600,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                      ),
-                    ),
-                  ),
+                child: CaptainActionButton(
+                  label: 'التفاصيل',
+                  height: 48,
+                  isOutlined: true,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                  },
                 ),
               ),
             ],
@@ -373,11 +329,11 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
     );
   }
 
-  Widget _buildSmallBadge(IconData icon, String label) {
+  Widget _buildSmallBadge(bool isDark, IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.gray100,
+        color: isDark ? AppColors.white.withOpacity(0.06) : AppColors.gray100,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -387,9 +343,9 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
           AppSpacing.w4,
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
-              color: AppColors.gray600,
+              color: isDark ? AppColors.gray400 : AppColors.gray600,
               fontWeight: FontWeight.bold,
               fontFamily: 'IBM Plex Sans Arabic',
             ),
@@ -472,11 +428,11 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
 
   void _showTripAcceptanceNotification(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         backgroundColor: AppColors.success,
-        duration: const Duration(seconds: 4),
+        duration: Duration(seconds: 4),
         content: Row(
-          children: const [
+          children: [
             Icon(Icons.check_circle_rounded, color: Colors.white),
             AppSpacing.w12,
             Expanded(
