@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 /// CaptainAccountPage - Complete profile and system configurations screen for Laffah Captains.
-/// Displays driver level badges, bike details shortcuts, help centers, and security items.
 class CaptainAccountPage extends StatefulWidget {
   const CaptainAccountPage({super.key});
 
@@ -37,7 +37,9 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               Icons.notifications_none_rounded,
               color: isDark ? AppColors.white : AppColors.gray900,
             ),
-            onPressed: () {},
+            onPressed: () {
+              HapticFeedback.lightImpact();
+            },
           ),
         ],
       ),
@@ -59,16 +61,17 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 ),
                 child: Row(
                   children: [
-                    // Larger custom avatar frame
+                    // Offline safe Custom avatar frame
                     Container(
-                      padding: const EdgeInsets.all(2.0),
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.all(3.0),
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: AppColors.primaryGradient,
                       ),
                       child: const CircleAvatar(
-                        radius: 36,
-                        backgroundImage: NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'),
+                        radius: 34,
+                        backgroundColor: AppColors.primary500,
+                        child: Icon(Icons.person_rounded, size: 38, color: Colors.white),
                       ),
                     ),
                     AppSpacing.w16,
@@ -95,7 +98,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(
-                                  'كابتن فضي',
+                                  'كابتن متميز',
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: AppColors.primary500,
@@ -119,7 +122,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                           ),
                           AppSpacing.h8,
                           const Text(
-                            'تويوتا كورولا • رقم اللوحة: 77213',
+                            'دراجة ياماهي • رقم اللوحة: 77213',
                             style: TextStyle(
                               fontSize: 11,
                               color: AppColors.gray500,
@@ -131,7 +134,9 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.edit_note_rounded, color: AppColors.primary500, size: 28),
-                      onPressed: () {},
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                      },
                     ),
                   ],
                 ),
@@ -254,7 +259,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
 
               AppSpacing.h24,
 
-              // Footer App Logo & Build Version Details
+              // Footer App Logo & Build Version Details (Using IBM Plex Sans Arabic typography)
               Column(
                 children: [
                   Container(
@@ -264,7 +269,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                       color: AppColors.primary500.withOpacity(0.08),
                       shape: BoxShape.circle,
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         'لفّة',
                         style: TextStyle(
@@ -278,18 +283,19 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                   ),
                   AppSpacing.h8,
                   const Text(
-                    'لفة - Laffah',
+                    'لفة - Laffah Mobile',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
+                      fontFamily: 'IBM Plex Sans Arabic',
                       color: AppColors.gray800,
                     ),
                   ),
                   const Text(
-                    'إصدار كابتن 2.4.0 (2024)',
+                    'إصدار تطبيق الكابتن 2.4.0 (2026)',
                     style: TextStyle(
-                      fontSize: 9,
-                      fontFamily: 'Courier',
+                      fontSize: 10,
+                      fontFamily: 'IBM Plex Sans Arabic',
                       fontWeight: FontWeight.bold,
                       color: AppColors.gray500,
                     ),
@@ -337,7 +343,10 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
         ),
       ),
       child: ListTile(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
         leading: Container(
           padding: const EdgeInsets.all(AppSpacing.s8),
           decoration: BoxDecoration(
@@ -368,9 +377,10 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
   }
 
   void _showLogoutConfirmDialog(BuildContext context) {
+    HapticFeedback.mediumImpact();
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
@@ -388,7 +398,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: const Text(
                   'إلغاء',
                   style: TextStyle(color: AppColors.gray600, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
@@ -396,13 +406,14 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  // Trigger actual system log out or BLoC dispatch here.
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('تم الخروج بأمان. نتمنى لك عودة قريبة كابتن لفة!'),
-                    ),
-                  );
+                  Navigator.pop(dialogContext);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('تم الخروج بأمان. نتمنى لك عودة قريبة كابتن لفة!'),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,

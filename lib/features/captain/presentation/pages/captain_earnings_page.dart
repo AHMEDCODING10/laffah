@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/captain_action_button.dart';
 
 /// CaptainEarningsPage - Premium financial dashboard wallet layout for Laffah Captains.
-/// Displays total earnings, stats grids, interactive target bonus bars, and historic lists.
 class CaptainEarningsPage extends StatefulWidget {
   const CaptainEarningsPage({super.key});
 
@@ -12,9 +13,14 @@ class CaptainEarningsPage extends StatefulWidget {
 }
 
 class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
+  // Target daily earnings simulation (Target = 5,000 YER, Current = 4,250 YER)
+  final double _dailyTarget = 5000.0;
+  final double _currentEarnings = 4250.0;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = (_currentEarnings / _dailyTarget).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -34,12 +40,13 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
             ),
             child: const CircleAvatar(
               radius: 18,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'),
+              backgroundColor: AppColors.primary500,
+              child: Icon(Icons.person_rounded, color: Colors.white, size: 20),
             ),
           ),
         ),
         title: Text(
-          'الأرباح',
+          'الأرباح المحفظة',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w900,
@@ -53,7 +60,9 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
               Icons.menu_rounded,
               color: isDark ? AppColors.white : AppColors.gray900,
             ),
-            onPressed: () {},
+            onPressed: () {
+              HapticFeedback.lightImpact();
+            },
           ),
         ],
       ),
@@ -91,9 +100,9 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                     ),
                   ),
                   AppSpacing.h8,
-                  const Text(
-                    '4,250 ر.ي',
-                    style: TextStyle(
+                  Text(
+                    '${_currentEarnings.toStringAsFixed(0)} ر.ي',
+                    style: const TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w900,
                       color: AppColors.primary900,
@@ -108,13 +117,13 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                       color: AppColors.success.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.trending_up_rounded, color: AppColors.success, size: 14),
                         AppSpacing.w6,
                         Text(
-                          'أعلى بنسبة 12%',
+                          'أعلى بنسبة 12% من الأسبوع الماضي',
                           style: TextStyle(
                             fontSize: 11,
                             color: AppColors.success,
@@ -125,6 +134,48 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                       ],
                     ),
                   ),
+
+                  AppSpacing.h20,
+
+                  // Daily Target Dynamic Progress Bar (Innovation Feature)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'هدف الأرباح اليومي',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.gray500,
+                              fontFamily: 'IBM Plex Sans Arabic',
+                            ),
+                          ),
+                          Text(
+                            '${(progress * 100).toInt()}% (${_dailyTarget.toInt()} ر.ي)',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary500,
+                              fontFamily: 'IBM Plex Sans Arabic',
+                            ),
+                          ),
+                        ],
+                      ),
+                      AppSpacing.h8,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 8,
+                          backgroundColor: isDark ? AppColors.gray850 : AppColors.gray200,
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary500),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -134,7 +185,6 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
             // Stats row with two cards: أرباح اليوم and أرباح الأسبوع
             Row(
               children: [
-                // أرباح الأسبوع
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.s14),
@@ -145,10 +195,10 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                         color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
                       ),
                     ),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'أرباح الأسبوع',
                           style: TextStyle(
                             fontSize: 11,
@@ -158,22 +208,21 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                           ),
                         ),
                         AppSpacing.h4,
-                        const Text(
-                          '2,150 ر.ي',
+                        Text(
+                          '21,500 ر.ي',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.gray900,
                             fontFamily: 'IBM Plex Sans Arabic',
                           ),
                         ),
                         AppSpacing.h8,
                         Row(
-                          children: const [
+                          children: [
                             Icon(Icons.calendar_today_rounded, color: AppColors.primary500, size: 12),
                             AppSpacing.w6,
                             Text(
-                              'الأسبوع 14',
+                              'الأسبوع الحالي',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: AppColors.gray500,
@@ -188,7 +237,6 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                   ),
                 ),
                 AppSpacing.w12,
-                // أرباح اليوم
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.s14),
@@ -199,10 +247,10 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                         color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
                       ),
                     ),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'أرباح اليوم',
                           style: TextStyle(
                             fontSize: 11,
@@ -212,22 +260,21 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                           ),
                         ),
                         AppSpacing.h4,
-                        const Text(
-                          '320 ر.ي',
+                        Text(
+                          '4,250 ر.ي',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.gray900,
                             fontFamily: 'IBM Plex Sans Arabic',
                           ),
                         ),
                         AppSpacing.h8,
                         Row(
-                          children: const [
+                          children: [
                             Icon(Icons.check_circle_rounded, color: AppColors.success, size: 12),
                             AppSpacing.w6,
                             Text(
-                              '12 رحلة',
+                              '12 رحلة مكتملة',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: AppColors.success,
@@ -246,102 +293,17 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
 
             AppSpacing.h16,
 
-            // Monthly Earnings card with miniature bar chart
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.s16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : AppColors.white,
-                borderRadius: AppSpacing.borderLG,
-                border: Border.all(
-                  color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'أرباح الشهر',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.gray500,
-                          fontFamily: 'IBM Plex Sans Arabic',
-                        ),
-                      ),
-                      AppSpacing.h4,
-                      const Text(
-                        '8,900 ر.ي',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.gray900,
-                          fontFamily: 'IBM Plex Sans Arabic',
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Compact bar chart graphic
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildMiniBar(40.0, true),
-                      _buildMiniBar(20.0, false),
-                      _buildMiniBar(32.0, false),
-                      _buildMiniBar(12.0, false),
-                      _buildMiniBar(25.0, false),
-                      _buildMiniBar(18.0, false),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            AppSpacing.h20,
-
-            // Brand Gradient Button: طلب تحويل الأرباح
-            Container(
-              width: double.infinity,
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: AppSpacing.radiusLG,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary500.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: () => _showPayoutBottomSheet(context, isDark),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: AppSpacing.radiusLG,
-                  ),
-                ),
-                icon: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
-                label: const Text(
-                  'طلب تحويل الأرباح',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'IBM Plex Sans Arabic',
-                  ),
-                ),
-              ),
+            // Payout Request Action
+            CaptainActionButton(
+              label: 'طلب تحويل الأرباح',
+              icon: Icons.account_balance_wallet_rounded,
+              onPressed: () => _showPayoutBottomSheet(context, isDark),
             ),
 
             AppSpacing.h8,
             const Center(
               child: Text(
-                'يتم معالجة الطلبات خلال 24 ساعة عمل',
+                'يتم معالجة الطلبات عبر الكريمي/جوالي خلال 24 ساعة',
                 style: TextStyle(
                   fontSize: 11,
                   color: AppColors.gray500,
@@ -357,7 +319,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'سجل الأرباح',
+                  'سجل المعاملات والأرباح',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -380,10 +342,10 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
             ),
             AppSpacing.h12,
 
-            // Historic records items
+            // Transactions
             _buildTransactionItem(
-              title: 'تحويل بنكي ناجح',
-              time: '12 أكتوبر 2023 • 10:30 صباحاً',
+              title: 'تحويل بنكي ناجح (الكريمي)',
+              time: 'اليوم • 10:30 صباحاً',
               amount: '- 3,500',
               statusText: 'مكتمل',
               statusColor: AppColors.success,
@@ -393,52 +355,18 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
               isNegative: true,
             ),
             _buildTransactionItem(
-              title: 'رحلة رقم #8829',
-              time: '12 أكتوبر 2023 • 09:15 صباحاً',
-              amount: '+ 450',
+              title: 'رحلة رقم #LF-8829',
+              time: 'اليوم • 09:15 صباحاً',
+              amount: '+ 1,800',
               statusText: 'تمت الإضافة',
-              statusColor: AppColors.gray500,
+              statusColor: AppColors.primary500,
               icon: Icons.motorcycle_rounded,
               iconBgColor: AppColors.primary500.withOpacity(0.12),
               iconColor: AppColors.primary500,
               isNegative: false,
-            ),
-            _buildTransactionItem(
-              title: 'رحلة رقم #8821',
-              time: '11 أكتوبر 2023 • 11:45 مساءً',
-              amount: '+ 620',
-              statusText: 'تمت الإضافة',
-              statusColor: AppColors.gray500,
-              icon: Icons.motorcycle_rounded,
-              iconBgColor: AppColors.primary500.withOpacity(0.12),
-              iconColor: AppColors.primary500,
-              isNegative: false,
-            ),
-            _buildTransactionItem(
-              title: 'طلب تحويل معلق',
-              time: '10 أكتوبر 2023 • 08:00 صباحاً',
-              amount: '- 1,200',
-              statusText: 'قيد المراجعة',
-              statusColor: AppColors.warning,
-              icon: Icons.history_rounded,
-              iconBgColor: AppColors.warning.withOpacity(0.12),
-              iconColor: AppColors.warning,
-              isNegative: true,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMiniBar(double height, bool isHighlighted) {
-    return Container(
-      margin: const EdgeInsets.only(left: 4.0),
-      width: 14,
-      height: height,
-      decoration: BoxDecoration(
-        color: isHighlighted ? AppColors.primary900 : AppColors.primary100,
-        borderRadius: BorderRadius.circular(3),
       ),
     );
   }
@@ -454,18 +382,16 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
     required Color iconColor,
     required bool isNegative,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s12),
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surfaceDark
-            : AppColors.white,
-        borderRadius: AppSpacing.radiusLG,
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: AppSpacing.borderLG,
         border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.white.withOpacity(0.04)
-              : AppColors.gray100,
+          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
         ),
       ),
       child: Row(
@@ -510,11 +436,11 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                amount,
+                '$amount ر.ي',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
-                  color: isNegative ? AppColors.gray900 : AppColors.primary500,
+                  color: isNegative ? AppColors.danger : AppColors.primary500,
                   fontFamily: 'IBM Plex Sans Arabic',
                 ),
               ),
@@ -545,6 +471,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
   void _showPayoutBottomSheet(BuildContext context, bool isDark) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -556,7 +483,12 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s20),
+            padding: EdgeInsets.only(
+              left: AppSpacing.s20,
+              right: AppSpacing.s20,
+              top: AppSpacing.s20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.s20,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -573,7 +505,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                 ),
                 AppSpacing.h16,
                 const Text(
-                  'اختر حساب التحويل المالي للكابتن',
+                  'اختر طريقة تحويل الأرباح',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
                 ),
@@ -581,8 +513,9 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                 _buildPayoutOption(
                   icon: Icons.account_balance_rounded,
                   title: 'صرافة الكريمي (حساب أم فلوس)',
-                  subtitle: 'سحب نقدي فوري بالرقم القومي',
+                  subtitle: 'سحب نقدي فوري برقم الهوية الوطنية',
                   onTap: () {
+                    HapticFeedback.mediumImpact();
                     Navigator.pop(context);
                     _showSuccessMessage(context);
                   },
@@ -590,8 +523,9 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                 _buildPayoutOption(
                   icon: Icons.wallet_rounded,
                   title: 'محفظة جوالي / كاش اليمن',
-                  subtitle: 'تصل مباشرة لرقم هاتفك المسجل',
+                  subtitle: 'تصل مباشرة لحساب محفظتك المسجل',
                   onTap: () {
+                    HapticFeedback.mediumImpact();
                     Navigator.pop(context);
                     _showSuccessMessage(context);
                   },
@@ -617,7 +551,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
       color: AppColors.primary500.withOpacity(0.04),
       shape: RoundedRectangleBorder(
         borderRadius: AppSpacing.borderMD,
-        side: BorderSide(color: AppColors.primary500.withOpacity(0.1)),
+        side: BorderSide(color: AppColors.primary500.withOpacity(0.12)),
       ),
       child: ListTile(
         onTap: onTap,
@@ -640,7 +574,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
       const SnackBar(
         backgroundColor: AppColors.success,
         content: Text(
-          'تم تقديم طلب سحب الأرباح بنجاح! جاري معالجة التحويل كأولوية قصوى لكابتن لفة.',
+          'تم تقديم طلب سحب الأرباح بنجاح! جاري المعالجة وإعلامك فور الإيداع.',
           style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13, fontWeight: FontWeight.bold),
         ),
       ),

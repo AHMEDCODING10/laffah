@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
+import 'captain_trip_invoice_widget.dart';
 
 /// CaptainNavigationPage - High-fidelity trip navigation and progress execution screen.
 /// Implements state progression (وصلت -> ابدأ الرحلة -> إنهاء الرحلة) and transitions
-/// to the premium Invoice Summary view matching Screenshot 4.
+/// to the premium Invoice Summary view.
 class CaptainNavigationPage extends StatefulWidget {
   final String tripId;
   final String passengerName;
@@ -44,7 +46,16 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_currentStep == 3) {
-      return _buildTripCompletedInvoice(context, isDark);
+      return CaptainTripInvoiceWidget(
+        fare: widget.fare,
+        distance: widget.distance,
+        duration: widget.duration,
+        pickup: widget.pickup,
+        dropoff: widget.dropoff,
+        onFinish: () {
+          Navigator.pop(context);
+        },
+      );
     }
 
     return Scaffold(
@@ -70,28 +81,51 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.more_horiz_rounded, size: 20),
-            onPressed: () {},
+            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+            },
           ),
         ),
         actions: [
-          // SOS button matching Screenshot 2
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.danger.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.danger.withOpacity(0.3), width: 1.0),
-            ),
-            child: const Center(
-              child: Text(
-                'SOS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.danger,
+          // Emergency SOS Action Button
+          InkWell(
+            onTap: () {
+              HapticFeedback.heavyImpact();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: AppColors.danger,
+                  content: Text(
+                    'تم تفعيل إشارة الطوارئ SOS وإرسال الموقع لفريق طوارئ لَفَّة!',
+                    style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+                  ),
                 ),
+              );
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.danger, width: 1.2),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.danger),
+                  SizedBox(width: 4),
+                  Text(
+                    'SOS طوارئ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.danger,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -99,12 +133,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       ),
       body: Stack(
         children: [
-          // Full map representation
+          // Map Representation
           Positioned.fill(
             child: _buildNavigationMap(isDark),
           ),
 
-          // Top navigation instruction card (Screenshot 2: "انعطف يساراً")
+          // Top Navigation Header
           Positioned(
             top: AppSpacing.s12,
             left: AppSpacing.s16,
@@ -116,7 +150,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                 padding: const EdgeInsets.all(AppSpacing.s14),
                 child: Row(
                   children: [
-                    // Turn left arrow avatar
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.s12),
                       decoration: BoxDecoration(
@@ -156,7 +189,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                         ],
                       ),
                     ),
-                    // Minutes floating indicator
                     _buildFloatingBubble(
                       '12',
                       'دقيقة',
@@ -168,7 +200,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
             ),
           ),
 
-          // Floating remaining distance indicator (Screenshot 2: "3.4 كم")
+          // Floating Distance Indicator
           Positioned(
             right: AppSpacing.s16,
             top: 115,
@@ -179,7 +211,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
             ),
           ),
 
-          // Bottom details sheet & interactive sliding actions
+          // Bottom Sheet & Sliding Action
           Positioned(
             bottom: 0,
             left: 0,
@@ -196,22 +228,22 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Passenger Information Card
+                    // Passenger Info Header Card
                     Row(
                       children: [
-                        // Passenger avatar
                         Stack(
                           alignment: Alignment.bottomRight,
                           children: [
-                            Container(
-                              width: 52,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.primary500, width: 2.0),
-                                image: const DecorationImage(
-                                  image: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150'),
-                                  fit: BoxFit.cover,
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundColor: AppColors.primary500.withOpacity(0.2),
+                              child: Text(
+                                widget.passengerName.isNotEmpty ? widget.passengerName[0] : 'ر',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary500,
+                                  fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
                             ),
@@ -223,7 +255,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                               ),
                               child: Text(
                                 '${widget.passengerRating} ★',
-                                style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'IBM Plex Sans Arabic'),
+                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black),
                               ),
                             ),
                           ],
@@ -256,12 +288,13 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                           ),
                         ),
 
-                        // Action icons (Call & Chat shortcuts)
+                        // Action Shortcuts (Call & Chat with Touch sizing 48x48)
                         Row(
                           children: [
                             _buildCircleCallAction(
                               Icons.chat_bubble_outline_rounded,
                               () {
+                                HapticFeedback.lightImpact();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('تم فتح محادثة لفة مع الراكب')),
                                 );
@@ -272,6 +305,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                             _buildCircleCallAction(
                               Icons.phone_in_talk_rounded,
                               () {
+                                HapticFeedback.mediumImpact();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('جاري الاتصال بـ ${widget.passengerName}...')),
                                 );
@@ -285,10 +319,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
 
                     AppSpacing.h20,
 
-                    // Key details row (Estimated fare & destination)
+                    // Key Specs Card
                     Row(
                       children: [
-                        // Estimated Fare box
                         Expanded(
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.s12),
@@ -318,7 +351,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                           ),
                         ),
                         AppSpacing.w12,
-                        // Destination box
                         Expanded(
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.s12),
@@ -356,7 +388,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
 
                     AppSpacing.h24,
 
-                    // Interactive progress slide/tap action button
+                    // RTL Interactive Swipe Slider Button
                     _buildStepActionButton(context, isDark),
                   ],
                 ),
@@ -368,7 +400,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     );
   }
 
-  // Interactive slider/button state selector
   Widget _buildStepActionButton(BuildContext context, bool isDark) {
     String label = '';
     Color btnColor = AppColors.primary500;
@@ -391,22 +422,20 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: btnColor.withOpacity(0.1),
+        color: btnColor.withOpacity(0.12),
         borderRadius: AppSpacing.borderLG,
-        border: Border.all(color: btnColor.withOpacity(0.2), width: 1.5),
+        border: Border.all(color: btnColor.withOpacity(0.3), width: 1.5),
       ),
       child: ClipRRect(
         borderRadius: AppSpacing.borderLG,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Slide indicators guide
             Positioned(
-              left: 20,
+              right: 20,
               child: Icon(Icons.double_arrow_rounded, color: btnColor, size: 18),
             ),
             
-            // Label
             Text(
               label,
               style: TextStyle(
@@ -417,22 +446,25 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
               ),
             ),
 
-            // Sliding active area
+            // RTL Drag Handle Slider
             GestureDetector(
               onHorizontalDragUpdate: (details) {
                 setState(() {
-                  _sliderValue += details.delta.dx / 220; // scaled
+                  // In RTL, dragging right-to-left increases progress
+                  _sliderValue -= details.delta.dx / 200;
                   if (_sliderValue < 0.0) _sliderValue = 0.0;
                   if (_sliderValue > 1.0) _sliderValue = 1.0;
                 });
               },
               onHorizontalDragEnd: (details) {
-                if (_sliderValue > 0.75) {
+                if (_sliderValue > 0.70) {
+                  HapticFeedback.heavyImpact();
                   setState(() {
                     _currentStep++;
                     _sliderValue = 0.0;
                   });
                 } else {
+                  HapticFeedback.lightImpact();
                   setState(() {
                     _sliderValue = 0.0;
                   });
@@ -450,7 +482,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                       BoxShadow(
                         color: btnColor.withOpacity(0.4),
                         blurRadius: 10,
-                        offset: const Offset(2, 2),
+                        offset: const Offset(-2, 2),
                       )
                     ],
                   ),
@@ -464,7 +496,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     );
   }
 
-  // Floating informational bubble indicator
   Widget _buildFloatingBubble(String val, String unit, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s10),
@@ -499,22 +530,21 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(25),
       child: Container(
-        width: 44,
-        height: 44,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray100,
+          color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray100,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
           color: AppColors.primary500,
-          size: 20,
+          size: 22,
         ),
       ),
     );
   }
 
-  // Mock navigation vector map drawing
   Widget _buildNavigationMap(bool isDark) {
     return Container(
       color: isDark ? const Color(0xFF131822) : const Color(0xFFF4F6F8),
@@ -523,200 +553,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       ),
     );
   }
-
-  // Invoice visual summary panel (Screenshot 4)
-  Widget _buildTripCompletedInvoice(BuildContext context, bool isDark) {
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1116) : const Color(0xFFFAFAFA),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: const Text(
-          'ملخص الرحلة',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            fontFamily: 'IBM Plex Sans Arabic',
-          ),
-        ),
-      ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              
-              // Success circular badge
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(AppSpacing.s16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary500.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.s12),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary500,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ),
-                ),
-              ),
-
-              AppSpacing.h20,
-
-              // Succes title and subtitle
-              const Text(
-                'تمت الرحلة بنجاح',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-              AppSpacing.h6,
-              const Text(
-                'شكراً لك يا كابتن! يومك حافل بالانجاز.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.gray500,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-
-              AppSpacing.h32,
-
-              // Invoice Details Glass Box Card
-              GlassBox(
-                borderRadius: AppSpacing.radiusLG,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s24),
-                child: Column(
-                  children: [
-                    const Text(
-                      'إجمالي قيمة المشوار',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.gray500,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                      ),
-                    ),
-                    AppSpacing.h4,
-                    Text(
-                      '${widget.fare.toStringAsFixed(0)} ريال',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary500,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                      ),
-                    ),
-                    
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: AppSpacing.s16),
-                      child: Divider(height: 1),
-                    ),
-
-                    // Cash indicator & specs rows
-                    _buildInvoiceRow('طريقة الدفع', 'نقداً (Cash)'),
-                    AppSpacing.h12,
-                    _buildInvoiceRow('المسافة', '8.4 كم'),
-                    AppSpacing.h12,
-                    _buildInvoiceRow('وقت الرحلة', '24 دقيقة'),
-                    AppSpacing.h12,
-                    _buildInvoiceRow('المسار', 'من حدة إلى شارع الستين'),
-                  ],
-                ),
-              ),
-
-              const Spacer(flex: 2),
-
-              // Bottom Actions (تم التحصيل & العودة للرئيسية)
-              Container(
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  borderRadius: AppSpacing.borderLG,
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context); // Go back home
-                  },
-                  icon: const Icon(Icons.payments_rounded, color: Colors.white),
-                  label: const Text(
-                    'تم التحصيل كاش',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic', color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
-                    shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderLG),
-                  ),
-                ),
-              ),
-
-              AppSpacing.h12,
-
-              OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
-                  side: BorderSide(color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray300, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderLG),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.home_rounded, size: 20, color: AppColors.gray500),
-                    AppSpacing.w10,
-                    Text(
-                      'العودة للرئيسية',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic', color: AppColors.gray500),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInvoiceRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: AppColors.gray500, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, fontFamily: 'IBM Plex Sans Arabic'),
-        ),
-      ],
-    );
-  }
 }
 
-/// Custom street route navigation lines painter
+/// Custom street route navigation lines painter optimized with repaint check
 class _RouteProgressPainter extends CustomPainter {
   final bool isDark;
   final int currentStep;
@@ -783,5 +622,7 @@ class _RouteProgressPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _RouteProgressPainter oldDelegate) {
+    return oldDelegate.isDark != isDark || oldDelegate.currentStep != currentStep;
+  }
 }
