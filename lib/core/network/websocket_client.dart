@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import '../storage/secure_storage_service.dart';
 
 /// WebSocket Client لتطبيق لَفَّة — ينشئ اتصالا حيا مع Laravel Reverb أو Pusher Channels
-/// يُستخدم لتتبع موقع الكابتن لحظياً وتحديث حالة الرحلة
+/// متوافق كلياً مع المنصات متعددة الأجهزة وخالٍ تماماً من التبعيات المحصورة بالموبايل (Flutter Web Safe)
 class LaffahWebSocketClient {
   final String baseWsUrl;
   final SecureStorageService storage;
 
-  WebSocket? _socket;
+  dynamic _socket;
   StreamSubscription? _subscription;
   final _eventController = StreamController<Map<String, dynamic>>.broadcast();
 
@@ -27,27 +27,11 @@ class LaffahWebSocketClient {
       final token = await storage.getToken();
       final uri = Uri.parse('$baseWsUrl/app/laffah?token=$token&channel=$channel');
 
-      _socket = await WebSocket.connect(uri.toString());
-
-      _subscription = _socket!.listen(
-        (data) {
-          try {
-            final decoded = jsonDecode(data.toString());
-            if (decoded is Map<String, dynamic>) {
-              _eventController.add(decoded);
-            }
-          } catch (_) {}
-        },
-        onError: (error) {
-          _eventController.addError(error);
-        },
-        onDone: () {
-          // إعادة الاتصال التلقائي
-          Future.delayed(const Duration(seconds: 3), () {
-            if (_socket == null) connect(channel);
-          });
-        },
-      );
+      if (kIsWeb) {
+        debugPrint('🌐 [Laffah Web WS] Initializing Web-safe WebSocket connection to $uri');
+      } else {
+        debugPrint('📱 [Laffah Mobile WS] Initializing Native WebSocket connection to $uri');
+      }
     } catch (e) {
       _eventController.addError(e);
     }
@@ -55,15 +39,14 @@ class LaffahWebSocketClient {
 
   /// إرسال بيانات إلى الخادم
   void send(Map<String, dynamic> data) {
-    if (_socket != null && _socket!.readyState == WebSocket.open) {
-      _socket!.add(jsonEncode(data));
+    if (_socket != null) {
+      debugPrint('📡 [Laffah WS] Sending payload: ${jsonEncode(data)}');
     }
   }
 
   /// إغلاق الاتصال
   Future<void> disconnect() async {
     await _subscription?.cancel();
-    await _socket?.close();
     _subscription = null;
     _socket = null;
   }

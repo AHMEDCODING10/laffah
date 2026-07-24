@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/glass_box.dart';
 
 /// CaptainEarningsPage - Premium financial dashboard wallet layout for Laffah Captains.
 /// Displays total earnings, stats grids, interactive target bonus bars, and historic lists.

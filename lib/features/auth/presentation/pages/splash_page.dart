@@ -21,6 +21,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   late Animation<double> _fadeAnimation;
   late Animation<double> _glowAnimation;
 
+  Timer? _navigationTimer;
+
   @override
   void initState() {
     super.initState();
@@ -58,11 +60,12 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     _animationController.forward();
 
     // Wait for the full loading duration before pushing landing screen
-    Timer(const Duration(milliseconds: 3200), _navigateToLanding);
+    _navigationTimer = Timer(const Duration(milliseconds: 3200), _navigateToLanding);
   }
 
   @override
   void dispose() {
+    _navigationTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }

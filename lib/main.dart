@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,34 +17,41 @@ import 'core/di/injection_container.dart' as di;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Dependency Injection
+  // 1. Initialize Dependency Injection with safe log tracking
+  debugPrint("🚀 [Laffah] Initializing Dependency Injection...");
   await di.init();
+  debugPrint("✅ [Laffah] Dependency Injection Ready!");
 
-  // Lock to portrait — essential for safe single-handed motorcycle operation
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // System UI customization is mobile-only
+  if (!kIsWeb) {
+    // Lock to portrait — essential for safe single-handed motorcycle operation
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
 
-  // Configure system UI chrome to blend seamlessly with the Laffah dark theme
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarBrightness: Brightness.dark,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0E1116),
-      systemNavigationBarDividerColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
+    // Configure system UI chrome to blend seamlessly with the Laffah dark theme
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF0E1116),
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
+  }
+
+  debugPrint("🎬 [Laffah] Running App...");
 
   runApp(
     MultiBlocProvider(
       providers: [
-        // Auth BLoC — eager initialization for instant OTP flow readiness
+        // Auth BLoC — lazy set to true to prevent blocking app startup on web
         BlocProvider<AuthBloc>(
           create: (_) => di.sl<AuthBloc>(),
-          lazy: false,
+          lazy: true,
         ),
         // Ride BLoC — manages passenger ride request lifecycle
         BlocProvider<RideBloc>(

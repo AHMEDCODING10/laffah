@@ -21,12 +21,30 @@ class LaffahLogo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Brand Logo Image from Assets
-        SizedBox(
+        Container(
           height: height,
           width: width,
-          child: Image.asset(
-            'assets/images/laffah_logo.png',
-            fit: BoxFit.contain,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(height * 0.22),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF6B00).withValues(alpha: 0.2),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(height * 0.22),
+            child: Image.asset(
+              'assets/images/laffah_logo.jpeg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Image.asset(
+                'assets/images/laffah_logo.png',
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
         if (showSubtitle) ...[

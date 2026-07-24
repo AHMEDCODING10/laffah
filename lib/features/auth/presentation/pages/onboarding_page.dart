@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/widgets/laffah_logo.dart';
 
 /// OnboardingPage — The first impression of the Laffah application.
 /// Educates the user about the core value propositions: exclusively motorcycles,

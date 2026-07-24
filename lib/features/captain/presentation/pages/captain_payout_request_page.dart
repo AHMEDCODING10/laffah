@@ -69,7 +69,6 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
   final double _pendingBalance = 12500.0;   // YER
   final double _totalEarned = 345000.0;     // YER
   final double _platformCommissionRate = 0.15; // 15% Laffah core commission
-  final double _withdrawnAmount = 264050.0; // YER
 
   late List<PayoutMethod> _payoutMethods;
   late List<PayoutTransaction> _transactions;
@@ -783,7 +782,6 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
   Widget _buildReceiptCalculationBox(bool isDark) {
     final enteredAmount = double.tryParse(_amountController.text) ?? 0.0;
     final fee = _calculateTransactionFee(enteredAmount);
-    final totalDeducted = enteredAmount;
     final netPayout = enteredAmount - fee;
 
     return Container(

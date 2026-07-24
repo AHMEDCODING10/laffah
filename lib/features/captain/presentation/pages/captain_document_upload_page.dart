@@ -195,7 +195,6 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
 
   Widget _buildProgressHeaderCard(bool isDark, double progress) {
     final approvedCount = _getApprovedCount();
-    final submittedCount = _getSubmittedCount();
 
     return GlassBox(
       borderRadius: AppSpacing.radiusXL,
