@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:latlong2/latlong.dart' as ll;
 import '../theme/app_colors.dart';
+
+typedef MarkerTapCallback = void Function(String title, String snippet, ll.LatLng position);
 
 /// LaffahMapView - Production-Grade Hybrid Interactive Map View for Laffah (راكب / كابتن)
 /// Configured for Sana'a metropolitan area (Latitude: 15.3694, Longitude: 44.1910).
@@ -15,6 +18,7 @@ class LaffahMapView extends StatefulWidget {
   final gmaps.CameraPosition? initialPosition;
   final void Function(gmaps.GoogleMapController)? onMapCreated;
   final bool showDefaultMockData;
+  final MarkerTapCallback? onMarkerTap;
 
   const LaffahMapView({
     super.key,
@@ -24,6 +28,7 @@ class LaffahMapView extends StatefulWidget {
     this.initialPosition,
     this.onMapCreated,
     this.showDefaultMockData = false,
+    this.onMarkerTap,
   });
 
   @override
@@ -190,17 +195,29 @@ class _LaffahMapViewState extends State<LaffahMapView> {
     // Convert external markers if provided
     if (widget.markers != null && widget.markers!.isNotEmpty) {
       for (final m in widget.markers!) {
+        final pos = ll.LatLng(m.position.latitude, m.position.longitude);
+        final title = m.infoWindow.title ?? 'موقع مخصص';
+        final snippet = m.infoWindow.snippet ?? '';
+
         list.add(
           Marker(
-            point: ll.LatLng(m.position.latitude, m.position.longitude),
+            point: pos,
             width: 48,
             height: 48,
-            child: Tooltip(
-              message: m.infoWindow.title ?? '',
-              child: const Icon(
-                Icons.location_on_rounded,
-                color: Color(0xFFFF6B00),
-                size: 36,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                if (widget.onMarkerTap != null) {
+                  widget.onMarkerTap!(title, snippet, pos);
+                }
+              },
+              child: Tooltip(
+                message: title,
+                child: const Icon(
+                  Icons.location_on_rounded,
+                  color: Color(0xFFFF6B00),
+                  size: 36,
+                ),
               ),
             ),
           ),
@@ -214,18 +231,30 @@ class _LaffahMapViewState extends State<LaffahMapView> {
         // Pickup Pin A - Hadda Street
         Marker(
           point: const ll.LatLng(15.3605, 44.1852),
-          width: 50,
-          height: 50,
-          child: Tooltip(
-            message: 'نقطة الانطلاق (A): شارع حدة',
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Colors.green,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+          width: 54,
+          height: 54,
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              if (widget.onMarkerTap != null) {
+                widget.onMarkerTap!(
+                  'نقطة الانطلاق (A)',
+                  'شارع حدة - أمام مركز الكميم، صنعاء',
+                  const ll.LatLng(15.3605, 44.1852),
+                );
+              }
+            },
+            child: Tooltip(
+              message: 'نقطة الانطلاق (A): شارع حدة',
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                ),
+                child: const Icon(Icons.my_location_rounded, color: Colors.white, size: 22),
               ),
-              child: const Icon(Icons.my_location_rounded, color: Colors.white, size: 20),
             ),
           ),
         ),
@@ -233,18 +262,30 @@ class _LaffahMapViewState extends State<LaffahMapView> {
         // Drop-off Pin B - Sana'a University
         Marker(
           point: const ll.LatLng(15.3782, 44.1804),
-          width: 50,
-          height: 50,
-          child: Tooltip(
-            message: 'وجهة الوصول (B): جامعة صنعاء',
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Colors.redAccent,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+          width: 54,
+          height: 54,
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              if (widget.onMarkerTap != null) {
+                widget.onMarkerTap!(
+                  'وجهة الوصول (B)',
+                  'جامعة صنعاء - البوابة الرئيسية، صنعاء',
+                  const ll.LatLng(15.3782, 44.1804),
+                );
+              }
+            },
+            child: Tooltip(
+              message: 'وجهة الوصول (B): جامعة صنعاء',
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.redAccent,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                ),
+                child: const Icon(Icons.flag_rounded, color: Colors.white, size: 22),
               ),
-              child: const Icon(Icons.flag_rounded, color: Colors.white, size: 20),
             ),
           ),
         ),
@@ -252,21 +293,33 @@ class _LaffahMapViewState extends State<LaffahMapView> {
         // Captain Motorbike Marker
         Marker(
           point: const ll.LatLng(15.3688, 44.1824),
-          width: 56,
-          height: 56,
-          child: Tooltip(
-            message: 'الكابتن علي (دراجة نارية)',
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF6B00),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: const [
-                  BoxShadow(color: Color(0xFFFF6B00), blurRadius: 10, spreadRadius: 2),
-                ],
+          width: 60,
+          height: 60,
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              if (widget.onMarkerTap != null) {
+                widget.onMarkerTap!(
+                  'موقع الدراجة النارية',
+                  'الكابتن متواجد بالقرب من شارع القاهرة، صنعاء',
+                  const ll.LatLng(15.3688, 44.1824),
+                );
+              }
+            },
+            child: Tooltip(
+              message: 'الكابتن علي (دراجة نارية)',
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6B00),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0xFFFF6B00), blurRadius: 12, spreadRadius: 3),
+                  ],
+                ),
+                child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 26),
               ),
-              child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 24),
             ),
           ),
         ),
