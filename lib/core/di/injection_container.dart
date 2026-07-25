@@ -6,6 +6,7 @@ import '../storage/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/send_otp_usecase.dart';
 import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
+import '../../features/auth/data/datasources/auth_mock_data_source.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -79,7 +80,7 @@ Future<void> init() async {
   // Auth Feature
   // ==========================
   sl.registerLazySingleton<AuthRemoteDataSource>(
-        () => AuthRemoteDataSourceImpl(sl()),
+        () => AuthMockDataSource(),
   );
   sl.registerLazySingleton<AuthRepository>(
         () => AuthRepositoryImpl(
