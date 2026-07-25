@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_controller.dart';
 
 /// CaptainSettingsPage — Allows Captain to toggle preferences like navigation app,
 /// auto-accept rides, and notification preferences.
@@ -62,6 +63,20 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
               icon: Icons.inventory_2_rounded,
               value: _receiveParcels,
               onChanged: (val) => setState(() => _receiveParcels = val),
+              isDark: isDark,
+            ),
+
+            AppSpacing.h16,
+            _buildSectionHeader('مظهر التطبيق', isDark),
+            _buildSwitchTile(
+              title: 'الوضع الداكن (Dark Mode)',
+              subtitle: 'التبديل بين المظهر النهاري والمظهر الداكن حسب راحتك.',
+              icon: Icons.dark_mode_rounded,
+              value: ThemeController.instance.isDarkMode,
+              onChanged: (val) {
+                ThemeController.instance.toggleTheme(val);
+                setState(() {});
+              },
               isDark: isDark,
             ),
 

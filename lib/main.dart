@@ -8,6 +8,7 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/ride/presentation/bloc/ride_bloc.dart';
 import 'features/captain/presentation/bloc/captain_bloc.dart';
 
+import 'core/theme/theme_controller.dart';
 import 'core/di/injection_container.dart' as di;
 
 /// Laffah Application Entry Point
@@ -17,7 +18,10 @@ import 'core/di/injection_container.dart' as di;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize Dependency Injection with safe log tracking
+  // 1. Initialize ThemeController (Default is Light Mode)
+  await ThemeController.instance.init();
+
+  // 2. Initialize Dependency Injection with safe log tracking
   debugPrint("🚀 [Laffah] Initializing Dependency Injection...");
   await di.init();
   debugPrint("✅ [Laffah] Dependency Injection Ready!");
