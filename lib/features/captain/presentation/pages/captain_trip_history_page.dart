@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
+import '../../../../core/router/app_router.dart';
+
 /// CaptainTripHistoryPage — Dedicated history page for Captains showing completed trips,
 /// earnings per trip, and canceled rides.
 class CaptainTripHistoryPage extends StatelessWidget {
@@ -22,7 +24,13 @@ class CaptainTripHistoryPage extends StatelessWidget {
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(LaffahRoutes.captainHome);
+              }
+            },
           ),
           title: Text(
             'سجل الرحلات',

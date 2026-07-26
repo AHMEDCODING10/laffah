@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../../core/widgets/glass_box.dart';
-import '../../../../../core/widgets/captain_action_button.dart';
 
-/// TripRequestDialog - Premium Glassmorphic overlay with active countdown timer & Android ergonomics.
+/// TripRequestDialog - High-fidelity Glassmorphic overlay for incoming Captain ride requests.
+/// Features a 15-second animated countdown ring, Yemeni Rial pricing, distance/time specs,
+/// and large ergonomic action buttons for single-handed motorcycle operation.
 class TripRequestDialog extends StatefulWidget {
   final String passengerName;
   final double passengerRating;
@@ -46,7 +47,7 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 350),
     );
 
     _slideAnimation = Tween<Offset>(
@@ -90,157 +91,125 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s20),
-          child: GlassBox(
-            borderRadius: AppSpacing.radiusXL,
-            padding: const EdgeInsets.all(AppSpacing.s20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header with Badge & Countdown Progress
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.s8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary500.withOpacity(0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.motorcycle_rounded,
-                            color: AppColors.primary500,
-                            size: 22,
-                          ),
-                        ),
-                        AppSpacing.w10,
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary500.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'طلب لَفَّة جديد',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary500,
-                              fontFamily: 'IBM Plex Sans Arabic',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    // Countdown circle timer
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 38,
-                          height: 38,
-                          child: CircularProgressIndicator(
-                            value: _secondsRemaining / 15.0,
-                            strokeWidth: 3.5,
-                            backgroundColor: isDark ? AppColors.gray800 : AppColors.gray200,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              _secondsRemaining <= 5 ? AppColors.danger : AppColors.primary500,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '$_secondsRemaining',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            color: _secondsRemaining <= 5 ? AppColors.danger : (isDark ? Colors.white : AppColors.gray900),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 88), // Extra bottom padding for floating bar
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.15),
+                blurRadius: 28,
+                spreadRadius: 4,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.s20),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF141822).withValues(alpha: 0.92)
+                      : Colors.white.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: const Color(0xFFFF6B00).withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
                 ),
-                
-                AppSpacing.h16,
-
-                // Passenger Info Tile
-                Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundColor: AppColors.primary500.withOpacity(0.2),
-                      child: Text(
-                        widget.passengerName.isNotEmpty ? widget.passengerName[0] : 'ع',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary500,
-                          fontFamily: 'IBM Plex Sans Arabic',
-                        ),
-                      ),
-                    ),
-                    AppSpacing.w12,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.passengerName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'IBM Plex Sans Arabic',
+                    // Header Badge & Countdown Progress Ring
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.s8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.two_wheeler_rounded,
+                                color: Color(0xFFFF6B00),
+                                size: 22,
+                              ),
                             ),
-                          ),
-                          Row(
-                            children: [
-                              const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
-                              AppSpacing.w4,
-                              Text(
-                                '${widget.passengerRating}',
-                                style: const TextStyle(
+                            AppSpacing.w10,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: const Text(
+                                'طلب مشوار جديد ⚡',
+                                style: TextStyle(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.gray600,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFFFF6B00),
+                                  fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${widget.fare.toStringAsFixed(0)} ر.ي',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary500,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                      ),
-                    ),
-                  ],
-                ),
+                            ),
+                          ],
+                        ),
 
-                AppSpacing.h16,
+                        // Countdown ring
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 42,
+                              height: 42,
+                              child: CircularProgressIndicator(
+                                value: _secondsRemaining / 15.0,
+                                strokeWidth: 4.0,
+                                backgroundColor: isDark ? AppColors.gray800 : AppColors.gray200,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  _secondsRemaining <= 5 ? AppColors.danger : const Color(0xFFFF6B00),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '$_secondsRemaining',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'monospace',
+                                color: _secondsRemaining <= 5 ? AppColors.danger : (isDark ? Colors.white : AppColors.gray900),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
 
-                // Route representation
-                Column(
-                  children: [
-                    // Pickup
+                    AppSpacing.h16,
+
+                    // Passenger Info & Fare Row
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary500,
-                            shape: BoxShape.circle,
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: const Color(0xFFFF6B00).withValues(alpha: 0.2),
+                          child: Text(
+                            widget.passengerName.isNotEmpty ? widget.passengerName[0] : 'ع',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFFF6B00),
+                              fontFamily: 'IBM Plex Sans Arabic',
+                            ),
                           ),
                         ),
                         AppSpacing.w12,
@@ -248,20 +217,59 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'نقطة الاستلام',
+                              Text(
+                                widget.passengerName,
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.gray500,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
                                   fontFamily: 'IBM Plex Sans Arabic',
+                                  color: isDark ? Colors.white : AppColors.gray900,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
+                                  AppSpacing.w4,
+                                  Text(
+                                    '${widget.passengerRating} ★',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFFFF6B00).withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(
+                                'الأجرة المتوقعة',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  color: Color(0xFFFF6B00),
                                 ),
                               ),
                               Text(
-                                widget.pickup,
+                                '${widget.fare.toStringAsFixed(0)} ر.ي',
                                 style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFFFF6B00),
                                   fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
@@ -271,125 +279,218 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                       ],
                     ),
 
-                    // Dashed connector
-                    Padding(
-                      padding: const EdgeInsets.only(left: 5),
-                      child: Row(
+                    AppSpacing.h16,
+
+                    // Pickup & Dropoff Route Details
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.s12),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : AppColors.gray50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                        ),
+                      ),
+                      child: Column(
                         children: [
-                          Container(
-                            width: 2,
-                            height: 20,
-                            color: isDark ? AppColors.white.withOpacity(0.12) : AppColors.gray300,
+                          // Pickup Location
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(top: 4),
+                                width: 12,
+                                height: 12,
+                                decoration: const BoxDecoration(
+                                  color: Colors.green,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              AppSpacing.w12,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'نقطة الانطلاق (A)',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                      ),
+                                    ),
+                                    Text(
+                                      widget.pickup,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        color: isDark ? Colors.white : AppColors.gray900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Container(
+                                width: 2,
+                                height: 16,
+                                color: isDark ? Colors.white24 : Colors.black12,
+                              ),
+                            ),
+                          ),
+
+                          // Dropoff Location
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(top: 4),
+                                width: 12,
+                                height: 12,
+                                decoration: const BoxDecoration(
+                                  color: Colors.redAccent,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              AppSpacing.w12,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'وجهة الوصول (B)',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.redAccent,
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                      ),
+                                    ),
+                                    Text(
+                                      widget.dropoff,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        color: isDark ? Colors.white : AppColors.gray900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
 
-                    // Dropoff
+                    AppSpacing.h12,
+
+                    // Specs Bento Row (Distance & Time)
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: AppColors.info,
-                            shape: BoxShape.circle,
+                        Expanded(
+                          child: _buildSpecCard(
+                            isDark,
+                            Icons.map_rounded,
+                            'المسافة الفردية',
+                            widget.distance,
                           ),
                         ),
                         AppSpacing.w12,
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'الوجهة',
+                          child: _buildSpecCard(
+                            isDark,
+                            Icons.schedule_rounded,
+                            'الزمان المقدر',
+                            widget.duration,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    AppSpacing.h16,
+
+                    // Action Buttons (Reject / Accept)
+                    Row(
+                      children: [
+                        // Reject Button
+                        Expanded(
+                          flex: 1,
+                          child: SizedBox(
+                            height: 48,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                HapticFeedback.mediumImpact();
+                                widget.onReject();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.danger,
+                                side: const BorderSide(color: AppColors.danger, width: 1.2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'رفض',
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.gray500,
                                   fontFamily: 'IBM Plex Sans Arabic',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
                                 ),
                               ),
-                              Text(
-                                widget.dropoff,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'IBM Plex Sans Arabic',
+                            ),
+                          ),
+                        ),
+
+                        AppSpacing.w12,
+
+                        // Accept Button
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 48,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                HapticFeedback.heavyImpact();
+                                widget.onAccept();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF6B00),
+                                foregroundColor: Colors.white,
+                                elevation: 4,
+                                shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                            ],
+                              icon: const Icon(Icons.flash_on_rounded, size: 20),
+                              label: const Text(
+                                'قبول الطلب الآن',
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14.5,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-
-                AppSpacing.h16,
-
-                // Spec row (Distance, Time)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSpecCard(
-                        context,
-                        isDark,
-                        Icons.map_rounded,
-                        'المسافة',
-                        widget.distance,
-                      ),
-                    ),
-                    AppSpacing.w12,
-                    Expanded(
-                      child: _buildSpecCard(
-                        context,
-                        isDark,
-                        Icons.schedule_rounded,
-                        'الوقت المقدر',
-                        widget.duration,
-                      ),
-                    ),
-                  ],
-                ),
-
-                AppSpacing.h20,
-
-                // Ergonomic Buttons (Accept / Reject) with Haptic Feedback
-                Row(
-                  children: [
-                    // Reject Button
-                    Expanded(
-                      child: CaptainActionButton(
-                        label: 'رفض',
-                        isOutlined: true,
-                        backgroundColor: AppColors.danger,
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          widget.onReject();
-                        },
-                      ),
-                    ),
-                    
-                    AppSpacing.w16,
-
-                    // Accept Button
-                    Expanded(
-                      flex: 2,
-                      child: CaptainActionButton(
-                        label: 'قبول الطلب',
-                        icon: Icons.check_circle_rounded,
-                        onPressed: () {
-                          HapticFeedback.heavyImpact();
-                          widget.onAccept();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -397,29 +498,21 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
     );
   }
 
-  // Helper builder for specs bento cards
-  Widget _buildSpecCard(BuildContext context, bool isDark, IconData icon, String label, String value) {
+  Widget _buildSpecCard(bool isDark, IconData icon, String label, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10, horizontal: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: isDark 
-            ? AppColors.white.withOpacity(0.04) 
-            : AppColors.gray100.withOpacity(0.8),
-        borderRadius: AppSpacing.borderLG,
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
-          width: 1.0,
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: AppColors.primary500,
-          ),
-          AppSpacing.w8,
+          Icon(icon, size: 16, color: const Color(0xFFFF6B00)),
+          const SizedBox(width: 6),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -434,10 +527,11 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   fontFamily: 'IBM Plex Sans Arabic',
+                  color: isDark ? Colors.white : AppColors.gray900,
                 ),
               ),
             ],

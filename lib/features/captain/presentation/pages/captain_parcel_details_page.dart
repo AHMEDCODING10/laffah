@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
+import '../../../../core/router/app_router.dart';
+
 /// CaptainParcelDetailsPage — Detailed view for Captains before accepting
 /// or during a parcel delivery. Shows pickup/drop-off points, parcel type,
 /// and sender/receiver contact information.
@@ -23,7 +25,13 @@ class CaptainParcelDetailsPage extends StatelessWidget {
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(LaffahRoutes.captainHome);
+              }
+            },
           ),
           title: Text(
             'تفاصيل توصيل الطرد',
@@ -196,7 +204,13 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go(LaffahRoutes.captainHome);
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.gray500,
                         padding: const EdgeInsets.symmetric(vertical: 16),

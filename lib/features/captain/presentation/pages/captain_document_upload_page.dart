@@ -195,6 +195,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
 
   Widget _buildProgressHeaderCard(bool isDark, double progress) {
     final approvedCount = _getApprovedCount();
+    final submittedCount = _getSubmittedCount();
 
     return GlassBox(
       borderRadius: AppSpacing.radiusXL,
@@ -219,7 +220,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                   ),
                   AppSpacing.h4,
                   Text(
-                    'تم قبول ($approvedCount) من أصل (${_documents.length}) وثائق رئيسية',
+                    'تم رفع ($submittedCount) وقبول ($approvedCount) من (${_documents.length}) وثائق',
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 12,

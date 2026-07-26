@@ -34,6 +34,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     
     // Simulate API call
     Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
       setState(() => _isLoading = false);
       // Usually would navigate to OTP verification for reset here
       ScaffoldMessenger.of(context).showSnackBar(
@@ -45,7 +46,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           backgroundColor: AppColors.success,
         ),
       );
-      context.pop();
+      if (mounted) context.pop();
     });
   }
 

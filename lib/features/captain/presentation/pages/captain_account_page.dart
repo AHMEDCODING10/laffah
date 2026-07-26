@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_controller.dart';
+import '../../../../core/router/app_router.dart';
+import 'widgets/captain_account_dialogs.dart';
 
-/// CaptainAccountPage - Complete profile and system configurations screen for Laffah Captains.
+/// CaptainAccountPage - Overhauled interactive profile dashboard for Laffah Captains.
+/// Integrates all 9 modal sheets (Profile, Vehicle, Documents, Password, Help, FAQ, Support, terms, language),
+/// top notification center overlay, theme toggler, and safe logout sequence.
 class CaptainAccountPage extends StatefulWidget {
   const CaptainAccountPage({super.key});
 
@@ -12,6 +18,94 @@ class CaptainAccountPage extends StatefulWidget {
 }
 
 class _CaptainAccountPageState extends State<CaptainAccountPage> {
+  // Mock Dynamic Profile State
+  String _captainName = 'أحمد محمد يحيى';
+  String _captainPhone = '771234567';
+  String _captainRating = '4.9';
+  String _selectedLang = 'ar'; // Default language Arabic
+
+  final Map<String, String> _vehicleInfo = {
+    'type': 'دراجة ياماها النارية 125cc',
+    'model': 'ياماها موديل (2023)',
+    'plate': '77213 - صنعاء',
+    'license': 'رخصة قيادة دراجات نارية سارية',
+  };
+
+  void _showNotificationCenterSheet(BuildContext context, bool isDark) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            color: isDark ? const Color(0xFF141822) : Colors.white,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(width: 44, height: 4.5, decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.black12, borderRadius: BorderRadius.circular(10))),
+              ),
+              AppSpacing.h16,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('مركز إشعارات الكابتن 🔔', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900, fontSize: 16)),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+              AppSpacing.h16,
+              Expanded(
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _buildNotifItem('مكافأة الإنجاز الأسبوعية 🎉', 'تم إضافة 500 ر.ي إلى محفظتك لتحقيق التارجت الأسبوعي بنجاح.', 'أمس', isDark),
+                    _buildNotifItem('صيانة خوادم النظام الدورية', 'تنبيه: ستجرى صيانة مجدولة لخوادم لَفَّة يوم الجمعة القادم بين 2:00 ص و 3:00 ص.', 'أمس', isDark),
+                    _buildNotifItem('تقييم راكب ممتاز 🌟', 'حصلت على تقييم 5 نجوم من الراكبة "سارة العامري": كابتن سريع ومحترم.', 'قبل يومين', isDark),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotifItem(String title, String desc, String time, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(time, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 10, color: AppColors.gray500)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(desc, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 11.5, color: AppColors.gray600, height: 1.4)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -22,10 +116,11 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        automaticallyImplyLeading: false,
         title: Text(
           'الحساب الشخصي',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w900,
             fontFamily: 'IBM Plex Sans Arabic',
             color: isDark ? AppColors.white : AppColors.gray900,
@@ -37,72 +132,73 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               Icons.notifications_none_rounded,
               color: isDark ? AppColors.white : AppColors.gray900,
             ),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-            },
+            onPressed: () => _showNotificationCenterSheet(context, isDark),
           ),
         ],
       ),
       body: Directionality(
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 90), // Bottom padding for floating bar
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // 1. Profile header visual card
+              // 1. Profile Visual Card
               Container(
-                padding: const EdgeInsets.all(AppSpacing.s20),
+              padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : AppColors.white,
-                  borderRadius: AppSpacing.borderXL,
+                  color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
                   ),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04), blurRadius: 10),
+                  ],
                 ),
                 child: Row(
                   children: [
-                    // Offline safe Custom avatar frame
                     Container(
-                      padding: const EdgeInsets.all(3.0),
+                      padding: const EdgeInsets.all(2.5),
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: AppColors.primaryGradient,
                       ),
                       child: const CircleAvatar(
-                        radius: 34,
-                        backgroundColor: AppColors.primary500,
-                        child: Icon(Icons.person_rounded, size: 38, color: Colors.white),
+                        radius: 32,
+                        backgroundColor: Color(0xFFFF6B00),
+                        child: Icon(Icons.person_rounded, size: 34, color: Colors.white),
                       ),
                     ),
                     AppSpacing.w16,
-                    // Captain detail titles
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'أحمد محمد يحيى',
+                          Text(
+                            _captainName,
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 17,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'IBM Plex Sans Arabic',
+                              color: isDark ? Colors.white : AppColors.gray900,
                             ),
                           ),
                           AppSpacing.h4,
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary500.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text(
                                   'كابتن متميز',
                                   style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppColors.primary500,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 9.5,
+                                    color: Color(0xFFFF6B00),
+                                    fontWeight: FontWeight.w900,
                                     fontFamily: 'IBM Plex Sans Arabic',
                                   ),
                                 ),
@@ -110,148 +206,269 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                               AppSpacing.w8,
                               const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                               AppSpacing.w2,
-                              const Text(
-                                '4.9',
+                              Text(
+                                _captainRating,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.gray600,
+                                  color: isDark ? AppColors.gray300 : AppColors.gray700,
                                 ),
                               ),
                             ],
                           ),
                           AppSpacing.h8,
-                          const Text(
-                            'دراجة ياماهي • رقم اللوحة: 77213',
-                            style: TextStyle(
-                              fontSize: 11,
+                          Text(
+                            '${_vehicleInfo['type']} • لوحة: ${_vehicleInfo['plate']}',
+                            style: const TextStyle(
+                              fontSize: 10.5,
                               color: AppColors.gray500,
                               fontFamily: 'IBM Plex Sans Arabic',
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.edit_note_rounded, color: AppColors.primary500, size: 28),
+                      icon: const Icon(Icons.edit_note_rounded, color: Color(0xFFFF6B00), size: 28),
                       onPressed: () {
                         HapticFeedback.lightImpact();
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => EditProfileSheet(
+                            currentName: _captainName,
+                            currentPhone: _captainPhone,
+                            onSave: (newName, newPhone) {
+                              setState(() {
+                                _captainName = newName;
+                                _captainPhone = newPhone;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  backgroundColor: AppColors.success,
+                                  content: Text('تم تحديث الملف الشخصي بنجاح 💾', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                                ),
+                              );
+                            },
+                          ),
+                        );
                       },
                     ),
                   ],
                 ),
               ),
 
-              AppSpacing.h24,
+              AppSpacing.h20,
 
-              // 2. GENERAL SETTINGS MODULE
+              // 2. GENERAL SETTINGS
               _buildSectionTitle('الإعدادات العامة'),
               AppSpacing.h8,
               _buildSettingItem(
                 icon: Icons.person_outline_rounded,
                 title: 'الملف الشخصي',
                 subtitle: 'إعدادات الحساب والبيانات الأساسية',
-                onTap: () {},
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => EditProfileSheet(
+                      currentName: _captainName,
+                      currentPhone: _captainPhone,
+                      onSave: (newName, newPhone) {
+                        setState(() {
+                          _captainName = newName;
+                          _captainPhone = newPhone;
+                        });
+                      },
+                    ),
+                  );
+                },
               ),
               _buildSettingItem(
                 icon: Icons.motorcycle_rounded,
                 title: 'بيانات الدراجة / المركبة',
                 subtitle: 'الموديل، لوحة الأرقام، نوع الرخصة',
-                onTap: () {},
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => VehicleDetailsSheet(vehicleInfo: _vehicleInfo),
+                  );
+                },
               ),
               _buildSettingItem(
                 icon: Icons.description_outlined,
                 title: 'الوثائق والأوراق الرسمية',
                 subtitle: 'بطاقة الهوية، رخصة القيادة، الفيش والتشبيه',
-                onTap: () {},
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const OfficialDocumentsSheet(),
+                  );
+                },
               ),
               _buildSettingItem(
                 icon: Icons.lock_outline_rounded,
                 title: 'تغيير كلمة المرور',
                 subtitle: 'تحديث تفاصيل الأمان للمستودع',
-                onTap: () {},
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const ChangePasswordSheet(),
+                  );
+                },
               ),
 
               AppSpacing.h16,
 
-              // 3. HELP & SUPPORT MODULE
+              // 3. THEME & LANGUAGE PREFERENCES
+              _buildSectionTitle('تفضيلات المظهر واللغة'),
+              AppSpacing.h8,
+              _buildSwitchSettingItem(
+                icon: Icons.dark_mode_rounded,
+                title: 'الوضع الداكن (Dark Mode)',
+                subtitle: 'التبديل التلقائي بين المظهر النهاري والمظهر الداكن',
+                value: ThemeController.instance.isDarkMode,
+                onChanged: (val) {
+                  ThemeController.instance.toggleTheme(val);
+                  setState(() {});
+                },
+                isDark: isDark,
+              ),
+              _buildSettingItem(
+                icon: Icons.translate_rounded,
+                title: 'تغيير لغة التطبيق',
+                subtitle: _selectedLang == 'ar' ? 'العربية (🇾🇪 العربية)' : 'English (🇬🇧 English)',
+                onTap: () {
+                  LanguageSelectorSheet.show(
+                    context: context,
+                    currentLang: _selectedLang,
+                    onSelected: (code) {
+                      setState(() {
+                        _selectedLang = code;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFFFF6B00),
+                          content: Text(
+                            code == 'ar' ? 'تم تغيير لغة التطبيق إلى العربية بنجاح' : 'App language changed to English successfully!',
+                            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+
+              AppSpacing.h16,
+
+              // 4. HELP & SUPPORT
               _buildSectionTitle('الدعم والمساعدة'),
               AppSpacing.h8,
               _buildSettingItem(
                 icon: Icons.support_agent_rounded,
                 title: 'مركز مساعدة كباتن لفة',
-                subtitle: 'تواصل مع الدعم الفني لحل المشاكل التقنية',
-                onTap: () {},
+                subtitle: 'أدلة زيادة الدخل ونقل الطرود وقواعد السلامة',
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const HelpCenterSheet(),
+                  );
+                },
               ),
               _buildSettingItem(
                 icon: Icons.help_outline_rounded,
                 title: 'الأسئلة الشائعة',
-                subtitle: 'دليل شامل لاستخدام التطبيق وزيادة الدخل',
-                onTap: () {},
+                subtitle: 'دليل شامل لاستخدام التطبيق وعمولة المنصة',
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const FAQSheet(),
+                  );
+                },
               ),
               _buildSettingItem(
                 icon: Icons.contact_support_outlined,
                 title: 'تواصل معنا مباشرة',
-                subtitle: 'رقم الطوارئ المباشر والمحادثة الحية',
-                onTap: () {},
+                subtitle: 'رقم طوارئ الدعم المباشر ومحادثة الواتساب',
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const DirectSupportSheet(),
+                  );
+                },
               ),
 
               AppSpacing.h16,
 
-              // 4. LEGAL MODULE
+              // 5. LEGAL
               _buildSectionTitle('القانونية'),
               AppSpacing.h8,
               _buildSettingItem(
                 icon: Icons.gavel_rounded,
                 title: 'الشروط والأحكام',
                 subtitle: 'اتفاقية الاستخدام وحقوق كابتن لفة',
-                onTap: () {},
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const TermsAndPrivacySheet(isPrivacy: false),
+                  );
+                },
               ),
               _buildSettingItem(
                 icon: Icons.security_rounded,
                 title: 'سياسة الخصوصية وحماية البيانات',
                 subtitle: 'كيف نتعامل مع سرية معلومات كباتننا',
-                onTap: () {},
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const TermsAndPrivacySheet(isPrivacy: true),
+                  );
+                },
               ),
 
               AppSpacing.h24,
 
-              // 5. LOG OUT & EXIT BUTTON
+              // 6. LOG OUT BUTTON
               Container(
-                margin: const EdgeInsets.only(bottom: AppSpacing.s12),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.06),
-                  borderRadius: AppSpacing.borderLG,
-                  border: Border.all(
-                    color: AppColors.error.withOpacity(0.12),
-                  ),
+                  color: AppColors.error.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.12)),
                 ),
                 child: ListTile(
                   onTap: () => _showLogoutConfirmDialog(context),
                   leading: Container(
                     padding: const EdgeInsets.all(AppSpacing.s8),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
                     child: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
                   ),
                   title: const Text(
                     'تسجيل الخروج',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.error,
-                      fontFamily: 'IBM Plex Sans Arabic',
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.error, fontFamily: 'IBM Plex Sans Arabic'),
                   ),
                   subtitle: const Text(
-                    'قم بالخروج الآمن من النظام وإلغاء الاستقبال',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.gray500,
-                      fontFamily: 'IBM Plex Sans Arabic',
-                    ),
+                    'قم بالخروج الآمن من النظام وإلغاء استقبال الرحلات',
+                    style: TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.error),
                 ),
@@ -259,48 +476,29 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
 
               AppSpacing.h24,
 
-              // Footer App Logo & Build Version Details (Using IBM Plex Sans Arabic typography)
+              // Footer Details
               Column(
                 children: [
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary500.withOpacity(0.08),
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: const Color(0xFFFF6B00).withValues(alpha: 0.08), shape: BoxShape.circle),
                     child: const Center(
                       child: Text(
                         'لفّة',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary900,
-                          fontFamily: 'IBM Plex Sans Arabic',
-                        ),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFFFF6B00), fontFamily: 'IBM Plex Sans Arabic'),
                       ),
                     ),
                   ),
                   AppSpacing.h8,
-                  const Text(
-                    'لفة - Laffah Mobile',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      color: AppColors.gray800,
-                    ),
+                  Text(
+                    'لفة - Laffah Captain App',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic', color: isDark ? AppColors.gray300 : AppColors.gray800),
                   ),
                   const Text(
                     'إصدار تطبيق الكابتن 2.4.0 (2026)',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.gray500,
-                    ),
+                    style: TextStyle(fontSize: 10, fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, color: AppColors.gray500),
                   ),
-                  AppSpacing.h32,
                 ],
               ),
             ],
@@ -315,12 +513,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
       alignment: Alignment.centerRight,
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          color: AppColors.gray500,
-          fontFamily: 'IBM Plex Sans Arabic',
-        ),
+        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
       ),
     );
   }
@@ -336,10 +529,10 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s10),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: AppSpacing.borderLG,
+        color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       child: ListTile(
@@ -348,30 +541,60 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
           onTap();
         },
         leading: Container(
-          padding: const EdgeInsets.all(AppSpacing.s8),
-          decoration: BoxDecoration(
-            color: AppColors.primary500.withOpacity(0.08),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: AppColors.primary500, size: 20),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: const Color(0xFFFF6B00).withValues(alpha: 0.08), shape: BoxShape.circle),
+          child: Icon(icon, color: const Color(0xFFFF6B00), size: 20),
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'IBM Plex Sans Arabic',
-          ),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(
-            fontSize: 10,
-            color: AppColors.gray500,
-            fontFamily: 'IBM Plex Sans Arabic',
-          ),
+          style: const TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+      ),
+    );
+  }
+
+  Widget _buildSwitchSettingItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required bool isDark,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.s10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+        ),
+      ),
+      child: SwitchListTile.adaptive(
+        value: value,
+        onChanged: (val) {
+          HapticFeedback.selectionClick();
+          onChanged(val);
+        },
+        activeColor: const Color(0xFFFF6B00),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
+        ),
+        secondary: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: const Color(0xFFFF6B00).withValues(alpha: 0.08), shape: BoxShape.circle),
+          child:  Icon(icon, color: Color(0xFFFF6B00), size: 20),
+        ),
       ),
     );
   }
@@ -384,13 +607,11 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.surfaceDark
-                : AppColors.white,
-            shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderLG),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF141822) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: const Text(
               'تسجيل الخروج',
-              style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic', fontSize: 16),
+              style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'IBM Plex Sans Arabic', fontSize: 16),
             ),
             content: const Text(
               'هل أنت متأكد من رغبتك في تسجيل الخروج من تطبيق كابتن لفة؟ سيتم إيقاف استقبال طلبات الركاب والطرود تلقائياً.',
@@ -399,30 +620,15 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text(
-                  'إلغاء',
-                  style: TextStyle(color: AppColors.gray600, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
-                ),
+                child: const Text('إلغاء', style: TextStyle(color: AppColors.gray600, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic')),
               ),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('تم الخروج بأمان. نتمنى لك عودة قريبة كابتن لفة!'),
-                      ),
-                    );
-                  }
+                  context.go(LaffahRoutes.roleSelection);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text(
-                  'تأكيد الخروج',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                child: const Text('تأكيد الخروج', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic')),
               ),
             ],
           ),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_controller.dart';
+
+import '../../../../core/router/app_router.dart';
 
 /// CaptainSettingsPage — Allows Captain to toggle preferences like navigation app,
 /// auto-accept rides, and notification preferences.
@@ -13,8 +16,8 @@ class CaptainSettingsPage extends StatefulWidget {
 }
 
 class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
-  bool _autoAcceptRides = false;
-  bool _voiceNavigation = true;
+  bool _autoAcceptRides = true;
+  bool _soundNotifications = true;
   bool _receiveParcels = true;
   String _selectedNavigationApp = 'خرائط جوجل';
 
@@ -32,7 +35,13 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(LaffahRoutes.captainHome);
+              }
+            },
           ),
           title: Text(
             'الإعدادات',
@@ -66,6 +75,20 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
             ),
 
             AppSpacing.h16,
+            _buildSectionHeader('مظهر التطبيق', isDark),
+            _buildSwitchTile(
+              title: 'الوضع الداكن (Dark Mode)',
+              subtitle: 'التبديل بين المظهر النهاري والمظهر الداكن حسب راحتك.',
+              icon: Icons.dark_mode_rounded,
+              value: ThemeController.instance.isDarkMode,
+              onChanged: (val) {
+                ThemeController.instance.toggleTheme(val);
+                setState(() {});
+              },
+              isDark: isDark,
+            ),
+
+            AppSpacing.h16,
             _buildSectionHeader('الملاحة والتوجيه', isDark),
             _buildSelectionTile(
               title: 'تطبيق الخرائط المفضل',
@@ -77,11 +100,11 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
               },
             ),
             _buildSwitchTile(
-              title: 'التوجيه الصوتي',
-              subtitle: 'تفعيل التعليمات الصوتية أثناء القيادة للحفاظ على سلامتك.',
+              title: 'التوجيه الصوتي والتنبيهات',
+              subtitle: 'تفعيل التعليمات الصوتية والتنبيهات أثناء القيادة.',
               icon: Icons.record_voice_over_rounded,
-              value: _voiceNavigation,
-              onChanged: (val) => setState(() => _voiceNavigation = val),
+              value: _soundNotifications,
+              onChanged: (val) => setState(() => _soundNotifications = val),
               isDark: isDark,
             ),
 

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_logo.dart';
 import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import 'otp_verification_page.dart';
 import 'auth_landing_page.dart';
@@ -59,13 +60,62 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
     super.dispose();
   }
 
+  // ── بيانات حساب الاختبار الثابتة ─────────────────────────────────────────
+  static const String _demoPhone    = '770291452';
+  static const String _demoPassword = '123456789';
+
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       final String phoneDigits = _phoneController.text.trim();
-      final String fullPhoneNumber = '+967$phoneDigits';
+      final String password    = _passwordController.text.trim();
 
-      // Fire Send OTP Code event to BLoC
-      context.read<AuthBloc>().add(SendOTPCode(fullPhoneNumber));
+      // التحقق من بيانات حساب الاختبار
+      if (phoneDigits != _demoPhone || password != _demoPassword) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: AppSpacing.borderMD,
+            ),
+            content: const Text(
+              'رقم الهاتف أو كلمة المرور غير صحيحة (استخدم بيانات حساب الاختبار)',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+
+      // إشعار نجاح وتسجيل الدخول المباشر (مرحلة التجربة واختبار الجودة)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppSpacing.borderMD,
+          ),
+          content: Text(
+            'تم تسجيل الدخول بنجاح كـ ${_isCaptain ? "كابتن" : "راكب"} (وضع التجربة)',
+            style: const TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      );
+
+      // التوجيه المباشر للشاشة الرئيسية
+      if (_isCaptain) {
+        context.go(LaffahRoutes.captainHome);
+      } else {
+        context.go(LaffahRoutes.passengerHome);
+      }
     }
   }
 
@@ -270,7 +320,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
-                                              'دخول واستلام رمز التحقق',
+                                              'تسجيل الدخول',
                                               style: TextStyle(
                                                 fontFamily: 'IBM Plex Sans Arabic',
                                                 fontWeight: FontWeight.w900,
@@ -289,6 +339,53 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                       ),
 
                       const SizedBox(height: 36),
+
+                      // ── بطاقة بيانات الاختبار ──────────────────────────
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppSpacing.s16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6B00).withOpacity(0.06),
+                          borderRadius: AppSpacing.borderMD,
+                          border: Border.all(
+                            color: const Color(0xFFFF6B00).withOpacity(0.18),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.verified_user_rounded,
+                                    color: Color(0xFFFF6B00), size: 16),
+                                AppSpacing.w8,
+                                const Text(
+                                  'حساب الاختبار (الدخول المباشر مفّعل)',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFFFF6B00),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'رقم الهاتف : 770291452\nكلمة المرور: 123456789\nرمز التحقق : أي 4 أرقام',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFF6B00),
+                                height: 1.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
 
                       // Redirect to landing to register/create new account
                       Row(

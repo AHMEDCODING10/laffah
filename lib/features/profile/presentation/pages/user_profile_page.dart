@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/widgets/glass_box.dart';
 
 /// UserProfilePage - Premium, high-fidelity profile screen for Laffah passengers.
@@ -492,6 +493,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
               onTap: () {},
             ),
             _buildDivider(isDark),
+            _buildThemeSwitchTile(isDark),
+            _buildDivider(isDark),
             _buildProfileTile(
               icon: Icons.language_rounded,
               title: 'لغة التطبيق / Language',
@@ -512,6 +515,51 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildThemeSwitchTile(bool isDark) {
+    final bool isDarkMode = ThemeController.instance.isDarkMode;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s4),
+      leading: Container(
+        padding: const EdgeInsets.all(AppSpacing.s8),
+        decoration: BoxDecoration(
+          color: AppColors.primary500.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.dark_mode_rounded,
+          color: AppColors.primary500,
+          size: 20,
+        ),
+      ),
+      title: Text(
+        'الوضع الداكن (Dark Mode)',
+        style: TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+      ),
+      subtitle: Text(
+        isDarkMode ? 'الوضع الداكن مفعّل حالياً' : 'الوضع النهاري مفعّل (الافتراضي)',
+        style: const TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: 11,
+          color: AppColors.gray500,
+        ),
+      ),
+      trailing: Switch(
+        value: isDarkMode,
+        activeColor: AppColors.primary500,
+        onChanged: (val) {
+          ThemeController.instance.toggleTheme(val);
+          setState(() {});
+        },
       ),
     );
   }

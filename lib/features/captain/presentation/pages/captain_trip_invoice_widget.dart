@@ -6,6 +6,8 @@ import '../../../../core/widgets/captain_action_button.dart';
 
 /// CaptainTripInvoiceWidget - Premium visual invoice summary presented after trip completion
 class CaptainTripInvoiceWidget extends StatelessWidget {
+  final String? tripId;
+  final String? passengerName;
   final double fare;
   final String distance;
   final String duration;
@@ -16,6 +18,8 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
 
   const CaptainTripInvoiceWidget({
     super.key,
+    this.tripId,
+    this.passengerName,
     required this.fare,
     required this.distance,
     required this.duration,
