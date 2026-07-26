@@ -1,0 +1,386 @@
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
+
+/// CaptainTransactionsSheet — Comprehensive transaction history bottom sheet.
+/// Displays all ride earnings, payout withdrawals, and platform commissions.
+class CaptainTransactionsSheet extends StatefulWidget {
+  final List<Map<String, dynamic>> transactions;
+
+  const CaptainTransactionsSheet({
+    super.key,
+    required this.transactions,
+  });
+
+  static void show(BuildContext context, List<Map<String, dynamic>> transactions) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CaptainTransactionsSheet(transactions: transactions),
+    );
+  }
+
+  @override
+  State<CaptainTransactionsSheet> createState() => _CaptainTransactionsSheetState();
+}
+
+class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
+  String _selectedFilter = 'الكل'; // 'الكل', 'أرباح', 'سحوبات'
+
+  List<Map<String, dynamic>> get _filteredTransactions {
+    if (_selectedFilter == 'أرباح') {
+      return widget.transactions.where((t) => t['isNegative'] == false).toList();
+    } else if (_selectedFilter == 'سحوبات') {
+      return widget.transactions.where((t) => t['isNegative'] == true).toList();
+    }
+    return widget.transactions;
+  }
+
+  void _showTransactionDetails(Map<String, dynamic> item, bool isDark) {
+    HapticFeedback.lightImpact();
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Row(
+            children: [
+              Icon(
+                item['isNegative'] == true
+                    ? Icons.account_balance_rounded
+                    : Icons.motorcycle_rounded,
+                color: item['isNegative'] == true ? AppColors.danger : const Color(0xFFFF6B00),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item['title'] ?? 'تفاصيل المعاملة',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : AppColors.gray900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetailRow('المبلغ', '${item['amount']} ر.ي', isDark, isHighlight: true),
+              const SizedBox(height: 8),
+              _buildDetailRow('الحالة', item['statusText'] ?? 'مكتمل', isDark),
+              const SizedBox(height: 8),
+              _buildDetailRow('الوقت والتاريخ', item['time'] ?? 'اليوم', isDark),
+              const SizedBox(height: 8),
+              _buildDetailRow('الرقم المرجعي', item['refId'] ?? 'REF-9920182', isDark),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'إغلاق',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFFF6B00),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, bool isDark, {bool isHighlight = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 12,
+            color: AppColors.gray500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: isHighlight ? 15 : 12.5,
+            fontWeight: FontWeight.w900,
+            color: isHighlight ? const Color(0xFFFF6B00) : (isDark ? Colors.white : AppColors.gray900),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final list = _filteredTransactions;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.2),
+              blurRadius: 32,
+              spreadRadius: 4,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF141822).withValues(alpha: 0.95)
+                    : Colors.white.withValues(alpha: 0.96),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Drag Handle Bar
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4.5,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+
+                  AppSpacing.h16,
+
+                  // Header Title
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'سجل المعاملات والتحويلات المالية',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 17,
+                          color: isDark ? Colors.white : AppColors.gray900,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.gray500),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+
+                  AppSpacing.h12,
+
+                  // Filter Tabs Bar (الكل, أرباح, سحوبات)
+                  Row(
+                    children: [
+                      _buildTabChip('الكل', _selectedFilter == 'الكل', isDark),
+                      const SizedBox(width: 8),
+                      _buildTabChip('أرباح', _selectedFilter == 'أرباح', isDark, color: AppColors.success),
+                      const SizedBox(width: 8),
+                      _buildTabChip('سحوبات', _selectedFilter == 'سحوبات', isDark, color: AppColors.danger),
+                    ],
+                  ),
+
+                  AppSpacing.h16,
+
+                  // Transactions List
+                  Expanded(
+                    child: list.isEmpty
+                        ? Center(
+                            child: Text(
+                              'لا توجد معاملات ماليّة في هذه الفئة',
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 13,
+                                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: list.length,
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              final item = list[index];
+                              final bool isNegative = item['isNegative'] == true;
+                              final Color statusColor = (item['statusColor'] as Color?) ?? AppColors.success;
+
+                              return GestureDetector(
+                                onTap: () => _showTransactionDetails(item, isDark),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.03)
+                                        : AppColors.gray50,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: isNegative
+                                                  ? AppColors.danger.withValues(alpha: 0.12)
+                                                  : const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              isNegative
+                                                  ? Icons.account_balance_rounded
+                                                  : Icons.motorcycle_rounded,
+                                              size: 18,
+                                              color: isNegative ? AppColors.danger : const Color(0xFFFF6B00),
+                                            ),
+                                          ),
+                                          AppSpacing.w12,
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item['title'] ?? '',
+                                                style: TextStyle(
+                                                  fontFamily: 'IBM Plex Sans Arabic',
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                  color: isDark ? Colors.white : AppColors.gray900,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                item['time'] ?? '',
+                                                style: const TextStyle(
+                                                  fontFamily: 'IBM Plex Sans Arabic',
+                                                  fontSize: 10.5,
+                                                  color: AppColors.gray500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            '${item['amount']} ر.ي',
+                                            style: TextStyle(
+                                              fontFamily: 'IBM Plex Sans Arabic',
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 14,
+                                              color: isNegative ? AppColors.danger : const Color(0xFFFF6B00),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: statusColor.withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              item['statusText'] ?? '',
+                                              style: TextStyle(
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: statusColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabChip(String label, bool isSelected, bool isDark, {Color? color}) {
+    final chipColor = color ?? const Color(0xFFFF6B00);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedFilter = label;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? chipColor.withValues(alpha: 0.15)
+              : (isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? chipColor
+                : (isDark ? Colors.white12 : AppColors.gray200),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+            color: isSelected
+                ? chipColor
+                : (isDark ? AppColors.gray400 : AppColors.gray600),
+          ),
+        ),
+      ),
+    );
+  }
+}

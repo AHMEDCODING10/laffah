@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import 'captain_trip_invoice_widget.dart';
+import '../../../../core/router/app_router.dart';
+import 'widgets/captain_communication_sheet.dart';
 
-/// CaptainNavigationPage - High-fidelity trip navigation and progress execution screen.
-/// Implements state progression (وصلت -> ابدأ الرحلة -> إنهاء الرحلة) and transitions
-/// to the premium Invoice Summary view.
+/// CaptainNavigationPage — High-fidelity live trip navigation and execution screen.
+/// Features interactive trip lifecycle progression (وصلت -> ابدأ الرحلة -> إنهاء الرحلة),
+/// WhatsApp/SMS/Call communication options, waiting timer, and transitions to invoice summary.
 class CaptainNavigationPage extends StatefulWidget {
   final String tripId;
   final String passengerName;
@@ -38,8 +41,76 @@ class CaptainNavigationPage extends StatefulWidget {
 
 class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   // Navigation states: 0: driving to pickup ('accepted'), 1: arrived at pickup ('arrived'), 2: on trip ('started'), 3: finished ('completed')
-  int _currentStep = 0; 
+  int _currentStep = 0;
   double _sliderValue = 0.0;
+
+  void _safePop(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(LaffahRoutes.captainHome);
+    }
+  }
+
+  void _showSOSEmergencyDialog(BuildContext context, bool isDark) {
+    HapticFeedback.heavyImpact();
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 24),
+              SizedBox(width: 10),
+              Text(
+                'طلب طوارئ SOS عاجل',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'في حال مواجهة أي حالة طوارئ أو حادث مروري في شوارع صنعاء، يمكنك الاتصال فوراً بطوارئ لَفَّة أو شرطة المرور.',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 12.5,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.gray500)),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    backgroundColor: AppColors.danger,
+                    content: Text(
+                      'تم إرسال بلاغ وإحداثيات الموقع الحالي لفريق طوارئ لَفَّة في صنعاء!',
+                      style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
+              icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
+              label: const Text('اتصال بالطوارئ', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,16 +118,20 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
 
     if (_currentStep == 3) {
       return CaptainTripInvoiceWidget(
+        tripId: widget.tripId,
+        passengerName: widget.passengerName,
         fare: widget.fare,
         distance: widget.distance,
         duration: widget.duration,
         pickup: widget.pickup,
         dropoff: widget.dropoff,
-        onFinish: () {
-          Navigator.pop(context);
-        },
+        onFinish: () => _safePop(context),
       );
     }
+
+    String appBarTitle = 'الذهاب للراكب';
+    if (_currentStep == 1) appBarTitle = 'في انتظار الراكب ⏱️';
+    if (_currentStep == 2) appBarTitle = 'في الطريق للوجهة 🛵';
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF11141B) : const Color(0xFFF8F9FB),
@@ -66,7 +141,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         automaticallyImplyLeading: false,
         centerTitle: true,
         title: Text(
-          _currentStep == 2 ? 'أثناء الرحلة' : 'الذهاب للراكب',
+          appBarTitle,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w900,
@@ -77,49 +152,38 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray200,
+            color: isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray200,
             shape: BoxShape.circle,
           ),
           child: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, size: 20),
             onPressed: () {
               HapticFeedback.lightImpact();
-              Navigator.pop(context);
+              _safePop(context);
             },
           ),
         ),
         actions: [
           // Emergency SOS Action Button
           InkWell(
-            onTap: () {
-              HapticFeedback.heavyImpact();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  backgroundColor: AppColors.danger,
-                  content: Text(
-                    'تم تفعيل إشارة الطوارئ SOS وإرسال الموقع لفريق طوارئ لَفَّة!',
-                    style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
-                  ),
-                ),
-              );
-            },
+            onTap: () => _showSOSEmergencyDialog(context, isDark),
             borderRadius: BorderRadius.circular(20),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.danger.withOpacity(0.15),
+                color: AppColors.danger.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.danger, width: 1.2),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.danger),
+                  Icon(Icons.warning_amber_rounded, size: 15, color: AppColors.danger),
                   SizedBox(width: 4),
                   Text(
                     'SOS طوارئ',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.bold,
                       color: AppColors.danger,
                       fontFamily: 'IBM Plex Sans Arabic',
@@ -133,12 +197,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       ),
       body: Stack(
         children: [
-          // Map Representation
+          // Interactive Map Canvas
           Positioned.fill(
             child: _buildNavigationMap(isDark),
           ),
 
-          // Top Navigation Header
+          // Top Navigation Guidance Banner
           Positioned(
             top: AppSpacing.s12,
             left: AppSpacing.s16,
@@ -153,12 +217,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.s12),
                       decoration: BoxDecoration(
-                        color: AppColors.primary500.withOpacity(0.15),
+                        color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
                         borderRadius: AppSpacing.borderMD,
                       ),
                       child: const Icon(
                         Icons.turn_left_rounded,
-                        color: AppColors.primary500,
+                        color: Color(0xFFFF6B00),
                         size: 26,
                       ),
                     ),
@@ -167,18 +231,22 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'انعطف يساراً',
-                            style: TextStyle(
-                              fontSize: 16,
+                          Text(
+                            _currentStep == 1
+                                ? 'أنت في نقطة الاستلام'
+                                : (_currentStep == 2 ? 'انعطف يساراً للوجهة' : 'انعطف يساراً'),
+                            style: const TextStyle(
+                              fontSize: 15,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'IBM Plex Sans Arabic',
                             ),
                           ),
                           Text(
-                            _currentStep == 2 
-                                ? 'شارع الستين - بعد 200 متر' 
-                                : 'شارع حِدة - باتجاه نقطة التجمع',
+                            _currentStep == 1
+                                ? widget.pickup
+                                : (_currentStep == 2 ? widget.dropoff : 'شارع حِدة - باتجاه نقطة التجمع'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 11,
                               color: AppColors.gray500,
@@ -190,7 +258,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                       ),
                     ),
                     _buildFloatingBubble(
-                      '12',
+                      widget.duration.split(' ').first,
                       'دقيقة',
                       isDark,
                     ),
@@ -200,18 +268,18 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
             ),
           ),
 
-          // Floating Distance Indicator
+          // Floating Distance Bubble
           Positioned(
             right: AppSpacing.s16,
             top: 115,
             child: _buildFloatingBubble(
-              '3.4',
+              widget.distance.split(' ').first,
               'كم',
               isDark,
             ),
           ),
 
-          // Bottom Sheet & Sliding Action
+          // Bottom Navigation Controls & Sliding Action Sheet
           Positioned(
             bottom: 0,
             left: 0,
@@ -223,45 +291,45 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                   topLeft: Radius.circular(AppSpacing.s32),
                   topRight: Radius.circular(AppSpacing.s32),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s24),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Passenger Info Header Card
+                    // Passenger Profile & Shortcuts Row
                     Row(
                       children: [
                         Stack(
                           alignment: Alignment.bottomRight,
                           children: [
                             CircleAvatar(
-                              radius: 26,
-                              backgroundColor: AppColors.primary500.withOpacity(0.2),
+                              radius: 24,
+                              backgroundColor: const Color(0xFFFF6B00).withValues(alpha: 0.2),
                               child: Text(
                                 widget.passengerName.isNotEmpty ? widget.passengerName[0] : 'ر',
                                 style: const TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary500,
+                                  color: Color(0xFFFF6B00),
                                   fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                               decoration: BoxDecoration(
                                 color: AppColors.warning,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '${widget.passengerRating} ★',
-                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black),
+                                style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Colors.black),
                               ),
                             ),
                           ],
                         ),
 
-                        AppSpacing.w16,
+                        AppSpacing.w12,
 
                         Expanded(
                           child: Column(
@@ -269,16 +337,17 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                             children: [
                               Text(
                                 widget.passengerName,
-                                style: const TextStyle(
-                                  fontSize: 16,
+                                style: TextStyle(
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w900,
                                   fontFamily: 'IBM Plex Sans Arabic',
+                                  color: isDark ? Colors.white : AppColors.gray900,
                                 ),
                               ),
                               const Text(
-                                'طريقة الدفع: محفظة لفة',
+                                'طريقة الدفع: نقداً / محفظة',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10.5,
                                   color: AppColors.gray500,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'IBM Plex Sans Arabic',
@@ -288,26 +357,40 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                           ),
                         ),
 
-                        // Action Shortcuts (Call & Chat with Touch sizing 48x48)
+                        // Action Shortcuts (Call & Chat Buttons)
                         Row(
                           children: [
+                            // Chat & WhatsApp Options
                             _buildCircleCallAction(
                               Icons.chat_bubble_outline_rounded,
                               () {
-                                HapticFeedback.lightImpact();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('تم فتح محادثة لفة مع الراكب')),
+                                CaptainCommunicationSheet.show(
+                                  context: context,
+                                  passengerName: widget.passengerName,
+                                  passengerPhone: widget.passengerPhone,
                                 );
                               },
                               isDark,
                             ),
-                            AppSpacing.w10,
+
+                            AppSpacing.w8,
+
+                            // Direct Call Phone Action
                             _buildCircleCallAction(
                               Icons.phone_in_talk_rounded,
                               () {
                                 HapticFeedback.mediumImpact();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('جاري الاتصال بـ ${widget.passengerName}...')),
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFFFF6B00),
+                                    content: Text(
+                                      'جاري الاتصال بالراكب (${widget.passengerPhone})...',
+                                      style: const TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                                 );
                               },
                               isDark,
@@ -317,22 +400,76 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                       ],
                     ),
 
-                    AppSpacing.h20,
+                    AppSpacing.h16,
 
-                    // Key Specs Card
+                    // Waiting Timer Banner (Visible when arrived at pickup: _currentStep == 1)
+                    if (_currentStep == 1)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.timer_rounded, color: AppColors.success, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'وقت الانتظار المجاني: 01:45',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            InkWell(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'تم إرسال التنبيه اللحظي للراكب: "الكابتن بانتظارك في الموقع 📍"',
+                                      style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'تنبيه الراكب 🔔',
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11.5,
+                                  color: Color(0xFFFF6B00),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // Specs Bento Row
                     Row(
                       children: [
                         Expanded(
                           child: Container(
-                            padding: const EdgeInsets.all(AppSpacing.s12),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
-                              borderRadius: AppSpacing.borderLG,
+                              color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
+                              borderRadius: BorderRadius.circular(14),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.payments_rounded, color: AppColors.primary500, size: 20),
-                                AppSpacing.w12,
+                                const Icon(Icons.payments_rounded, color: Color(0xFFFF6B00), size: 18),
+                                AppSpacing.w8,
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -342,7 +479,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                     ),
                                     Text(
                                       '${widget.fare.toStringAsFixed(0)} ر.ي',
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, fontFamily: 'IBM Plex Sans Arabic'),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w900,
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        color: isDark ? Colors.white : AppColors.gray900,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -350,18 +492,18 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                             ),
                           ),
                         ),
-                        AppSpacing.w12,
+                        AppSpacing.w10,
                         Expanded(
                           child: Container(
-                            padding: const EdgeInsets.all(AppSpacing.s12),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
-                              borderRadius: AppSpacing.borderLG,
+                              color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
+                              borderRadius: BorderRadius.circular(14),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.place_rounded, color: AppColors.info, size: 20),
-                                AppSpacing.w12,
+                                const Icon(Icons.place_rounded, color: AppColors.info, size: 18),
+                                AppSpacing.w8,
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,7 +516,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                         widget.dropoff.split('،').first,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, fontFamily: 'IBM Plex Sans Arabic'),
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w900,
+                                          fontFamily: 'IBM Plex Sans Arabic',
+                                          color: isDark ? Colors.white : AppColors.gray900,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -386,9 +533,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                       ],
                     ),
 
-                    AppSpacing.h24,
+                    AppSpacing.h16,
 
-                    // RTL Interactive Swipe Slider Button
+                    // Interactive Step Action Button
                     _buildStepActionButton(context, isDark),
                   ],
                 ),
@@ -402,44 +549,44 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
 
   Widget _buildStepActionButton(BuildContext context, bool isDark) {
     String label = '';
-    Color btnColor = AppColors.primary500;
+    Color btnColor = const Color(0xFFFF6B00);
     IconData icon = Icons.check_circle_rounded;
 
     if (_currentStep == 0) {
-      label = 'وصلت لموقع الراكب';
+      label = 'وصلت لموقع الراكب 📍';
       btnColor = AppColors.info;
       icon = Icons.pin_drop_rounded;
     } else if (_currentStep == 1) {
-      label = 'بدء الرحلة الآن';
+      label = 'بدء الرحلة الآن ⚡';
       btnColor = AppColors.success;
       icon = Icons.play_arrow_rounded;
     } else {
-      label = 'إنهاء الرحلة وتأكيد الوصول';
-      btnColor = AppColors.primary500;
+      label = 'إنهاء الرحلة وتأكيد الوصول 🏁';
+      btnColor = const Color(0xFFFF6B00);
       icon = Icons.verified_rounded;
     }
 
     return Container(
-      height: 56,
+      height: 54,
       decoration: BoxDecoration(
-        color: btnColor.withOpacity(0.12),
-        borderRadius: AppSpacing.borderLG,
-        border: Border.all(color: btnColor.withOpacity(0.3), width: 1.5),
+        color: btnColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: btnColor.withValues(alpha: 0.3), width: 1.5),
       ),
       child: ClipRRect(
-        borderRadius: AppSpacing.borderLG,
+        borderRadius: BorderRadius.circular(20),
         child: Stack(
           alignment: Alignment.center,
           children: [
             Positioned(
-              right: 20,
+              right: 16,
               child: Icon(Icons.double_arrow_rounded, color: btnColor, size: 18),
             ),
-            
+
             Text(
               label,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w900,
                 color: btnColor,
                 fontFamily: 'IBM Plex Sans Arabic',
@@ -450,14 +597,21 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
             GestureDetector(
               onHorizontalDragUpdate: (details) {
                 setState(() {
-                  // In RTL, dragging right-to-left increases progress
                   _sliderValue -= details.delta.dx / 200;
                   if (_sliderValue < 0.0) _sliderValue = 0.0;
                   if (_sliderValue > 1.0) _sliderValue = 1.0;
                 });
               },
+              onTap: () {
+                // Also allow direct tap execution for ergonomic accessibility
+                HapticFeedback.heavyImpact();
+                setState(() {
+                  _currentStep++;
+                  _sliderValue = 0.0;
+                });
+              },
               onHorizontalDragEnd: (details) {
-                if (_sliderValue > 0.70) {
+                if (_sliderValue > 0.65) {
                   HapticFeedback.heavyImpact();
                   setState(() {
                     _currentStep++;
@@ -473,20 +627,20 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
               child: Align(
                 alignment: Alignment(1.0 - (_sliderValue * 2), 0),
                 child: Container(
-                  width: 56,
-                  height: 56,
+                  width: 54,
+                  height: 54,
                   decoration: BoxDecoration(
                     color: btnColor,
-                    borderRadius: AppSpacing.borderLG,
+                    borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: btnColor.withOpacity(0.4),
+                        color: btnColor.withValues(alpha: 0.4),
                         blurRadius: 10,
                         offset: const Offset(-2, 2),
                       )
                     ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 24),
+                  child: Icon(icon, color: Colors.white, size: 22),
                 ),
               ),
             ),
@@ -500,12 +654,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withOpacity(0.85) : Colors.white.withOpacity(0.9),
-        borderRadius: AppSpacing.borderMD,
-        border: Border.all(color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200, width: 1.0),
+        color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.gray200, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
           ),
         ],
@@ -514,11 +668,16 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         children: [
           Text(
             val,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, height: 1.0),
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+              height: 1.0,
+              color: isDark ? Colors.white : AppColors.gray900,
+            ),
           ),
           Text(
             unit,
-            style: const TextStyle(fontSize: 9, color: AppColors.gray500, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
+            style: const TextStyle(fontSize: 9.5, color: AppColors.gray500, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
           ),
         ],
       ),
@@ -528,18 +687,18 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   Widget _buildCircleCallAction(IconData icon, VoidCallback onTap, bool isDark) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: BorderRadius.circular(22),
       child: Container(
-        width: 48,
-        height: 48,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray100,
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray100,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
-          color: AppColors.primary500,
-          size: 22,
+          color: const Color(0xFFFF6B00),
+          size: 20,
         ),
       ),
     );
@@ -555,7 +714,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   }
 }
 
-/// Custom street route navigation lines painter optimized with repaint check
+/// Custom street route navigation lines painter
 class _RouteProgressPainter extends CustomPainter {
   final bool isDark;
   final int currentStep;
@@ -565,22 +724,22 @@ class _RouteProgressPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
-      ..color = isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03)
+      ..color = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)
       ..strokeWidth = 3.0;
 
     final primaryStreetsPaint = Paint()
-      ..color = isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05)
+      ..color = isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05)
       ..strokeWidth = 14.0
       ..strokeCap = StrokeCap.round;
 
     final activeRoutePaint = Paint()
-      ..color = AppColors.primary500
+      ..color = const Color(0xFFFF6B00)
       ..strokeWidth = 8.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
     final completedRoutePaint = Paint()
-      ..color = AppColors.gray500.withOpacity(0.4)
+      ..color = AppColors.gray500.withValues(alpha: 0.4)
       ..strokeWidth = 8.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -614,7 +773,7 @@ class _RouteProgressPainter extends CustomPainter {
     }
 
     // Node dots
-    final startPinPaint = Paint()..color = AppColors.primary500;
+    final startPinPaint = Paint()..color = const Color(0xFFFF6B00);
     final endPinPaint = Paint()..color = AppColors.info;
 
     canvas.drawCircle(p1, 10.0, startPinPaint);

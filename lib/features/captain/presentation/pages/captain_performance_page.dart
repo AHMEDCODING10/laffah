@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
+import '../../../../core/router/app_router.dart';
+
 /// CaptainPerformancePage — A dashboard for Captains to view their rating,
 /// acceptance rate, cancellation rate, and overall performance metrics.
 class CaptainPerformancePage extends StatelessWidget {
@@ -22,7 +24,13 @@ class CaptainPerformancePage extends StatelessWidget {
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(LaffahRoutes.captainHome);
+              }
+            },
           ),
           title: Text(
             'مؤشرات الأداء',
