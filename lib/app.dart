@@ -26,8 +26,8 @@ class LaffahApp extends StatelessWidget {
       // Laffah Design System theming
       // Dark mode is the primary and default Laffah experience
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      //darkTheme: AppTheme.darkTheme,
+      //themeMode: ThemeMode.dark,
 
       // Yemeni Arabic locale — primary market
       locale: const Locale('ar', 'YE'),
