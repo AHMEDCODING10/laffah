@@ -526,7 +526,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                     ],
                   ),
                   Text(
-                    '${item['estimatedFare'].toStringAsFixed(0)} ريال مقدراً',
+                    '${item['estimatedFare'].toStringAsFixed(0)} ر.ي مقدراً',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
@@ -640,7 +640,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                     ],
                   ),
                   Text(
-                    '${item['fare'].toStringAsFixed(0)} ريال',
+                    '${item['fare'].toStringAsFixed(0)} ر.ي',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,

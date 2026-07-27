@@ -7,6 +7,10 @@ import '../../../../core/widgets/laffah_map_view.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
 import '../../../ride/presentation/bloc/ride_event.dart';
 import '../../../ride/presentation/bloc/ride_state.dart';
+import '../../../ride/presentation/pages/trip_history_page.dart';
+import '../../../passenger/presentation/pages/wallet_page.dart';
+import '../../../profile/presentation/pages/user_profile_page.dart';
+import '../widgets/passenger_floating_bottom_bar.dart';
 import '../../../ride/presentation/widgets/ride_selection_bottom_sheet.dart';
 import '../../../parcel/presentation/widgets/parcel_delivery_form_bottom_sheet.dart';
 
@@ -27,7 +31,57 @@ class HomeDashboardPage extends StatefulWidget {
   State<HomeDashboardPage> createState() => _HomeDashboardPageState();
 }
 
-class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProviderStateMixin {
+class _HomeDashboardPageState extends State<HomeDashboardPage> {
+  int _currentIndex = 0; // 0: Home, 1: History, 2: Wallet, 3: Profile
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            IndexedStack(
+              index: _currentIndex,
+              children: const [
+                _HomeMapSubPage(),
+                TripHistoryPage(),
+                WalletPage(),
+                UserProfilePage(),
+              ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: PassengerFloatingBottomBar(
+                currentIndex: _currentIndex,
+                onTap: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMapSubPage extends StatefulWidget {
+  const _HomeMapSubPage();
+
+  @override
+  State<_HomeMapSubPage> createState() => _HomeMapSubPageState();
+}
+
+class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderStateMixin {
   final TextEditingController _pickupController = TextEditingController(text: 'شارع حدة، أمام مركز الكميم');
   final TextEditingController _dropoffController = TextEditingController(text: 'بوابة جامعة صنعاء الرئيسية');
 
@@ -36,8 +90,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProvid
   double _ratingSelected = 5.0;
   final TextEditingController _ratingCommentController = TextEditingController();
 
-  // Active Category selection state: 'ride', 'parcel', 'quick'
-  String _activeCategory = 'ride';
 
   @override
   void initState() {
@@ -123,12 +175,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProvid
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        resizeToAvoidBottomInset: false,
-        body: Stack(
+    return Stack(
           children: [
             // ==========================================
             // LAYER 1: Interactive Simulated Map Component
@@ -208,32 +255,8 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProvid
                             },
                           ),
                         ),
-                        // Laffah Title & Brand Logo
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(AppSpacing.s6),
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary500,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.electric_moped_rounded, color: AppColors.white, size: 20),
-                            ),
-                            AppSpacing.w10,
-                            Text(
-                              'لَفّة Laffah',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                fontFamily: 'IBM Plex Sans Arabic',
-                                foreground: Paint()
-                                  ..shader = AppColors.primaryGradient.createShader(
-                                    const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0),
-                                  ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        // Middle Empty Space
+                        const Spacer(),
                         // Notifications / Saved places icon
                         Container(
                           width: 48,
@@ -261,19 +284,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProvid
                     ),
                   ),
 
-                  // Category Selector Chips [مشوار, طرد, حجز سريع]
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20),
-                    child: Row(
-                      children: [
-                        _buildCategoryChip('ride', 'مشوار سريع', Icons.directions_bike_rounded, isDark),
-                        AppSpacing.w10,
-                        _buildCategoryChip('parcel', 'توصيل طرد', Icons.inventory_2_rounded, isDark),
-                        AppSpacing.w10,
-                        _buildCategoryChip('quick', 'حجز سريع', Icons.flash_on_rounded, isDark),
-                      ],
-                    ),
-                  ),
+
 
                   const Spacer(),
 
@@ -304,66 +315,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProvid
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String categoryId, String title, IconData icon, bool isDark) {
-    final isSelected = _activeCategory == categoryId;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _activeCategory = categoryId;
-          });
-          if (categoryId == 'parcel') {
-            _showParcelForm();
-          } else if (categoryId == 'quick') {
-            Navigator.pushNamed(context, '/saved_places');
-          }
-        },
-        child: Container(
-          height: 48, // Touch target matching guidelines
-          decoration: BoxDecoration(
-            color: isSelected 
-                ? AppColors.primary500 
-                : (isDark ? AppColors.surfaceElevatedDark.withOpacity(0.8) : AppColors.white),
-            borderRadius: AppSpacing.radiusMD,
-            border: Border.all(
-              color: isSelected ? AppColors.primary500 : (isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isSelected ? AppColors.primary500.withOpacity(0.3) : Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? AppColors.white : AppColors.primary500,
-              ),
-              AppSpacing.w8,
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12.5,
-                  color: isSelected ? AppColors.white : (isDark ? AppColors.white : AppColors.gray900),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        );
   }
 
   // ==========================================
@@ -418,7 +370,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProvid
                 borderRadius: AppSpacing.radiusMD,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary500.withOpacity(0.35),
+                    color: AppColors.primary500.withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -448,6 +400,38 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> with TickerProvid
                     ),
                     AppSpacing.w10,
                     Icon(Icons.arrow_forward_rounded, size: 18, color: AppColors.white),
+                  ],
+                ),
+              ),
+            ),
+            
+            AppSpacing.h12,
+            
+            // Secondary CTA: Parcel Delivery
+            SizedBox(
+              height: 48,
+              child: OutlinedButton(
+                onPressed: _showParcelForm,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary500,
+                  side: BorderSide(color: AppColors.primary500.withValues(alpha: 0.5), width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppSpacing.radiusMD,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.inventory_2_rounded, size: 18),
+                    AppSpacing.w10,
+                    const Text(
+                      'توصيل طرد',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -312,7 +312,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                               ),
                             ),
                             const Text(
-                              'ريال يمني',
+                              'ر.ي',
                               style: TextStyle(
                                 fontFamily: _fontFamily,
                                 fontSize: 9,

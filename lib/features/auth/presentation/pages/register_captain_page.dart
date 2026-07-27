@@ -15,28 +15,8 @@ import 'otp_verification_page.dart';
 // MOTORCYCLE-SPECIFIC DOMAIN DATA (EXCLUSIVELY MOTORCYCLES)
 // ============================================================
 
-/// Motorcycle brands that are commonly used in Yemen.
-const List<String> _kMotorcycleBrands = [
-  'هوندا (Honda)',
-  'ياماها (Yamaha)',
-  'سوزوكي (Suzuki)',
-  'كاواساكي (Kawasaki)',
-  'TVS',
-  'ليفان (Lifan)',
-  'هيرو (Hero)',
-  'رونكي (Ronki)',
-  'أخرى',
-];
+// (Motorcycle brands and engine sizes removed for simplification)
 
-/// Engine displacement options available on the registration form.
-const List<String> _kEngineSizes = [
-  '100cc – 110cc',
-  '125cc',
-  '150cc',
-  '160cc – 175cc',
-  '200cc',
-  '250cc فأكثر',
-];
 
 // ============================================================
 // PAGE CLASS
@@ -63,15 +43,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
   TextEditingController();
-  final TextEditingController _modelController = TextEditingController();
-  final TextEditingController _yearController = TextEditingController();
   final TextEditingController _plateController = TextEditingController();
-
-  // ──────────────────────────────────────────
-  // DROPDOWN / CHIP STATE
-  // ──────────────────────────────────────────
-  String _selectedBrand = _kMotorcycleBrands[0];
-  String _selectedEngineSize = _kEngineSizes[1]; // Default: 125cc
 
   // ──────────────────────────────────────────
   // VISIBILITY & AGREEMENT TOGGLES
@@ -87,16 +59,12 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
   final FocusNode _phoneFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
   final FocusNode _confirmPasswordFocusNode = FocusNode();
-  final FocusNode _modelFocusNode = FocusNode();
-  final FocusNode _yearFocusNode = FocusNode();
   final FocusNode _plateFocusNode = FocusNode();
 
   bool _isNameFocused = false;
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
   bool _isConfirmPasswordFocused = false;
-  bool _isModelFocused = false;
-  bool _isYearFocused = false;
   bool _isPlateFocused = false;
 
   @override
@@ -110,10 +78,6 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
     _confirmPasswordFocusNode.addListener(() => setState(
             () => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
-    _modelFocusNode.addListener(
-            () => setState(() => _isModelFocused = _modelFocusNode.hasFocus));
-    _yearFocusNode.addListener(
-            () => setState(() => _isYearFocused = _yearFocusNode.hasFocus));
     _plateFocusNode.addListener(
             () => setState(() => _isPlateFocused = _plateFocusNode.hasFocus));
   }
@@ -124,15 +88,11 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _modelController.dispose();
-    _yearController.dispose();
     _plateController.dispose();
     _nameFocusNode.dispose();
     _phoneFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
-    _modelFocusNode.dispose();
-    _yearFocusNode.dispose();
     _plateFocusNode.dispose();
     super.dispose();
   }
@@ -173,9 +133,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         phone: fullPhone,
         password: _passwordController.text,
         vehicleType: 'دراجة نارية', // ✅ نوع ثابت ومباشر بدون تعقيد
-        vehicleModel:
-        '${_selectedBrand.split(' ').first} ${_modelController.text.trim()} • $_selectedEngineSize',
-        vehicleYear: int.tryParse(_yearController.text.trim()) ?? 0,
+        vehicleModel: 'غير محدد',
+        vehicleYear: 2024,
         vehiclePlate: _plateController.text.trim(),
       ),
     );
@@ -315,41 +274,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
                           _buildSectionHeader('2. بيانات الدراجة النارية:'),
                           const SizedBox(height: 12),
 
-                          _buildLabel('ماركة الدراجة النارية:'),
-                          _buildBrandDropdown(isDark),
-                          const SizedBox(height: 16),
-
-                          _buildLabel('موديل الدراجة (مثال: Wave, R15):'),
-                          _buildModelField(isDark),
-                          const SizedBox(height: 16),
-
-                          _buildLabel('سعة المحرك (cc):'),
-                          _buildEngineSizeChips(isDark),
-                          const SizedBox(height: 16),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildLabel('سنة الصنع:'),
-                                    _buildYearField(isDark),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.s16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildLabel('رقم اللوحة:'),
-                                    _buildPlateField(isDark),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                          _buildLabel('رقم اللوحة المرورية:'),
+                          _buildPlateField(isDark),
 
                           const SizedBox(height: 24),
 
@@ -788,171 +714,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     );
   }
 
-  Widget _buildBrandDropdown(bool isDark) {
-    return DropdownButtonFormField<String>(
-      value: _selectedBrand,
-      dropdownColor: isDark
-          ? AppColors.surfaceElevatedDark
-          : AppColors.surfaceElevatedLight,
-      icon: const Icon(Icons.keyboard_arrow_down_rounded),
-      decoration: _buildInputDecoration(
-        isDark: isDark,
-        isFocused: false,
-        hintText: 'اختر الماركة',
-      ),
-      items: _kMotorcycleBrands.map((String brand) {
-        return DropdownMenuItem<String>(
-          value: brand,
-          child: Text(
-            brand,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        if (newValue != null) {
-          setState(() => _selectedBrand = newValue);
-        }
-      },
-    );
-  }
-
-  Widget _buildModelField(bool isDark) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        borderRadius: AppSpacing.radiusSM,
-        boxShadow: [
-          if (_isModelFocused)
-            BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-        ],
-      ),
-      child: TextFormField(
-        controller: _modelController,
-        focusNode: _modelFocusNode,
-        style: TextStyle(
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: 13.5,
-          fontWeight: FontWeight.bold,
-          color: isDark ? AppColors.white : AppColors.gray900,
-        ),
-        decoration: _buildInputDecoration(
-          isDark: isDark,
-          isFocused: _isModelFocused,
-          hintText: 'مثال: CG 125, Boxer 150',
-          suffixIcon: Icon(
-            Icons.two_wheeler_rounded,
-            color: _isModelFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
-            size: 20,
-          ),
-        ),
-        validator: (String? value) {
-          if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال موديل الدراجة';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildEngineSizeChips(bool isDark) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _kEngineSizes.map((String size) {
-        final bool isSelected = _selectedEngineSize == size;
-        return ChoiceChip(
-          label: Text(
-            size,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 11.5,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
-              color: isSelected
-                  ? AppColors.white
-                  : (isDark ? AppColors.gray300 : AppColors.gray700),
-            ),
-          ),
-          selected: isSelected,
-          selectedColor: const Color(0xFFFF6B00),
-          backgroundColor:
-          isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppSpacing.radiusSM,
-            side: BorderSide(
-              color: isSelected
-                  ? const Color(0xFFFF6B00)
-                  : (isDark
-                  ? AppColors.white.withOpacity(0.08)
-                  : AppColors.gray300),
-            ),
-          ),
-          onSelected: (bool selected) {
-            if (selected) {
-              setState(() => _selectedEngineSize = size);
-            }
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildYearField(bool isDark) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        borderRadius: AppSpacing.radiusSM,
-        boxShadow: [
-          if (_isYearFocused)
-            BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-        ],
-      ),
-      child: TextFormField(
-        controller: _yearController,
-        focusNode: _yearFocusNode,
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(4),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: isDark ? AppColors.white : AppColors.gray900,
-        ),
-        decoration: _buildInputDecoration(
-          isDark: isDark,
-          isFocused: _isYearFocused,
-          hintText: '2022',
-        ),
-        validator: (String? value) {
-          if (value == null || value.trim().isEmpty) {
-            return 'مطلوب';
-          }
-          final int? year = int.tryParse(value.trim());
-          if (year == null || year < 2000 || year > DateTime.now().year + 1) {
-            return 'سنة غير صحيحة';
-          }
-          return null;
-        },
-      ),
-    );
-  }
+  // (Motorcycle UI helpers removed)
 
   Widget _buildPlateField(bool isDark) {
     return AnimatedContainer(

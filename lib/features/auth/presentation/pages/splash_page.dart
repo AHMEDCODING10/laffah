@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_logo.dart';
-import 'auth_landing_page.dart';
 
 /// SplashPage - Animated, high-fidelity entry screen for Laffah.
 /// Implements premium scale and fade micro-animations, a warm orange radial glow,
@@ -72,22 +73,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
   void _navigateToLanding() {
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 600),
-          reverseTransitionDuration: const Duration(milliseconds: 600),
-          pageBuilder: (context, animation, secondaryAnimation) => const AuthLandingPage(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeInOutCubic,
-              ),
-              child: child,
-            );
-          },
-        ),
-      );
+      context.go(LaffahRoutes.authLanding);
     }
   }
 

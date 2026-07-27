@@ -82,27 +82,27 @@ class AuthLandingPage extends StatelessWidget {
 
                     // Heading Promo Text
                     Text(
-                      'خطوتك الأولى لتنقل ذكي وموثوق',
+                      'مرحباً بك في لَفَّة',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.w900,
                         color: isDark ? AppColors.white : AppColors.gray900,
-                        height: 1.3,
+                        letterSpacing: -0.5,
                       ),
                     ),
 
                     AppSpacing.h8,
 
                     Text(
-                      'اختر طريقة انضمامك إلى منصة لَفَّة للبدء بالتنقل أو تحقيق الأرباح في صنعاء وباقي المدن اليمنية.',
+                      'اختر كيف تود استخدام التطبيق للبدء فوراً',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 13,
+                        fontSize: 14,
                         color: isDark ? AppColors.gray400 : AppColors.gray600,
-                        height: 1.5,
+                        height: 1.4,
                       ),
                     ),
 
@@ -113,7 +113,7 @@ class AuthLandingPage extends StatelessWidget {
                       context: context,
                       isDark: isDark,
                       title: 'طلب رحلة (راكب)',
-                      subtitle: 'ابحث عن كابتن، احسب أجرتك، وتنقّل بأمان وسهولة بضغطة زر.',
+                      subtitle: 'ابحث عن كابتن، احسب أجرتك، وتنقّل بأمان.',
                       icon: Icons.person_pin_circle_rounded,
                       buttonText: 'إنشاء حساب راكب',
                       onPressed: () {
@@ -133,7 +133,7 @@ class AuthLandingPage extends StatelessWidget {
                       context: context,
                       isDark: isDark,
                       title: 'انضم ككابتن (سائق)',
-                      subtitle: 'سجّل دراجتك النارية، كُن رئيس نفسك وحقّق عوائد يومية ممتازة.',
+                      subtitle: 'سجّل دراجتك، كُن رئيس نفسك وحقّق عوائد يومية.',
                       icon: Icons.two_wheeler_rounded,
                       buttonText: 'التسجيل ككابتن لَفَّة',
                       accentColor: const Color(0xFFFF6B00),
@@ -221,8 +221,8 @@ class AuthLandingPage extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.s12),
                 decoration: BoxDecoration(
                   color: isOrangeAccent
-                      ? const Color(0xFFFF6B00).withOpacity(0.12)
-                      : AppColors.primary500.withOpacity(0.08),
+                      ? const Color(0xFFFF6B00).withValues(alpha: 0.12)
+                      : AppColors.primary500.withValues(alpha: 0.08),
                   borderRadius: AppSpacing.borderSM,
                 ),
                 child: Icon(
@@ -263,13 +263,14 @@ class AuthLandingPage extends StatelessWidget {
           AppSpacing.h16,
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 52,
             child: ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isOrangeAccent ? const Color(0xFFFF6B00) : AppColors.gray800,
                 foregroundColor: AppColors.white,
                 elevation: 0,
+                shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(
                   borderRadius: AppSpacing.borderMD,
                 ),
@@ -282,7 +283,7 @@ class AuthLandingPage extends StatelessWidget {
                     style: const TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontWeight: FontWeight.w900,
-                      fontSize: 13,
+                      fontSize: 14,
                     ),
                   ),
                   AppSpacing.w8,
