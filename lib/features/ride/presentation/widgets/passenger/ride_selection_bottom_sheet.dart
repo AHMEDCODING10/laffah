@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../../core/router/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
@@ -44,39 +46,10 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   static const String _fontFamily = 'IBM Plex Sans Arabic';
 
   String _paymentMode = 'cash';
-  String _selectedVehicleId = 'moto_normal';
-
-  final List<VehicleOption> _vehicles = const [
-    VehicleOption(
-      id: 'moto_normal',
-      name: 'دراجة عادية (100–125cc)',
-      subtitle: 'مشاوير قصيرة وتوصيل اقتصادي في زحام صنعاء',
-      basePrice: 800.0,
-      eta: '3 دقيقة',
-      icon: Icons.motorcycle_rounded,
-    ),
-    VehicleOption(
-      id: 'moto_medium',
-      name: 'دراجة متوسطة (150–200cc)',
-      subtitle: 'مشوار مريح ومستقر للرحلات المتوسطة داخل المدينة',
-      basePrice: 1200.0,
-      eta: '5 دقيقة',
-      icon: Icons.two_wheeler_rounded,
-    ),
-    VehicleOption(
-      id: 'moto_fast',
-      name: 'دراجة سريعة (200cc+)',
-      subtitle: 'أداء عالٍ ومقعد مريح للمشاوير الطويلة والطرود',
-      basePrice: 1500.0,
-      eta: '7 دقيقة',
-      icon: Icons.speed_rounded,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedVehicle = _vehicles.firstWhere((v) => v.id == _selectedVehicleId);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -87,7 +60,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             : const Color(0xFFF9FAFB).withOpacity(0.9),
         padding: const EdgeInsets.only(
           top: AppSpacing.s16,
-          bottom: AppSpacing.s24,
+          bottom: 96,
           left: AppSpacing.s20,
           right: AppSpacing.s20,
         ),
@@ -138,6 +111,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             ),
             AppSpacing.h16,
 
+            // Destinations Box (Pickup & Dropoff)
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
@@ -151,7 +125,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.my_location_rounded, color: AppColors.success, size: 14),
+                      const Icon(Icons.my_location_rounded, color: AppColors.success, size: 16),
                       AppSpacing.w10,
                       Expanded(
                         child: Text(
@@ -160,8 +134,9 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: _fontFamily,
-                            fontSize: 12,
-                            color: isDark ? AppColors.gray300 : AppColors.gray800,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? AppColors.white : AppColors.gray900,
                           ),
                         ),
                       ),
@@ -179,7 +154,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 14),
+                      const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 16),
                       AppSpacing.w10,
                       Expanded(
                         child: Text(
@@ -188,7 +163,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: _fontFamily,
-                            fontSize: 12,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.bold,
                             color: isDark ? AppColors.white : AppColors.gray900,
                           ),
@@ -201,135 +176,87 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             ),
             AppSpacing.h16,
 
-            Text(
-              'اختر فئة التوصيل المناسبة:',
-              style: TextStyle(
-                fontFamily: _fontFamily,
-                fontSize: 12.5,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.gray400 : AppColors.gray600,
-              ),
-            ),
-            AppSpacing.h10,
+            // Single Delivery Fare Section (Replacing category cards)
+            Builder(
+              builder: (context) {
+                final metrics = RideBloc.calculateDynamicMetrics(widget.pickup, widget.dropoff);
+                final double calculatedFare = (metrics['fare'] as double?) ?? 800.0;
 
-            Column(
-              children: _vehicles.map((vehicle) {
-                final isSelected = vehicle.id == _selectedVehicleId;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedVehicleId = vehicle.id;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: AppSpacing.s10),
-                    padding: const EdgeInsets.all(AppSpacing.s12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary500.withOpacity(0.08)
-                          : (isDark ? AppColors.white.withOpacity(0.01) : AppColors.white),
-                      borderRadius: AppSpacing.borderMD,
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary500
-                            : (isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200),
-                        width: isSelected ? 1.5 : 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.s10),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primary500.withOpacity(0.15)
-                                : (isDark ? AppColors.white.withOpacity(0.03) : AppColors.gray50),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            vehicle.icon,
-                            color: isSelected ? AppColors.primary500 : (isDark ? AppColors.gray400 : AppColors.gray600),
-                            size: 24,
-                          ),
-                        ),
-                        AppSpacing.w16,
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    vehicle.name,
-                                    style: TextStyle(
-                                      fontFamily: _fontFamily,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13.5,
-                                      color: isDark ? AppColors.white : AppColors.gray900,
-                                    ),
-                                  ),
-                                  AppSpacing.w10,
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary500.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      vehicle.eta,
-                                      style: const TextStyle(
-                                        fontFamily: _fontFamily,
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              AppSpacing.h4,
-                              Text(
-                                vehicle.subtitle,
-                                style: TextStyle(
-                                  fontFamily: _fontFamily,
-                                  fontSize: 10.5,
-                                  color: isDark ? AppColors.gray400 : AppColors.gray600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${vehicle.basePrice.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                                color: AppColors.primary500,
-                              ),
-                            ),
-                            const Text(
-                              'ريال يمني',
-                              style: TextStyle(
-                                fontFamily: _fontFamily,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16,
+                    vertical: AppSpacing.s16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary500.withValues(alpha: isDark ? 0.12 : 0.08),
+                    borderRadius: AppSpacing.borderMD,
+                    border: Border.all(
+                      color: AppColors.primary500.withValues(alpha: 0.3),
+                      width: 1.5,
                     ),
                   ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary500.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.payments_rounded,
+                              color: AppColors.primary500,
+                              size: 20,
+                            ),
+                          ),
+                          AppSpacing.w12,
+                          Text(
+                            'سعر التوصيل',
+                            style: TextStyle(
+                              fontFamily: _fontFamily,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? AppColors.white : AppColors.gray900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            calculatedFare.toStringAsFixed(0),
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                              color: AppColors.primary500,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'ريال يمني',
+                            style: TextStyle(
+                              fontFamily: _fontFamily,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 );
-              }).toList(),
+              },
             ),
-            AppSpacing.h12,
+            AppSpacing.h16,
 
+            // Payment Mode & Promo Row
             Row(
               children: [
                 Expanded(
@@ -406,6 +333,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             ),
             AppSpacing.h20,
 
+            // Confirm Ride Button -> Triggers SearchingCaptainOverlay
             Container(
               height: 54,
               decoration: BoxDecoration(
@@ -421,14 +349,25 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
               ),
               child: ElevatedButton(
                 onPressed: () {
+                  final metrics = RideBloc.calculateDynamicMetrics(widget.pickup, widget.dropoff);
+                  final double fare = (metrics['fare'] as double?) ?? 800.0;
+                  final double distance = (metrics['distance'] as double?) ?? 6.8;
+                  final int duration = (metrics['duration'] as int?) ?? 15;
+
+                  // 1. Dispatch event to RideBloc
                   context.read<RideBloc>().add(ConfirmUnifiedBooking(
                         pickup: widget.pickup,
                         dropoff: widget.dropoff,
-                        fare: selectedVehicle.basePrice,
-                        distance: 6.8,
-                        duration: 15,
+                        fare: fare,
+                        distance: distance,
+                        duration: duration,
                       ));
+
+                  // 2. Close bottom sheet modal only
                   Navigator.pop(context);
+
+                  // 3. Navigate directly to Searching Captain / Ride Tracking screen via GoRouter
+                  context.push(LaffahRoutes.passengerRideTracking);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,

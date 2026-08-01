@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/laffah_app_bar.dart';
 
 /// WalletPage — Displays Passenger's balance in YER (Yemeni Rial) and recent transactions.
 /// Emphasizes local payment channels (Al-Kuraimi, Floos, Jawali).
@@ -16,26 +17,9 @@ class WalletPage extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () => context.pop(),
-          ),
-          title: Text(
-            'المحفظة',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        ),
+        appBar: const LaffahAppBar(title: 'محفظة لَفَّة'),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.s24),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s24, AppSpacing.s24, AppSpacing.s24, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

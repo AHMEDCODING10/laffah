@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/widgets/glass_box.dart';
+import '../../../../core/widgets/laffah_app_bar.dart';
 
-/// UserProfilePage - Premium, high-fidelity profile screen for Laffah passengers.
-/// Strictly implements RTL layouts, IBM Plex Sans Arabic typography, and a modern dark/light styling.
-/// Displays user info, gold/silver tiers, document verification cards, and a modern options list.
+/// UserProfilePage — Restructured to match Stitch design.
+/// Sections:
+///   1) User info header card (UNCHANGED)
+///   2) المعلومات الشخصية  (Profile, Edit Data, Saved Places)
+///   3) الأمان والتفضيلات  (Change Password, Language, Dark Mode toggle)
+///   4) الدعم والقانون     (Help, FAQ, Contact Us, Privacy, Terms)
+///   5) Logout button
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
 
@@ -15,6 +22,9 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
+  // ─────────────────────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -23,60 +33,135 @@ class _UserProfilePageState extends State<UserProfilePage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? AppColors.white : AppColors.gray900,
-              size: 20,
-            ),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-          centerTitle: true,
-          title: Text(
-            'الملف الشخصي',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        ),
+        appBar: const LaffahAppBar(title: 'الملف الشخصي', showMenuButton: false),
         body: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s16, AppSpacing.s20, 100),
           children: [
-            // ==========================================
-            // MODULE 1: Elegant User Info Header Card
-            // ==========================================
+            // ══════════════════════════════════════════
+            // MODULE 1: User Info Header Card — UNCHANGED
+            // ══════════════════════════════════════════
             _buildUserInfoHeader(isDark),
-            
-            AppSpacing.h24,
-
-            // ==========================================
-            // MODULE 2: Account Level & Streaks
-            // ==========================================
-            _buildTierMetrics(isDark),
 
             AppSpacing.h24,
 
-            // ==========================================
-            // MODULE 3: Account Verification / Documents
-            // ==========================================
-            _buildDocumentVerificationSection(isDark),
+            // ══════════════════════════════════════════
+            // MODULE 2: المعلومات الشخصية
+            // ══════════════════════════════════════════
+            _buildSectionLabel('المعلومات الشخصية', isDark),
+            AppSpacing.h10,
+            _buildSectionCard(isDark, [
+              _ProfileListTile(
+                icon: Icons.person_outline_rounded,
+                label: 'الملف الشخصي',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.passengerProfile),
+              ),
+              _buildDivider(isDark),
+              _ProfileListTile(
+                icon: Icons.edit_outlined,
+                label: 'تعديل البيانات',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.passengerProfileEdit),
+              ),
+              _buildDivider(isDark),
+              _ProfileListTile(
+                icon: Icons.place_outlined,
+                label: 'الأماكن المحفوظة',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.passengerSavedPlaces),
+              ),
+            ]),
+
+            AppSpacing.h20,
+
+            // ══════════════════════════════════════════
+            // MODULE 3: الأمان والتفضيلات
+            // ══════════════════════════════════════════
+            _buildSectionLabel('الأمان والتفضيلات', isDark),
+            AppSpacing.h10,
+            _buildSectionCard(isDark, [
+              _ProfileListTile(
+                icon: Icons.lock_outline_rounded,
+                label: 'تغيير كلمة المرور',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.changePassword),
+              ),
+              _buildDivider(isDark),
+              _ProfileListTile(
+                icon: Icons.language_rounded,
+                label: 'اللغة',
+                isDark: isDark,
+                trailing: Text(
+                  'العربية',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 12,
+                    color: isDark ? AppColors.gray400 : AppColors.gray500,
+                  ),
+                ),
+                onTap: () {
+                  // TODO: Implement language switching when multi-language is supported
+                },
+              ),
+              _buildDivider(isDark),
+              // Dark mode toggle — functional via ThemeController
+              _buildDarkModeTile(isDark),
+            ]),
+
+            AppSpacing.h20,
+
+            // ══════════════════════════════════════════
+            // MODULE 4: الدعم والقانون
+            // ══════════════════════════════════════════
+            _buildSectionLabel('الدعم والقانون', isDark),
+            AppSpacing.h10,
+            _buildSectionCard(isDark, [
+              _ProfileListTile(
+                icon: Icons.help_outline_rounded,
+                label: 'مركز المساعدة',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.helpCenter),
+              ),
+              _buildDivider(isDark),
+              _ProfileListTile(
+                icon: Icons.quiz_outlined,
+                label: 'الأسئلة الشائعة',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.faq),
+              ),
+              _buildDivider(isDark),
+              _ProfileListTile(
+                icon: Icons.mail_outline_rounded,
+                label: 'تواصل معنا',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.contactUs),
+              ),
+              _buildDivider(isDark),
+              _ProfileListTile(
+                icon: Icons.privacy_tip_outlined,
+                label: 'سياسة الخصوصية',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.privacyPolicy),
+              ),
+              _buildDivider(isDark),
+              _ProfileListTile(
+                icon: Icons.description_outlined,
+                label: 'الشروط والأحكام',
+                isDark: isDark,
+                onTap: () => context.push(LaffahRoutes.termsOfService),
+              ),
+            ]),
 
             AppSpacing.h24,
 
-            // ==========================================
-            // MODULE 4: Menu Options & Settings List
-            // ==========================================
-            _buildMenuOptionsSection(isDark),
+            // ══════════════════════════════════════════
+            // MODULE 5: Logout Button
+            // ══════════════════════════════════════════
+            _buildLogoutButton(isDark),
 
-            AppSpacing.h40,
+            AppSpacing.h32,
 
-            // App Version Footer
+            // App version footer
             Center(
               child: Column(
                 children: [
@@ -102,13 +187,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 ],
               ),
             ),
-            AppSpacing.h32,
+
+            AppSpacing.h24,
           ],
         ),
       ),
     );
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // MODULE 1: User Info Header Card — UNTOUCHED from original
+  // ─────────────────────────────────────────────────────────────
   Widget _buildUserInfoHeader(bool isDark) {
     return GlassBox(
       borderRadius: AppSpacing.radiusXL,
@@ -130,7 +219,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary500.withOpacity(0.2),
+                      color: AppColors.primary500.withValues(alpha: 0.2),
                       blurRadius: 16,
                       spreadRadius: 2,
                     ),
@@ -168,7 +257,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
             ],
           ),
-          
+
           AppSpacing.h16,
 
           // User details
@@ -188,10 +277,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary500.withOpacity(0.12),
+                  color: AppColors.primary500.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primary500.withOpacity(0.25),
+                    color: AppColors.primary500.withValues(alpha: 0.25),
                   ),
                 ),
                 child: const Text(
@@ -206,7 +295,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
             ],
           ),
-          
+
           AppSpacing.h6,
 
           Text(
@@ -223,339 +312,99 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  Widget _buildTierMetrics(bool isDark) {
-    return Row(
-      children: [
-        Expanded(
-          child: GlassBox(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            borderRadius: AppSpacing.radiusMD,
-            child: Column(
-              children: [
-                const Text(
-                  'الرحلات المكتملة',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                    color: AppColors.gray500,
-                  ),
-                ),
-                AppSpacing.h6,
-                Text(
-                  '48 مشوار',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: isDark ? AppColors.white : AppColors.gray900,
-                  ),
-                ),
-              ],
-            ),
-          ),
+  // ─────────────────────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────────────────────
+
+  /// Section heading label
+  Widget _buildSectionLabel(String text, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.s4, bottom: AppSpacing.s2),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: FontWeight.w900,
+          fontSize: 13,
+          letterSpacing: 0.2,
+          color: isDark ? AppColors.gray400 : AppColors.gray600,
         ),
-        AppSpacing.w12,
-        Expanded(
-          child: GlassBox(
-            padding: const EdgeInsets.all(AppSpacing.s12),
-            borderRadius: AppSpacing.radiusMD,
-            child: Column(
-              children: [
-                const Text(
-                  'التقييم الشخصي',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                    color: AppColors.gray500,
-                  ),
-                ),
-                AppSpacing.h6,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      color: AppColors.warning,
-                      size: 18,
-                    ),
-                    AppSpacing.w4,
-                    Text(
-                      '4.92 / 5',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 15,
-                        color: isDark ? AppColors.white : AppColors.gray900,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildDocumentVerificationSection(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(right: AppSpacing.s4),
-          child: Text(
-            'توثيق الهوية والوثائق الرسمية',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              color: isDark ? AppColors.white : AppColors.gray800,
-            ),
-          ),
-        ),
-        AppSpacing.h12,
-        Row(
-          children: [
-            // Card 1: ID card
-            Expanded(
-              child: GlassBox(
-                borderRadius: AppSpacing.radiusMD,
-                padding: const EdgeInsets.all(AppSpacing.s12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Icon(
-                          Icons.badge_rounded,
-                          color: AppColors.primary500,
-                          size: 24,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'مقبول ✓',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 9,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    AppSpacing.h16,
-                    Text(
-                      'بطاقة الهوية الوطنية',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: isDark ? AppColors.white : AppColors.gray900,
-                      ),
-                    ),
-                    AppSpacing.h4,
-                    const Text(
-                      'تم التحقق والتوثيق بنجاح',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 10,
-                        color: AppColors.gray500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            AppSpacing.w12,
-            // Card 2: Driver's license
-            Expanded(
-              child: GlassBox(
-                borderRadius: AppSpacing.radiusMD,
-                padding: const EdgeInsets.all(AppSpacing.s12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Icon(
-                          Icons.card_membership_rounded,
-                          color: AppColors.primary500,
-                          size: 24,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'تحت المراجعة ⏱️',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 9,
-                              color: AppColors.warning,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    AppSpacing.h16,
-                    Text(
-                      'رخصة القيادة الرسمية',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: isDark ? AppColors.white : AppColors.gray900,
-                      ),
-                    ),
-                    AppSpacing.h4,
-                    const Text(
-                      'جاري التحقق من مكتب المرور',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 10,
-                        color: AppColors.gray500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMenuOptionsSection(bool isDark) {
+  /// Rounded card container wrapping a list of tiles
+  Widget _buildSectionCard(bool isDark, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withOpacity(0.6) : AppColors.white.withOpacity(0.8),
+        color: isDark
+            ? AppColors.surfaceDark.withValues(alpha: 0.6)
+            : AppColors.white.withValues(alpha: 0.9),
         borderRadius: AppSpacing.borderXL,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray200,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: AppSpacing.borderXL,
-        child: Column(
-          children: [
-            _buildProfileTile(
-              icon: Icons.account_balance_wallet_rounded,
-              title: 'محفظتي وطرق الدفع',
-              subtitle: 'الرصيد المتاح: 4,500 ريال',
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildDivider(isDark),
-            _buildProfileTile(
-              icon: Icons.percent_rounded,
-              title: 'الأكواد الترويجية',
-              subtitle: 'وفر أجرة مشاويرك مع عروض لَفَّة',
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildDivider(isDark),
-            _buildProfileTile(
-              icon: Icons.stars_rounded,
-              title: 'الأماكن المفضلة',
-              subtitle: 'أضف المنزل، العمل، والوجهات المعتادة',
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildDivider(isDark),
-            _buildProfileTile(
-              icon: Icons.support_agent_rounded,
-              title: 'الدعم والمساعدة',
-              subtitle: 'حلول المشاكل، التذاكر، والتواصل المباشر',
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildDivider(isDark),
-            _buildProfileTile(
-              icon: Icons.security_rounded,
-              title: 'الأمان والخصوصية',
-              subtitle: 'قفل الحساب، تعديل كلمة المرور، وتوثيق المصادقة',
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildDivider(isDark),
-            _buildThemeSwitchTile(isDark),
-            _buildDivider(isDark),
-            _buildProfileTile(
-              icon: Icons.language_rounded,
-              title: 'لغة التطبيق / Language',
-              subtitle: 'العربية (Arabic)',
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildDivider(isDark),
-            _buildProfileTile(
-              icon: Icons.power_settings_new_rounded,
-              title: 'تسجيل الخروج',
-              subtitle: 'تبديل الحساب أو إغلاق الجلسة الحالية',
-              iconColor: AppColors.danger,
-              isDark: isDark,
-              onTap: () {
-                _showLogoutDialog(context);
-              },
-            ),
-          ],
-        ),
+        child: Column(children: children),
       ),
     );
   }
 
-  Widget _buildThemeSwitchTile(bool isDark) {
+  /// Thin divider between tiles
+  Widget _buildDivider(bool isDark) {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      indent: 52.0,
+      color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray100,
+    );
+  }
+
+  /// Dark Mode toggle tile — functional via ThemeController
+  Widget _buildDarkModeTile(bool isDark) {
     final bool isDarkMode = ThemeController.instance.isDarkMode;
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s4),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s2,
+      ),
       leading: Container(
-        padding: const EdgeInsets.all(AppSpacing.s8),
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
-          color: AppColors.primary500.withOpacity(0.1),
+          color: AppColors.primary500.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: const Icon(
-          Icons.dark_mode_rounded,
+          Icons.dark_mode_outlined,
           color: AppColors.primary500,
           size: 20,
         ),
       ),
       title: Text(
-        'الوضع الداكن (Dark Mode)',
+        'الوضع الداكن',
         style: TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           fontSize: 14,
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
       ),
-      subtitle: Text(
-        isDarkMode ? 'الوضع الداكن مفعّل حالياً' : 'الوضع النهاري مفعّل (الافتراضي)',
-        style: const TextStyle(
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: 11,
-          color: AppColors.gray500,
-        ),
-      ),
       trailing: Switch(
         value: isDarkMode,
-        activeColor: AppColors.primary500,
+        activeThumbColor: AppColors.primary500,
         onChanged: (val) {
           ThemeController.instance.toggleTheme(val);
           setState(() {});
@@ -564,64 +413,49 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  Widget _buildProfileTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isDark,
-    Color iconColor = AppColors.primary500,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s4),
-      leading: Container(
-        padding: const EdgeInsets.all(AppSpacing.s8),
+  /// Logout button — prominent, with confirmation dialog
+  Widget _buildLogoutButton(bool isDark) {
+    return GestureDetector(
+      onTap: () => _showLogoutDialog(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.s14,
+          horizontal: AppSpacing.s20,
+        ),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
-          shape: BoxShape.circle,
+          color: AppColors.danger.withValues(alpha: isDark ? 0.12 : 0.07),
+          borderRadius: AppSpacing.borderXL,
+          border: Border.all(
+            color: AppColors.danger.withValues(alpha: 0.25),
+          ),
         ),
-        child: Icon(
-          icon,
-          color: iconColor,
-          size: 20,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.logout_rounded,
+              color: AppColors.danger,
+              size: 20,
+            ),
+            AppSpacing.w10,
+            const Text(
+              'تسجيل الخروج',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: AppColors.danger,
+              ),
+            ),
+          ],
         ),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-          color: isDark ? AppColors.white : AppColors.gray900,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: 11,
-          color: AppColors.gray500,
-        ),
-      ),
-      trailing: Icon(
-        Icons.chevron_left_rounded, // Left chevron because of RTL Arabic UI layout!
-        color: AppColors.gray400,
-        size: 20,
       ),
     );
   }
 
-  Widget _buildDivider(bool isDark) {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      indent: AppSpacing.s16,
-      endIndent: AppSpacing.s16,
-      color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
-    );
-  }
-
+  // ─────────────────────────────────────────────────────────────
+  // LOGOUT DIALOG
+  // ─────────────────────────────────────────────────────────────
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -647,41 +481,138 @@ class _UserProfilePageState extends State<UserProfilePage> {
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 13,
+              height: 1.6,
               color: AppColors.gray600,
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'إلغاء',
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.gray700
+                            : AppColors.gray300,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppSpacing.borderXS,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+                    ),
+                    child: const Text(
+                      'إلغاء',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.gray600,
+                      ),
+                    ),
+                  ),
+                ),
+                AppSpacing.w12,
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      // Navigate to auth landing after logout
+                      context.go(LaffahRoutes.authLanding);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.danger,
+                      foregroundColor: AppColors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppSpacing.borderXS,
+                      ),
+                    ),
+                    child: const Text(
+                      'تأكيد الخروج',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// REUSABLE: _ProfileListTile
+// A single, consistent row: leading icon circle + label + trailing widget (arrow or custom)
+// ─────────────────────────────────────────────────────────────
+class _ProfileListTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+  final VoidCallback onTap;
+  final Color iconColor;
+  final Widget? trailing;
+
+  const _ProfileListTile({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+    required this.onTap,
+    this.iconColor = AppColors.primary500,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s12,
+        ),
+        child: Row(
+          children: [
+            // Leading icon circle
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 19,
+              ),
+            ),
+            AppSpacing.w12,
+            // Label
+            Expanded(
+              child: Text(
+                label,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.gray500,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: isDark ? AppColors.white : AppColors.gray900,
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx); // Close dialog
-                Navigator.pop(context); // Go back or reset auth state
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppSpacing.borderXS,
+            // Trailing: custom widget OR default chevron arrow
+            trailing ??
+                Icon(
+                  Icons.chevron_left_rounded, // Left chevron = forward in RTL
+                  color: isDark ? AppColors.gray600 : AppColors.gray400,
+                  size: 20,
                 ),
-              ),
-              child: const Text(
-                'تأكيد الخروج',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
           ],
         ),
       ),

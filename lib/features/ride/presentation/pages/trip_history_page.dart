@@ -146,52 +146,106 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        backgroundColor: isDark
+            ? AppColors.backgroundDark.withValues(alpha: 0.95)
+            : AppColors.backgroundLight.withValues(alpha: 0.95),
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: isDark ? AppColors.white : AppColors.gray900,
-            size: 20,
+        titleSpacing: 0,
+        title: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+            child: Row(
+              children: [
+                // Hamburger Menu Button
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primary500.withValues(alpha: 0.2),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.menu_rounded,
+                      color: AppColors.primary500,
+                      size: 24,
+                    ),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  ),
+                ),
+                AppSpacing.w12,
+                Text(
+                  'رحلاتي وحجوزاتي',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? AppColors.white : AppColors.gray900,
+                  ),
+                ),
+                const Spacer(),
+                // Notifications Bell
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.white.withValues(alpha: 0.08)
+                          : AppColors.gray200,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.notifications_none_rounded,
+                    color: isDark ? AppColors.gray400 : AppColors.gray700,
+                    size: 22,
+                  ),
+                ),
+              ],
+            ),
           ),
-          onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          'الطلبات',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          labelColor: AppColors.primary500,
+          unselectedLabelColor: isDark ? AppColors.gray500 : AppColors.gray500,
+          indicatorColor: AppColors.primary500,
+          indicatorWeight: 3.0,
+          labelStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
             fontFamily: 'IBM Plex Sans Arabic',
-            color: isDark ? AppColors.white : AppColors.gray900,
           ),
-        ),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: AppColors.primary500,
-            unselectedLabelColor: isDark ? AppColors.gray500 : AppColors.gray500,
-            indicatorColor: AppColors.primary500,
-            indicatorWeight: 3.0,
-            labelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'IBM Plex Sans Arabic',
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'IBM Plex Sans Arabic',
-            ),
-            tabs: const [
-              Tab(text: 'الحالية'),
-              Tab(text: 'المجدولة'),
-              Tab(text: 'السابقة'),
-              Tab(text: 'الملغاة'),
-            ],
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'IBM Plex Sans Arabic',
           ),
+          tabs: const [
+            Tab(text: 'الحالية'),
+            Tab(text: 'المجدولة'),
+            Tab(text: 'السابقة'),
+            Tab(text: 'الملغاة'),
+          ],
         ),
       ),
       body: Directionality(
@@ -216,7 +270,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
       itemCount: _activeTrips.length,
       itemBuilder: (context, index) {
         final item = _activeTrips[index];
@@ -487,7 +541,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
       itemCount: _scheduledTrips.length,
       itemBuilder: (context, index) {
         final item = _scheduledTrips[index];
@@ -504,10 +558,10 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.s8),
                         decoration: BoxDecoration(
-                          color: AppColors.info.withOpacity(0.12),
+                          color: AppColors.primary500.withOpacity(0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.calendar_today_rounded, color: AppColors.info, size: 18),
+                        child: const Icon(Icons.calendar_today_rounded, color: AppColors.primary500, size: 18),
                       ),
                       AppSpacing.w12,
                       Column(
@@ -588,7 +642,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
       itemCount: _pastTrips.length,
       itemBuilder: (context, index) {
         final item = _pastTrips[index];
@@ -750,7 +804,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
       itemCount: _cancelledTrips.length,
       itemBuilder: (context, index) {
         final item = _cancelledTrips[index];

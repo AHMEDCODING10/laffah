@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/pages/coming_soon_page.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../widgets/laffah_main_shell_scaffold.dart';
 
 // Auth module
 import '../../features/auth/presentation/pages/splash_page.dart';
@@ -21,6 +22,7 @@ import '../../features/home/presentation/pages/home_dashboard_page.dart';
 
 // Passenger ride & history
 import '../../features/ride/presentation/pages/trip_history_page.dart';
+import '../../features/ride/presentation/pages/active_trip_passenger_page.dart';
 
 // Captain core features
 import '../../features/captain/presentation/pages/captain_trip_history_page.dart';
@@ -37,6 +39,7 @@ import '../../features/ride/presentation/pages/report_incident_page.dart';
 import '../../features/ride/presentation/pages/support_tickets_page.dart';
 
 // Parcel Delivery features
+import '../../features/parcel/presentation/pages/parcel_send_page.dart';
 import '../../features/parcel/presentation/pages/parcel_tracking_page.dart';
 import '../../features/parcel/presentation/pages/parcel_confirmation_page.dart';
 import '../../features/parcel/presentation/pages/parcel_history_page.dart';
@@ -87,6 +90,7 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   // PASSENGER — RIDE LIFECYCLE
   // ──────────────────────────────────────────
+  static const String passengerRideRequest = '/passenger/ride/request';
   static const String passengerRideTracking = '/passenger/ride/tracking';
   static const String passengerRideInvoice = '/passenger/ride/invoice';
   static const String passengerScheduleRide = '/passenger/ride/schedule';
@@ -94,6 +98,7 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   // PASSENGER — PARCEL DELIVERY
   // ──────────────────────────────────────────
+  static const String passengerParcelSend = '/passenger/parcel/send';
   static const String passengerParcelTracking = '/passenger/parcel/tracking';
   static const String passengerParcelConfirm = '/passenger/parcel/confirm';
   static const String passengerParcelHistory = '/passenger/parcel/history';
@@ -132,6 +137,14 @@ abstract class LaffahRoutes {
   static const String captainSupport = '/captain/support';
 
   // ──────────────────────────────────────────
+  // PASSENGER — SUPPORT & LEGAL
+  // ──────────────────────────────────────────
+  static const String helpCenter = '/passenger/support/help';
+  static const String faq = '/passenger/support/faq';
+  static const String contactUs = '/passenger/support/contact';
+  static const String changePassword = '/passenger/profile/change-password';
+
+  // ──────────────────────────────────────────
   // LEGAL
   // ──────────────────────────────────────────
   static const String privacyPolicy = '/legal/privacy';
@@ -148,6 +161,15 @@ class AppRouter {
 
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>(debugLabel: 'LaffahRootNavigator');
+
+  static final GlobalKey<NavigatorState> _shellNavigatorKeyHome =
+      GlobalKey<NavigatorState>(debugLabel: 'shellHome');
+  static final GlobalKey<NavigatorState> _shellNavigatorKeyHistory =
+      GlobalKey<NavigatorState>(debugLabel: 'shellHistory');
+  static final GlobalKey<NavigatorState> _shellNavigatorKeyWallet =
+      GlobalKey<NavigatorState>(debugLabel: 'shellWallet');
+  static final GlobalKey<NavigatorState> _shellNavigatorKeyProfile =
+      GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -233,34 +255,88 @@ class AppRouter {
       ),
 
       // ══════════════════════════════════════════
-      // PASSENGER — HOME DASHBOARD
+      // PASSENGER — MAIN SHELL ROUTE (4 ROOT TABS)
+      // ══════════════════════════════════════════
+      StatefulShellRoute.indexedStack(
+        builder: (BuildContext context, GoRouterState state,
+            StatefulNavigationShell navigationShell) {
+          return LaffahMainShellScaffold(navigationShell: navigationShell);
+        },
+        branches: <StatefulShellBranch>[
+          // Branch 0: الرئيسية (Home)
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorKeyHome,
+            routes: <RouteBase>[
+              GoRoute(
+                path: LaffahRoutes.passengerHome,
+                name: 'passenger-home',
+                builder: (BuildContext context, GoRouterState state) =>
+                    const HomeDashboardPage(),
+              ),
+            ],
+          ),
+
+          // Branch 1: رحلاتي (History & Active Orders)
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorKeyHistory,
+            routes: <RouteBase>[
+              GoRoute(
+                path: LaffahRoutes.passengerHistory,
+                name: 'passenger-history',
+                builder: (BuildContext context, GoRouterState state) =>
+                    const TripHistoryPage(),
+              ),
+            ],
+          ),
+
+          // Branch 2: المحفظة (Wallet)
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorKeyWallet,
+            routes: <RouteBase>[
+              GoRoute(
+                path: LaffahRoutes.passengerWallet,
+                name: 'passenger-wallet',
+                builder: (BuildContext context, GoRouterState state) =>
+                    const WalletPage(),
+              ),
+            ],
+          ),
+
+          // Branch 3: الحساب (Profile)
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorKeyProfile,
+            routes: <RouteBase>[
+              GoRoute(
+                path: LaffahRoutes.passengerProfile,
+                name: 'passenger-profile',
+                builder: (BuildContext context, GoRouterState state) =>
+                    const UserProfilePage(),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // ══════════════════════════════════════════
+      // PASSENGER — RIDE & PARCEL FLOWS (PUSHED OVER SHELL)
       // ══════════════════════════════════════════
       GoRoute(
-        path: LaffahRoutes.passengerHome,
-        name: 'passenger-home',
+        path: LaffahRoutes.passengerRideRequest,
+        name: 'passenger-ride-request',
         builder: (BuildContext context, GoRouterState state) =>
             const HomeDashboardPage(),
       ),
 
-      // ══════════════════════════════════════════
-      // PASSENGER — RIDE HISTORY & ORDERS
-      // ══════════════════════════════════════════
       GoRoute(
-        path: LaffahRoutes.passengerHistory,
-        name: 'passenger-history',
+        path: LaffahRoutes.passengerParcelSend,
+        name: 'passenger-parcel-send',
         builder: (BuildContext context, GoRouterState state) =>
-            const TripHistoryPage(),
+            const ParcelSendPage(),
       ),
 
       // ══════════════════════════════════════════
       // PASSENGER — CORE FEATURES
       // ══════════════════════════════════════════
-      GoRoute(
-        path: LaffahRoutes.passengerWallet,
-        name: 'passenger-wallet',
-        builder: (BuildContext context, GoRouterState state) =>
-            const WalletPage(),
-      ),
       GoRoute(
         path: LaffahRoutes.passengerNotifications,
         name: 'passenger-notifications',
@@ -278,11 +354,7 @@ class AppRouter {
         path: LaffahRoutes.passengerRideTracking,
         name: 'passenger-ride-tracking',
         builder: (BuildContext context, GoRouterState state) =>
-            const LaffahComingSoonPage(
-          featureNameAr: 'تتبع الرحلة المباشر',
-          featureNameEn: 'Active Ride Tracking',
-          iconData: Icons.gps_fixed_rounded,
-        ),
+            const ActiveTripPassengerPage(),
       ),
 
       GoRoute(
@@ -336,16 +408,6 @@ class AppRouter {
         name: 'parcel-delivery-proof',
         builder: (BuildContext context, GoRouterState state) =>
             const ParcelDeliveryProofPage(),
-      ),
-
-      // ══════════════════════════════════════════
-      // PASSENGER — PROFILE
-      // ══════════════════════════════════════════
-      GoRoute(
-        path: LaffahRoutes.passengerProfile,
-        name: 'passenger-profile',
-        builder: (BuildContext context, GoRouterState state) =>
-            const UserProfilePage(),
       ),
 
       GoRoute(
@@ -501,6 +563,54 @@ class AppRouter {
           featureNameAr: 'دعم ومساعدة الكباتن',
           featureNameEn: 'Captain Support',
           iconData: Icons.headset_mic_outlined,
+        ),
+      ),
+
+      // ══════════════════════════════════════════
+      // PROFILE — HELP, FAQ, CONTACT, CHANGE PASSWORD
+      // (Static placeholder pages — replace with real content later)
+      // ══════════════════════════════════════════
+      GoRoute(
+        path: LaffahRoutes.helpCenter,
+        name: 'help-center',
+        builder: (BuildContext context, GoRouterState state) =>
+            const LaffahComingSoonPage(
+          featureNameAr: 'مركز المساعدة',
+          featureNameEn: 'Help Center',
+          iconData: Icons.help_outline_rounded,
+        ),
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.faq,
+        name: 'faq',
+        builder: (BuildContext context, GoRouterState state) =>
+            const LaffahComingSoonPage(
+          featureNameAr: 'الأسئلة الشائعة',
+          featureNameEn: 'FAQ',
+          iconData: Icons.quiz_outlined,
+        ),
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.contactUs,
+        name: 'contact-us',
+        builder: (BuildContext context, GoRouterState state) =>
+            const LaffahComingSoonPage(
+          featureNameAr: 'تواصل معنا',
+          featureNameEn: 'Contact Us',
+          iconData: Icons.mail_outline_rounded,
+        ),
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.changePassword,
+        name: 'change-password',
+        builder: (BuildContext context, GoRouterState state) =>
+            const LaffahComingSoonPage(
+          featureNameAr: 'تغيير كلمة المرور',
+          featureNameEn: 'Change Password',
+          iconData: Icons.lock_outline_rounded,
         ),
       ),
 

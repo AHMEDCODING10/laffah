@@ -220,29 +220,18 @@ class _ActiveTripPassengerPageState extends State<ActiveTripPassengerPage> {
                 ),
 
                 // 3. Bottom Sheet Overlay Logic
-                if (state is RideSearching)
+                if (state is RideSearching || state is RideAccepted || state is RideInitial || state is RideBookingConfirmed)
                   Positioned.fill(
                     child: SearchingCaptainOverlay(
-                      onCancel: () {
-                        context.read<RideBloc>().add(CancelRideRequested(reason: 'إلغاء البحث'));
-                        context.go(LaffahRoutes.passengerHome);
-                      },
-                    ),
-                  )
-                else if (state is RideAccepted)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: CaptainEnRouteCard(
                       captainName: captainName,
                       motorcycleModel: motorcycleModel,
                       licensePlate: licensePlate,
-                      rating: rating,
+                      captainRating: rating,
                       eta: eta,
-                      onCall: () {},
-                      onMessage: () {},
-                      onCancel: _handleCancelRide,
+                      onCancel: () {
+                        context.read<RideBloc>().add(const CancelRideRequested(reason: 'إلغاء البحث'));
+                        context.go(LaffahRoutes.passengerHome);
+                      },
                     ),
                   )
                 else if (state is RideInProgress)
