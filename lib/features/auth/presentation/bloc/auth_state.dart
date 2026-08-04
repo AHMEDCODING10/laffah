@@ -18,7 +18,7 @@ class AuthLoading extends AuthState {
 /// State emitted when the OTP has been successfully sent to the phone.
 class AuthCodeSent extends AuthState {
   final String phone;
-  final String verificationId; // Mock verification ID
+  final String verificationId; // Verification ID returned from API
 
   const AuthCodeSent({
     required this.phone,
@@ -39,7 +39,19 @@ class AuthCodeSent extends AuthState {
 
 /// State emitted when the OTP is successfully verified.
 class AuthSuccess extends AuthState {
-  const AuthSuccess();
+  final String role; // 'captain' or 'passenger'
+
+  const AuthSuccess({this.role = 'passenger'});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AuthSuccess &&
+          runtimeType == other.runtimeType &&
+          role == other.role;
+
+  @override
+  int get hashCode => role.hashCode;
 }
 
 /// State emitted when any error or validation failure occurs.
@@ -57,4 +69,8 @@ class AuthFailure extends AuthState {
 
   @override
   int get hashCode => message.hashCode;
+}
+
+class AuthProfileUpdated extends AuthState {
+  const AuthProfileUpdated();
 }

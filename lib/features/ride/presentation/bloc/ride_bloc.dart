@@ -6,6 +6,9 @@ import '../../domain/usecases/request_ride_usecase.dart';
 import '../../domain/usecases/cancel_ride_usecase.dart';
 import '../../../parcel/domain/usecases/submit_parcel_order_usecase.dart';
 
+import '../../domain/usecases/track_ride_usecase.dart';
+import '../../domain/entities/ride_entity.dart';
+
 // ===========================================================================
 // DATA LAYER MODELS (IMMUTABLE DTOs)
 // ===========================================================================
@@ -135,11 +138,31 @@ class ConfirmBooking extends RideEvent {
 
 class SubmitParcelOrder extends RideEvent {
   final ParcelData data;
-
+  
   const SubmitParcelOrder(this.data);
 
   @override
   List<Object?> get props => [data];
+}
+
+class TrackRideEvent extends RideEvent {
+  final String tripId;
+
+  const TrackRideEvent(this.tripId);
+
+  @override
+  List<Object?> get props => [tripId];
+}
+
+
+class ScheduleRide extends RideEvent {
+  final DateTime date;
+  final String time;
+
+  const ScheduleRide({required this.date, required this.time});
+
+  @override
+  List<Object?> get props => [date, time];
 }
 
 class CancelRideRequested extends RideEvent {
@@ -151,6 +174,15 @@ class CancelRideRequested extends RideEvent {
   List<Object?> get props => [reason];
 }
 
+class ApplyPromoCode extends RideEvent {
+  final String code;
+
+  const ApplyPromoCode(this.code);
+
+  @override
+  List<Object?> get props => [code];
+}
+
 class SimulateRideStep extends RideEvent {
   final dynamic step;
 
@@ -158,6 +190,24 @@ class SimulateRideStep extends RideEvent {
 
   @override
   List<Object?> get props => [step];
+}
+
+class ListenToRideStatus extends RideEvent {
+  final String rideId;
+
+  const ListenToRideStatus(this.rideId);
+
+  @override
+  List<Object?> get props => [rideId];
+}
+
+class RideStatusUpdatedFromSocket extends RideEvent {
+  final dynamic rideEntity;
+
+  const RideStatusUpdatedFromSocket(this.rideEntity);
+
+  @override
+  List<Object?> get props => [rideEntity];
 }
 
 // ===========================================================================
@@ -227,6 +277,31 @@ class RideInProgress extends RideState {
 
 class RideCompleted extends RideState {
   const RideCompleted();
+}
+
+class RideScheduledSuccess extends RideState {
+  final DateTime date;
+  final String time;
+  const RideScheduledSuccess(this.date, this.time);
+  
+  @override
+  List<Object?> get props => [date, time];
+}
+
+class PromoCodeApplied extends RideState {
+  final double discountPercentage;
+  const PromoCodeApplied(this.discountPercentage);
+
+  @override
+  List<Object?> get props => [discountPercentage];
+}
+
+class PromoCodeInvalid extends RideState {
+  final String message;
+  const PromoCodeInvalid(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }
 
 class RideOptionsLoaded extends RideState {
@@ -348,18 +423,38 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   final RequestRideUseCase requestRideUseCase;
   final CancelRideUseCase cancelRideUseCase;
   final SubmitParcelOrderUseCase submitParcelOrderUseCase;
+  final TrackRideUseCase trackRideUseCase;
+
+  StreamSubscription? _rideStatusSubscription;
 
   RideBloc({
     required this.requestRideUseCase,
     required this.cancelRideUseCase,
     required this.submitParcelOrderUseCase,
+    required this.trackRideUseCase,
   }) : super(const RideInitial()) {
     on<CalculateSingleTripFare>(_onCalculateSingleTripFare);
     on<ConfirmUnifiedBooking>(_onConfirmUnifiedBooking);
     on<ConfirmBooking>(_onConfirmBooking);
     on<SubmitParcelOrder>(_onSubmitParcelOrder);
+    on<ScheduleRide>(_onScheduleRide);
     on<CancelRideRequested>(_onCancelRideRequested);
+    on<ApplyPromoCode>(_onApplyPromoCode);
     on<SimulateRideStep>(_onSimulateRideStep);
+    on<ListenToRideStatus>(_onListenToRideStatus);
+    on<RideStatusUpdatedFromSocket>(_onRideStatusUpdatedFromSocket);
+  }
+
+  @override
+  Future<void> close() {
+    _rideStatusSubscription?.cancel();
+    return super.close();
+  }
+
+  void _onScheduleRide(ScheduleRide event, Emitter<RideState> emit) async {
+    emit(const RideLoading());
+    await Future.delayed(const Duration(seconds: 1));
+    emit(RideScheduledSuccess(event.date, event.time));
   }
 
   static const List<RideOption> rideTiers = [
@@ -471,6 +566,9 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           status: rideEntity.status,
           rideId: rideEntity.id,
         ));
+        
+        // Start listening to WebSocket for this ride
+        add(ListenToRideStatus(rideEntity.id));
       },
     );
   }
@@ -517,6 +615,9 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           status: rideEntity.status,
           rideId: rideEntity.id,
         ));
+
+        // Start listening to WebSocket for this ride
+        add(ListenToRideStatus(rideEntity.id));
       },
     );
   }
@@ -596,6 +697,52 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       emit(const RideCompleted());
     } else if (stepStr == 'finding' || stepStr == '0') {
       emit(const RideSearching());
+    }
+  }
+
+  FutureOr<void> _onApplyPromoCode(
+    ApplyPromoCode event,
+    Emitter<RideState> emit,
+  ) async {
+    emit(const RideLoading());
+    await Future.delayed(const Duration(seconds: 1));
+    // Valid promo codes — real validation happens on the backend
+    const validCodes = ['LAFFAH10', 'WELCOME20', 'RIDE15'];
+    if (validCodes.contains(event.code.toUpperCase())) {
+      emit(const PromoCodeApplied(0.1));
+    } else {
+      emit(PromoCodeInvalid('كود الخصم "${event.code}" غير صالح أو منتهي الصلاحية.'));
+    }
+  }
+
+  void _onListenToRideStatus(ListenToRideStatus event, Emitter<RideState> emit) {
+    _rideStatusSubscription?.cancel();
+    _rideStatusSubscription = trackRideUseCase(event.rideId).listen((result) {
+      result.fold(
+        (failure) => add(const SimulateRideStep(step: 'error')),
+        (rideEntity) => add(RideStatusUpdatedFromSocket(rideEntity)),
+      );
+    });
+  }
+
+  void _onRideStatusUpdatedFromSocket(RideStatusUpdatedFromSocket event, Emitter<RideState> emit) {
+    final rideEntity = event.rideEntity as RideEntity;
+    
+    if (rideEntity.status == 'accepted' && rideEntity.captainName != null) {
+      emit(RideAccepted(
+        captainName: rideEntity.captainName!,
+        vehicleModel: rideEntity.vehicleModel ?? 'مركبة كابتن لفة',
+        vehiclePlate: rideEntity.vehiclePlate ?? '-',
+        captainRating: rideEntity.rating ?? 5.0,
+        eta: '3 دقائق', // We can calculate real ETA if we have captain location
+      ));
+    } else if (rideEntity.status == 'in_progress' || rideEntity.status == 'started') {
+      emit(const RideInProgress(etaToDestination: 'متابعة الرحلة...'));
+    } else if (rideEntity.status == 'completed') {
+      emit(const RideCompleted());
+    } else if (rideEntity.status == 'cancelled') {
+      emit(const RideError('تم إلغاء الرحلة.'));
+      emit(const RideInitial());
     }
   }
 }

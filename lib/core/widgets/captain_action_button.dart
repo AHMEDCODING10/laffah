@@ -93,7 +93,7 @@ class CaptainActionButton extends StatelessWidget {
                 boxShadow: onPressed != null
                     ? [
                         BoxShadow(
-                          color: effectiveBg.withOpacity(0.3),
+                          color: effectiveBg.withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),

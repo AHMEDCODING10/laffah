@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/widgets/glass_box.dart';
+import '../bloc/profile_bloc.dart';
+import '../bloc/profile_event.dart';
+import '../bloc/profile_state.dart';
 
 /// UserProfilePage - Premium, high-fidelity profile screen for Laffah passengers.
 /// Strictly implements RTL layouts, IBM Plex Sans Arabic typography, and a modern dark/light styling.
@@ -16,13 +22,18 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   @override
+  void initState() {
+    super.initState();
+    context.read<ProfileBloc>().add(GetProfileEvent());
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -45,36 +56,38 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
-          children: [
-            // ==========================================
-            // MODULE 1: Elegant User Info Header Card
-            // ==========================================
-            _buildUserInfoHeader(isDark),
-            
-            AppSpacing.h24,
+        body: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            return ListView(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
+              children: [
+                // ==========================================
+                // MODULE 1: Elegant User Info Header Card
+                // ==========================================
+                _buildUserInfoHeader(isDark, state),
+                
+                AppSpacing.h24,
 
-            // ==========================================
-            // MODULE 2: Account Level & Streaks
-            // ==========================================
-            _buildTierMetrics(isDark),
+                // ==========================================
+                // MODULE 2: Account Level & Streaks
+                // ==========================================
+                _buildTierMetrics(isDark),
 
-            AppSpacing.h24,
+                AppSpacing.h24,
 
-            // ==========================================
-            // MODULE 3: Account Verification / Documents
-            // ==========================================
-            _buildDocumentVerificationSection(isDark),
+                // ==========================================
+                // MODULE 3: Account Verification / Documents
+                // ==========================================
+                _buildDocumentVerificationSection(isDark),
 
-            AppSpacing.h24,
+                AppSpacing.h24,
 
-            // ==========================================
-            // MODULE 4: Menu Options & Settings List
-            // ==========================================
-            _buildMenuOptionsSection(isDark),
+                // ==========================================
+                // MODULE 4: Menu Options & Settings List
+                // ==========================================
+                _buildMenuOptionsSection(isDark),
 
-            AppSpacing.h40,
+                AppSpacing.h40,
 
             // App Version Footer
             Center(
@@ -102,14 +115,28 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 ],
               ),
             ),
-            AppSpacing.h32,
-          ],
+                AppSpacing.h32,
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildUserInfoHeader(bool isDark) {
+  Widget _buildUserInfoHeader(bool isDark, ProfileState state) {
+    String name = 'مستخدم لَفَّة';
+    String phone = '';
+    String roleText = 'عميل مميز ★';
+    String initial = 'م';
+
+    if (state is ProfileLoaded) {
+      name = state.profile.name.isNotEmpty ? state.profile.name : 'مستخدم لَفَّة';
+      phone = state.profile.phone.isNotEmpty ? state.profile.phone : '';
+      initial = name.substring(0, 1).toUpperCase();
+      roleText = state.profile.role == 'captain' ? 'كابتن لَفَّة ★' : 'عميل مميز ★';
+    }
+
     return GlassBox(
       borderRadius: AppSpacing.radiusXL,
       padding: const EdgeInsets.all(AppSpacing.s20),
@@ -130,18 +157,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary500.withOpacity(0.2),
+                      color: AppColors.primary500.withValues(alpha: 0.2),
                       blurRadius: 16,
                       spreadRadius: 2,
                     ),
                   ],
                 ),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 45,
                   backgroundColor: AppColors.primary50,
                   child: Text(
-                    'س',
-                    style: TextStyle(
+                    initial,
+                    style: const TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontWeight: FontWeight.w900,
                       fontSize: 38,
@@ -176,7 +203,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'سارة العامري',
+                name,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.w900,
@@ -188,15 +215,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary500.withOpacity(0.12),
+                  color: AppColors.primary500.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primary500.withOpacity(0.25),
+                    color: AppColors.primary500.withValues(alpha: 0.25),
                   ),
                 ),
-                child: const Text(
-                  'عميل مميز ★',
-                  style: TextStyle(
+                child: Text(
+                  roleText,
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.w900,
                     fontSize: 9,
@@ -209,15 +236,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
           
           AppSpacing.h6,
 
-          Text(
-            '+967 777 123 456',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+          if (phone.isNotEmpty)
+            Text(
+              phone,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: isDark ? AppColors.gray400 : AppColors.gray600,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -338,7 +366,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.12),
+                            color: AppColors.success.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -396,7 +424,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.12),
+                            color: AppColors.warning.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -441,17 +469,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Widget _buildMenuOptionsSection(bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withOpacity(0.6) : AppColors.white.withOpacity(0.8),
+    return Material(
+      color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.8),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: AppSpacing.borderXL,
-        border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+        side: BorderSide(
+          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
         ),
       ),
-      child: ClipRRect(
-        borderRadius: AppSpacing.borderXL,
-        child: Column(
+      child: Column(
           children: [
             _buildProfileTile(
               icon: Icons.account_balance_wallet_rounded,
@@ -515,7 +542,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -527,7 +553,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       leading: Container(
         padding: const EdgeInsets.all(AppSpacing.s8),
         decoration: BoxDecoration(
-          color: AppColors.primary500.withOpacity(0.1),
+          color: AppColors.primary500.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: const Icon(
@@ -555,7 +581,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       ),
       trailing: Switch(
         value: isDarkMode,
-        activeColor: AppColors.primary500,
+        activeThumbColor: AppColors.primary500,
         onChanged: (val) {
           ThemeController.instance.toggleTheme(val);
           setState(() {});
@@ -578,7 +604,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       leading: Container(
         padding: const EdgeInsets.all(AppSpacing.s8),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -598,13 +624,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 11,
           color: AppColors.gray500,
         ),
       ),
-      trailing: Icon(
+      trailing: const Icon(
         Icons.chevron_left_rounded, // Left chevron because of RTL Arabic UI layout!
         color: AppColors.gray400,
         size: 20,
@@ -618,7 +644,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       thickness: 1,
       indent: AppSpacing.s16,
       endIndent: AppSpacing.s16,
-      color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+      color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray100,
     );
   }
 
@@ -665,7 +691,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx); // Close dialog
-                Navigator.pop(context); // Go back or reset auth state
+                context.go(LaffahRoutes.authLanding); // Go to auth landing page
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.danger,

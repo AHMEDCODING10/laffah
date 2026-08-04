@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -11,8 +12,8 @@ import '../../../ride/presentation/pages/trip_history_page.dart';
 import '../../../passenger/presentation/pages/wallet_page.dart';
 import '../../../profile/presentation/pages/user_profile_page.dart';
 import '../widgets/passenger_floating_bottom_bar.dart';
-import '../../../ride/presentation/widgets/ride_selection_bottom_sheet.dart';
-import '../../../parcel/presentation/widgets/parcel_delivery_form_bottom_sheet.dart';
+import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
+import '../../../parcel/presentation/widgets/passenger/parcel_delivery_form_bottom_sheet.dart';
 
 /// HomeDashboardPage - The premium Passenger main map home interface for "Laffah (لفّة)"
 /// Adheres strictly to Laffah's design system: Deep Charcoal theme, Yemeni Orange accents,
@@ -36,13 +37,9 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             IndexedStack(
@@ -183,13 +180,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
             Positioned.fill(
               child: BlocBuilder<RideBloc, RideState>(
                 builder: (context, state) {
-                  String status = 'idle';
-                  if (state is RideBookingConfirmed) {
-                    status = state.status;
-                  }
                   return LaffahMapView(
                     isDark: isDark,
-                    showDefaultMockData: status != 'idle',
+                    showDefaultMockData: false,
                   );
                 },
               ),
@@ -210,8 +203,8 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        isDark ? AppColors.backgroundDark.withOpacity(0.9) : AppColors.white.withOpacity(0.9),
-                        isDark ? AppColors.backgroundDark.withOpacity(0.4) : AppColors.white.withOpacity(0.4),
+                        isDark ? AppColors.backgroundDark.withValues(alpha: 0.9) : AppColors.white.withValues(alpha: 0.9),
+                        isDark ? AppColors.backgroundDark.withValues(alpha: 0.4) : AppColors.white.withValues(alpha: 0.4),
                         Colors.transparent,
                       ],
                     ),
@@ -239,10 +232,10 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                           decoration: BoxDecoration(
                             color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.primary500.withOpacity(0.2), width: 1.5),
+                            border: Border.all(color: AppColors.primary500.withValues(alpha: 0.2), width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -251,7 +244,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                           child: IconButton(
                             icon: const Icon(Icons.person, color: AppColors.primary500, size: 22),
                             onPressed: () {
-                              Navigator.pushNamed(context, '/profile');
+                              context.push('/passenger/profile');
                             },
                           ),
                         ),
@@ -264,10 +257,10 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                           decoration: BoxDecoration(
                             color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.primary500.withOpacity(0.1), width: 1.5),
+                            border: Border.all(color: AppColors.primary500.withValues(alpha: 0.1), width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -276,7 +269,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                           child: IconButton(
                             icon: const Icon(Icons.bookmark_rounded, color: AppColors.primary500, size: 22),
                             onPressed: () {
-                              Navigator.pushNamed(context, '/saved_places');
+                              context.push('/passenger/profile/saved-places');
                             },
                           ),
                         ),
@@ -382,7 +375,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                   backgroundColor: Colors.transparent,
                   foregroundColor: AppColors.white,
                   shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppSpacing.radiusMD,
                   ),
                 ),
@@ -415,16 +408,16 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary500,
                   side: BorderSide(color: AppColors.primary500.withValues(alpha: 0.5), width: 1.5),
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppSpacing.radiusMD,
                   ),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.inventory_2_rounded, size: 18),
+                    Icon(Icons.inventory_2_rounded, size: 18),
                     AppSpacing.w10,
-                    const Text(
+                    Text(
                       'توصيل طرد',
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
@@ -455,7 +448,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/saved_places'),
+                  onTap: () => context.push('/passenger/profile/saved-places'),
                   child: const Text(
                     'عرض الكل ⚙',
                     style: TextStyle(
@@ -489,9 +482,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+                        color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray100,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200),
+                        border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -530,9 +523,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
     return Container(
       height: 52, // Optimal touch target
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
         borderRadius: AppSpacing.radiusSM,
-        border: Border.all(color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300),
+        border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300),
       ),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
       child: Row(
@@ -625,9 +618,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
-                color: AppColors.primary500.withOpacity(0.04),
+                color: AppColors.primary500.withValues(alpha: 0.04),
                 borderRadius: AppSpacing.radiusSM,
-                border: Border.all(color: AppColors.primary500.withOpacity(0.1)),
+                border: Border.all(color: AppColors.primary500.withValues(alpha: 0.1)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -658,7 +651,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary500.withOpacity(0.12),
+                      color: AppColors.primary500.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -686,7 +679,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
                   side: const BorderSide(color: AppColors.danger, width: 1.2),
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppSpacing.radiusSM,
                   ),
                 ),
@@ -736,7 +729,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.15),
+                    color: AppColors.success.withValues(alpha: 0.15),
                     borderRadius: AppSpacing.radiusXS,
                   ),
                   child: const Text(
@@ -755,7 +748,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppColors.primary500.withOpacity(0.1),
+                    color: AppColors.primary500.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.person, color: AppColors.primary500, size: 28),
@@ -794,7 +787,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray100,
                     borderRadius: AppSpacing.radiusSM,
                   ),
                   child: Text(
@@ -829,7 +822,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary500,
                       foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
+                      shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
                     ),
                   ),
                 ),
@@ -849,7 +842,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.success,
                       side: const BorderSide(color: AppColors.success),
-                      shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
+                      shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
                     ),
                   ),
                 ),
@@ -891,7 +884,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary500.withOpacity(0.15),
+                    color: AppColors.primary500.withValues(alpha: 0.15),
                     borderRadius: AppSpacing.radiusXS,
                   ),
                   child: const Text(
@@ -909,7 +902,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceElevatedDark.withOpacity(0.5) : AppColors.gray100,
+                      color: isDark ? AppColors.surfaceElevatedDark.withValues(alpha: 0.5) : AppColors.gray100,
                       borderRadius: AppSpacing.radiusSM,
                     ),
                     child: const Column(
@@ -927,7 +920,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceElevatedDark.withOpacity(0.5) : AppColors.gray100,
+                      color: isDark ? AppColors.surfaceElevatedDark.withValues(alpha: 0.5) : AppColors.gray100,
                       borderRadius: AppSpacing.radiusSM,
                     ),
                     child: const Column(
@@ -951,7 +944,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.primary500.withOpacity(0.1),
+                  color: AppColors.primary500.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.motorcycle_rounded, color: AppColors.primary500, size: 22),
@@ -1014,9 +1007,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
-                color: AppColors.primary500.withOpacity(0.04),
+                color: AppColors.primary500.withValues(alpha: 0.04),
                 borderRadius: AppSpacing.radiusSM,
-                border: Border.all(color: AppColors.primary500.withOpacity(0.1)),
+                border: Border.all(color: AppColors.primary500.withValues(alpha: 0.1)),
               ),
               child: Column(
                 children: [
@@ -1084,8 +1077,8 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                 hintStyle: TextStyle(color: isDark ? AppColors.gray500 : AppColors.gray400, fontSize: 12),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 filled: true,
-                fillColor: isDark ? AppColors.surfaceElevatedDark.withOpacity(0.5) : AppColors.gray100,
-                border: OutlineInputBorder(borderRadius: AppSpacing.radiusSM, borderSide: BorderSide.none),
+                fillColor: isDark ? AppColors.surfaceElevatedDark.withValues(alpha: 0.5) : AppColors.gray100,
+                border: const OutlineInputBorder(borderRadius: AppSpacing.radiusSM, borderSide: BorderSide.none),
               ),
             ),
             AppSpacing.h16,
@@ -1093,7 +1086,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
             // Submit rating
             Container(
               height: 48,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: AppColors.primaryGradient,
                 borderRadius: AppSpacing.radiusSM,
               ),
@@ -1111,7 +1104,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
                   backgroundColor: Colors.transparent,
                   foregroundColor: Colors.white,
                   shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
+                  shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
                 ),
                 child: const Text('إرسال التقييم وإنهاء الرحلة', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, fontSize: 13.5)),
               ),
@@ -1154,9 +1147,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark.withOpacity(0.5) : AppColors.gray50,
+                color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.5) : AppColors.gray50,
                 borderRadius: AppSpacing.radiusSM,
-                border: Border.all(color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200),
+                border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
               ),
               child: Column(
                 children: [
@@ -1198,7 +1191,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> with TickerProviderSta
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary500,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
+                shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusSM),
               ),
               child: const Text('العودة للقائمة الرئيسية', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
             ),

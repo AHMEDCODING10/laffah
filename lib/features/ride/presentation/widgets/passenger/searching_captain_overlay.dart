@@ -52,8 +52,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
             filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
             child: Container(
               color: isDark
-                  ? const Color(0xFF0E1116).withOpacity(0.7)
-                  : Colors.white.withOpacity(0.7),
+                  ? const Color(0xFF0E1116).withValues(alpha: 0.7)
+                  : Colors.white.withValues(alpha: 0.7),
             ),
           ),
           Center(
@@ -71,7 +71,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                           height: 160 * _pulseAnimation.value,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFFFF6B00).withOpacity(0.1),
+                            color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                           ),
                         ),
                         Container(
@@ -79,7 +79,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                           height: 110 * _pulseAnimation.value,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFFFF6B00).withOpacity(0.2),
+                            color: const Color(0xFFFF6B00).withValues(alpha: 0.2),
                           ),
                         ),
                         Container(
@@ -138,12 +138,12 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                       ),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? AppColors.white.withOpacity(0.05)
+                            ? AppColors.white.withValues(alpha: 0.05)
                             : AppColors.gray200,
                         borderRadius: AppSpacing.radiusFull,
                         border: Border.all(
                           color: isDark
-                              ? AppColors.white.withOpacity(0.1)
+                              ? AppColors.white.withValues(alpha: 0.1)
                               : AppColors.gray300,
                         ),
                       ),

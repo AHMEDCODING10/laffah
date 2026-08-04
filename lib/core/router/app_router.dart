@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/pages/coming_soon_page.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 
@@ -13,7 +12,7 @@ import '../../features/auth/presentation/pages/otp_verification_page.dart';
 import '../../features/auth/presentation/pages/register_passenger_page.dart';
 import '../../features/auth/presentation/pages/register_captain_page.dart';
 import '../../features/auth/presentation/pages/onboarding_page.dart';
-import '../../features/auth/presentation/pages/role_selection_page.dart';
+
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 
 // Passenger home
@@ -21,6 +20,9 @@ import '../../features/home/presentation/pages/home_dashboard_page.dart';
 
 // Passenger ride & history
 import '../../features/ride/presentation/pages/trip_history_page.dart';
+import '../../features/ride/presentation/pages/passenger_schedule_ride_page.dart';
+import '../../features/ride/presentation/pages/passenger_ride_tracking_page.dart';
+import '../../features/ride/presentation/pages/passenger_ride_invoice_page.dart';
 
 // Captain core features
 import '../../features/captain/presentation/pages/captain_trip_history_page.dart';
@@ -28,13 +30,14 @@ import '../../features/captain/presentation/pages/captain_performance_page.dart'
 import '../../features/captain/presentation/pages/captain_settings_page.dart';
 import '../../features/captain/presentation/pages/captain_ride_invoice_page.dart';
 import '../../features/captain/presentation/pages/captain_parcel_details_page.dart';
+import '../../features/captain/presentation/pages/captain_bonus_page.dart';
+import '../../features/captain/presentation/pages/captain_support_page.dart';
 
 // Passenger core features
 import '../../features/passenger/presentation/pages/wallet_page.dart';
 import '../../features/passenger/presentation/pages/notifications_page.dart';
 import '../../features/passenger/presentation/pages/promo_code_page.dart';
-import '../../features/ride/presentation/pages/report_incident_page.dart';
-import '../../features/ride/presentation/pages/support_tickets_page.dart';
+
 
 // Parcel Delivery features
 import '../../features/parcel/presentation/pages/parcel_tracking_page.dart';
@@ -49,8 +52,14 @@ import '../../features/captain/presentation/pages/captain_payout_request_page.da
 import '../../features/captain/presentation/pages/captain_document_upload_page.dart';
 
 // Profile module
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../features/captain/presentation/bloc/core/captain_bloc.dart';
+import '../di/injection_container.dart' as di;
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/profile/presentation/pages/saved_places_page.dart';
+import '../../features/profile/presentation/pages/passenger_profile_edit_page.dart';
+import '../../features/profile/presentation/pages/legal/privacy_policy_page.dart';
+import '../../features/profile/presentation/pages/legal/terms_of_service_page.dart';
 
 // ============================================================
 // ROUTE PATH CONSTANTS
@@ -72,7 +81,7 @@ abstract class LaffahRoutes {
   static const String authOtp                 = '/auth/otp';
   static const String authRegisterPassenger   = '/auth/register/passenger';
   static const String authRegisterCaptain     = '/auth/register/captain';
-  static const String roleSelection           = '/auth/role';
+
   static const String forgotPassword          = '/auth/forgot-password';
 
   // ──────────────────────────────────────────
@@ -109,8 +118,7 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   // PASSENGER — SUPPORT
   // ──────────────────────────────────────────
-  static const String passengerReportIncident = '/passenger/support/report';
-  static const String passengerSupportTickets = '/passenger/support/tickets';
+
 
   // ──────────────────────────────────────────
   // CAPTAIN — CORE
@@ -202,7 +210,9 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final String phone =
               state.uri.queryParameters['phone'] ?? '';
-          return OTPVerificationPage(phoneNumber: phone);
+          final String role =
+              state.uri.queryParameters['role'] ?? 'passenger';
+          return OTPVerificationPage(phoneNumber: phone, role: role);
         },
       ),
 
@@ -218,13 +228,6 @@ class AppRouter {
         name: 'auth-register-captain',
         builder: (BuildContext context, GoRouterState state) =>
         const RegisterCaptainPage(),
-      ),
-
-      GoRoute(
-        path: LaffahRoutes.roleSelection,
-        name: 'role-selection',
-        builder: (BuildContext context, GoRouterState state) =>
-        const RoleSelectionPage(),
       ),
 
       GoRoute(
@@ -280,33 +283,28 @@ class AppRouter {
         path: LaffahRoutes.passengerRideTracking,
         name: 'passenger-ride-tracking',
         builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'تتبع الرحلة المباشر',
-          featureNameEn: 'Active Ride Tracking',
-          iconData: Icons.gps_fixed_rounded,
-        ),
+        const PassengerRideTrackingPage(),
       ),
 
       GoRoute(
         path: LaffahRoutes.passengerRideInvoice,
         name: 'passenger-ride-invoice',
-        builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'فاتورة الرحلة',
-          featureNameEn: 'Ride Invoice',
-          iconData: Icons.receipt_long_rounded,
-        ),
+        builder: (BuildContext context, GoRouterState state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return PassengerRideInvoicePage(
+            fare: (extra['fare'] as num?)?.toDouble() ?? 1200.0,
+            tripId: extra['tripId'] as String? ?? 'LF-83210',
+            captainName: extra['captainName'] as String? ?? 'محمد علي',
+            discount: (extra['discount'] as num?)?.toDouble() ?? 0.0,
+          );
+        },
       ),
 
       GoRoute(
         path: LaffahRoutes.passengerScheduleRide,
         name: 'passenger-schedule-ride',
         builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'جدولة رحلة مسبقة',
-          featureNameEn: 'Schedule a Ride',
-          iconData: Icons.schedule_rounded,
-        ),
+        const PassengerScheduleRidePage(),
       ),
 
       // ══════════════════════════════════════════
@@ -354,11 +352,7 @@ class AppRouter {
         path: LaffahRoutes.passengerProfileEdit,
         name: 'passenger-profile-edit',
         builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'تعديل الملف الشخصي',
-          featureNameEn: 'Edit Profile',
-          iconData: Icons.edit_outlined,
-        ),
+        const PassengerProfileEditPage(),
       ),
 
       GoRoute(
@@ -371,25 +365,9 @@ class AppRouter {
       // ══════════════════════════════════════════
       // PASSENGER — SUPPORT & INCIDENTS
       // ══════════════════════════════════════════
-      GoRoute(
-        path: LaffahRoutes.passengerReportIncident,
-        name: 'passenger-report-incident',
-        builder: (BuildContext context, GoRouterState state) {
-          final Map<String, dynamic>? extra =
-          state.extra as Map<String, dynamic>?;
-          return ReportIncidentPage(
-            preFilledRideId: extra?['rideId'] as String?,
-            preFilledCaptainName: extra?['captainName'] as String?,
-          );
-        },
-      ),
 
-      GoRoute(
-        path: LaffahRoutes.passengerSupportTickets,
-        name: 'passenger-support-tickets',
-        builder: (BuildContext context, GoRouterState state) =>
-        const SupportTicketsPage(),
-      ),
+
+
 
       // ══════════════════════════════════════════
       // CAPTAIN — HOME DASHBOARD
@@ -398,7 +376,10 @@ class AppRouter {
         path: LaffahRoutes.captainHome,
         name: 'captain-home',
         builder: (BuildContext context, GoRouterState state) =>
-        const CaptainHomePage(),
+            BlocProvider<CaptainBloc>(
+          create: (_) => di.sl<CaptainBloc>(),
+          child: const CaptainHomePage(),
+        ),
       ),
 
       // ══════════════════════════════════════════
@@ -469,11 +450,7 @@ class AppRouter {
         path: LaffahRoutes.captainBonus,
         name: 'captain-bonus',
         builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'مكافآت وبونص الكباتن',
-          featureNameEn: 'Captain Bonuses & Rewards',
-          iconData: Icons.emoji_events_outlined,
-        ),
+        const CaptainBonusPage(),
       ),
 
       // ══════════════════════════════════════════
@@ -500,11 +477,7 @@ class AppRouter {
         path: LaffahRoutes.captainSupport,
         name: 'captain-support',
         builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'دعم ومساعدة الكباتن',
-          featureNameEn: 'Captain Support',
-          iconData: Icons.headset_mic_outlined,
-        ),
+        const CaptainSupportPage(),
       ),
 
       // ══════════════════════════════════════════
@@ -514,22 +487,14 @@ class AppRouter {
         path: LaffahRoutes.privacyPolicy,
         name: 'privacy-policy',
         builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'سياسة الخصوصية',
-          featureNameEn: 'Privacy Policy',
-          iconData: Icons.privacy_tip_outlined,
-        ),
+        const PrivacyPolicyPage(),
       ),
 
       GoRoute(
         path: LaffahRoutes.termsOfService,
         name: 'terms-of-service',
         builder: (BuildContext context, GoRouterState state) =>
-        const LaffahComingSoonPage(
-          featureNameAr: 'الشروط والأحكام',
-          featureNameEn: 'Terms of Service',
-          iconData: Icons.description_outlined,
-        ),
+        const TermsOfServicePage(),
       ),
     ],
 
@@ -615,7 +580,7 @@ class _LaffahRouteErrorPage extends StatelessWidget {
                         backgroundColor: AppColors.primary500,
                         foregroundColor: AppColors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(
+                        shape: const RoundedRectangleBorder(
                           borderRadius: AppSpacing.radiusMD,
                         ),
                       ),

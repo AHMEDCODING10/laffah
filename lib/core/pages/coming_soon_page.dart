@@ -52,9 +52,7 @@ class _LaffahComingSoonPageState extends State<LaffahComingSoonPage>
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-        isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -197,7 +195,7 @@ class _LaffahComingSoonPageState extends State<LaffahComingSoonPage>
                 Text(
                   widget.featureNameEn,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -259,7 +257,7 @@ class _LaffahComingSoonPageState extends State<LaffahComingSoonPage>
                       backgroundColor: AppColors.primary500,
                       foregroundColor: AppColors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD,
                       ),
                     ),

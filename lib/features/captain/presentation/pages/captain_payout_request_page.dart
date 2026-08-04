@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
+import '../bloc/core/captain_bloc.dart';
+import '../bloc/core/captain_event.dart';
+import '../bloc/core/captain_state.dart';
 
 /// Enum representing the status of a payout transaction
 enum PayoutStatus {
@@ -64,10 +68,10 @@ class CaptainPayoutRequestPage extends StatefulWidget {
 }
 
 class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
-  // Mock account balances
-  final double _availableBalance = 68450.0; // YER
-  final double _pendingBalance = 12500.0;   // YER
-  final double _totalEarned = 345000.0;     // YER
+  // Real account balances will be fetched from BLoC/Backend
+  final double _availableBalance = 0.0;
+  final double _pendingBalance = 0.0;
+  final double _totalEarned = 0.0;
   final double _platformCommissionRate = 0.15; // 15% Laffah core commission
 
   late List<PayoutMethod> _payoutMethods;
@@ -78,7 +82,7 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
   final TextEditingController _accountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  bool _isSubmitting = false;
+  final bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -133,45 +137,7 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
   }
 
   void _initializeTransactions() {
-    _transactions = [
-      PayoutTransaction(
-        referenceId: 'TXN-9021-YER',
-        amount: 25000.0,
-        fee: 250.0,
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        status: PayoutStatus.completed,
-        methodName: 'الكريمي إكسبرس',
-        accountDetails: 'حساب رقم: 30129485',
-      ),
-      PayoutTransaction(
-        referenceId: 'TXN-8742-YER',
-        amount: 15000.0,
-        fee: 0.0,
-        date: DateTime.now().subtract(const Duration(days: 8)),
-        status: PayoutStatus.completed,
-        methodName: 'خدمة فلوس موبايل',
-        accountDetails: 'رقم المحفظة: 777123456',
-      ),
-      PayoutTransaction(
-        referenceId: 'TXN-8110-YER',
-        amount: 32000.0,
-        fee: 480.0,
-        date: DateTime.now().subtract(const Duration(days: 14)),
-        status: PayoutStatus.failed,
-        methodName: 'النجم إكسبرس للشبكات',
-        accountDetails: 'حوالة باسم: علي صالح ناصر',
-        rejectionReason: 'الاسم رباعي غير متطابق تماماً مع بيانات البطاقة الشخصية المرفوعة في قسم التوثيق.',
-      ),
-      PayoutTransaction(
-        referenceId: 'TXN-7945-YER',
-        amount: 20000.0,
-        fee: 0.0,
-        date: DateTime.now().subtract(const Duration(days: 21)),
-        status: PayoutStatus.completed,
-        methodName: 'محفظة جيب الإلكترونية',
-        accountDetails: 'حساب رقم: 777123456',
-      ),
-    ];
+    _transactions = [];
   }
 
   double _calculateTransactionFee(double amount) {
@@ -191,57 +157,54 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? AppColors.white : AppColors.gray900,
-              size: 20,
+      child: BlocConsumer<CaptainBloc, CaptainState>(
+        listener: (context, state) {
+          if (state is CaptainPayoutRequestSuccess) {
+            final amt = double.tryParse(_amountController.text) ?? 0.0;
+            _showPayoutSuccessDialog(amt);
+            _amountController.clear();
+            _accountController.clear();
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: isDark ? AppColors.white : AppColors.gray900,
+                  size: 20,
+                ),
+                onPressed: () => context.mounted ? Navigator.maybePop(context) : null,
+              ),
+              centerTitle: true,
+              title: Text(
+                'طلب سحب الرصيد والمحفظة',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: isDark ? AppColors.white : AppColors.gray900,
+                ),
+              ),
             ),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-          centerTitle: true,
-          title: Text(
-            'طلب سحب الرصيد والمحفظة',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: isDark ? AppColors.white : AppColors.gray900,
+            body: SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
+                children: [
+                  _buildBalanceDashboard(isDark),
+                  AppSpacing.h24,
+                  _buildPayoutFormSection(isDark),
+                  AppSpacing.h24,
+                  _buildTransactionsLogSection(isDark),
+                  AppSpacing.h32,
+                ],
+              ),
             ),
-          ),
-        ),
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
-            children: [
-              // ==========================================
-              // MODULE 1: Elegant Balance Summary Dashboard
-              // ==========================================
-              _buildBalanceDashboard(isDark),
-
-              AppSpacing.h24,
-
-              // ==========================================
-              // MODULE 2: Interactive Payout Request Form
-              // ==========================================
-              _buildPayoutFormSection(isDark),
-
-              AppSpacing.h24,
-
-              // ==========================================
-              // MODULE 3: Historical Transactions Log
-              // ==========================================
-              _buildTransactionsLogSection(isDark),
-
-              AppSpacing.h32,
-            ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -268,7 +231,7 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
@@ -367,7 +330,7 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               Container(
                 height: 36,
                 width: 1,
-                color: isDark ? AppColors.white.withOpacity(0.06) : AppColors.gray200,
+                color: isDark ? AppColors.white.withValues(alpha: 0.06) : AppColors.gray200,
               ),
               AppSpacing.w16,
               Expanded(
@@ -416,10 +379,10 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+              color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
               borderRadius: AppSpacing.borderSM,
               border: Border.all(
-                color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+                color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray100,
               ),
             ),
             child: Row(
@@ -455,10 +418,10 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withOpacity(0.6) : AppColors.white.withOpacity(0.9),
+        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.9),
         borderRadius: AppSpacing.borderXL,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
         ),
       ),
       child: Form(
@@ -528,11 +491,11 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
                 filled: true,
-                fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: AppSpacing.borderSM,
                   borderSide: BorderSide(
-                    color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -610,11 +573,11 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
                 filled: true,
-                fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: AppSpacing.borderSM,
                   borderSide: BorderSide(
-                    color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -703,10 +666,10 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
         borderRadius: AppSpacing.borderSM,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -787,10 +750,10 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: AppColors.primary500.withOpacity(0.04),
+        color: AppColors.primary500.withValues(alpha: 0.04),
         borderRadius: AppSpacing.borderSM,
         border: Border.all(
-          color: AppColors.primary500.withOpacity(0.12),
+          color: AppColors.primary500.withValues(alpha: 0.12),
         ),
       ),
       child: Column(
@@ -967,10 +930,10 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s14),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withOpacity(0.6) : AppColors.white.withOpacity(0.8),
+        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.8),
         borderRadius: AppSpacing.borderLG,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
         ),
       ),
       child: Column(
@@ -1067,9 +1030,9 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.s8),
               decoration: BoxDecoration(
-                color: AppColors.danger.withOpacity(0.05),
+                color: AppColors.danger.withValues(alpha: 0.05),
                 borderRadius: AppSpacing.borderSM,
-                border: Border.all(color: AppColors.danger.withOpacity(0.12)),
+                border: Border.all(color: AppColors.danger.withValues(alpha: 0.12)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1104,39 +1067,12 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
 
   void _handlePayoutSubmit() {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSubmitting = true;
-      });
-
-      // Simulation of a payment request submission
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          final amt = double.parse(_amountController.text);
-          setState(() {
-            _isSubmitting = false;
-            // Add new transaction to top of logs
-            _transactions.insert(
-              0,
-              PayoutTransaction(
-                referenceId: 'TXN-NEW-${(1000 + (DateTime.now().millisecond)).toString()}-YER',
-                amount: amt,
-                fee: _calculateTransactionFee(amt),
-                date: DateTime.now(),
-                status: _selectedMethod?.id == 'floos' || _selectedMethod?.id == 'jeeb'
-                    ? PayoutStatus.completed
-                    : PayoutStatus.pending,
-                methodName: _selectedMethod!.name,
-                accountDetails: _accountController.text,
-              ),
-            );
-          });
-
-          // Show success bottom sheet or dialog
-          _showPayoutSuccessDialog(amt);
-          _amountController.clear();
-          _accountController.clear();
-        }
-      });
+      final amt = double.parse(_amountController.text);
+      context.read<CaptainBloc>().add(RequestPayout(
+        amount: amt,
+        method: _selectedMethod!.id,
+        accountDetails: _accountController.text,
+      ));
     }
   }
 

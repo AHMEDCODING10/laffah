@@ -3,6 +3,12 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/di/injection_container.dart';
+import '../bloc/trips/captain_trips_bloc.dart';
+import '../bloc/trips/captain_trips_event.dart';
+import '../bloc/trips/captain_trips_state.dart';
+import '../../domain/entities/captain_trip_entity.dart';
 import 'widgets/captain_trip_details_sheet.dart';
 
 /// CaptainTripsSubPage - Interactive Sub-Page for Captain's Trip History & Active Orders.
@@ -17,116 +23,49 @@ class CaptainTripsSubPage extends StatefulWidget {
 
 class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  String _selectedStatusFilter = 'الكل'; // 'الكل', 'قيد التنفيذ', 'تم الانتهاء', 'ملغاة'
+  final ScrollController _scrollController = ScrollController();
+  late CaptainTripsBloc _tripsBloc;
 
-  // Authentic Sana'a Trips Data List
-  final List<Map<String, dynamic>> _allTrips = [
-    {
-      'id': 'LF-88293',
-      'status': 'قيد التنفيذ',
-      'statusColor': AppColors.warning,
-      'passengerName': 'سارة العامري',
-      'passengerPhone': '+967 777 123 456',
-      'rating': 4.9,
-      'pickup': 'شارع الستين - أمام مستشفى آزال، صنعاء',
-      'dropoff': 'مول العرب - شارع حدة، صنعاء',
-      'price': '2,400 ر.ي',
-      'grossFare': 2400.0,
-      'date': 'اليوم، 10:30 ص',
-      'distance': '4.5 كم',
-      'duration': '12 دقيقة',
-      'paymentMethod': 'نقداً (Cash)',
-    },
-    {
-      'id': 'LF-88290',
-      'status': 'تم الانتهاء',
-      'statusColor': AppColors.success,
-      'passengerName': 'أحمد منصور',
-      'passengerPhone': '+967 771 999 888',
-      'rating': 4.8,
-      'pickup': 'شارع حدة - أمام مركز الكميم، صنعاء',
-      'dropoff': 'جامعة صنعاء - البوابة الرئيسية، صنعاء',
-      'price': '1,800 ر.ي',
-      'grossFare': 1800.0,
-      'date': 'اليوم، 09:15 ص',
-      'distance': '3.4 كم',
-      'duration': '9 دقائق',
-      'paymentMethod': 'محفظة لَفَّة',
-    },
-    {
-      'id': 'LF-88285',
-      'status': 'تم الانتهاء',
-      'statusColor': AppColors.success,
-      'passengerName': 'خالد العنسي',
-      'passengerPhone': '+967 773 444 555',
-      'rating': 5.0,
-      'pickup': 'ميدان التحرير - صنعاء القديمة',
-      'dropoff': 'جبل نقم - شارع الأربعين، صنعاء',
-      'price': '2,100 ر.ي',
-      'grossFare': 2100.0,
-      'date': 'أمس، 08:00 م',
-      'distance': '5.2 كم',
-      'duration': '16 دقيقة',
-      'paymentMethod': 'نقداً (Cash)',
-    },
-    {
-      'id': 'LF-88270',
-      'status': 'ملغاة',
-      'statusColor': AppColors.danger,
-      'passengerName': 'محمد علي',
-      'passengerPhone': '+967 770 111 222',
-      'rating': 4.7,
-      'pickup': 'الصافية - خلف مبنى البريد العام، صنعاء',
-      'dropoff': 'حدة أسطنبول - أمام المطعم التركي، صنعاء',
-      'price': '1,500 ر.ي',
-      'grossFare': 1500.0,
-      'date': 'أمس، 04:30 م',
-      'distance': '2.8 كم',
-      'duration': '7 دقائق',
-      'paymentMethod': 'نقداً (Cash)',
-    },
-    {
-      'id': 'LF-88262',
-      'status': 'تم الانتهاء',
-      'statusColor': AppColors.success,
-      'passengerName': 'ياسر الحداد',
-      'passengerPhone': '+967 775 666 777',
-      'rating': 4.9,
-      'pickup': 'شارع الزبيري - تقاطع جولة كنعان، صنعاء',
-      'dropoff': 'السيلية - قرب باب اليمن، صنعاء',
-      'price': '2,200 ر.ي',
-      'grossFare': 2200.0,
-      'date': 'منذ يومين، 02:15 م',
-      'distance': '4.1 كم',
-      'duration': '11 دقيقة',
-      'paymentMethod': 'محفظة لَفَّة',
-    },
-  ];
+  String _searchQuery = '';
+  String _selectedStatusFilter = 'الكل'; 
+
+  @override
+  void initState() {
+    super.initState();
+    _tripsBloc = sl<CaptainTripsBloc>();
+    _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (_tripsBloc.state is CaptainTripsLoaded) {
+        final state = _tripsBloc.state as CaptainTripsLoaded;
+        if (!state.hasReachedMax) {
+          _tripsBloc.add(FetchCaptainTrips(statusFilter: _selectedStatusFilter));
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
+    _tripsBloc.close();
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredTrips {
-    return _allTrips.where((trip) {
-      // 1. Filter by Status
-      if (_selectedStatusFilter != 'الكل') {
-        if (trip['status'] != _selectedStatusFilter) {
-          return false;
-        }
-      }
+  List<CaptainTripEntity> _getFilteredTrips(List<CaptainTripEntity> trips) {
+    if (_searchQuery.trim().isEmpty) return trips;
 
-      // 2. Filter by Search Query
-      if (_searchQuery.trim().isEmpty) return true;
-
-      final query = _searchQuery.trim().toLowerCase();
-      final id = (trip['id'] as String).toLowerCase();
-      final passenger = (trip['passengerName'] as String).toLowerCase();
-      final pickup = (trip['pickup'] as String).toLowerCase();
-      final dropoff = (trip['dropoff'] as String).toLowerCase();
+    final query = _searchQuery.trim().toLowerCase();
+    return trips.where((trip) {
+      final id = trip.id.toLowerCase();
+      final passenger = trip.passengerName.toLowerCase();
+      final pickup = trip.pickup.toLowerCase();
+      final dropoff = trip.dropoff.toLowerCase();
 
       return id.contains(query) ||
           passenger.contains(query) ||
@@ -138,11 +77,9 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final filtered = _filteredTrips;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      appBar: AppBar(
+appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -248,17 +185,64 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
 
             // Trips List or Empty Search View
             Expanded(
-              child: filtered.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.builder(
+              child: BlocBuilder<CaptainTripsBloc, CaptainTripsState>(
+                bloc: _tripsBloc,
+                builder: (context, state) {
+                  if (state is CaptainTripsInitial || (state is CaptainTripsLoading && state.isFirstFetch)) {
+                    return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00)));
+                  }
+
+                  if (state is CaptainTripsError) {
+                    return Center(
+                      child: Text(
+                        'حدث خطأ: ${state.message}',
+                        style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.danger),
+                      ),
+                    );
+                  }
+
+                  List<CaptainTripEntity> trips = [];
+                  bool isLoadingMore = false;
+
+                  if (state is CaptainTripsLoaded) {
+                    trips = state.trips;
+                  } else if (state is CaptainTripsLoading) {
+                    trips = state.oldTrips;
+                    isLoadingMore = true;
+                  }
+
+                  final filtered = _getFilteredTrips(trips);
+
+                  if (filtered.isEmpty) {
+                    return _buildEmptyState(isDark);
+                  }
+
+                  return RefreshIndicator(
+                    color: const Color(0xFFFF6B00),
+                    onRefresh: () async {
+                      _tripsBloc.add(FetchCaptainTrips(isRefresh: true, statusFilter: _selectedStatusFilter));
+                      // wait for state change
+                      await _tripsBloc.stream.firstWhere((s) => s is! CaptainTripsLoading);
+                    },
+                    child: ListView.builder(
+                      controller: _scrollController,
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 90), // Extra space for floating bottom bar
-                      itemCount: filtered.length,
-                      physics: const BouncingScrollPhysics(),
+                      itemCount: filtered.length + (isLoadingMore ? 1 : 0),
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                       itemBuilder: (context, index) {
+                        if (index == filtered.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00))),
+                          );
+                        }
                         final trip = filtered[index];
                         return _buildTripCard(context, trip, isDark);
                       },
                     ),
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -272,9 +256,12 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        setState(() {
-          _selectedStatusFilter = label;
-        });
+        if (_selectedStatusFilter != label) {
+          setState(() {
+            _selectedStatusFilter = label;
+          });
+          _tripsBloc.add(FetchCaptainTrips(statusFilter: label, isRefresh: true));
+        }
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -306,7 +293,8 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
     );
   }
 
-  Widget _buildTripCard(BuildContext context, Map<String, dynamic> trip, bool isDark) {
+  Widget _buildTripCard(BuildContext context, CaptainTripEntity tripEntity, bool isDark) {
+    final trip = tripEntity.toMap();
     final String status = trip['status'];
     final Color statusColor = trip['statusColor'];
 

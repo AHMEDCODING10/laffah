@@ -83,8 +83,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
       child: GlassBox(
         borderRadius: AppSpacing.radiusBottomSheet,
         customBgColor: isDark 
-            ? const Color(0xFF111827).withOpacity(0.9) 
-            : const Color(0xFFF9FAFB).withOpacity(0.9),
+            ? const Color(0xFF111827).withValues(alpha: 0.9) 
+            : const Color(0xFFF9FAFB).withValues(alpha: 0.9),
         padding: const EdgeInsets.only(
           top: AppSpacing.s16,
           bottom: AppSpacing.s24,
@@ -100,7 +100,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                  color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.15),
                   borderRadius: AppSpacing.radiusXS,
                 ),
               ),
@@ -124,7 +124,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -141,10 +141,10 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray100,
+                color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100,
                 borderRadius: AppSpacing.borderSM,
                 border: Border.all(
-                  color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+                  color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
                 ),
               ),
               child: Column(
@@ -226,13 +226,13 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                     padding: const EdgeInsets.all(AppSpacing.s12),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primary500.withOpacity(0.08)
-                          : (isDark ? AppColors.white.withOpacity(0.01) : AppColors.white),
+                          ? AppColors.primary500.withValues(alpha: 0.08)
+                          : (isDark ? AppColors.white.withValues(alpha: 0.01) : AppColors.white),
                       borderRadius: AppSpacing.borderMD,
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primary500
-                            : (isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200),
+                            : (isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
@@ -242,8 +242,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                           padding: const EdgeInsets.all(AppSpacing.s10),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.primary500.withOpacity(0.15)
-                                : (isDark ? AppColors.white.withOpacity(0.03) : AppColors.gray50),
+                                ? AppColors.primary500.withValues(alpha: 0.15)
+                                : (isDark ? AppColors.white.withValues(alpha: 0.03) : AppColors.gray50),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -272,7 +272,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary500.withOpacity(0.1),
+                                      color: AppColors.primary500.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -303,7 +303,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${vehicle.basePrice.toStringAsFixed(0)}',
+                              vehicle.basePrice.toStringAsFixed(0),
                               style: const TextStyle(
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.w900,
@@ -343,10 +343,10 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                       height: 48,
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                         borderRadius: AppSpacing.borderSM,
                         border: Border.all(
-                          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+                          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
                         ),
                       ),
                       child: Row(
@@ -378,10 +378,10 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                       borderRadius: AppSpacing.borderSM,
                       border: Border.all(
-                        color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+                        color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
                       ),
                     ),
                     child: Row(
@@ -413,7 +413,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                 borderRadius: AppSpacing.radiusMD,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary500.withOpacity(0.35),
+                    color: AppColors.primary500.withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -434,7 +434,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   backgroundColor: Colors.transparent,
                   foregroundColor: AppColors.white,
                   shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppSpacing.radiusMD,
                   ),
                 ),

@@ -8,10 +8,10 @@ class VerifyOtpUseCase {
 
   VerifyOtpUseCase(this.repository);
 
-  Future<Either<Failure, UserEntity>> call(String phone, String code) async {
+  Future<Either<Failure, UserEntity>> call(String phone, String code, {String role = 'passenger'}) async {
     if (code.length != 4) {
       return const Left(ValidationFailure('رمز التحقق يجب أن يكون 4 أرقام'));
     }
-    return await repository.verifyOtp(phone, code);
+    return await repository.verifyOtp(phone, code, role: role);
   }
 }

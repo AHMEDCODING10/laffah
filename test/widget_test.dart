@@ -5,7 +5,7 @@ import 'package:laffah/app.dart';
 import 'package:laffah/core/di/injection_container.dart' as di;
 import 'package:laffah/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:laffah/features/ride/presentation/bloc/ride_bloc.dart';
-import 'package:laffah/features/captain/presentation/bloc/captain_bloc.dart';
+import 'package:laffah/features/captain/presentation/bloc/core/captain_bloc.dart';
 
 void main() {
   setUpAll(() async {

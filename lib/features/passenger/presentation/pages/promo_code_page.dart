@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../ride/presentation/bloc/ride_bloc.dart';
 
 /// PromoCodePage — Page to apply promo codes for discounts on motorcycle rides.
 /// Uses clear error handling and visually appealing success states.
@@ -29,37 +31,8 @@ class _PromoCodePageState extends State<PromoCodePage> {
       );
       return;
     }
-
-    setState(() => _isLoading = true);
     
-    // Simulate API verification
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      
-      if (_promoController.text.trim().toUpperCase() == 'LAFFAH20') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'تم تفعيل كود الخصم بنجاح! خصم 20% على رحلتك القادمة',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
-            ),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        context.pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'كود الخصم غير صحيح أو منتهي الصلاحية',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
-            ),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    });
+    context.read<RideBloc>().add(ApplyPromoCode(_promoController.text.trim()));
   }
 
   @override
@@ -74,49 +47,78 @@ class _PromoCodePageState extends State<PromoCodePage> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () => context.pop(),
-          ),
-          title: Text(
-            'كود الخصم',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppSpacing.h32,
-                
-                Center(
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.discount_rounded,
-                      color: Color(0xFF3B82F6),
-                      size: 50,
-                    ),
-                  ),
+      child: BlocConsumer<RideBloc, RideState>(
+        listener: (context, state) {
+          if (state is PromoCodeApplied) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'تم تفعيل كود الخصم بنجاح! خصم ${(state.discountPercentage * 100).toInt()}% على رحلتك',
+                  style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
                 ),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            context.pop();
+          } else if (state is PromoCodeInvalid) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  state.message,
+                  style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                ),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          } else if (state is RideLoading) {
+            setState(() => _isLoading = true);
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+                onPressed: () => context.pop(),
+              ),
+              title: Text(
+                'كود الخصم',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: isDark ? AppColors.white : AppColors.gray900,
+                ),
+              ),
+            ),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSpacing.h32,
+                    
+                    Center(
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.discount_rounded,
+                          color: Color(0xFF3B82F6),
+                          size: 50,
+                        ),
+                      ),
+                    ),
                 
                 AppSpacing.h32,
                 
@@ -131,7 +133,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
                 ),
                 AppSpacing.h8,
                 Text(
-                  'أدخل الرمز الترويجي للحصول على خصومات حصرية لرحلات الدراجات النارية والتوصيل.',
+                  'أدخل الرمز الترويجي للحصول على خصومات حصرية لرحلاتك.',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 14,
@@ -145,10 +147,10 @@ class _PromoCodePageState extends State<PromoCodePage> {
                 // Input Field
                 Container(
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.white.withOpacity(0.03) : AppColors.gray50,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.03) : AppColors.gray50,
                     borderRadius: AppSpacing.radiusMD,
                     border: Border.all(
-                      color: isDark ? AppColors.white.withOpacity(0.1) : AppColors.gray300,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
                     ),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 4),
@@ -194,7 +196,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
                       foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD,
                       ),
                     ),
@@ -219,8 +221,9 @@ class _PromoCodePageState extends State<PromoCodePage> {
             ),
           ),
         ),
+      );
+        },
       ),
     );
   }
 }
-

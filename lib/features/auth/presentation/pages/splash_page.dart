@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -23,6 +24,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   late Animation<double> _glowAnimation;
 
   Timer? _navigationTimer;
+  final _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -61,7 +63,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     _animationController.forward();
 
     // Wait for the full loading duration before pushing landing screen
-    _navigationTimer = Timer(const Duration(milliseconds: 3200), _navigateToLanding);
+    _navigationTimer = Timer(const Duration(milliseconds: 3200), _navigateSmart);
   }
 
   @override
@@ -71,8 +73,16 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  void _navigateToLanding() {
-    if (mounted) {
+  /// Smart navigation: check if user is already logged in
+  Future<void> _navigateSmart() async {
+    if (!mounted) return;
+    final token = await _storage.read(key: 'sanctum_token');
+    if (!mounted) return;
+    if (token != null && token.isNotEmpty) {
+      // User is already logged in — go to passenger home as default
+      // (The app will redirect if needed based on profile)
+      context.go(LaffahRoutes.passengerHome);
+    } else {
       context.go(LaffahRoutes.authLanding);
     }
   }
@@ -82,8 +92,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      body: Stack(
+body: Stack(
         alignment: Alignment.center,
         children: [
           // Background subtle warm orange radial glow element
@@ -99,7 +108,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF6B00).withOpacity(isDark ? 0.09 : 0.05),
+                        color: const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.09 : 0.05),
                         blurRadius: _glowAnimation.value * 2,
                         spreadRadius: _glowAnimation.value,
                       ),
@@ -153,7 +162,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                           child: LinearProgressIndicator(
                             color: const Color(0xFFFF6B00),
                             backgroundColor: isDark
-                                ? AppColors.white.withOpacity(0.08)
+                                ? AppColors.white.withValues(alpha: 0.08)
                                 : AppColors.gray200,
                           ),
                         ),

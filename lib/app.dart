@@ -48,11 +48,9 @@ class LaffahApp extends StatelessWidget {
 
           // Global builder: enforce RTL + disable text scaling
           builder: (BuildContext context, Widget? child) {
-            return MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                // Prevent layout overflow when system font size is increased
-                textScaler: TextScaler.noScaling,
-              ),
+            return MediaQuery.withClampedTextScaling(
+              minScaleFactor: 1.0,
+              maxScaleFactor: 1.3,
               child: Directionality(
                 textDirection: TextDirection.rtl,
                 child: child ?? const SizedBox.shrink(),

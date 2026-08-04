@@ -87,7 +87,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 width: 48,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.white.withOpacity(0.12) : AppColors.gray300,
+                  color: isDark ? AppColors.white.withValues(alpha: 0.12) : AppColors.gray300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -96,10 +96,10 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.15),
+                  color: AppColors.success.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.success.withOpacity(0.3),
+                    color: AppColors.success.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -140,11 +140,11 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
                   color: isDark 
-                      ? AppColors.backgroundDark.withOpacity(0.4) 
-                      : AppColors.surfaceLight.withOpacity(0.6),
+                      ? AppColors.backgroundDark.withValues(alpha: 0.4) 
+                      : AppColors.surfaceLight.withValues(alpha: 0.6),
                   borderRadius: AppSpacing.borderLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withOpacity(0.06) : AppColors.gray200,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.06) : AppColors.gray200,
                     width: 1.0,
                   ),
                 ),
@@ -259,13 +259,13 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     color: isDark ? AppColors.gray500 : AppColors.gray400,
                   ),
                   filled: true,
-                  fillColor: isDark ? Colors.black.withOpacity(0.2) : AppColors.white,
+                  fillColor: isDark ? Colors.black.withValues(alpha: 0.2) : AppColors.white,
                   counterStyle: const TextStyle(fontSize: 10, fontFamily: 'IBM Plex Sans Arabic'),
                   contentPadding: const EdgeInsets.all(AppSpacing.s12),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: AppSpacing.borderMD,
                     borderSide: BorderSide(
-                      color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray300,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray300,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -289,7 +289,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     borderRadius: AppSpacing.borderMD,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary500.withOpacity(0.3),
+                        color: AppColors.primary500.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -338,17 +338,17 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.support_agent_rounded,
                       color: AppColors.info,
                       size: 18,
                     ),
                     AppSpacing.w8,
-                    const Text(
-                      'واجهت مشكلة؟ فتح تذكرة دعم',
+                    Text(
+                      'واجهت مشكلة؟ تواصل مع الدعم',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

@@ -14,8 +14,7 @@ class ParcelHistoryPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -106,7 +105,7 @@ class ParcelHistoryPage extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -114,7 +113,7 @@ class ParcelHistoryPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.inventory_2_rounded, color: statusColor, size: 24),
@@ -139,7 +138,7 @@ class ParcelHistoryPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

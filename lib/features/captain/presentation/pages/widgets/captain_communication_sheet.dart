@@ -65,7 +65,7 @@ class CaptainCommunicationSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final List<String> quickMessages = const [
+    const List<String> quickMessages = [
       'أنا وصلت موقع الاستلام وبانتظارك 📍',
       'أنا في الطريق وفي الزحمة دقيقتين وأصل 🛵',
       'يرجى التجهز والانتظار مكانك ⏱️',

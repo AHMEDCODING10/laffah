@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
+import '../bloc/profile_bloc.dart';
+import '../bloc/profile_event.dart';
+import '../bloc/profile_state.dart';
+import '../../domain/entities/saved_place_entity.dart';
 
 /// Enum representing the preset type of a saved place
 enum PlaceType {
@@ -46,7 +51,6 @@ class SavedPlacesPage extends StatefulWidget {
 }
 
 class _SavedPlacesPageState extends State<SavedPlacesPage> {
-  late List<SavedPlace> _savedPlaces;
   final _formKey = GlobalKey<FormState>();
   
   final TextEditingController _nameController = TextEditingController();
@@ -59,64 +63,9 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   @override
   void initState() {
     super.initState();
-    _initializeSavedPlaces();
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _addressController.dispose();
-    super.dispose();
-  }
-
-  void _initializeSavedPlaces() {
-    _savedPlaces = [
-      SavedPlace(
-        id: 'place_1',
-        name: 'المنزل (بيت العائلة)',
-        addressDetails: 'صنعاء، حي حدة، خلف بريد حدة السكني',
-        latitude: 15.3585,
-        longitude: 44.1872,
-        type: PlaceType.home,
-        icon: Icons.home_rounded,
-      ),
-      SavedPlace(
-        id: 'place_2',
-        name: 'مقر العمل الحالي',
-        addressDetails: 'شارع الزبيري، برج الأمل التجاري، الطابق الرابع',
-        latitude: 15.3712,
-        longitude: 44.1954,
-        type: PlaceType.work,
-        icon: Icons.business_center_rounded,
-      ),
-      SavedPlace(
-        id: 'place_3',
-        name: 'بوابة جامعة صنعاء الرئيسية',
-        addressDetails: 'شارع الدائري الغربي، البوابة الغربية المقابلة للمكتبة',
-        latitude: 15.3782,
-        longitude: 44.1804,
-        type: PlaceType.university,
-        icon: Icons.school_rounded,
-      ),
-      SavedPlace(
-        id: 'place_4',
-        name: 'مركز الكميم التجاري',
-        addressDetails: 'شارع حدة العام، بجانب كافيه رويال',
-        latitude: 15.3605,
-        longitude: 44.1852,
-        type: PlaceType.shopping,
-        icon: Icons.local_mall_rounded,
-      ),
-      SavedPlace(
-        id: 'place_5',
-        name: 'مزار باب اليمن التاريخي',
-        addressDetails: 'صنعاء القديمة، أمام ساحة باب اليمن الرئيسية',
-        latitude: 15.3524,
-        longitude: 44.2140,
-        type: PlaceType.historic,
-        icon: Icons.castle_rounded,
-      ),
-    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileBloc>().add(GetSavedPlacesEvent());
+    });
   }
 
   IconData _getIconForType(PlaceType type) {
@@ -160,8 +109,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -212,14 +160,20 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                             color: isDark ? AppColors.white : AppColors.gray800,
                           ),
                         ),
-                        Text(
-                          '${_savedPlaces.length} مواقع محفوظة',
-                          style: const TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary500,
-                          ),
+                        BlocBuilder<ProfileBloc, ProfileState>(
+                          builder: (context, state) {
+                            int count = 0;
+                            if (state is SavedPlacesLoaded) count = state.places.length;
+                            return Text(
+                              '$count مواقع محفوظة',
+                              style: const TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary500,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -229,14 +183,54 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                     // ==========================================
                     // Interactive Places Grid/List
                     // ==========================================
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _savedPlaces.length,
-                      separatorBuilder: (context, index) => AppSpacing.h12,
-                      itemBuilder: (context, index) {
-                        return _buildPlaceCard(isDark, _savedPlaces[index]);
-                      },
+                    BlocBuilder<ProfileBloc, ProfileState>(
+                      builder: (context, state) {
+                        if (state is ProfileLoading) {
+                          return const Center(child: CircularProgressIndicator(color: AppColors.primary500));
+                        } else if (state is SavedPlacesLoaded) {
+                          final savedPlaces = state.places;
+                          if (savedPlaces.isEmpty) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: Text('لا توجد أماكن محفوظة بعد', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                              ),
+                            );
+                          }
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: savedPlaces.length,
+                            separatorBuilder: (context, index) => AppSpacing.h12,
+                            itemBuilder: (context, index) {
+                              final entity = savedPlaces[index];
+                              
+                              PlaceType parsedType = PlaceType.custom;
+                              if (entity.type == 'home') parsedType = PlaceType.home;
+                              if (entity.type == 'work') parsedType = PlaceType.work;
+
+                              final model = SavedPlace(
+                                id: entity.id,
+                                name: entity.name,
+                                addressDetails: entity.address,
+                                latitude: entity.lat,
+                                longitude: entity.lng,
+                                type: parsedType,
+                                icon: _getIconForType(parsedType),
+                              );
+                              return _buildPlaceCard(isDark, model);
+                            },
+                          );
+                        } else if (state is ProfileError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Text(state.message, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.danger)),
+                            ),
+                          );
+                        }
+                        return const SizedBox();
+                      }
                     ),
 
                     AppSpacing.h32,
@@ -264,7 +258,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.s12),
             decoration: BoxDecoration(
-              color: AppColors.primary500.withOpacity(0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -289,7 +283,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 ),
                 AppSpacing.h4,
                 Text(
-                  'اضغط على أي موقع محفوظ لحجز مشوارك فورياً دون الحاجة لكتابة العناوين مجدداً على الخارطة.',
+                  'اضغط على أي موقع محفوظ لحجز مشوارك فورياً دون الحاجة ظ„ظƒطھابة العناوين مجدداً على الخارطة.',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 11,
@@ -308,10 +302,10 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   Widget _buildPlaceCard(bool isDark, SavedPlace place) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withOpacity(0.6) : AppColors.white.withOpacity(0.9),
+        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.9),
         borderRadius: AppSpacing.borderLG,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
         ),
       ),
       child: ClipRRect(
@@ -323,7 +317,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
               leading: Container(
                 padding: const EdgeInsets.all(AppSpacing.s10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary500.withOpacity(0.1),
+                  color: AppColors.primary500.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -347,7 +341,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray100,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray100,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -414,10 +408,10 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: AppSpacing.s16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary500.withOpacity(0.05),
+                  color: AppColors.primary500.withValues(alpha: 0.05),
                   border: Border(
                     top: BorderSide(
-                      color: isDark ? AppColors.white.withOpacity(0.03) : AppColors.gray100,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.03) : AppColors.gray100,
                     ),
                   ),
                 ),
@@ -465,7 +459,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
         color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -552,9 +546,8 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _savedPlaces.removeWhere((p) => p.id == place.id);
-                });
+                // TODO: Implement delete logic in BLoC
+                // context.read<ProfileBloc>().add(DeleteSavedPlaceEvent(place.id));
                 Navigator.pop(ctx);
                 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -706,11 +699,11 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
                         filled: true,
-                        fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                        fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: AppSpacing.borderSM,
                           borderSide: BorderSide(
-                            color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+                            color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -776,11 +769,11 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 12),
                         filled: true,
-                        fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                        fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: AppSpacing.borderSM,
                           borderSide: BorderSide(
-                            color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+                            color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -824,7 +817,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () => _savePlaceSubmitted(editPlace),
+                        onPressed: () => _savePlaceSubmitted(editPlace, context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary500,
                           foregroundColor: AppColors.white,
@@ -890,11 +883,11 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           ),
           selected: isSelected,
           selectedColor: AppColors.primary500,
-          backgroundColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray100,
+          backgroundColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: BorderSide(
-              color: isSelected ? AppColors.primary500 : (isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200),
+              color: isSelected ? AppColors.primary500 : (isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
             ),
           ),
           onSelected: (selected) {
@@ -922,10 +915,10 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: AppColors.primary500.withOpacity(0.03),
+        color: AppColors.primary500.withValues(alpha: 0.03),
         borderRadius: AppSpacing.borderSM,
         border: Border.all(
-          color: AppColors.primary500.withOpacity(0.1),
+          color: AppColors.primary500.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -1019,39 +1012,19 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     );
   }
 
-  void _savePlaceSubmitted(SavedPlace? editPlace) {
+  void _savePlaceSubmitted(SavedPlace? editPlace, BuildContext context) {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        if (editPlace != null) {
-          // Edit existing place
-          final index = _savedPlaces.indexWhere((p) => p.id == editPlace.id);
-          if (index != -1) {
-            _savedPlaces[index] = SavedPlace(
-              id: editPlace.id,
-              name: _nameController.text.trim(),
-              addressDetails: _addressController.text.trim(),
-              latitude: _selectedLat,
-              longitude: _selectedLng,
-              type: _selectedType,
-              icon: _getIconForType(_selectedType),
-            );
-          }
-        } else {
-          // Add new place to list
-          final newId = 'place_custom_${DateTime.now().millisecondsSinceEpoch}';
-          _savedPlaces.add(
-            SavedPlace(
-              id: newId,
-              name: _nameController.text.trim(),
-              addressDetails: _addressController.text.trim(),
-              latitude: _selectedLat,
-              longitude: _selectedLng,
-              type: _selectedType,
-              icon: _getIconForType(_selectedType),
-            ),
-          );
-        }
-      });
+      final newEntity = SavedPlaceEntity(
+        id: editPlace?.id ?? 'place_custom_${DateTime.now().millisecondsSinceEpoch}',
+        name: _nameController.text.trim(),
+        address: _addressController.text.trim(),
+        lat: _selectedLat,
+        lng: _selectedLng,
+        type: _selectedType.name,
+      );
+
+      // Trigger Bloc Event
+      context.read<ProfileBloc>().add(AddSavedPlaceEvent(newEntity));
 
       // Close sheet
       Navigator.pop(context);
@@ -1067,7 +1040,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 const Icon(Icons.check_circle_rounded, color: AppColors.white, size: 20),
                 AppSpacing.w12,
                 Text(
-                  editPlace != null ? 'تم تعديل الموقع وحفظ التغييرات!' : 'تم إضافة وحفظ الموقع المفضل الجديد بنجاح!',
+                  editPlace != null ? 'تم تحديث تفاصيل الموقع بنجاح!' : 'تم إضافة موقعك المفضل بنجاح!',
                   style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 12,
@@ -1137,7 +1110,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 AppSpacing.h8,
 
                 Text(
-                  'سيقوم النظام بحساب تسعيرة الأجرة فورياً وإرسال كابتن الدراجة النارية الأقرب لموقعك الحالي في صنعاء.',
+                  'سيقوم النظام بحساب تسعيرة الأجرة فورياً وإرسال كابتن ط§ظ„دراجة النارية الأقرب لموقعك الحالي في صنعاء.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
@@ -1153,9 +1126,9 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.s12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary500.withOpacity(0.04),
+                    color: AppColors.primary500.withValues(alpha: 0.04),
                     borderRadius: AppSpacing.borderSM,
-                    border: Border.all(color: AppColors.primary500.withOpacity(0.1)),
+                    border: Border.all(color: AppColors.primary500.withValues(alpha: 0.1)),
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1192,7 +1165,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                         onPressed: () => Navigator.pop(ctx),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: isDark ? AppColors.white.withOpacity(0.12) : AppColors.gray300),
+                          side: BorderSide(color: isDark ? AppColors.white.withValues(alpha: 0.12) : AppColors.gray300),
                           shape: RoundedRectangleBorder(
                             borderRadius: AppSpacing.borderMD,
                           ),
@@ -1212,7 +1185,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(ctx); // Close sheet
-                          _executeMockBooking(place);
+                          _executeBooking(place);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary500,
@@ -1241,116 +1214,23 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     );
   }
 
-  void _executeMockBooking(SavedPlace place) {
-    // Show beautiful booking simulation banner
+  void _executeBooking(SavedPlace place) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.black,
-        duration: const Duration(seconds: 4),
+      const SnackBar(
+        backgroundColor: AppColors.info,
         content: Directionality(
           textDirection: TextDirection.rtl,
-          child: Row(
-            children: [
-              const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
-                ),
-              ),
-              AppSpacing.w12,
-              Expanded(
-                child: Text(
-                  'جاري البحث عن كابتن دراجة نارية للتوصيل إلى "${place.name}"... يرجى البقاء في التطبيق.',
-                  style: const TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-            ],
+          child: Text(
+            'سيتم تفعيل الحجز السريع عند الانتهاء من ربط الباك-اند ط¨ط§لكامل.',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+              color: AppColors.white,
+            ),
           ),
         ),
       ),
     );
-
-    // Simulated match success
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.surfaceDark
-                  : AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: AppSpacing.borderLG,
-              ),
-              icon: const Icon(
-                Icons.check_circle_rounded,
-                color: AppColors.success,
-                size: 45,
-              ),
-              title: const Text(
-                'تم قبول مشوارك السريع!',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'الكابتن: محمد علي الأهدل (دراجة رقم: ص-2394)',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                  AppSpacing.h8,
-                  const Text(
-                    'الوقت المتوقع للوصول لموقعك: 3 دقائق.\nيرجى تجهيز مبلغ 1,300 ريال يمني نقداً كقيمة متفق عليها للمشوار.',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 12,
-                      height: 1.4,
-                      color: AppColors.gray600,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary500,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppSpacing.borderXS,
-                    ),
-                  ),
-                  child: const Text(
-                    'موافق، تتبع الرحلة',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-    });
   }
 }

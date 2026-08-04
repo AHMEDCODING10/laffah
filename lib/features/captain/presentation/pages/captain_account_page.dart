@@ -5,6 +5,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/di/injection_container.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_event.dart';
+import '../../../profile/presentation/bloc/profile_state.dart';
 import 'widgets/captain_account_dialogs.dart';
 
 /// CaptainAccountPage - Overhauled interactive profile dashboard for Laffah Captains.
@@ -18,10 +23,40 @@ class CaptainAccountPage extends StatefulWidget {
 }
 
 class _CaptainAccountPageState extends State<CaptainAccountPage> {
-  // Mock Dynamic Profile State
+  late ProfileBloc _profileBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileBloc = sl<ProfileBloc>()..add(GetProfileEvent());
+  }
+
+  @override
+  void dispose() {
+    _profileBloc.close();
+    super.dispose();
+  }
+
+  // Fallback Avatar Widget extracting the first letter
+  Widget _buildFallbackAvatar(String name) {
+    String firstLetter = 'ك'; // default fallback 'كابتن'
+    if (name.isNotEmpty && name != 'جاري التحميل...') {
+      firstLetter = name.trim().characters.first.toUpperCase();
+    }
+    return Text(
+      firstLetter,
+      style: const TextStyle(
+        fontFamily: 'IBM Plex Sans Arabic',
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  // Mock Dynamic Profile State (fallback values if bloc fails)
   String _captainName = 'أحمد محمد يحيى';
   String _captainPhone = '771234567';
-  String _captainRating = '4.9';
   String _selectedLang = 'ar'; // Default language Arabic
 
   final Map<String, String> _vehicleInfo = {
@@ -156,79 +191,110 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                     BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04), blurRadius: 10),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(2.5),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppColors.primaryGradient,
-                      ),
-                      child: const CircleAvatar(
-                        radius: 32,
-                        backgroundColor: Color(0xFFFF6B00),
-                        child: Icon(Icons.person_rounded, size: 34, color: Colors.white),
-                      ),
-                    ),
-                    AppSpacing.w16,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _captainName,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              color: isDark ? Colors.white : AppColors.gray900,
-                            ),
+                child: BlocBuilder<ProfileBloc, ProfileState>(
+                  bloc: _profileBloc,
+                  builder: (context, state) {
+                    String name = 'جاري التحميل...';
+                    String rating = '0.0';
+                    String? avatarUrl;
+
+                    if (state is ProfileLoaded) {
+                      name = state.profile.name;
+                      rating = '4.9'; // Fallback if rating isn't in profile yet
+                      avatarUrl = state.profile.avatarUrl; 
+                    } else if (state is ProfileError) {
+                      name = 'كابتن لَفَّة';
+                    }
+
+                    Widget avatarChild;
+                    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                      avatarChild = ClipOval(
+                        child: Image.network(
+                          avatarUrl,
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildFallbackAvatar(name),
+                        ),
+                      );
+                    } else {
+                      avatarChild = _buildFallbackAvatar(name);
+                    }
+
+                    return Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(2.5),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: AppColors.primaryGradient,
                           ),
-                          AppSpacing.h4,
-                          Row(
+                          child: CircleAvatar(
+                            radius: 32,
+                            backgroundColor: const Color(0xFFFF6B00),
+                            child: avatarChild,
+                          ),
+                        ),
+                        AppSpacing.w16,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Text(
-                                  'كابتن متميز',
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-                                    color: Color(0xFFFF6B00),
-                                    fontWeight: FontWeight.w900,
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                  ),
+                              Text(
+                                name,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  color: isDark ? Colors.white : AppColors.gray900,
                                 ),
                               ),
-                              AppSpacing.w8,
-                              const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                              AppSpacing.w2,
+                              AppSpacing.h4,
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Text(
+                                      'كابتن متميز',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        color: Color(0xFFFF6B00),
+                                        fontWeight: FontWeight.w900,
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                      ),
+                                    ),
+                                  ),
+                                  AppSpacing.w8,
+                                  const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                                  AppSpacing.w2,
+                                  Text(
+                                    rating,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? AppColors.gray300 : AppColors.gray700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              AppSpacing.h8,
                               Text(
-                                _captainRating,
-                                style: TextStyle(
-                                  fontSize: 12,
+                                '${_vehicleInfo['type']} • لوحة: ${_vehicleInfo['plate']}',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: AppColors.gray500,
+                                  fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? AppColors.gray300 : AppColors.gray700,
                                 ),
                               ),
                             ],
                           ),
-                          AppSpacing.h8,
-                          Text(
-                            '${_vehicleInfo['type']} • لوحة: ${_vehicleInfo['plate']}',
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              color: AppColors.gray500,
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
                     IconButton(
                       icon: const Icon(Icons.edit_note_rounded, color: Color(0xFFFF6B00), size: 28),
                       onPressed: () {
@@ -257,8 +323,10 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                       },
                     ),
                   ],
-                ),
-              ),
+                );
+              },
+            ),
+          ),
 
               AppSpacing.h20,
 
@@ -449,28 +517,31 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               AppSpacing.h24,
 
               // 6. LOG OUT BUTTON
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.error.withValues(alpha: 0.12)),
-                ),
-                child: ListTile(
-                  onTap: () => _showLogoutConfirmDialog(context),
-                  leading: Container(
-                    padding: const EdgeInsets.all(AppSpacing.s8),
-                    decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
-                    child: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+              Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.12)),
                   ),
-                  title: const Text(
-                    'تسجيل الخروج',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.error, fontFamily: 'IBM Plex Sans Arabic'),
+                  child: ListTile(
+                    onTap: () => _showLogoutConfirmDialog(context),
+                    leading: Container(
+                      padding: const EdgeInsets.all(AppSpacing.s8),
+                      decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
+                      child: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+                    ),
+                    title: const Text(
+                      'تسجيل الخروج',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.error, fontFamily: 'IBM Plex Sans Arabic'),
+                    ),
+                    subtitle: const Text(
+                      'قم بالخروج الآمن من النظام وإلغاء استقبال الرحلات',
+                      style: TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.error),
                   ),
-                  subtitle: const Text(
-                    'قم بالخروج الآمن من النظام وإلغاء استقبال الرحلات',
-                    style: TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.error),
                 ),
               ),
 
@@ -526,16 +597,18 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.s10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          ),
         ),
-      ),
-      child: ListTile(
+        child: ListTile(
         onTap: () {
           HapticFeedback.lightImpact();
           onTap();
@@ -555,8 +628,9 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSwitchSettingItem({
     required IconData icon,
@@ -566,34 +640,37 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
     required ValueChanged<bool> onChanged,
     required bool isDark,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.s10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          ),
         ),
-      ),
-      child: SwitchListTile.adaptive(
-        value: value,
-        onChanged: (val) {
-          HapticFeedback.selectionClick();
-          onChanged(val);
-        },
-        activeColor: const Color(0xFFFF6B00),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
-        ),
-        secondary: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: const Color(0xFFFF6B00).withValues(alpha: 0.08), shape: BoxShape.circle),
-          child:  Icon(icon, color: Color(0xFFFF6B00), size: 20),
+        child: SwitchListTile.adaptive(
+          value: value,
+          onChanged: (val) {
+            HapticFeedback.selectionClick();
+            onChanged(val);
+          },
+          activeTrackColor: const Color(0xFFFF6B00),
+          title: Text(
+            title,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: const TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
+          ),
+          secondary: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: const Color(0xFFFF6B00).withValues(alpha: 0.08), shape: BoxShape.circle),
+            child:  Icon(icon, color: const Color(0xFFFF6B00), size: 20),
+          ),
         ),
       ),
     );
@@ -625,7 +702,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  context.go(LaffahRoutes.roleSelection);
+                  context.go(LaffahRoutes.authLanding);
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                 child: const Text('تأكيد الخروج', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic')),

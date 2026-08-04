@@ -17,10 +17,12 @@ import '../bloc/auth_state.dart';
 /// and quick "تعديل رقم الهاتف" navigation trigger.
 class OTPVerificationPage extends StatefulWidget {
   final String phoneNumber;
+  final String role;
 
   const OTPVerificationPage({
     super.key,
     required this.phoneNumber,
+    this.role = 'passenger',
   });
 
   @override
@@ -83,7 +85,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
   void _handleVerify() {
     final String otpCode = _controllers.map((c) => c.text).join();
     if (otpCode.length == 4) {
-      context.read<AuthBloc>().add(VerifyOTPCode(widget.phoneNumber, otpCode));
+      context.read<AuthBloc>().add(VerifyOTPCode(widget.phoneNumber, otpCode, role: widget.role));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -144,8 +146,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
     return Directionality(
       textDirection: TextDirection.rtl, // RTL support
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -170,9 +171,36 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
         body: SafeArea(
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
-              if (state is AuthSuccess) {
-                // Navigate directly to passenger home dashboard
-                context.go(LaffahRoutes.passengerHome);
+              if (state is AuthCodeSent) {
+                if (state.verificationId != 'register_flow' && state.verificationId.isNotEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      content: Text(
+                        'كود التحقق للتجربة: ${state.verificationId}',
+                        style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      duration: const Duration(seconds: 10),
+                    ),
+                  );
+                }
+              } else if (state is AuthSuccess) {
+                // Navigate to the correct home based on user role
+                if (state.role == 'captain') {
+                  context.go(LaffahRoutes.captainHome);
+                } else {
+                  context.go(LaffahRoutes.passengerHome);
+                }
               } else if (state is AuthFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -303,12 +331,12 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                                       onChanged: (value) => _onTileChanged(index, value),
                                       decoration: InputDecoration(
                                         filled: true,
-                                        fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                                        fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                                         contentPadding: EdgeInsets.zero,
                                         enabledBorder: OutlineInputBorder(
                                           borderRadius: AppSpacing.borderMD,
                                           borderSide: BorderSide(
-                                            color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray300,
+                                            color: isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray300,
                                             width: 1.2,
                                           ),
                                         ),
@@ -375,7 +403,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
                                   backgroundColor: const Color(0xFFFF6B00),
                                   foregroundColor: AppColors.white,
                                   elevation: 2,
-                                  shadowColor: const Color(0xFFFF6B00).withOpacity(0.3),
+                                  shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.3),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: AppSpacing.borderMD,
                                   ),
@@ -405,36 +433,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
 
                       const SizedBox(height: 32),
 
-                      // Mock hints to guide the user sandbox
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.s16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF6B00).withOpacity(0.05),
-                          borderRadius: AppSpacing.borderMD,
-                          border: Border.all(
-                            color: const Color(0xFFFF6B00).withOpacity(0.12),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.info_outline_rounded, color: Color(0xFFFF6B00), size: 18),
-                            AppSpacing.w12,
-                            const Expanded(
-                              child: Text(
-                                'وضع الاختبار: أدخل أي رمز مكوّن من 4 أرقام لتجاوز هذه الشاشة.',
-                                style: TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFF6B00),
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+
                     ],
                   ),
                 ),

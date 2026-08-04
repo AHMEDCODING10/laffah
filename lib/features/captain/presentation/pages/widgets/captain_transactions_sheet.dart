@@ -4,17 +4,19 @@ import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 
+import '../../../domain/entities/captain_transaction_entity.dart';
+
 /// CaptainTransactionsSheet — Comprehensive transaction history bottom sheet.
 /// Displays all ride earnings, payout withdrawals, and platform commissions.
 class CaptainTransactionsSheet extends StatefulWidget {
-  final List<Map<String, dynamic>> transactions;
+  final List<CaptainTransactionEntity> transactions;
 
   const CaptainTransactionsSheet({
     super.key,
     required this.transactions,
   });
 
-  static void show(BuildContext context, List<Map<String, dynamic>> transactions) {
+  static void show(BuildContext context, List<CaptainTransactionEntity> transactions) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
@@ -31,16 +33,16 @@ class CaptainTransactionsSheet extends StatefulWidget {
 class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
   String _selectedFilter = 'الكل'; // 'الكل', 'أرباح', 'سحوبات'
 
-  List<Map<String, dynamic>> get _filteredTransactions {
+  List<CaptainTransactionEntity> get _filteredTransactions {
     if (_selectedFilter == 'أرباح') {
-      return widget.transactions.where((t) => t['isNegative'] == false).toList();
+      return widget.transactions.where((t) => !t.isNegative).toList();
     } else if (_selectedFilter == 'سحوبات') {
-      return widget.transactions.where((t) => t['isNegative'] == true).toList();
+      return widget.transactions.where((t) => t.isNegative).toList();
     }
     return widget.transactions;
   }
 
-  void _showTransactionDetails(Map<String, dynamic> item, bool isDark) {
+  void _showTransactionDetails(CaptainTransactionEntity item, bool isDark) {
     HapticFeedback.lightImpact();
     showDialog(
       context: context,
@@ -52,15 +54,15 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
           title: Row(
             children: [
               Icon(
-                item['isNegative'] == true
+                item.isNegative
                     ? Icons.account_balance_rounded
                     : Icons.motorcycle_rounded,
-                color: item['isNegative'] == true ? AppColors.danger : const Color(0xFFFF6B00),
+                color: item.isNegative ? AppColors.danger : const Color(0xFFFF6B00),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  item['title'] ?? 'تفاصيل المعاملة',
+                  item.title,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 15,
@@ -74,13 +76,13 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('المبلغ', '${item['amount']} ر.ي', isDark, isHighlight: true),
+              _buildDetailRow('المبلغ', '${item.isNegative ? '-' : '+'} ${item.amount} ر.ي', isDark, isHighlight: true),
               const SizedBox(height: 8),
-              _buildDetailRow('الحالة', item['statusText'] ?? 'مكتمل', isDark),
+              _buildDetailRow('الحالة', item.status, isDark),
               const SizedBox(height: 8),
-              _buildDetailRow('الوقت والتاريخ', item['time'] ?? 'اليوم', isDark),
+              _buildDetailRow('الوقت والتاريخ', item.date, isDark),
               const SizedBox(height: 8),
-              _buildDetailRow('الرقم المرجعي', item['refId'] ?? 'REF-9920182', isDark),
+              _buildDetailRow('الرقم المرجعي', item.refId, isDark),
             ],
           ),
           actions: [
@@ -233,8 +235,8 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                             physics: const BouncingScrollPhysics(),
                             itemBuilder: (context, index) {
                               final item = list[index];
-                              final bool isNegative = item['isNegative'] == true;
-                              final Color statusColor = (item['statusColor'] as Color?) ?? AppColors.success;
+                              final bool isNegative = item.isNegative;
+                              final Color statusColor = isNegative ? AppColors.warning : AppColors.success;
 
                               return GestureDetector(
                                 onTap: () => _showTransactionDetails(item, isDark),
@@ -247,7 +249,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                         : AppColors.gray50,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                                     ),
                                   ),
                                   child: Row(
@@ -259,15 +261,15 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
                                               color: isNegative
-                                                  ? AppColors.danger.withValues(alpha: 0.12)
-                                                  : const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                                                  ? AppColors.danger.withValues(alpha: 0.1)
+                                                  : const Color(0xFFFF6B00).withValues(alpha: 0.1),
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
                                               isNegative
                                                   ? Icons.account_balance_rounded
                                                   : Icons.motorcycle_rounded,
-                                              size: 18,
+                                              size: 20,
                                               color: isNegative ? AppColors.danger : const Color(0xFFFF6B00),
                                             ),
                                           ),
@@ -276,21 +278,21 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                item['title'] ?? '',
+                                                item.title,
                                                 style: TextStyle(
-                                                  fontFamily: 'IBM Plex Sans Arabic',
-                                                  fontWeight: FontWeight.bold,
                                                   fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'IBM Plex Sans Arabic',
                                                   color: isDark ? Colors.white : AppColors.gray900,
                                                 ),
                                               ),
-                                              const SizedBox(height: 2),
+                                              AppSpacing.h4,
                                               Text(
-                                                item['time'] ?? '',
+                                                item.date,
                                                 style: const TextStyle(
-                                                  fontFamily: 'IBM Plex Sans Arabic',
                                                   fontSize: 10.5,
                                                   color: AppColors.gray500,
+                                                  fontFamily: 'IBM Plex Sans Arabic',
                                                 ),
                                               ),
                                             ],
@@ -301,15 +303,15 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
                                           Text(
-                                            '${item['amount']} ر.ي',
+                                            '${isNegative ? '-' : '+'} ${item.amount} ر.ي',
                                             style: TextStyle(
-                                              fontFamily: 'IBM Plex Sans Arabic',
+                                              fontSize: 14.5,
                                               fontWeight: FontWeight.w900,
-                                              fontSize: 14,
                                               color: isNegative ? AppColors.danger : const Color(0xFFFF6B00),
+                                              fontFamily: 'IBM Plex Sans Arabic',
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
+                                          AppSpacing.h4,
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
@@ -317,12 +319,12 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                               borderRadius: BorderRadius.circular(10),
                                             ),
                                             child: Text(
-                                              item['statusText'] ?? '',
+                                              item.status,
                                               style: TextStyle(
-                                                fontFamily: 'IBM Plex Sans Arabic',
                                                 fontSize: 9.5,
                                                 fontWeight: FontWeight.bold,
                                                 color: statusColor,
+                                                fontFamily: 'IBM Plex Sans Arabic',
                                               ),
                                             ),
                                           ),

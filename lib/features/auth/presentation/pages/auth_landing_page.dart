@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_logo.dart';
-import 'phone_number_input_page.dart';
-import 'register_passenger_page.dart';
-import 'register_captain_page.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/router/app_router.dart';
+
 
 /// AuthLandingPage - Elegant gateway where passengers and captains begin their Laffah journey.
 /// Implements beautiful, high-contrast layouts, Glassmorphic cards, complete RTL support,
@@ -22,60 +19,23 @@ class AuthLandingPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl, // RTL Layout first
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         body: SafeArea(
-          child: Stack(
-            children: [
-              // 1. Skip Button at the top-left (or top-right in RTL, let's put it on top-left)
-              Positioned(
-                top: AppSpacing.s12,
-                left: AppSpacing.s16,
-                child: TextButton(
-                  onPressed: () {
-                    // Navigate to home dashboard bypassing authentication via GoRouter
-                    context.go(LaffahRoutes.passengerHome);
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFFF6B00),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s16,
-                      vertical: AppSpacing.s8,
-                    ),
-                  ),
-                  child: const Row(
-                    children: [
-                      Text(
-                        'تخطي',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(Icons.double_arrow_rounded, size: 16),
-                    ],
-                  ),
-                ),
+          child: Center(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s24,
+                vertical: AppSpacing.s40,
               ),
-
-              // 2. Main Content Scrollable
-              SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s24,
-                  vertical: AppSpacing.s40,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 48),
-
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                     // Brand Logo Mark
                     const LaffahLogo(
                       height: 120,
                       width: 120,
-                      showSubtitle: true,
+                      showSubtitle: false,
                     ),
 
                     const SizedBox(height: 40),
@@ -117,12 +77,7 @@ class AuthLandingPage extends StatelessWidget {
                       icon: Icons.person_pin_circle_rounded,
                       buttonText: 'إنشاء حساب راكب',
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterPassengerPage(),
-                          ),
-                        );
+                        context.push('/auth/register/passenger');
                       },
                     ),
 
@@ -138,12 +93,7 @@ class AuthLandingPage extends StatelessWidget {
                       buttonText: 'التسجيل ككابتن لَفَّة',
                       accentColor: const Color(0xFFFF6B00),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterCaptainPage(),
-                          ),
-                        );
+                        context.push('/auth/register/captain');
                       },
                     ),
 
@@ -164,12 +114,7 @@ class AuthLandingPage extends StatelessWidget {
                         const SizedBox(width: AppSpacing.s8),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PhoneNumberInputPage(),
-                              ),
-                            );
+                            context.push('/auth/phone');
                           },
                           child: const Text(
                             'تسجيل الدخول',
@@ -189,8 +134,7 @@ class AuthLandingPage extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
         ),
       ),
     );

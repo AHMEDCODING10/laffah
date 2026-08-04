@@ -15,8 +15,7 @@ class NotificationsPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -100,13 +99,13 @@ class NotificationsPage extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
         color: isUnread 
-            ? (isDark ? color.withOpacity(0.1) : color.withOpacity(0.05))
+            ? (isDark ? color.withValues(alpha: 0.1) : color.withValues(alpha: 0.05))
             : (isDark ? AppColors.surfaceDark : AppColors.white),
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
           color: isUnread 
-              ? color.withOpacity(0.3) 
-              : (isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200),
+              ? color.withValues(alpha: 0.3) 
+              : (isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
         ),
       ),
       child: Row(
@@ -115,7 +114,7 @@ class NotificationsPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),

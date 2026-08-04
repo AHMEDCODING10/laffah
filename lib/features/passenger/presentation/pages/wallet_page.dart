@@ -3,10 +3,28 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
-/// WalletPage — Displays Passenger's balance in YER (Yemeni Rial) and recent transactions.
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/wallet_bloc.dart';
+import '../bloc/wallet_event.dart';
+import '../bloc/wallet_state.dart';
+
+/// WalletPage - Displays Passenger's balance in YER (Yemeni Rial) and recent transactions.
 /// Emphasizes local payment channels (Al-Kuraimi, Floos, Jawali).
-class WalletPage extends StatelessWidget {
+class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
+
+  @override
+  State<WalletPage> createState() => _WalletPageState();
+}
+
+class _WalletPageState extends State<WalletPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WalletBloc>().add(GetWalletBalanceEvent());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +33,7 @@ class WalletPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -52,7 +69,7 @@ class WalletPage extends StatelessWidget {
                   borderRadius: AppSpacing.radiusLG,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF6B00).withOpacity(0.3),
+                      color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
@@ -66,37 +83,48 @@ class WalletPage extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                     AppSpacing.h8,
-                    const Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '4,500',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 40,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            'ريال (YER)',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
+                    BlocBuilder<WalletBloc, WalletState>(
+                      builder: (context, state) {
+                        if (state is WalletLoading) {
+                          return const CircularProgressIndicator(color: Colors.white);
+                        } else if (state is WalletError) {
+                          return Text(state.message, style: const TextStyle(color: Colors.white, fontSize: 12));
+                        } else if (state is WalletBalanceLoaded) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                state.wallet.balance.toStringAsFixed(0),
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  height: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 6),
+                                child: Text(
+                                  'ريال (YER)',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return const Text('...', style: TextStyle(color: Colors.white, fontSize: 40));
+                      }
                     ),
                     AppSpacing.h24,
                     Row(
@@ -108,7 +136,7 @@ class WalletPage extends StatelessWidget {
                               backgroundColor: Colors.white,
                               foregroundColor: const Color(0xFFFF6B00),
                               elevation: 0,
-                              shape: RoundedRectangleBorder(
+                              shape: const RoundedRectangleBorder(
                                 borderRadius: AppSpacing.radiusMD,
                               ),
                             ),
@@ -191,7 +219,7 @@ class WalletPage extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -200,8 +228,8 @@ class WalletPage extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isNegative 
-                  ? AppColors.danger.withOpacity(0.1)
-                  : AppColors.success.withOpacity(0.1),
+                  ? AppColors.danger.withValues(alpha: 0.1)
+                  : AppColors.success.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

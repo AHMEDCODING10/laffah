@@ -19,7 +19,7 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
   bool _autoAcceptRides = true;
   bool _soundNotifications = true;
   bool _receiveParcels = true;
-  String _selectedNavigationApp = 'خرائط جوجل';
+  final String _selectedNavigationApp = 'خرائط جوجل';
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +28,7 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -138,7 +137,7 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
                   foregroundColor: AppColors.danger,
                   side: const BorderSide(color: AppColors.danger),
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppSpacing.radiusMD,
                   ),
                 ),
@@ -165,11 +164,11 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
       padding: const EdgeInsets.only(left: 24, right: 24, bottom: 12, top: 8),
       child: Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 14,
           fontWeight: FontWeight.w900,
-          color: const Color(0xFFFF6B00),
+          color: Color(0xFFFF6B00),
         ),
       ),
     );
@@ -186,7 +185,7 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
     return SwitchListTile(
       value: value,
       onChanged: onChanged,
-      activeColor: const Color(0xFFFF6B00),
+      activeThumbColor: const Color(0xFFFF6B00),
       title: Text(
         title,
         style: TextStyle(
@@ -229,11 +228,11 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFFFF6B00),
+          color: Color(0xFFFF6B00),
         ),
       ),
       leading: Icon(icon, color: isDark ? AppColors.gray400 : AppColors.gray600),

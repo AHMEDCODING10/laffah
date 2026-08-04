@@ -1,3 +1,4 @@
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/base_response_model.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/ride_model.dart';
@@ -26,7 +27,7 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
     required double expectedPrice,
   }) async {
     final response = await dioClient.dio.post(
-      '/ride/request', // Replace with real ApiEndpoints.requestRide
+      ApiEndpoints.requestRide,
       data: {
         'pickup_location': pickupLocation,
         'dropoff_location': dropoffLocation,
@@ -40,8 +41,8 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
   @override
   Future<BaseResponseModel<void>> cancelRide(String rideId) async {
     final response = await dioClient.dio.post(
-      '/ride/$rideId/cancel', // Replace with real ApiEndpoints.cancelRide
+      ApiEndpoints.cancelRide(rideId),
     );
-    return BaseResponseModel.fromJson(response.data, (data) => null);
+    return BaseResponseModel.fromJson(response.data, (data) {});
   }
 }

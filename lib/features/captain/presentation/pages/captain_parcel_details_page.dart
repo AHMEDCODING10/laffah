@@ -18,8 +18,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -55,7 +54,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
                   ),
                 ),
                 child: Row(
@@ -63,7 +62,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withOpacity(0.1),
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.inventory_2_rounded, color: Color(0xFF3B82F6), size: 32),
@@ -97,7 +96,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withOpacity(0.1),
+                        color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                         borderRadius: AppSpacing.radiusMD,
                       ),
                       child: const Text(
@@ -134,7 +133,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusMD,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
                   ),
                 ),
                 child: Column(
@@ -214,7 +213,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.gray500,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
+                        shape: const RoundedRectangleBorder(
                           borderRadius: AppSpacing.radiusMD,
                         ),
                       ),
@@ -239,7 +238,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                         backgroundColor: const Color(0xFFFF6B00),
                         foregroundColor: AppColors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
+                        shape: const RoundedRectangleBorder(
                           borderRadius: AppSpacing.radiusMD,
                         ),
                       ),
@@ -278,7 +277,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             shape: BoxShape.circle,
             border: Border.all(color: color, width: 2),
           ),
@@ -334,7 +333,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -376,7 +375,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
             onPressed: () {},
             icon: const Icon(Icons.call_rounded, color: Color(0xFF22C55E)),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFF22C55E).withOpacity(0.1),
+              backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.1),
             ),
           ),
         ],

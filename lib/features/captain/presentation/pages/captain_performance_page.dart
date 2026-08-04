@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-
 import '../../../../core/router/app_router.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_state.dart';
 
 /// CaptainPerformancePage — A dashboard for Captains to view their rating,
 /// acceptance rate, cancellation rate, and overall performance metrics.
@@ -17,7 +19,6 @@ class CaptainPerformancePage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -42,85 +43,91 @@ class CaptainPerformancePage extends StatelessWidget {
             ),
           ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.s24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Rating Overview
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.s24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [const Color(0xFF1E293B), isDark ? const Color(0xFF0F172A) : const Color(0xFF334155)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: AppSpacing.radiusLG,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFFF6B00), width: 3),
+        body: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            String rating = '4.8';
+            if (state is ProfileLoaded) {
+              // rating from profile
+            }
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.s24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Rating Overview
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.s24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [const Color(0xFF1E293B), isDark ? const Color(0xFF0F172A) : const Color(0xFF334155)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      child: const Center(
-                        child: Text(
-                          '4.8',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                      borderRadius: AppSpacing.radiusLG,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFFF6B00), width: 3),
+                          ),
+                          child: Center(
+                            child: Text(
+                              rating,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    AppSpacing.w24,
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'التقييم العام',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 16,
-                              color: Colors.white70,
-                            ),
+                        AppSpacing.w24,
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'التقييم العام',
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 16,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'أداء ممتاز! حافظ على هذا المستوى للحصول على المزيد من طلبات التوصيل.',
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 12,
+                                  color: Colors.white54,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'أداء ممتاز! حافظ على هذا المستوى للحصول على المزيد من طلبات التوصيل.',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 12,
-                              color: Colors.white54,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              
-              AppSpacing.h32,
-              
-              Text(
-                'المؤشرات الرئيسية',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? AppColors.white : AppColors.gray900,
-                ),
-              ),
-              AppSpacing.h16,
+                  ),
+                  
+                  AppSpacing.h32,
+                  
+                  Text(
+                    'المؤشرات الرئيسية',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? AppColors.white : AppColors.gray900,
+                    ),
+                  ),
+                  AppSpacing.h16,
               
               Row(
                 children: [
@@ -180,10 +187,12 @@ class CaptainPerformancePage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  ),
+);
+}
 
   Widget _buildMetricCard({
     required String title,
@@ -199,7 +208,7 @@ class CaptainPerformancePage extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Column(
@@ -257,7 +266,7 @@ class CaptainPerformancePage extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Column(

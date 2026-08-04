@@ -20,6 +20,12 @@ class AppTheme {
       primaryColor: AppColors.primary500,
       scaffoldBackgroundColor: AppColors.backgroundLight,
       fontFamily: arabicFontFamily,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary500,
         secondary: AppColors.primary600,
@@ -156,6 +162,12 @@ class AppTheme {
       primaryColor: AppColors.primary500,
       scaffoldBackgroundColor: AppColors.backgroundDark,
       fontFamily: arabicFontFamily,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary500,
         secondary: AppColors.primary400,

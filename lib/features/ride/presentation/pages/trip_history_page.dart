@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
-import '../widgets/rating_and_support_dialog.dart';
-import 'support_tickets_page.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../widgets/passenger/rating_and_support_dialog.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// TripHistoryPage - Shown under the "طلباتي" (My Orders) tab.
 /// Displays an elegant interactive tab bar with: Active, Scheduled, Past, and Cancelled orders.
@@ -127,13 +128,12 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
         captainName: trip['captainName'] ?? 'كابتن لَفَّة',
         tripType: trip['type'] ?? 'رحلة سريعة',
         fare: (trip['fare'] as num?)?.toDouble() ?? 1000.0,
-        onOpenSupportTicket: () {
-          // Open support tickets page
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SupportTicketsPage(),
-            ),
-          );
+        onOpenSupportTicket: () async {
+          Navigator.of(context).pop();
+          final uri = Uri.parse('whatsapp://send?phone=967770291452');
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri);
+          }
         },
       ),
     );
@@ -144,8 +144,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      appBar: AppBar(
+appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -238,7 +237,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.s8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary500.withOpacity(0.12),
+                          color: AppColors.primary500.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -277,13 +276,13 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s4),
                     decoration: BoxDecoration(
                       color: isRide 
-                          ? AppColors.primary500.withOpacity(0.15) 
-                          : AppColors.warning.withOpacity(0.15),
+                          ? AppColors.primary500.withValues(alpha: 0.15) 
+                          : AppColors.warning.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isRide 
-                            ? AppColors.primary500.withOpacity(0.3) 
-                            : AppColors.warning.withOpacity(0.3),
+                            ? AppColors.primary500.withValues(alpha: 0.3) 
+                            : AppColors.warning.withValues(alpha: 0.3),
                         width: 1.0,
                       ),
                     ),
@@ -317,7 +316,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.s8),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
+                        color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray100,
                         borderRadius: AppSpacing.borderSM,
                       ),
                       child: const Icon(Icons.mark_as_unread_rounded, size: 20, color: AppColors.primary500),
@@ -363,10 +362,10 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
+                        const CircleAvatar(
                           radius: 18,
                           backgroundColor: AppColors.primary300,
-                          child: const Icon(Icons.person, color: AppColors.white),
+                          child: Icon(Icons.person, color: AppColors.white),
                         ),
                         AppSpacing.w12,
                         Column(
@@ -427,7 +426,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: isDark ? AppColors.white.withOpacity(0.12) : AppColors.gray400),
+                          side: BorderSide(color: isDark ? AppColors.white.withValues(alpha: 0.12) : AppColors.gray400),
                           shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderMD),
                         ),
                         child: Text(
@@ -456,7 +455,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.danger.withOpacity(0.12),
+                          backgroundColor: AppColors.danger.withValues(alpha: 0.12),
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderMD),
                         ),
@@ -504,7 +503,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.s8),
                         decoration: BoxDecoration(
-                          color: AppColors.info.withOpacity(0.12),
+                          color: AppColors.info.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.calendar_today_rounded, color: AppColors.info, size: 18),
@@ -609,8 +608,8 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                         padding: const EdgeInsets.all(AppSpacing.s8),
                         decoration: BoxDecoration(
                           color: isRide 
-                              ? AppColors.primary500.withOpacity(0.1) 
-                              : AppColors.info.withOpacity(0.1),
+                              ? AppColors.primary500.withValues(alpha: 0.1) 
+                              : AppColors.info.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -703,12 +702,11 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                       IconButton(
                         icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.info, size: 20),
                         tooltip: 'تواصل مع الدعم',
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SupportTicketsPage(),
-                            ),
-                          );
+                        onPressed: () async {
+                          final uri = Uri.parse('whatsapp://send?phone=967770291452');
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          }
                         },
                       ),
                       AppSpacing.w4,
@@ -767,7 +765,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.s8),
                         decoration: BoxDecoration(
-                          color: AppColors.danger.withOpacity(0.12),
+                          color: AppColors.danger.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.cancel_rounded, color: AppColors.danger, size: 18),
@@ -795,7 +793,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s4),
                     decoration: BoxDecoration(
-                      color: AppColors.danger.withOpacity(0.15),
+                      color: AppColors.danger.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -876,23 +874,9 @@ class _TripHistoryPageState extends State<TripHistoryPage> with SingleTickerProv
 
   // Empty state fallback widget
   Widget _buildEmptyState(String text) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history_rounded, size: 64, color: AppColors.primary500.withOpacity(0.3)),
-          AppSpacing.h16,
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'IBM Plex Sans Arabic',
-              color: AppColors.gray500,
-            ),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      title: text,
+      icon: Icons.history_rounded,
     );
   }
 }

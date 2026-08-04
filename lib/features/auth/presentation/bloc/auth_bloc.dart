@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
 import '../../domain/usecases/verify_otp_usecase.dart';
+import '../../domain/usecases/register_passenger_usecase.dart';
+import '../../domain/usecases/register_captain_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -9,14 +11,57 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SendOtpUseCase sendOtpUseCase;
   final VerifyOtpUseCase verifyOtpUseCase;
+  final RegisterPassengerUseCase registerPassengerUseCase;
+  final RegisterCaptainUseCase registerCaptainUseCase;
 
   AuthBloc({
     required this.sendOtpUseCase,
     required this.verifyOtpUseCase,
+    required this.registerPassengerUseCase,
+    required this.registerCaptainUseCase,
   }) : super(const AuthInitial()) {
     on<SendOTPCode>(_onSendOTPCode);
     on<VerifyOTPCode>(_onVerifyOTPCode);
     on<ResendOTPCode>(_onResendOTPCode);
+    on<UpdateUserProfile>(_onUpdateUserProfile);
+    on<RegisterPassengerRequested>(_onRegisterPassengerRequested);
+    on<RegisterCaptainRequested>(_onRegisterCaptainRequested);
+  }
+
+  FutureOr<void> _onRegisterPassengerRequested(
+    RegisterPassengerRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await registerPassengerUseCase.call(
+      name: event.name,
+      phone: event.phone,
+      password: event.password,
+    );
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (userEntity) => emit(const AuthSuccess(role: 'passenger')),
+    );
+  }
+
+  FutureOr<void> _onRegisterCaptainRequested(
+    RegisterCaptainRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await registerCaptainUseCase.call(
+      name: event.name,
+      phone: event.phone,
+      password: event.password,
+      vehicleType: event.vehicleType,
+      vehicleModel: event.vehicleModel,
+      vehicleYear: event.vehicleYear,
+      vehiclePlate: event.vehiclePlate,
+    );
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (userEntity) => emit(const AuthSuccess(role: 'captain')),
+    );
   }
 
   FutureOr<void> _onSendOTPCode(
@@ -42,18 +87,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     
-    // Assuming the event has phone and code, but original AuthEvent VerifyOTPCode only has code
-    // In a real flow, phone should be passed from UI or state.
-    // For now we will use a dummy phone if not available, or you need to update AuthEvent.
-    // Note: VerifyOTPCode event needs to be updated to include phone.
-    // Assuming we update VerifyOTPCode to include phone.
-    final String phone = (event as dynamic).phone ?? '777123456'; 
+    final String phone = event.phone;
 
-    final result = await verifyOtpUseCase.call(phone, event.code);
+    final result = await verifyOtpUseCase.call(phone, event.code, role: event.role);
 
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (userEntity) => emit(const AuthSuccess()),
+      (userEntity) => emit(AuthSuccess(role: userEntity.role)),
     );
   }
 
@@ -72,5 +112,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         verificationId: verificationId,
       )),
     );
+  }
+
+  FutureOr<void> _onUpdateUserProfile(
+    UpdateUserProfile event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    // Simulate backend save
+    await Future.delayed(const Duration(seconds: 1));
+    emit(const AuthProfileUpdated());
   }
 }

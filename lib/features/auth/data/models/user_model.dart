@@ -10,12 +10,21 @@ class UserModel extends UserEntity {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Backend response: data = { "user": {...}, "token": "..." }
+    // OR flat response: data = { "id": ..., "token": "..." }
+    final Map<String, dynamic> userMap = json['user'] != null
+        ? Map<String, dynamic>.from(json['user'] as Map)
+        : json;
+    final String? token = json['token'] as String?;
+
     return UserModel(
-      id: json['id'].toString(),
-      phone: json['phone'] ?? '',
-      name: json['name'] ?? '',
-      role: json['role'] ?? 'passenger',
-      token: json['token'],
+      id: userMap['id'].toString(),
+      phone: userMap['phone'] ?? '',
+      name: userMap['name'] ?? '',
+      role: (userMap['roles'] as List?)?.isNotEmpty == true
+          ? ((userMap['roles'] as List).any((r) => r is Map && r['name'] == 'captain') ? 'captain' : (userMap['roles'][0]['name'] ?? 'passenger'))
+          : (userMap['role'] ?? 'passenger'),
+      token: token,
     );
   }
 

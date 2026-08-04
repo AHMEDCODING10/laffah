@@ -1,3 +1,4 @@
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/base_response_model.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/parcel_model.dart';
@@ -30,7 +31,7 @@ class ParcelRemoteDataSourceImpl implements ParcelRemoteDataSource {
     required String notes,
   }) async {
     final response = await dioClient.dio.post(
-      '/parcel/submit',
+      ApiEndpoints.submitParcel,
       data: {
         'sender_name': senderName,
         'sender_phone': senderPhone,

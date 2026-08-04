@@ -39,7 +39,7 @@ class ParcelTrackingPage extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -61,7 +61,7 @@ class ParcelTrackingPage extends StatelessWidget {
                       borderRadius: AppSpacing.radiusFull,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -95,8 +95,8 @@ class ParcelTrackingPage extends StatelessWidget {
               child: GlassBox(
                 borderRadius: AppSpacing.radiusBottomSheet,
                 customBgColor: isDark 
-                    ? const Color(0xFF111827).withOpacity(0.95) 
-                    : Colors.white.withOpacity(0.95),
+                    ? const Color(0xFF111827).withValues(alpha: 0.95) 
+                    : Colors.white.withValues(alpha: 0.95),
                 padding: EdgeInsets.only(
                   top: AppSpacing.s24,
                   bottom: MediaQuery.of(context).padding.bottom + 16,
@@ -119,13 +119,13 @@ class ParcelTrackingPage extends StatelessWidget {
                             color: isDark ? AppColors.gray400 : AppColors.gray600,
                           ),
                         ),
-                        Text(
+                        const Text(
                           'يصل خلال 12 دقيقة',
                           style: TextStyle(
                             fontFamily: 'IBM Plex Sans Arabic',
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFFFF6B00),
+                            color: Color(0xFFFF6B00),
                           ),
                         ),
                       ],
@@ -142,10 +142,10 @@ class ParcelTrackingPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.s12),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.white.withOpacity(0.03) : AppColors.gray50,
+                        color: isDark ? AppColors.white.withValues(alpha: 0.03) : AppColors.gray50,
                         borderRadius: AppSpacing.radiusMD,
                         border: Border.all(
-                          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+                          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
                         ),
                       ),
                       child: Row(
@@ -188,7 +188,7 @@ class ParcelTrackingPage extends StatelessWidget {
                             onPressed: () {},
                             icon: const Icon(Icons.call_rounded, color: Color(0xFF22C55E)),
                             style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFF22C55E).withOpacity(0.1),
+                              backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.1),
                             ),
                           ),
                         ],

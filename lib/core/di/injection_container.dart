@@ -1,12 +1,18 @@
 import 'package:get_it/get_it.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../network/dio_client.dart';
 import '../network/websocket_client.dart';
+import '../network/network_info.dart';
+import '../services/pusher_service.dart';
+import '../services/routing_service.dart';
 import '../storage/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/send_otp_usecase.dart';
 import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
-import '../../features/auth/data/datasources/auth_mock_data_source.dart';
+import '../../features/auth/domain/usecases/register_passenger_usecase.dart';
+import '../../features/auth/domain/usecases/register_captain_usecase.dart';
+
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -14,15 +20,27 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/ride/domain/repositories/ride_repository.dart';
 import '../../features/ride/domain/usecases/request_ride_usecase.dart';
 import '../../features/ride/domain/usecases/cancel_ride_usecase.dart';
+import '../../features/ride/domain/usecases/track_ride_usecase.dart';
 import '../../features/ride/data/datasources/ride_remote_data_source.dart';
 import '../../features/ride/data/repositories/ride_repository_impl.dart';
 import '../../features/ride/presentation/bloc/ride_bloc.dart';
 
 import '../../features/captain/domain/repositories/captain_repository.dart';
 import '../../features/captain/domain/usecases/toggle_captain_status_usecase.dart';
+import '../../features/captain/domain/usecases/request_payout_usecase.dart';
+import '../../features/captain/domain/usecases/fetch_bonus_data_usecase.dart';
+import '../../features/captain/domain/usecases/update_location_usecase.dart';
+import '../../features/captain/domain/usecases/get_captain_trips_usecase.dart';
 import '../../features/captain/data/datasources/captain_remote_data_source.dart';
 import '../../features/captain/data/repositories/captain_repository_impl.dart';
-import '../../features/captain/presentation/bloc/captain_bloc.dart';
+import '../../features/captain/presentation/bloc/core/captain_bloc.dart';
+import '../../features/captain/presentation/bloc/trips/captain_trips_bloc.dart';
+import '../../features/captain/domain/usecases/get_captain_wallet_usecase.dart';
+import '../../features/captain/domain/usecases/get_captain_notifications_usecase.dart';
+import '../../features/captain/domain/usecases/get_captain_nearby_requests_usecase.dart';
+import '../../features/captain/domain/usecases/upload_document_usecase.dart';
+import '../../features/captain/presentation/bloc/wallet/captain_wallet_bloc.dart';
+import '../../features/captain/presentation/bloc/notifications/captain_notifications_bloc.dart';
 
 import '../../features/parcel/domain/repositories/parcel_repository.dart';
 import '../../features/parcel/domain/usecases/submit_parcel_order_usecase.dart';
@@ -37,6 +55,10 @@ import '../../features/passenger/data/repositories/wallet_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
+
+import '../../features/parcel/presentation/bloc/parcel_bloc.dart';
+import '../../features/passenger/presentation/bloc/wallet_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -44,6 +66,9 @@ Future<void> init() async {
   // ==========================
   // Core / Network / Storage
   // ==========================
+  sl.registerLazySingleton(() => Connectivity());
+  sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
+
   sl.registerLazySingleton<DioClient>(() => DioClient());
 
   // Web-safe options for FlutterSecureStorage to prevent browser hanging
@@ -80,7 +105,7 @@ Future<void> init() async {
   // Auth Feature
   // ==========================
   sl.registerLazySingleton<AuthRemoteDataSource>(
-        () => AuthMockDataSource(),
+        () => AuthRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<AuthRepository>(
         () => AuthRepositoryImpl(
@@ -88,13 +113,19 @@ Future<void> init() async {
       secureStorage: sl(),
     ),
   );
+  // Use cases
   sl.registerLazySingleton(() => SendOtpUseCase(sl()));
   sl.registerLazySingleton(() => VerifyOtpUseCase(sl()));
+  sl.registerLazySingleton(() => RegisterPassengerUseCase(sl()));
+  sl.registerLazySingleton(() => RegisterCaptainUseCase(sl()));
 
+  // Bloc
   sl.registerFactory(
         () => AuthBloc(
       sendOtpUseCase: sl(),
       verifyOtpUseCase: sl(),
+      registerPassengerUseCase: sl(),
+      registerCaptainUseCase: sl(),
     ),
   );
 
@@ -105,16 +136,21 @@ Future<void> init() async {
         () => RideRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<RideRepository>(
-        () => RideRepositoryImpl(remoteDataSource: sl()),
+        () => RideRepositoryImpl(
+      remoteDataSource: sl(),
+      webSocketClient: sl(),
+    ),
   );
   sl.registerLazySingleton(() => RequestRideUseCase(sl()));
   sl.registerLazySingleton(() => CancelRideUseCase(sl()));
+  sl.registerLazySingleton(() => TrackRideUseCase(sl()));
 
-  sl.registerFactory(
+  sl.registerFactory<RideBloc>(
         () => RideBloc(
       requestRideUseCase: sl(),
       cancelRideUseCase: sl(),
       submitParcelOrderUseCase: sl(),
+      trackRideUseCase: sl(),
     ),
   );
 
@@ -122,18 +158,47 @@ Future<void> init() async {
   // Captain Feature
   // ==========================
   sl.registerLazySingleton<CaptainRemoteDataSource>(
-        () => CaptainRemoteDataSourceImpl(sl()),
+        () => CaptainRemoteDataSourceImpl(sl(), sl()),
   );
   sl.registerLazySingleton<CaptainRepository>(
         () => CaptainRepositoryImpl(remoteDataSource: sl()),
   );
+  sl.registerLazySingleton(() => RoutingService());
+  sl.registerLazySingleton(() => PusherService());
   sl.registerLazySingleton(() => ToggleCaptainStatusUseCase(sl()));
-
-  sl.registerFactory(
+  sl.registerLazySingleton(() => RequestPayoutUseCase(sl()));
+  sl.registerLazySingleton(() => FetchBonusDataUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateLocationUseCase(sl()));
+  sl.registerLazySingleton(() => GetCaptainTripsUseCase(sl()));
+  sl.registerLazySingleton(() => GetCaptainWalletUseCase(sl()));
+  sl.registerLazySingleton(() => UploadDocumentUseCase(sl()));
+  sl.registerFactory<CaptainBloc>(
         () => CaptainBloc(
       toggleCaptainStatusUseCase: sl(),
+      requestPayoutUseCase: sl(),
+      fetchBonusDataUseCase: sl(),
+      updateLocationUseCase: sl(),
+      routingService: sl(),
+      pusherService: sl(),
     ),
   );
+
+  sl.registerFactory(() => CaptainTripsBloc(
+        getCaptainTripsUseCase: sl(),
+      ));
+
+  sl.registerFactory(() => CaptainWalletBloc(
+        getCaptainWalletUseCase: sl(),
+        repository: sl(),
+      ));
+
+  sl.registerLazySingleton(() => GetCaptainNotificationsUseCase(sl()));
+  sl.registerLazySingleton(() => GetCaptainNearbyRequestsUseCase(sl()));
+
+  sl.registerFactory(() => CaptainNotificationsBloc(
+        getNotifications: sl(),
+        getNearbyRequests: sl(),
+      ));
 
   // ==========================
   // Wallet Feature
@@ -155,4 +220,19 @@ Future<void> init() async {
   sl.registerLazySingleton<ProfileRepository>(
         () => ProfileRepositoryImpl(remoteDataSource: sl()),
   );
+
+  // ==========================
+  // Parcel Feature
+  // ==========================
+  sl.registerFactory(() => ParcelBloc(submitParcelOrder: sl()));
+
+  // ==========================
+  // Passenger / Wallet Feature
+  // ==========================
+  sl.registerFactory(() => WalletBloc(repository: sl()));
+
+  // ==========================
+  // Profile Feature
+  // ==========================
+  sl.registerFactory(() => ProfileBloc(repository: sl()));
 }

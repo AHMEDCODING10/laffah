@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Base custom glassmorphic bottom sheet wrapper for unified design aesthetics
 Widget _buildGlassSheetWrapper({
@@ -624,11 +625,12 @@ class DirectSupportSheet extends StatelessWidget {
             label: 'اتصال هاتفي مباشر بالدعم',
             icon: Icons.phone_in_talk_rounded,
             color: const Color(0xFFFF6B00),
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('جاري إجراء الاتصال الهاتفي بالدعم (+967 777 000 111)...')),
-              );
+              final uri = Uri.parse('tel:770291452');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              }
             },
           ),
           AppSpacing.h10,
@@ -638,11 +640,12 @@ class DirectSupportSheet extends StatelessWidget {
             label: 'مراسلة عبر واتساب الدعم',
             icon: Icons.chat_rounded,
             color: const Color(0xFF25D366),
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('جاري توجيهك إلى واتساب دعم الكباتن...')),
-              );
+              final uri = Uri.parse('whatsapp://send?phone=967770291452');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              }
             },
           ),
           AppSpacing.h24,
