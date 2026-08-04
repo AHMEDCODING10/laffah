@@ -24,7 +24,7 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
   final _notesController = TextEditingController();
   final _itemDescriptionController = TextEditingController();
 
-  String _selectedParcelType = 'طرد / علبة';
+  String _selectedParcelType = 'طرد / علبة هدايا';
   String _selectedSize = 'small';
   bool _photoAttached = false;
 

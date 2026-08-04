@@ -79,9 +79,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
     try {
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri);
-      } else {
-        await launchUrl(launchUri);
-      }
+      } 
     } catch (e) {
       debugPrint('Could not launch phone dialer: $e');
     }
@@ -154,7 +152,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary500,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD,
                     ),
                   ),
@@ -669,7 +667,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                               foregroundColor: AppColors.white,
                               elevation: 4,
                               shadowColor: AppColors.primary500.withValues(alpha: 0.4),
-                              shape: RoundedRectangleBorder(
+                              shape: const RoundedRectangleBorder(
                                 borderRadius: AppSpacing.radiusMD,
                               ),
                             ),

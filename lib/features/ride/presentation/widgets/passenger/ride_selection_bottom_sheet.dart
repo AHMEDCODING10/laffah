@@ -373,7 +373,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   backgroundColor: Colors.transparent,
                   foregroundColor: AppColors.white,
                   shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppSpacing.radiusMD,
                   ),
                 ),

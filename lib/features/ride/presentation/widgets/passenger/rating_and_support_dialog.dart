@@ -259,13 +259,13 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     color: isDark ? AppColors.gray500 : AppColors.gray400,
                   ),
                   filled: true,
-                  fillColor: isDark ? Colors.black.withOpacity(0.2) : AppColors.white,
+                  fillColor: isDark ? Colors.black.withValues(alpha: 0.2) : AppColors.white,
                   counterStyle: const TextStyle(fontSize: 10, fontFamily: 'IBM Plex Sans Arabic'),
                   contentPadding: const EdgeInsets.all(AppSpacing.s12),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: AppSpacing.borderMD,
                     borderSide: BorderSide(
-                      color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray300,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray300,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -289,7 +289,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     borderRadius: AppSpacing.borderMD,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary500.withOpacity(0.3),
+                        color: AppColors.primary500.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -299,6 +299,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     onPressed: _isSubmitting ? null : _submitRating,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
+                      foregroundColor: AppColors.white,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: AppSpacing.borderMD,
@@ -310,11 +311,11 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                              color: AppColors.white,
                             ),
                           )
                         : const Text(
-                            'تأكيد التقييم',
+                            'إرسال التقييم وإنهاء',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -338,16 +339,16 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.support_agent_rounded,
                       color: AppColors.info,
                       size: 18,
                     ),
                     AppSpacing.w8,
-                    const Text(
+                    Text(
                       'واجهت مشكلة؟ فتح تذكرة دعم',
                       style: TextStyle(
                         fontSize: 12,

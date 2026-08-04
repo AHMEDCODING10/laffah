@@ -1,13 +1,114 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
+import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../widgets/transaction_list_tile.dart';
+import '../widgets/wallet_balance_card.dart';
 
-/// WalletPage — Displays Passenger's balance in YER (Yemeni Rial) and recent transactions.
+/// WalletPage — Displays Passenger's balance in YER and recent transactions.
 /// Emphasizes local payment channels (Al-Kuraimi, Floos, Jawali).
-class WalletPage extends StatelessWidget {
+class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
+
+  @override
+  State<WalletPage> createState() => _WalletPageState();
+}
+
+class _WalletPageState extends State<WalletPage> {
+  late final double _balance;
+  late final List<WalletTransactionModel> _transactions;
+
+  @override
+  void initState() {
+    super.initState();
+    _balance = FakePassengerCoreRepository.getWalletBalance();
+    _transactions = FakePassengerCoreRepository.getWalletTransactions();
+  }
+
+  void _showTopUpBottomSheet(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : AppColors.white,
+            borderRadius: AppSpacing.radiusBottomSheet,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              AppSpacing.h16,
+              Text(
+                'اختر طريقة الشحن الإلكتروني المحلية',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: isDark ? AppColors.white : AppColors.gray900,
+                ),
+              ),
+              AppSpacing.h16,
+              _buildTopUpOption('حاسب / إيداع بنك الكريمي', Icons.account_balance_rounded, isDark),
+              _buildTopUpOption('محفظة فلوس (Floos)', Icons.account_balance_wallet_rounded, isDark),
+              _buildTopUpOption('محفظة جوالي (Jawali)', Icons.phone_android_rounded, isDark),
+              AppSpacing.h16,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopUpOption(String title, IconData icon, bool isDark) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.primary500.withValues(alpha: 0.12),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: AppColors.primary500, size: 20),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: FontWeight.bold,
+          fontSize: 13.5,
+          color: isDark ? AppColors.white : AppColors.gray900,
+        ),
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+      onTap: () {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'جاري تحويلك لخيار شحن المحفظة عبر $title...',
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+            ),
+            backgroundColor: AppColors.primary500,
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,222 +117,47 @@ class WalletPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar: const LaffahAppBar(title: 'محفظة لَفَّة'),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s24, AppSpacing.s24, AppSpacing.s24, 100),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Balance Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.s24),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: AppSpacing.radiusLG,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF6B00).withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'الرصيد المتاح',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
-                    AppSpacing.h8,
-                    const Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '4,500',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 40,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            'ريال (YER)',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    AppSpacing.h24,
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFFFF6B00),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: AppSpacing.radiusMD,
-                              ),
-                            ),
-                            icon: const Icon(Icons.add_rounded, size: 20),
-                            label: const Text(
-                              'شحن الرصيد',
-                              style: TextStyle(
-                                fontFamily: 'IBM Plex Sans Arabic',
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              
-              AppSpacing.h32,
-              
-              Text(
-                'سجل العمليات',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? AppColors.white : AppColors.gray900,
-                ),
-              ),
-              AppSpacing.h16,
-              
-              // Transactions List
-              _buildTransactionItem(
-                title: 'رحلة دراجة نارية - شارع الستين',
-                date: 'اليوم، 10:30 صباحاً',
-                amount: '- 1,200',
-                isNegative: true,
-                isDark: isDark,
-              ),
-              _buildTransactionItem(
-                title: 'شحن رصيد - الكريمي إكسبرس',
-                date: 'أمس، 04:15 عصراً',
-                amount: '+ 5,000',
-                isNegative: false,
-                isDark: isDark,
-              ),
-              _buildTransactionItem(
-                title: 'رحلة دراجة نارية - حدة',
-                date: '18 يوليو 2026',
-                amount: '- 800',
-                isNegative: true,
-                isDark: isDark,
-              ),
-              _buildTransactionItem(
-                title: 'توصيل طرد - الجامعة',
-                date: '15 يوليو 2026',
-                amount: '- 1,500',
-                isNegative: true,
-                isDark: isDark,
-              ),
-            ],
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s20,
+            AppSpacing.s20,
+            AppSpacing.s20,
+            100,
           ),
-        ),
-      ),
-    );
-  }
+          children: [
+            // Balance Card
+            WalletBalanceCard(
+              balance: _balance,
+              onTopUpPressed: () => _showTopUpBottomSheet(isDark),
+            ),
 
-  Widget _buildTransactionItem({
-    required String title,
-    required String date,
-    required String amount,
-    required bool isNegative,
-    required bool isDark,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: AppSpacing.radiusMD,
-        border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+            AppSpacing.h24,
+
+            // Recent Transactions Title
+            Text(
+              'سجل المعاملات المالية الحديثة',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                color: isDark ? AppColors.white : AppColors.gray900,
+              ),
+            ),
+
+            AppSpacing.h12,
+
+            // Transactions List
+            for (final tx in _transactions)
+              TransactionListTile(
+                isDark: isDark,
+                transaction: tx,
+              ),
+          ],
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isNegative 
-                  ? AppColors.danger.withOpacity(0.1)
-                  : AppColors.success.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isNegative ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-              color: isNegative ? AppColors.danger : AppColors.success,
-              size: 20,
-            ),
-          ),
-          AppSpacing.w16,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.white : AppColors.gray900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 12,
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            amount,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: isNegative ? AppColors.danger : AppColors.success,
-            ),
-          ),
-        ],
       ),
     );
   }
 }
-
