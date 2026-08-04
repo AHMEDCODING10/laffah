@@ -6,8 +6,11 @@ import '../../domain/usecases/request_ride_usecase.dart';
 import '../../domain/usecases/cancel_ride_usecase.dart';
 import '../../../parcel/domain/usecases/submit_parcel_order_usecase.dart';
 
-import '../../domain/usecases/track_ride_usecase.dart';
-import '../../domain/entities/ride_entity.dart';
+export 'ride_event.dart';
+export 'ride_state.dart';
+
+import 'ride_event.dart';
+import 'ride_state.dart';
 
 // ===========================================================================
 // DATA LAYER MODELS (IMMUTABLE DTOs)
@@ -78,344 +81,6 @@ class RideOption extends Equatable {
 }
 
 // ===========================================================================
-// RIDE EVENTS
-// ===========================================================================
-
-@immutable
-abstract class RideEvent extends Equatable {
-  const RideEvent();
-
-  @override
-  List<Object?> get props => [];
-}
-
-class CalculateSingleTripFare extends RideEvent {
-  final String pickup;
-  final String dropoff;
-
-  const CalculateSingleTripFare({
-    required this.pickup,
-    required this.dropoff,
-  });
-
-  @override
-  List<Object?> get props => [pickup, dropoff];
-}
-
-class ConfirmUnifiedBooking extends RideEvent {
-  final String pickup;
-  final String dropoff;
-  final double fare;
-  final double distance;
-  final int duration;
-
-  const ConfirmUnifiedBooking({
-    required this.pickup,
-    required this.dropoff,
-    required this.fare,
-    required this.distance,
-    required this.duration,
-  });
-
-  @override
-  List<Object?> get props => [pickup, dropoff, fare, distance, duration];
-}
-
-class ConfirmBooking extends RideEvent {
-  final String pickup;
-  final String dropoff;
-  final String rideType;
-
-  const ConfirmBooking({
-    required this.pickup,
-    required this.dropoff,
-    required this.rideType,
-  });
-
-  @override
-  List<Object?> get props => [pickup, dropoff, rideType];
-}
-
-class SubmitParcelOrder extends RideEvent {
-  final ParcelData data;
-  
-  const SubmitParcelOrder(this.data);
-
-  @override
-  List<Object?> get props => [data];
-}
-
-class TrackRideEvent extends RideEvent {
-  final String tripId;
-
-  const TrackRideEvent(this.tripId);
-
-  @override
-  List<Object?> get props => [tripId];
-}
-
-
-class ScheduleRide extends RideEvent {
-  final DateTime date;
-  final String time;
-
-  const ScheduleRide({required this.date, required this.time});
-
-  @override
-  List<Object?> get props => [date, time];
-}
-
-class CancelRideRequested extends RideEvent {
-  final String? reason;
-
-  const CancelRideRequested({this.reason});
-
-  @override
-  List<Object?> get props => [reason];
-}
-
-class ApplyPromoCode extends RideEvent {
-  final String code;
-
-  const ApplyPromoCode(this.code);
-
-  @override
-  List<Object?> get props => [code];
-}
-
-class SimulateRideStep extends RideEvent {
-  final dynamic step;
-
-  const SimulateRideStep({this.step});
-
-  @override
-  List<Object?> get props => [step];
-}
-
-class ListenToRideStatus extends RideEvent {
-  final String rideId;
-
-  const ListenToRideStatus(this.rideId);
-
-  @override
-  List<Object?> get props => [rideId];
-}
-
-class RideStatusUpdatedFromSocket extends RideEvent {
-  final dynamic rideEntity;
-
-  const RideStatusUpdatedFromSocket(this.rideEntity);
-
-  @override
-  List<Object?> get props => [rideEntity];
-}
-
-// ===========================================================================
-// RIDE STATES
-// ===========================================================================
-
-@immutable
-abstract class RideState extends Equatable {
-  const RideState();
-
-  @override
-  List<Object?> get props => [];
-}
-
-class RideInitial extends RideState {
-  const RideInitial();
-}
-
-typedef RideIdle = RideInitial;
-
-class RideLoading extends RideState {
-  const RideLoading();
-}
-
-class RideSearching extends RideState {
-  final double price;
-
-  const RideSearching({this.price = 2450.0});
-
-  @override
-  List<Object?> get props => [price];
-}
-
-class RideAccepted extends RideState {
-  final String captainName;
-  final String vehicleModel;
-  final String vehiclePlate;
-  final double captainRating;
-  final String eta;
-
-  const RideAccepted({
-    required this.captainName,
-    required this.vehicleModel,
-    required this.vehiclePlate,
-    required this.captainRating,
-    required this.eta,
-  });
-
-  @override
-  List<Object?> get props => [
-        captainName,
-        vehicleModel,
-        vehiclePlate,
-        captainRating,
-        eta,
-      ];
-}
-
-class RideInProgress extends RideState {
-  final String etaToDestination;
-
-  const RideInProgress({this.etaToDestination = '12 دقيقة'});
-
-  @override
-  List<Object?> get props => [etaToDestination];
-}
-
-class RideCompleted extends RideState {
-  const RideCompleted();
-}
-
-class RideScheduledSuccess extends RideState {
-  final DateTime date;
-  final String time;
-  const RideScheduledSuccess(this.date, this.time);
-  
-  @override
-  List<Object?> get props => [date, time];
-}
-
-class PromoCodeApplied extends RideState {
-  final double discountPercentage;
-  const PromoCodeApplied(this.discountPercentage);
-
-  @override
-  List<Object?> get props => [discountPercentage];
-}
-
-class PromoCodeInvalid extends RideState {
-  final String message;
-  const PromoCodeInvalid(this.message);
-
-  @override
-  List<Object?> get props => [message];
-}
-
-class RideOptionsLoaded extends RideState {
-  final String pickup;
-  final String dropoff;
-  final List<RideOption> options;
-  final double distance;
-  final int duration;
-  final double fare;
-
-  const RideOptionsLoaded({
-    required this.pickup,
-    required this.dropoff,
-    required this.options,
-    required this.distance,
-    required this.duration,
-    required this.fare,
-  });
-
-  @override
-  List<Object?> get props => [pickup, dropoff, options, distance, duration, fare];
-}
-
-class RideBookingConfirmed extends RideState {
-  final String pickup;
-  final String dropoff;
-  final RideOption selectedOption;
-  final String captainName;
-  final String captainPhone;
-  final String vehicleModel;
-  final String vehiclePlate;
-  final double rating;
-  final String status;
-  final String? rideId;
-
-  const RideBookingConfirmed({
-    required this.pickup,
-    required this.dropoff,
-    required this.selectedOption,
-    required this.captainName,
-    required this.captainPhone,
-    required this.vehicleModel,
-    required this.vehiclePlate,
-    required this.rating,
-    required this.status,
-    this.rideId,
-  });
-
-  RideBookingConfirmed copyWith({
-    String? pickup,
-    String? dropoff,
-    RideOption? selectedOption,
-    String? captainName,
-    String? captainPhone,
-    String? vehicleModel,
-    String? vehiclePlate,
-    double? rating,
-    String? status,
-    String? rideId,
-  }) {
-    return RideBookingConfirmed(
-      pickup: pickup ?? this.pickup,
-      dropoff: dropoff ?? this.dropoff,
-      selectedOption: selectedOption ?? this.selectedOption,
-      captainName: captainName ?? this.captainName,
-      captainPhone: captainPhone ?? this.captainPhone,
-      vehicleModel: vehicleModel ?? this.vehicleModel,
-      vehiclePlate: vehiclePlate ?? this.vehiclePlate,
-      rating: rating ?? this.rating,
-      status: status ?? this.status,
-      rideId: rideId ?? this.rideId,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-        pickup,
-        dropoff,
-        selectedOption,
-        captainName,
-        captainPhone,
-        vehicleModel,
-        vehiclePlate,
-        rating,
-        status,
-        rideId,
-      ];
-}
-
-class ParcelSubmitted extends RideState {
-  final ParcelData data;
-  final String trackingId;
-  final double price;
-
-  const ParcelSubmitted({
-    required this.data,
-    required this.trackingId,
-    required this.price,
-  });
-
-  @override
-  List<Object?> get props => [data, trackingId, price];
-}
-
-class RideError extends RideState {
-  final String message;
-
-  const RideError(this.message);
-
-  @override
-  List<Object?> get props => [message];
-}
-
-// ===========================================================================
 // RIDE BLOC (Clean Architecture)
 // ===========================================================================
 
@@ -423,38 +88,18 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   final RequestRideUseCase requestRideUseCase;
   final CancelRideUseCase cancelRideUseCase;
   final SubmitParcelOrderUseCase submitParcelOrderUseCase;
-  final TrackRideUseCase trackRideUseCase;
-
-  StreamSubscription? _rideStatusSubscription;
 
   RideBloc({
     required this.requestRideUseCase,
     required this.cancelRideUseCase,
     required this.submitParcelOrderUseCase,
-    required this.trackRideUseCase,
   }) : super(const RideInitial()) {
     on<CalculateSingleTripFare>(_onCalculateSingleTripFare);
     on<ConfirmUnifiedBooking>(_onConfirmUnifiedBooking);
     on<ConfirmBooking>(_onConfirmBooking);
     on<SubmitParcelOrder>(_onSubmitParcelOrder);
-    on<ScheduleRide>(_onScheduleRide);
     on<CancelRideRequested>(_onCancelRideRequested);
-    on<ApplyPromoCode>(_onApplyPromoCode);
     on<SimulateRideStep>(_onSimulateRideStep);
-    on<ListenToRideStatus>(_onListenToRideStatus);
-    on<RideStatusUpdatedFromSocket>(_onRideStatusUpdatedFromSocket);
-  }
-
-  @override
-  Future<void> close() {
-    _rideStatusSubscription?.cancel();
-    return super.close();
-  }
-
-  void _onScheduleRide(ScheduleRide event, Emitter<RideState> emit) async {
-    emit(const RideLoading());
-    await Future.delayed(const Duration(seconds: 1));
-    emit(RideScheduledSuccess(event.date, event.time));
   }
 
   static const List<RideOption> rideTiers = [
@@ -566,9 +211,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           status: rideEntity.status,
           rideId: rideEntity.id,
         ));
-        
-        // Start listening to WebSocket for this ride
-        add(ListenToRideStatus(rideEntity.id));
       },
     );
   }
@@ -615,9 +257,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           status: rideEntity.status,
           rideId: rideEntity.id,
         ));
-
-        // Start listening to WebSocket for this ride
-        add(ListenToRideStatus(rideEntity.id));
       },
     );
   }
@@ -697,52 +336,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       emit(const RideCompleted());
     } else if (stepStr == 'finding' || stepStr == '0') {
       emit(const RideSearching());
-    }
-  }
-
-  FutureOr<void> _onApplyPromoCode(
-    ApplyPromoCode event,
-    Emitter<RideState> emit,
-  ) async {
-    emit(const RideLoading());
-    await Future.delayed(const Duration(seconds: 1));
-    // Valid promo codes — real validation happens on the backend
-    const validCodes = ['LAFFAH10', 'WELCOME20', 'RIDE15'];
-    if (validCodes.contains(event.code.toUpperCase())) {
-      emit(const PromoCodeApplied(0.1));
-    } else {
-      emit(PromoCodeInvalid('كود الخصم "${event.code}" غير صالح أو منتهي الصلاحية.'));
-    }
-  }
-
-  void _onListenToRideStatus(ListenToRideStatus event, Emitter<RideState> emit) {
-    _rideStatusSubscription?.cancel();
-    _rideStatusSubscription = trackRideUseCase(event.rideId).listen((result) {
-      result.fold(
-        (failure) => add(const SimulateRideStep(step: 'error')),
-        (rideEntity) => add(RideStatusUpdatedFromSocket(rideEntity)),
-      );
-    });
-  }
-
-  void _onRideStatusUpdatedFromSocket(RideStatusUpdatedFromSocket event, Emitter<RideState> emit) {
-    final rideEntity = event.rideEntity as RideEntity;
-    
-    if (rideEntity.status == 'accepted' && rideEntity.captainName != null) {
-      emit(RideAccepted(
-        captainName: rideEntity.captainName!,
-        vehicleModel: rideEntity.vehicleModel ?? 'مركبة كابتن لفة',
-        vehiclePlate: rideEntity.vehiclePlate ?? '-',
-        captainRating: rideEntity.rating ?? 5.0,
-        eta: '3 دقائق', // We can calculate real ETA if we have captain location
-      ));
-    } else if (rideEntity.status == 'in_progress' || rideEntity.status == 'started') {
-      emit(const RideInProgress(etaToDestination: 'متابعة الرحلة...'));
-    } else if (rideEntity.status == 'completed') {
-      emit(const RideCompleted());
-    } else if (rideEntity.status == 'cancelled') {
-      emit(const RideError('تم إلغاء الرحلة.'));
-      emit(const RideInitial());
     }
   }
 }

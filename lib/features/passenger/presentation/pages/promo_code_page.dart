@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../ride/presentation/bloc/ride_bloc.dart';
+import '../../../../core/widgets/glass_box.dart';
+import '../../../../core/widgets/laffah_app_bar.dart';
+import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../widgets/promo_card.dart';
 
-/// PromoCodePage — Page to apply promo codes for discounts on motorcycle rides.
-/// Uses clear error handling and visually appealing success states.
+/// PromoCodePage — Passenger Promo Codes & Discounts Screen.
+/// Refactored to Clean Architecture composition.
 class PromoCodePage extends StatefulWidget {
   const PromoCodePage({super.key});
 
@@ -15,15 +16,28 @@ class PromoCodePage extends StatefulWidget {
 }
 
 class _PromoCodePageState extends State<PromoCodePage> {
-  final TextEditingController _promoController = TextEditingController();
-  bool _isLoading = false;
+  final TextEditingController _codeController = TextEditingController();
+  late final List<PromoVoucherModel> _promos;
 
-  void _handleApplyPromo() {
-    if (_promoController.text.trim().isEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    _promos = FakePassengerCoreRepository.getPromoVouchers();
+  }
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  void _applyPromoCode(String code) {
+    if (code.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'يرجى إدخال كود الخصم أولاً',
+            'يرجى إدخال رمز الخصم أولاً',
+            textAlign: TextAlign.right,
             style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
           ),
           backgroundColor: AppColors.danger,
@@ -31,14 +45,18 @@ class _PromoCodePageState extends State<PromoCodePage> {
       );
       return;
     }
-    
-    context.read<RideBloc>().add(ApplyPromoCode(_promoController.text.trim()));
-  }
 
-  @override
-  void dispose() {
-    _promoController.dispose();
-    super.dispose();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'تم تفعيل كود الخصم ($code) بنجاح!',
+          textAlign: TextAlign.right,
+          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+        ),
+        backgroundColor: AppColors.success,
+      ),
+    );
+    _codeController.clear();
   }
 
   @override
@@ -47,182 +65,123 @@ class _PromoCodePageState extends State<PromoCodePage> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: BlocConsumer<RideBloc, RideState>(
-        listener: (context, state) {
-          if (state is PromoCodeApplied) {
-            setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'تم تفعيل كود الخصم بنجاح! خصم ${(state.discountPercentage * 100).toInt()}% على رحلتك',
-                  style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
-                ),
-                backgroundColor: AppColors.success,
-              ),
-            );
-            context.pop();
-          } else if (state is PromoCodeInvalid) {
-            setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.message,
-                  style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
-                ),
-                backgroundColor: AppColors.danger,
-              ),
-            );
-          } else if (state is RideLoading) {
-            setState(() => _isLoading = true);
-          }
-        },
-        builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: true,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-                onPressed: () => context.pop(),
-              ),
-              title: Text(
-                'كود الخصم',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: isDark ? AppColors.white : AppColors.gray900,
-                ),
-              ),
-            ),
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppSpacing.h32,
-                    
-                    Center(
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.discount_rounded,
-                          color: Color(0xFF3B82F6),
-                          size: 50,
-                        ),
-                      ),
-                    ),
-                
-                AppSpacing.h32,
-                
-                Text(
-                  'إضافة كود خصم',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: isDark ? AppColors.white : AppColors.gray900,
-                  ),
-                ),
-                AppSpacing.h8,
-                Text(
-                  'أدخل الرمز الترويجي للحصول على خصومات حصرية لرحلاتك.',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 14,
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
-                    height: 1.5,
-                  ),
-                ),
-                
-                AppSpacing.h32,
-                
-                // Input Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.03) : AppColors.gray50,
-                    borderRadius: AppSpacing.radiusMD,
-                    border: Border.all(
-                      color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
+      child: Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: const LaffahAppBar(title: 'أكواد الخصم والعروض'),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s20,
+            AppSpacing.s20,
+            AppSpacing.s20,
+            100,
+          ),
+          children: [
+            // Promo Code Entry Card
+            GlassBox(
+              borderRadius: AppSpacing.radiusLG,
+              padding: const EdgeInsets.all(AppSpacing.s16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'هل لديك كود خصم خاص؟',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: isDark ? AppColors.white : AppColors.gray900,
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 4),
-                  child: Row(
+                  AppSpacing.h12,
+                  Row(
                     children: [
-                      const Icon(Icons.local_offer_outlined, color: AppColors.gray400, size: 20),
-                      AppSpacing.w12,
                       Expanded(
                         child: TextField(
-                          controller: _promoController,
-                          textCapitalization: TextCapitalization.characters,
+                          controller: _codeController,
                           style: TextStyle(
                             fontFamily: 'monospace',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
                             color: isDark ? AppColors.white : AppColors.gray900,
-                            letterSpacing: 2,
                           ),
                           decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'أدخل الكود هنا',
+                            hintText: 'أدخل رمز الخصم (مثال: LAFFAH20)',
                             hintStyle: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
-                              color: isDark ? AppColors.gray600 : AppColors.gray400,
-                              letterSpacing: 0,
-                              fontSize: 16,
+                              fontSize: 12,
+                              color: isDark ? AppColors.gray500 : AppColors.gray400,
                             ),
+                            filled: true,
+                            fillColor: isDark
+                                ? AppColors.white.withValues(alpha: 0.03)
+                                : AppColors.gray100,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s14,
+                              vertical: AppSpacing.s12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: AppSpacing.radiusSM,
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      AppSpacing.w10,
+                      ElevatedButton(
+                        onPressed: () => _applyPromoCode(_codeController.text),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary500,
+                          foregroundColor: AppColors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s20,
+                            vertical: AppSpacing.s14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppSpacing.borderSM,
+                          ),
+                        ),
+                        child: const Text(
+                          'تطبيق',
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: AppColors.white,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                
-                const Spacer(),
-                
-                // Submit Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleApplyPromo,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
-                      foregroundColor: AppColors.white,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: AppSpacing.radiusMD,
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Text(
-                            'تفعيل الكود',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                  ),
-                ),
-                AppSpacing.h32,
-              ],
+                ],
+              ),
             ),
-          ),
+
+            AppSpacing.h24,
+
+            // Active Promos Title
+            Text(
+              'العروض والقسائم المتاحة لك',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                color: isDark ? AppColors.white : AppColors.gray900,
+              ),
+            ),
+
+            AppSpacing.h12,
+
+            // Active Promos List
+            for (final promo in _promos)
+              PromoCard(
+                isDark: isDark,
+                promo: promo,
+                onApply: () => _applyPromoCode(promo.code),
+              ),
+          ],
         ),
-      );
-        },
       ),
     );
   }

@@ -2,82 +2,181 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../widgets/notification_card.dart';
 
-/// NotificationsPage — Central hub for passenger notifications.
-/// Includes trip updates, promo codes, and system alerts.
-class NotificationsPage extends StatelessWidget {
+/// NotificationsPage — Central hub for passenger notifications matching Laffah design.
+/// Refactored to Clean Architecture composition.
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
   @override
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends State<NotificationsPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late List<NotificationItemModel> _notifications;
+  int _selectedCategoryIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+    _notifications = FakePassengerCoreRepository.getNotifications();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<NotificationItemModel> get _filteredNotifications {
+    if (_selectedCategoryIndex == 0) return _notifications;
+    final categories = [
+      null,
+      NotificationCategory.rides,
+      NotificationCategory.parcels,
+      NotificationCategory.messages,
+      NotificationCategory.offers,
+    ];
+    final selectedCat = categories[_selectedCategoryIndex];
+    return _notifications.where((n) => n.category == selectedCat).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
-          backgroundColor: Colors.transparent,
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: AppBar(
+          backgroundColor:
+              isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
           elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () => context.pop(),
+          scrolledUnderElevation: 0,
+          leading: Container(
+            margin: const EdgeInsets.all(AppSpacing.s8),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary500.withValues(alpha: 0.2),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppColors.primary500,
+                size: 20,
+              ),
+              onPressed: () => context.pop(),
+            ),
           ),
           title: Text(
-            'الإشعارات',
+            'الإشعارات والتنبيهات',
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
               fontSize: 18,
+              fontWeight: FontWeight.w900,
               color: isDark ? AppColors.white : AppColors.gray900,
             ),
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.done_all_rounded, color: isDark ? AppColors.gray400 : AppColors.gray600, size: 20),
-              onPressed: () {},
-              tooltip: 'تحديد الكل كمقروء',
-            ),
-          ],
+          centerTitle: false,
         ),
-        body: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+        body: Column(
           children: [
-            _buildNotificationItem(
-              title: 'خصم 20% على رحلتك القادمة!',
-              message: 'استخدم الكود LAFFAH20 واستمتع بخصم على رحلتك بالدراجة النارية.',
-              time: 'منذ ساعتين',
-              icon: Icons.local_offer_rounded,
-              color: const Color(0xFF3B82F6),
-              isUnread: true,
-              isDark: isDark,
+            // Filter Tabs
+            Container(
+              margin: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s16,
+                vertical: AppSpacing.s8,
+              ),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.backgroundDark
+                    : AppColors.backgroundLight,
+              ),
+              child: TabBar(
+                controller: _tabController,
+                onTap: (index) => setState(() => _selectedCategoryIndex = index),
+                indicatorColor: AppColors.primary500,
+                indicatorWeight: 3,
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: AppColors.primary500,
+                unselectedLabelColor:
+                    isDark ? AppColors.gray400 : AppColors.gray600,
+                labelStyle: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11.5,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11.5,
+                ),
+                tabs: const [
+                  Tab(
+                    icon: Icon(Icons.apps_rounded, size: 20),
+                    text: 'الكل',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.directions_car_rounded, size: 20),
+                    text: 'الرحلات',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.inventory_2_rounded, size: 20),
+                    text: 'الطرود',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                    text: 'الرسائل',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.local_offer_rounded, size: 20),
+                    text: 'العروض',
+                  ),
+                ],
+              ),
             ),
-            _buildNotificationItem(
-              title: 'تم شحن رصيدك بنجاح',
-              message: 'تمت إضافة 5,000 ريال إلى محفظتك عبر الكريمي.',
-              time: 'أمس، 04:15 عصراً',
-              icon: Icons.account_balance_wallet_rounded,
-              color: const Color(0xFF10B981),
-              isUnread: false,
-              isDark: isDark,
-            ),
-            _buildNotificationItem(
-              title: 'رحلتك اكتملت بنجاح',
-              message: 'نأمل أن تكون قد استمتعت برحلتك مع الكابتن محمد علي.',
-              time: '18 يوليو 2026',
-              icon: Icons.motorcycle_rounded,
-              color: const Color(0xFFFF6B00),
-              isUnread: false,
-              isDark: isDark,
-            ),
-            _buildNotificationItem(
-              title: 'طردك في الطريق',
-              message: 'الكابتن استلم الطرد وهو الآن متوجه نحو موقع التسليم.',
-              time: '15 يوليو 2026',
-              icon: Icons.inventory_2_rounded,
-              color: const Color(0xFFFF6B00),
-              isUnread: false,
-              isDark: isDark,
+
+            // Notification List
+            Expanded(
+              child: _filteredNotifications.isEmpty
+                  ? _buildEmptyState(isDark)
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.s16,
+                        0,
+                        AppSpacing.s16,
+                        96,
+                      ),
+                      itemCount: _filteredNotifications.length,
+                      itemBuilder: (context, index) {
+                        final item = _filteredNotifications[index];
+                        return NotificationCard(
+                          isDark: isDark,
+                          item: item,
+                          onTap: () {
+                            // Tap handler
+                          },
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -85,90 +184,24 @@ appBar: AppBar(
     );
   }
 
-  Widget _buildNotificationItem({
-    required String title,
-    required String message,
-    required String time,
-    required IconData icon,
-    required Color color,
-    required bool isUnread,
-    required bool isDark,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      decoration: BoxDecoration(
-        color: isUnread 
-            ? (isDark ? color.withValues(alpha: 0.1) : color.withValues(alpha: 0.05))
-            : (isDark ? AppColors.surfaceDark : AppColors.white),
-        borderRadius: AppSpacing.radiusMD,
-        border: Border.all(
-          color: isUnread 
-              ? color.withValues(alpha: 0.3) 
-              : (isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 24),
+          Icon(
+            Icons.notifications_none_rounded,
+            size: 48,
+            color: isDark ? AppColors.gray600 : AppColors.gray400,
           ),
-          AppSpacing.w16,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 15,
-                          fontWeight: isUnread ? FontWeight.w900 : FontWeight.w700,
-                          color: isDark ? AppColors.white : AppColors.gray900,
-                        ),
-                      ),
-                    ),
-                    if (isUnread)
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFF6B00),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-                AppSpacing.h8,
-                Text(
-                  message,
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 13,
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
-                    height: 1.4,
-                  ),
-                ),
-                AppSpacing.h12,
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 11,
-                    color: isDark ? AppColors.gray500 : AppColors.gray400,
-                  ),
-                ),
-              ],
+          AppSpacing.h16,
+          Text(
+            'لا توجد إشعارات في هذا التصنيف حالياً',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: isDark ? AppColors.gray400 : AppColors.gray600,
             ),
           ),
         ],
@@ -176,4 +209,3 @@ appBar: AppBar(
     );
   }
 }
-
