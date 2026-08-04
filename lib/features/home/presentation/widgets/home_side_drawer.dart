@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -105,7 +106,18 @@ class HomeSideDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.support_agent_rounded,
                     title: 'الدعم الفني والشكاوى',
-                    route: LaffahRoutes.passengerSupportTickets,
+                    onTap: () async {
+                      Navigator.pop(context); // Close drawer
+                      final Uri url = Uri.parse('whatsapp://send?phone=+967770291452');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      } else {
+                        final Uri phoneUrl = Uri.parse('tel:+967770291452');
+                        if (await canLaunchUrl(phoneUrl)) {
+                          await launchUrl(phoneUrl);
+                        }
+                      }
+                    },
                   ),
                   _buildDrawerTile(
                     context: context,
@@ -117,7 +129,10 @@ class HomeSideDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.published_with_changes_rounded,
                     title: 'التبديل إلى وضع الكابتن',
-                    route: LaffahRoutes.roleSelection,
+                    onTap: () {
+                      Navigator.pop(context);
+                      // context.go(LaffahRoutes.roleSelection); // TODO: Implement role selection
+                    },
                   ),
                 ],
               ),
@@ -132,7 +147,8 @@ class HomeSideDrawer extends StatelessWidget {
     required BuildContext context,
     required IconData icon,
     required String title,
-    required String route,
+    String? route,
+    VoidCallback? onTap,
   }) {
     return ListTile(
       leading: Icon(icon, color: AppColors.primary500, size: 22),
@@ -145,9 +161,11 @@ class HomeSideDrawer extends StatelessWidget {
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
       ),
-      onTap: () {
+      onTap: onTap ?? () {
         Navigator.pop(context); // Close drawer
-        context.go(route);
+        if (route != null) {
+          context.go(route);
+        }
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -102,7 +103,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   icon: Icons.lock_outline_rounded,
                   label: 'تغيير كلمة المرور',
                   isDark: isDark,
-                  onTap: () => context.push(LaffahRoutes.changePassword),
+                  onTap: () {}, // TODO: Implement change password page
                 ),
                 ProfileListTile(
                   icon: Icons.language_rounded,
@@ -149,13 +150,23 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   icon: Icons.headset_mic_outlined,
                   label: 'الدعم الفني والخدمات',
                   isDark: isDark,
-                  onTap: () => context.push(LaffahRoutes.passengerSupportTickets),
+                  onTap: () async {
+                    final Uri url = Uri.parse('whatsapp://send?phone=+967770291452');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    } else {
+                      final Uri phoneUrl = Uri.parse('tel:+967770291452');
+                      if (await canLaunchUrl(phoneUrl)) {
+                        await launchUrl(phoneUrl);
+                      }
+                    }
+                  },
                 ),
                 ProfileListTile(
                   icon: Icons.help_outline_rounded,
                   label: 'الأسئلة الشائعة',
                   isDark: isDark,
-                  onTap: () => context.push(LaffahRoutes.faq),
+                  onTap: () {}, // TODO: Implement FAQ page
                 ),
                 ProfileListTile(
                   icon: Icons.privacy_tip_outlined,

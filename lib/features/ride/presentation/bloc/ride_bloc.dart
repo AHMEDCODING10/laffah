@@ -100,6 +100,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     on<SubmitParcelOrder>(_onSubmitParcelOrder);
     on<CancelRideRequested>(_onCancelRideRequested);
     on<SimulateRideStep>(_onSimulateRideStep);
+    on<ScheduleRide>(_onScheduleRide);
   }
 
   static const List<RideOption> rideTiers = [
@@ -338,4 +339,14 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       emit(const RideSearching());
     }
   }
+
+  Future<void> _onScheduleRide(
+    ScheduleRide event,
+    Emitter<RideState> emit,
+  ) async {
+    emit(const RideLoading());
+    await Future.delayed(const Duration(seconds: 1));
+    emit(const RideScheduledSuccess());
+  }
 }
+

@@ -106,6 +106,7 @@ abstract class LaffahRoutes {
   static const String passengerParcelTracking = '/passenger/parcel/tracking';
   static const String passengerParcelConfirm  = '/passenger/parcel/confirm';
   static const String passengerParcelHistory  = '/passenger/parcel/history';
+  static const String passengerParcelSend     = '/passenger/parcel/send';
   static const String parcelDeliveryProof     = '/parcel/proof';
 
   // ──────────────────────────────────────────

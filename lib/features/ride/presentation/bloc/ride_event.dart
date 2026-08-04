@@ -84,3 +84,16 @@ class SimulateRideStep extends RideEvent {
   @override
   List<Object?> get props => [step];
 }
+
+class ScheduleRide extends RideEvent {
+  final DateTime date;
+  final String time;
+
+  const ScheduleRide({
+    required this.date,
+    required this.time,
+  });
+
+  @override
+  List<Object?> get props => [date, time];
+}

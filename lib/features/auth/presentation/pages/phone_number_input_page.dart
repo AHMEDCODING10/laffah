@@ -69,8 +69,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
   }
 
   // ──────────────── بيانات حساب الاختبار الثابتة ──────────────────────────────────────
-  static const String _demoPhone    = '770291452';
-  static const String _demoPassword = '123456789';
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {

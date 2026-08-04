@@ -150,7 +150,6 @@ Future<void> init() async {
       requestRideUseCase: sl(),
       cancelRideUseCase: sl(),
       submitParcelOrderUseCase: sl(),
-      trackRideUseCase: sl(),
     ),
   );
 

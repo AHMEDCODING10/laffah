@@ -170,6 +170,19 @@ class ParcelSubmitted extends RideState {
   List<Object?> get props => [data, trackingId, price];
 }
 
+class ParcelOrderSubmitted extends RideState {
+  final ParcelData data;
+
+  const ParcelOrderSubmitted(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class RideScheduledSuccess extends RideState {
+  const RideScheduledSuccess();
+}
+
 class RideError extends RideState {
   final String message;
 
