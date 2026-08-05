@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../theme/app_colors.dart';
 
 typedef MarkerTapCallback = void Function(String title, String snippet, LatLng position);
@@ -105,15 +104,13 @@ class _LaffahMapViewState extends State<LaffahMapView> {
               },
             ),
           children: [
-            // Tile Layer (LocationIQ الرئيسي بمفتاحك pk.3bd02f004b13a666e4b510335a4c5771)
+            // Tile Layer — CartoDB tiles (CORS-friendly for web + good quality)
             TileLayer(
               urlTemplate: widget.isDark
-                  ? 'https://tiles.locationiq.com/v3/dark/r/{z}/{x}/{y}.png?key=${dotenv.env['LOCATION_IQ_KEY'] ?? 'pk.3bd02f004b13a666e4b510335a4c5771'}'
-                  : 'https://tiles.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=${dotenv.env['LOCATION_IQ_KEY'] ?? 'pk.3bd02f004b13a666e4b510335a4c5771'}',
-              fallbackUrl: widget.isDark
                   ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-                  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  : 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.laffah.app',
+              maxZoom: 20,
             ),
 
             // مسارات الرحلة (Polylines)

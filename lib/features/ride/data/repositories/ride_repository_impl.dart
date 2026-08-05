@@ -63,6 +63,21 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
+  Future<Either<Failure, List<Map<String, dynamic>>>> getTripHistory() async {
+    try {
+      final trips = await remoteDataSource.getTripHistory();
+      return Right(trips);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        return const Left(ServerFailure('انتهت جلسة الدخول، يرجى تسجيل الدخول مجدداً'));
+      }
+      return const Left(ServerFailure('تعذّر تحميل سجل الرحلات. تحقق من اتصالك بالإنترنت'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId) {
     // 1. Send connection request to the specific ride channel
     webSocketClient.connect('trip.$rideId');

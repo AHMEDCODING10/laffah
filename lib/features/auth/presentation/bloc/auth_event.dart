@@ -5,80 +5,23 @@ abstract class AuthEvent {
   const AuthEvent();
 }
 
-class UpdateUserProfile extends AuthEvent {
-  final String name;
-  final String email;
+/// Event triggered when the user submits phone + password to log in.
+class LoginRequested extends AuthEvent {
   final String phone;
+  final String password;
 
-  const UpdateUserProfile({required this.name, required this.email, required this.phone});
+  const LoginRequested({required this.phone, required this.password});
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UpdateUserProfile &&
-          runtimeType == other.runtimeType &&
-          name == other.name &&
-          email == other.email &&
-          phone == other.phone;
-
-  @override
-  int get hashCode => name.hashCode ^ email.hashCode ^ phone.hashCode;
-}
-
-/// Event triggered when the user submits their phone number to receive an OTP.
-class SendOTPCode extends AuthEvent {
-  final String phone;
-
-  const SendOTPCode(this.phone);
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SendOTPCode &&
-          runtimeType == other.runtimeType &&
-          phone == other.phone;
-
-  @override
-  int get hashCode => phone.hashCode;
-}
-
-/// Event triggered when the user inputs and submits the 4-digit verification code.
-class VerifyOTPCode extends AuthEvent {
-  final String phone;
-  final String code;
-  final String role;
-
-  const VerifyOTPCode(this.phone, this.code, {this.role = 'passenger'});
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is VerifyOTPCode &&
+      other is LoginRequested &&
           runtimeType == other.runtimeType &&
           phone == other.phone &&
-          code == other.code &&
-          role == other.role;
+          password == other.password;
 
   @override
-  int get hashCode => phone.hashCode ^ code.hashCode ^ role.hashCode;
-}
-
-/// Event triggered when the countdown timer expires and the user requests a code resend.
-class ResendOTPCode extends AuthEvent {
-  final String phone;
-
-  const ResendOTPCode(this.phone);
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ResendOTPCode &&
-          runtimeType == other.runtimeType &&
-          phone == other.phone;
-
-  @override
-  int get hashCode => phone.hashCode;
-
+  int get hashCode => phone.hashCode ^ password.hashCode;
 }
 
 /// Event triggered when a passenger submits their full registration form.
@@ -148,4 +91,9 @@ class RegisterCaptainRequested extends AuthEvent {
       vehicleModel.hashCode ^
       vehicleYear.hashCode ^
       vehiclePlate.hashCode;
+}
+
+/// Event triggered when user taps Logout button.
+class LogoutRequested extends AuthEvent {
+  const LogoutRequested();
 }

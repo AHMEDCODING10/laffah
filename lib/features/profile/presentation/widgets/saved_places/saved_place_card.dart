@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
-import '../../../data/datasources/fake_profile_repository.dart';
+import '../../../data/models/saved_place_model.dart';
 
 /// SavedPlaceCard — Card widget displaying a saved place item with single-tap booking trigger.
 class SavedPlaceCard extends StatelessWidget {
@@ -39,7 +39,7 @@ class SavedPlaceCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  place.icon,
+                  _getIconForType(place.type),
                   color: AppColors.primary500,
                   size: 20,
                 ),
@@ -60,7 +60,7 @@ class SavedPlaceCard extends StatelessWidget {
                     ),
                     AppSpacing.h2,
                     Text(
-                      place.addressDetails,
+                      place.address,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 11.5,
@@ -142,7 +142,7 @@ class SavedPlaceCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${place.latitude.toStringAsFixed(4)}, ${place.longitude.toStringAsFixed(4)}',
+                    '${place.lat.toStringAsFixed(4)}, ${place.lng.toStringAsFixed(4)}',
                     style: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 11,
@@ -182,5 +182,22 @@ class SavedPlaceCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'home':
+        return Icons.home_rounded;
+      case 'work':
+        return Icons.business_center_rounded;
+      case 'university':
+        return Icons.school_rounded;
+      case 'shopping':
+        return Icons.local_mall_rounded;
+      case 'historic':
+        return Icons.castle_rounded;
+      default:
+        return Icons.place_rounded;
+    }
   }
 }

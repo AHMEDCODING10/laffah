@@ -234,7 +234,7 @@ class OfficialDocumentsSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'الوثائق والأوراق الرسمية الموثقة',
+            'الوثائق والأوراق الرسمية',
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -243,10 +243,8 @@ class OfficialDocumentsSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h16,
-          _buildDocumentTile('بطاقة الهوية الشخصية (اليمنية)', 'مقبولة ومعتمدة ✔️', isDark),
-          _buildDocumentTile('رخصة القيادة البارية', 'مقبولة وصالحة ✔️', isDark),
-          _buildDocumentTile('كرت ملكية الدراجة النارية', 'مقبول وموثق ✔️', isDark),
-          _buildDocumentTile('صحيفة الحالة الجنائية (الفيش والتشبيه)', 'مقبول ونظيف ✔️', isDark),
+          _buildDocumentTile(context, 'بطاقة الهوية الشخصية (اليمنية)', 'id_card', isDark),
+          _buildDocumentTile(context, 'كرت ملكية الدراجة النارية', 'vehicle_registration', isDark),
           AppSpacing.h24,
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
@@ -266,7 +264,7 @@ class OfficialDocumentsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDocumentTile(String name, String status, bool isDark) {
+  Widget _buildDocumentTile(BuildContext context, String name, String type, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -280,23 +278,35 @@ class OfficialDocumentsSheet extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            name,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 12.5,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : AppColors.gray900,
+          Expanded(
+            child: Text(
+              name,
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : AppColors.gray900,
+              ),
             ),
           ),
-          Text(
-            status,
-            style: const TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 11.5,
-              fontWeight: FontWeight.w900,
-              color: AppColors.success,
+          ElevatedButton(
+            onPressed: () {
+              // TODO: Implement image picker and upload logic using type
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: AppColors.primary,
+                  content: Text('جاري فتح المعرض...', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                )
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              minimumSize: const Size(0, 32),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
+            child: const Text('رفع', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 12)),
           ),
         ],
       ),

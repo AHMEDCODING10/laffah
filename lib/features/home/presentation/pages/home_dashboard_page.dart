@@ -7,11 +7,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
-import '../../../parcel/presentation/widgets/passenger/parcel_delivery_form_bottom_sheet.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
 import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.dart';
 import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
-import '../../data/datasources/fake_home_repository.dart';
+import '../../data/datasources/home_local_data_source.dart';
 import '../widgets/home_action_buttons_row.dart';
 import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_ride_status_cards.dart';
@@ -19,6 +18,7 @@ import '../widgets/home_side_drawer.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/quick_destinations_section.dart';
 import '../widgets/recent_destinations_section.dart';
+import 'location_search_page.dart';
 
 /// HomeDashboardPage — Refactored Passenger Home Dashboard for Laffah (لَفّة).
 /// Clean Architecture & Modular Widget Composition.
@@ -43,14 +43,23 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
   int _selectedQuickIndex = -1;
 
-  late final List<Map<String, dynamic>> _quickDestinations;
-  late final List<Map<String, dynamic>> _recentDestinations;
+  late List<Map<String, dynamic>> _quickDestinations = [];
+  late List<Map<String, dynamic>> _recentDestinations = [];
 
   @override
   void initState() {
     super.initState();
-    _quickDestinations = FakeHomeRepository.getQuickDestinations();
-    _recentDestinations = FakeHomeRepository.getRecentDestinations();
+    _quickDestinations = HomeLocalDataSource.getQuickDestinations();
+    _loadRecentDestinations();
+  }
+
+  Future<void> _loadRecentDestinations() async {
+    final recent = await HomeLocalDataSource.getRecentDestinations();
+    if (mounted) {
+      setState(() {
+        _recentDestinations = recent;
+      });
+    }
   }
 
   @override
@@ -58,6 +67,29 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     _pickupController.dispose();
     _dropoffController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openSearchAndSelectRide() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LocationSearchPage(locationType: 'dropoff'),
+      ),
+    );
+
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        _dropoffController.text = result['name'] ?? '';
+      });
+      // Save it as a recent destination
+      await HomeLocalDataSource.saveRecentDestination({
+        'title': result['name'],
+        'subtitle': 'وجهة تم البحث عنها',
+        'distance': '0 كم',
+      });
+      _loadRecentDestinations(); // Refresh
+      _showRideSelection();
+    }
   }
 
   void _showRideSelection() {
@@ -198,7 +230,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                 child: HomeTopHeader(
                   isDark: isDark,
                   dropoffController: _dropoffController,
-                  onSearchTap: _showRideSelection,
+                  onSearchTap: _openSearchAndSelectRide,
                   onOpenDrawer: () {
                     _scaffoldKey.currentState?.openDrawer();
                   },

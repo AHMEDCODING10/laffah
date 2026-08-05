@@ -41,7 +41,7 @@ class DioClient {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = _inMemoryToken ?? await _storage.read(key: 'sanctum_token');
+        final token = _inMemoryToken ?? await _storage.read(key: 'auth_token');
         if (token != null && token.isNotEmpty) {
           _inMemoryToken = token;
           options.headers['Authorization'] = 'Bearer $token';
@@ -54,12 +54,15 @@ class DioClient {
     _dio.interceptors.add(InterceptorsWrapper(
       onError: (DioException e, handler) async {
         if (e.response?.statusCode == 401) {
-          // Only purge if an authorization header was actually sent
-          // This prevents accidental logouts due to storage latency on startup
+          // If the request was for login, do NOT emit unauthenticated (it's just a wrong password)
+          if (e.requestOptions.path.contains(ApiEndpoints.login)) {
+            return handler.next(e);
+          }
+
           final hasAuthHeader = e.requestOptions.headers.containsKey('Authorization');
           if (hasAuthHeader) {
             _inMemoryToken = null;
-            await _storage.delete(key: 'sanctum_token');
+            await _storage.delete(key: 'auth_token');
             NetworkEventBus.emitUnauthenticated();
           }
         }
@@ -106,7 +109,7 @@ class DioClient {
 
     _uploadDio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = _inMemoryToken ?? await _storage.read(key: 'sanctum_token');
+        final token = _inMemoryToken ?? await _storage.read(key: 'auth_token');
         if (token != null && token.isNotEmpty) {
           _inMemoryToken = token;
           options.headers['Authorization'] = 'Bearer $token';
@@ -118,10 +121,13 @@ class DioClient {
     _uploadDio.interceptors.add(InterceptorsWrapper(
       onError: (DioException e, handler) async {
         if (e.response?.statusCode == 401) {
+          if (e.requestOptions.path.contains(ApiEndpoints.login)) {
+            return handler.next(e);
+          }
           final hasAuthHeader = e.requestOptions.headers.containsKey('Authorization');
           if (hasAuthHeader) {
             _inMemoryToken = null;
-            await _storage.delete(key: 'sanctum_token');
+            await _storage.delete(key: 'auth_token');
             NetworkEventBus.emitUnauthenticated();
           }
         }

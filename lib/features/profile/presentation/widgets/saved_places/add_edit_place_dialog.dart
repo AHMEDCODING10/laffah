@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
-import '../../../data/datasources/fake_profile_repository.dart';
+import '../../../data/models/saved_place_model.dart';
 
 /// AddEditPlaceDialog — Modal form dialog for creating or editing saved places.
 class AddEditPlaceDialog extends StatefulWidget {
@@ -42,15 +42,15 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
 
   late TextEditingController _nameController;
   late TextEditingController _addressController;
-  late PlaceType _selectedType;
+  late String _selectedType;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.placeToEdit?.name ?? '');
     _addressController =
-        TextEditingController(text: widget.placeToEdit?.addressDetails ?? '');
-    _selectedType = widget.placeToEdit?.type ?? PlaceType.custom;
+        TextEditingController(text: widget.placeToEdit?.address ?? '');
+    _selectedType = widget.placeToEdit?.type ?? 'custom';
   }
 
   @override
@@ -60,34 +60,16 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
     super.dispose();
   }
 
-  IconData _getIconForType(PlaceType type) {
-    switch (type) {
-      case PlaceType.home:
-        return Icons.home_rounded;
-      case PlaceType.work:
-        return Icons.business_center_rounded;
-      case PlaceType.university:
-        return Icons.school_rounded;
-      case PlaceType.shopping:
-        return Icons.local_mall_rounded;
-      case PlaceType.historic:
-        return Icons.castle_rounded;
-      case PlaceType.custom:
-        return Icons.place_rounded;
-    }
-  }
-
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       final newPlace = SavedPlaceModel(
         id: widget.placeToEdit?.id ??
             'place_${DateTime.now().millisecondsSinceEpoch}',
         name: _nameController.text.trim(),
-        addressDetails: _addressController.text.trim(),
-        latitude: widget.placeToEdit?.latitude ?? 15.3694,
-        longitude: widget.placeToEdit?.longitude ?? 44.1910,
+        address: _addressController.text.trim(),
+        lat: widget.placeToEdit?.lat ?? 15.3694,
+        lng: widget.placeToEdit?.lng ?? 44.1910,
         type: _selectedType,
-        icon: _getIconForType(_selectedType),
       );
 
       widget.onSave(newPlace);
@@ -200,18 +182,18 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
                     ),
                   ),
                   AppSpacing.h8,
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildTypeChip('منزل', PlaceType.home),
-                      _buildTypeChip('عمل', PlaceType.work),
-                      _buildTypeChip('جامعة', PlaceType.university),
-                      _buildTypeChip('تسوق', PlaceType.shopping),
-                      _buildTypeChip('تاريخي', PlaceType.historic),
-                      _buildTypeChip('مخصص', PlaceType.custom),
-                    ],
-                  ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildTypeChip('منزل', 'home'),
+                        _buildTypeChip('عمل', 'work'),
+                        _buildTypeChip('جامعة', 'university'),
+                        _buildTypeChip('تسوق', 'shopping'),
+                        _buildTypeChip('تاريخي', 'historic'),
+                        _buildTypeChip('مخصص', 'custom'),
+                      ],
+                    ),
 
                   AppSpacing.h20,
 
@@ -248,7 +230,7 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
     );
   }
 
-  Widget _buildTypeChip(String label, PlaceType type) {
+  Widget _buildTypeChip(String label, String type) {
     final isSelected = _selectedType == type;
     return ChoiceChip(
       label: Text(

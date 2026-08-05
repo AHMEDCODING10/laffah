@@ -4,10 +4,11 @@ import '../../../../core/network/dio_client.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<BaseResponseModel<String>> sendOtp(String phone);
-  Future<BaseResponseModel<UserModel>> verifyOtp(String phone, String code, {String role = 'passenger'});
+
   Future<BaseResponseModel<UserModel>> registerPassenger(Map<String, dynamic> data);
   Future<BaseResponseModel<UserModel>> registerCaptain(Map<String, dynamic> data);
+  Future<BaseResponseModel<UserModel>> login(String phone, String password);
+  Future<void> logoutFromServer();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -15,24 +16,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   AuthRemoteDataSourceImpl(this.dioClient);
 
-  @override
-  Future<BaseResponseModel<String>> sendOtp(String phone) async {
-    final response = await dioClient.dio.post(
-      ApiEndpoints.sendOtp,
-      data: {'phone': phone},
-    );
-    return BaseResponseModel.fromJson(response.data, (data) => data['dev_otp']?.toString() ?? '');
-  }
 
   @override
-  Future<BaseResponseModel<UserModel>> verifyOtp(String phone, String code, {String role = 'passenger'}) async {
+  Future<BaseResponseModel<UserModel>> login(String phone, String password) async {
     final response = await dioClient.dio.post(
-      ApiEndpoints.verifyOtp,
-      data: {'phone': phone, 'otp': code, 'role': role},
+      ApiEndpoints.login,
+      data: {'phone': phone, 'password': password},
     );
-    
     return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
   }
+
 
   @override
   Future<BaseResponseModel<UserModel>> registerPassenger(Map<String, dynamic> data) async {
@@ -50,5 +43,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       data: data,
     );
     return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
+  }
+
+  @override
+  Future<void> logoutFromServer() async {
+    await dioClient.dio.post(ApiEndpoints.logout);
   }
 }

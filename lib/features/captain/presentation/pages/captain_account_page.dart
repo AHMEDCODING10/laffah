@@ -54,15 +54,13 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
     );
   }
 
-  // Mock Dynamic Profile State (fallback values if bloc fails)
-  String _captainName = 'أحمد محمد يحيى';
-  String _captainPhone = '771234567';
   String _selectedLang = 'ar'; // Default language Arabic
 
-  final Map<String, String> _vehicleInfo = {
-    'type': 'دراجة ياماها النارية 125cc',
-    'model': 'ياماها موديل (2023)',
-    'plate': '77213 - صنعاء',
+  // Fallback vehicle info if not available
+  final Map<String, String> _defaultVehicleInfo = {
+    'type': 'غير محدد',
+    'model': 'غير محدد',
+    'plate': 'غير محدد',
     'license': 'رخصة قيادة دراجات نارية سارية',
   };
 
@@ -162,12 +160,25 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(
-              Icons.notifications_none_rounded,
-              color: isDark ? AppColors.white : AppColors.gray900,
+          BlocListener<ProfileBloc, ProfileState>(
+            bloc: _profileBloc,
+            listener: (context, state) {
+              if (state is ProfileLoaded) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    backgroundColor: AppColors.success,
+                    content: Text('تم تحديث الملف الشخصي بنجاح 💾', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                  ),
+                );
+              }
+            },
+            child: IconButton(
+              icon: Icon(
+                Icons.notifications_none_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900,
+              ),
+              onPressed: () => _showNotificationCenterSheet(context, isDark),
             ),
-            onPressed: () => _showNotificationCenterSheet(context, isDark),
           ),
         ],
       ),
@@ -197,11 +208,18 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                     String name = 'جاري التحميل...';
                     String rating = '0.0';
                     String? avatarUrl;
+                    String vehicleType = 'مركبة';
+                    String vehiclePlate = 'غير محدد';
+
+                    bool isVerified = false;
 
                     if (state is ProfileLoaded) {
                       name = state.profile.name;
-                      rating = '4.9'; // Fallback if rating isn't in profile yet
+                      rating = state.profile.rating?.toStringAsFixed(1) ?? '5.0'; 
                       avatarUrl = state.profile.avatarUrl; 
+                      vehicleType = state.profile.vehicleType ?? 'مركبة';
+                      vehiclePlate = state.profile.plateNumber ?? 'غير محدد';
+                      isVerified = state.profile.isVerified;
                     } else if (state is ProfileError) {
                       name = 'كابتن لَفَّة';
                     }
@@ -253,22 +271,63 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                               AppSpacing.h4,
                               Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Text(
-                                      'كابتن متميز',
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        color: Color(0xFFFF6B00),
-                                        fontWeight: FontWeight.w900,
-                                        fontFamily: 'IBM Plex Sans Arabic',
+                                  if (isVerified)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.success.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.verified_rounded, color: AppColors.success, size: 12),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'حساب موثق',
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              color: AppColors.success,
+                                              fontWeight: FontWeight.w900,
+                                              fontFamily: 'IBM Plex Sans Arabic',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    GestureDetector(
+                                      onTap: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) => const OfficialDocumentsSheet(),
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: AppColors.error.withValues(alpha: 0.5)),
+                                        ),
+                                        child: const Row(
+                                          children: [
+                                            Icon(Icons.warning_rounded, color: AppColors.error, size: 12),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'غير موثق - وثق الآن',
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                color: AppColors.error,
+                                                fontWeight: FontWeight.w900,
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
                                   AppSpacing.w8,
                                   const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                                   AppSpacing.w2,
@@ -284,7 +343,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                               ),
                               AppSpacing.h8,
                               Text(
-                                '${_vehicleInfo['type']} • لوحة: ${_vehicleInfo['plate']}',
+                                '$vehicleType • لوحة: $vehiclePlate',
                                 style: const TextStyle(
                                   fontSize: 10.5,
                                   color: AppColors.gray500,
@@ -299,22 +358,28 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                       icon: const Icon(Icons.edit_note_rounded, color: Color(0xFFFF6B00), size: 28),
                       onPressed: () {
                         HapticFeedback.lightImpact();
+                        
+                        String currentName = '';
+                        String currentPhone = '';
+                        if (_profileBloc.state is ProfileLoaded) {
+                          final profile = (_profileBloc.state as ProfileLoaded).profile;
+                          currentName = profile.name;
+                          currentPhone = profile.phone;
+                        }
+                        
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
                           builder: (context) => EditProfileSheet(
-                            currentName: _captainName,
-                            currentPhone: _captainPhone,
+                            currentName: currentName,
+                            currentPhone: currentPhone,
                             onSave: (newName, newPhone) {
-                              setState(() {
-                                _captainName = newName;
-                                _captainPhone = newPhone;
-                              });
+                              _profileBloc.add(UpdateProfileEvent(name: newName));
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   backgroundColor: AppColors.success,
-                                  content: Text('تم تحديث الملف الشخصي بنجاح 💾', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                                  content: Text('جاري تحديث الملف الشخصي... ⏳', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
                                 ),
                               );
                             },
@@ -338,18 +403,28 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 title: 'الملف الشخصي',
                 subtitle: 'إعدادات الحساب والبيانات الأساسية',
                 onTap: () {
+                  String currentName = '';
+                  String currentPhone = '';
+                  if (_profileBloc.state is ProfileLoaded) {
+                    final profile = (_profileBloc.state as ProfileLoaded).profile;
+                    currentName = profile.name;
+                    currentPhone = profile.phone;
+                  }
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (context) => EditProfileSheet(
-                      currentName: _captainName,
-                      currentPhone: _captainPhone,
+                      currentName: currentName,
+                      currentPhone: currentPhone,
                       onSave: (newName, newPhone) {
-                        setState(() {
-                          _captainName = newName;
-                          _captainPhone = newPhone;
-                        });
+                        _profileBloc.add(UpdateProfileEvent(name: newName));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: AppColors.success,
+                            content: Text('جاري تحديث الملف الشخصي... ⏳', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                          ),
+                        );
                       },
                     ),
                   );
@@ -360,11 +435,19 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 title: 'بيانات الدراجة / المركبة',
                 subtitle: 'الموديل، لوحة الأرقام، نوع الرخصة',
                 onTap: () {
+                  Map<String, String> currentVehicleInfo = Map.from(_defaultVehicleInfo);
+                  if (_profileBloc.state is ProfileLoaded) {
+                    final profile = (_profileBloc.state as ProfileLoaded).profile;
+                    currentVehicleInfo['type'] = profile.vehicleType ?? 'غير محدد';
+                    currentVehicleInfo['model'] = profile.vehicleModel ?? 'غير محدد';
+                    currentVehicleInfo['plate'] = profile.plateNumber ?? 'غير محدد';
+                  }
+
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (context) => VehicleDetailsSheet(vehicleInfo: _vehicleInfo),
+                    builder: (context) => VehicleDetailsSheet(vehicleInfo: currentVehicleInfo),
                   );
                 },
               ),

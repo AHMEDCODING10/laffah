@@ -3,7 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
-import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../../data/models/promo_voucher_model.dart';
 import '../widgets/promo_card.dart';
 
 /// PromoCodePage — Passenger Promo Codes & Discounts Screen.
@@ -22,7 +22,8 @@ class _PromoCodePageState extends State<PromoCodePage> {
   @override
   void initState() {
     super.initState();
-    _promos = FakePassengerCoreRepository.getPromoVouchers();
+    // Promos will be loaded from the real backend API
+    _promos = [];
   }
 
   @override

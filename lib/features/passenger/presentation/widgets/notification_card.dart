@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
-import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../../data/models/notification_item_model.dart';
 
 /// NotificationCard — Item widget displaying notification details with unread indicator and category icon.
 class NotificationCard extends StatelessWidget {
@@ -41,13 +41,12 @@ class NotificationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.s10),
                   decoration: BoxDecoration(
-                    color: (item.color ?? AppColors.primary500)
-                        .withValues(alpha: 0.12),
+                    color: _getCategoryColor(item.category).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    item.icon ?? Icons.notifications_rounded,
-                    color: item.color ?? AppColors.primary500,
+                    _getCategoryIcon(item.category),
+                    color: _getCategoryColor(item.category),
                     size: 20,
                   ),
                 ),
@@ -97,10 +96,10 @@ class NotificationCard extends StatelessWidget {
                       ),
                       Text(
                         item.time,
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 11,
-                          color: isDark ? AppColors.gray500 : AppColors.gray400,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10.5,
+                          color: AppColors.gray500,
                         ),
                       ),
                     ],
@@ -144,5 +143,35 @@ class NotificationCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'rides':
+        return Icons.directions_car_rounded;
+      case 'parcels':
+        return Icons.inventory_2_rounded;
+      case 'offers':
+        return Icons.local_offer_rounded;
+      case 'messages':
+        return Icons.chat_bubble_rounded;
+      default:
+        return Icons.notifications_rounded;
+    }
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'rides':
+        return AppColors.primary500;
+      case 'parcels':
+        return Colors.orange;
+      case 'offers':
+        return AppColors.success;
+      case 'messages':
+        return Colors.blue;
+      default:
+        return AppColors.primary500;
+    }
   }
 }

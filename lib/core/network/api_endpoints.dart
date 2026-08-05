@@ -19,11 +19,12 @@ class ApiEndpoints {
   }
   
   // Auth Endpoints
-  static const String sendOtp = '/auth/send-otp';
-  static const String verifyOtp = '/auth/verify-otp';
-  static const String logout = '/auth/logout';
-  static const String registerPassenger = '/auth/register-passenger'; // Aligned with backend standard
-  static const String registerCaptain = '/auth/register-captain'; // Aligned with backend standard
+  static const String login            = '/auth/login';
+  static const String sendOtp          = '/auth/send-otp';
+  static const String verifyOtp        = '/auth/verify-otp';
+  static const String logout           = '/auth/logout';
+  static const String registerPassenger = '/auth/register-passenger';
+  static const String registerCaptain   = '/auth/register-captain';
 
   // Profile / User Endpoints
   static const String userProfile = '/user/profile';

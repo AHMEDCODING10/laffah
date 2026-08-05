@@ -195,8 +195,6 @@ appBar: AppBar(
             if (state is AuthSuccess) {
               // تسجيل الكابتن نجح - توجيه مباشر لشاشة الكابتن
               context.go(LaffahRoutes.captainHome);
-            } else if (state is AuthCodeSent) {
-              context.push('/auth/otp?phone=${Uri.encodeComponent(state.phone)}');
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

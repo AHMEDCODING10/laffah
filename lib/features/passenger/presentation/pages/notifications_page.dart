@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../../data/models/notification_item_model.dart';
 import '../widgets/notification_card.dart';
 
 /// NotificationsPage — Central hub for passenger notifications matching Laffah design.
@@ -24,7 +24,8 @@ class _NotificationsPageState extends State<NotificationsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
-    _notifications = FakePassengerCoreRepository.getNotifications();
+    // Notifications will be loaded from the real backend push notifications system
+    _notifications = [];
   }
 
   @override
@@ -37,10 +38,10 @@ class _NotificationsPageState extends State<NotificationsPage>
     if (_selectedCategoryIndex == 0) return _notifications;
     final categories = [
       null,
-      NotificationCategory.rides,
-      NotificationCategory.parcels,
-      NotificationCategory.messages,
-      NotificationCategory.offers,
+      'rides',
+      'parcels',
+      'messages',
+      'offers',
     ];
     final selectedCat = categories[_selectedCategoryIndex];
     return _notifications.where((n) => n.category == selectedCat).toList();

@@ -27,20 +27,35 @@ class CalculateSingleTripFare extends RideEvent {
 class ConfirmUnifiedBooking extends RideEvent {
   final String pickup;
   final String dropoff;
+  final List<String> additionalDropoffs; // For Multiple Drop-offs
   final double fare;
   final double distance;
   final int duration;
+  final bool isScheduled; // For Scheduled Rides
+  final DateTime? scheduledTime;
 
   const ConfirmUnifiedBooking({
     required this.pickup,
     required this.dropoff,
+    this.additionalDropoffs = const [],
     required this.fare,
     required this.distance,
     required this.duration,
+    this.isScheduled = false,
+    this.scheduledTime,
   });
 
   @override
-  List<Object?> get props => [pickup, dropoff, fare, distance, duration];
+  List<Object?> get props => [
+        pickup,
+        dropoff,
+        additionalDropoffs,
+        fare,
+        distance,
+        duration,
+        isScheduled,
+        scheduledTime,
+      ];
 }
 
 class ConfirmBooking extends RideEvent {
@@ -69,11 +84,17 @@ class SubmitParcelOrder extends RideEvent {
 
 class CancelRideRequested extends RideEvent {
   final String? reason;
+  final String? tripId; // For cancelling a specific trip by ID from history
 
-  const CancelRideRequested({this.reason});
+  const CancelRideRequested({this.reason, this.tripId});
 
   @override
-  List<Object?> get props => [reason];
+  List<Object?> get props => [reason, tripId];
+}
+
+/// Load trip history from the backend
+class LoadTripHistoryEvent extends RideEvent {
+  const LoadTripHistoryEvent();
 }
 
 class SimulateRideStep extends RideEvent {

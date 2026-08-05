@@ -53,7 +53,9 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       lat = pos.latitude;
       lng = pos.longitude;
     } catch (_) {
-      // Fallback or request permissions
+      // Fallback: Use Sanaa center coordinates if GPS unavailable
+      lat = 15.3605;
+      lng = 44.1852;
     }
 
     final result = await toggleCaptainStatusUseCase(
@@ -70,27 +72,11 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         if (status.isOnline) {
           emit(const CaptainOnline());
           _startLocationTracking();
+          // Connect to real Pusher WebSocket to receive live trip requests
           pusherService.connect(
-            captainId: 'captain-123',
+            captainId: status.captainId ?? 'unknown',
             onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
           );
-          
-          // Simulation Mode: Auto-dispatch a fake trip request after 5 seconds
-          Timer(const Duration(seconds: 5), () {
-            if (state is CaptainOnline) {
-              add(IncomingTripRequestReceived({
-                'trip_id': 'SIM-${DateTime.now().millisecondsSinceEpoch}',
-                'passenger_name': 'عميل لَفَّة (محاكاة)',
-                'passenger_phone': '777000111',
-                'passenger_rating': 4.9,
-                'pickup': 'موقع العميل القريب',
-                'dropoff': 'نقطة الوصول المحددة',
-                'fare': 1500.0,
-                'distance': '2.5 كم',
-                'duration': '8 دقائق',
-              }));
-            }
-          });
         } else {
           emit(const CaptainOffline());
           _stopLocationTracking();
@@ -99,6 +85,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       },
     );
   }
+
 
   void _onIncomingTripRequestReceived(IncomingTripRequestReceived event, EmitFn emit) {
     final d = event.data;

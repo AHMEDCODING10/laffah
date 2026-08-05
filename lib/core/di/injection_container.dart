@@ -8,8 +8,7 @@ import '../services/pusher_service.dart';
 import '../services/routing_service.dart';
 import '../storage/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
-import '../../features/auth/domain/usecases/send_otp_usecase.dart';
-import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
+import '../../features/auth/domain/usecases/login_usecase.dart';
 import '../../features/auth/domain/usecases/register_passenger_usecase.dart';
 import '../../features/auth/domain/usecases/register_captain_usecase.dart';
 
@@ -21,6 +20,7 @@ import '../../features/ride/domain/repositories/ride_repository.dart';
 import '../../features/ride/domain/usecases/request_ride_usecase.dart';
 import '../../features/ride/domain/usecases/cancel_ride_usecase.dart';
 import '../../features/ride/domain/usecases/track_ride_usecase.dart';
+import '../../features/ride/domain/usecases/get_trip_history_usecase.dart';
 import '../../features/ride/data/datasources/ride_remote_data_source.dart';
 import '../../features/ride/data/repositories/ride_repository_impl.dart';
 import '../../features/ride/presentation/bloc/ride_bloc.dart';
@@ -114,18 +114,17 @@ Future<void> init() async {
     ),
   );
   // Use cases
-  sl.registerLazySingleton(() => SendOtpUseCase(sl()));
-  sl.registerLazySingleton(() => VerifyOtpUseCase(sl()));
+  sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => RegisterPassengerUseCase(sl()));
   sl.registerLazySingleton(() => RegisterCaptainUseCase(sl()));
 
   // Bloc
   sl.registerFactory(
         () => AuthBloc(
-      sendOtpUseCase: sl(),
-      verifyOtpUseCase: sl(),
+      loginUseCase: sl(),
       registerPassengerUseCase: sl(),
       registerCaptainUseCase: sl(),
+      authRepository: sl(),
     ),
   );
 
@@ -144,12 +143,14 @@ Future<void> init() async {
   sl.registerLazySingleton(() => RequestRideUseCase(sl()));
   sl.registerLazySingleton(() => CancelRideUseCase(sl()));
   sl.registerLazySingleton(() => TrackRideUseCase(sl()));
+  sl.registerLazySingleton(() => GetTripHistoryUseCase(sl()));
 
   sl.registerFactory<RideBloc>(
         () => RideBloc(
       requestRideUseCase: sl(),
       cancelRideUseCase: sl(),
       submitParcelOrderUseCase: sl(),
+      getTripHistoryUseCase: sl(),
     ),
   );
 

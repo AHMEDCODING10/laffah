@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
-import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../../data/models/promo_voucher_model.dart';
 
 /// PromoCard — Item widget displaying promo code details with copy & apply callbacks.
 class PromoCard extends StatelessWidget {

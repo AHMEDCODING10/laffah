@@ -1089,6 +1089,7 @@ appBar: AppBar(
       ),
     );
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
     // Map document id to backend type expected by Laravel (id_card, driving_license, vehicle_registration)

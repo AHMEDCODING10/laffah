@@ -8,7 +8,6 @@ import '../../core/theme/app_spacing.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/auth_landing_page.dart';
 import '../../features/auth/presentation/pages/phone_number_input_page.dart';
-import '../../features/auth/presentation/pages/otp_verification_page.dart';
 import '../../features/auth/presentation/pages/register_passenger_page.dart';
 import '../../features/auth/presentation/pages/register_captain_page.dart';
 import '../../features/auth/presentation/pages/onboarding_page.dart';
@@ -60,6 +59,7 @@ import '../../features/profile/presentation/pages/saved_places_page.dart';
 import '../../features/profile/presentation/pages/passenger_profile_edit_page.dart';
 import '../../features/profile/presentation/pages/legal/privacy_policy_page.dart';
 import '../../features/profile/presentation/pages/legal/terms_of_service_page.dart';
+import '../../features/profile/domain/entities/profile_entity.dart';
 
 // ============================================================
 // ROUTE PATH CONSTANTS
@@ -78,7 +78,6 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   static const String authLanding             = '/auth';
   static const String authPhone               = '/auth/phone';
-  static const String authOtp                 = '/auth/otp';
   static const String authRegisterPassenger   = '/auth/register/passenger';
   static const String authRegisterCaptain     = '/auth/register/captain';
 
@@ -205,17 +204,6 @@ class AppRouter {
         const PhoneNumberInputPage(),
       ),
 
-      GoRoute(
-        path: LaffahRoutes.authOtp,
-        name: 'auth-otp',
-        builder: (BuildContext context, GoRouterState state) {
-          final String phone =
-              state.uri.queryParameters['phone'] ?? '';
-          final String role =
-              state.uri.queryParameters['role'] ?? 'passenger';
-          return OTPVerificationPage(phoneNumber: phone, role: role);
-        },
-      ),
 
       GoRoute(
         path: LaffahRoutes.authRegisterPassenger,
@@ -352,8 +340,10 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.passengerProfileEdit,
         name: 'passenger-profile-edit',
-        builder: (BuildContext context, GoRouterState state) =>
-        const PassengerProfileEditPage(),
+        builder: (BuildContext context, GoRouterState state) {
+          final profile = state.extra as ProfileEntity?;
+          return PassengerProfileEditPage(profile: profile);
+        },
       ),
 
       GoRoute(

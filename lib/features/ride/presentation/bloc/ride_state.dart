@@ -183,6 +183,31 @@ class RideScheduledSuccess extends RideState {
   const RideScheduledSuccess();
 }
 
+// ============================================================
+// Trip History States
+// ============================================================
+class TripHistoryLoading extends RideState {
+  const TripHistoryLoading();
+}
+
+class TripHistoryLoaded extends RideState {
+  final List<Map<String, dynamic>> trips;
+
+  const TripHistoryLoaded(this.trips);
+
+  @override
+  List<Object?> get props => [trips];
+}
+
+class TripHistoryError extends RideState {
+  final String message;
+
+  const TripHistoryError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 class RideError extends RideState {
   final String message;
 

@@ -17,51 +17,35 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.secureStorage,
   });
 
+  // Helper to save token
+  Future<void> _saveToken(String? token) async {
+    if (token != null) {
+      DioClient.setToken(token);
+      await secureStorage.write(key: 'auth_token', value: token);
+    }
+  }
+
   @override
-  Future<Either<Failure, String>> sendOtp(String phone) async {
+  Future<Either<Failure, UserEntity>> login(String phone, String password) async {
     try {
-      final response = await remoteDataSource.sendOtp(phone);
+      final response = await remoteDataSource.login(phone, password);
       if (response.success && response.data != null) {
+        await _saveToken(response.data!.token);
         return Right(response.data!);
       } else {
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (e) {
       if (e.error is LaravelValidationException) {
-        final exception = e.error as LaravelValidationException;
-        return Left(ValidationFailure(exception.message));
+        return Left(ValidationFailure((e.error as LaravelValidationException).message));
       }
-      return const Left(ServerFailure('حدث خطأ أثناء الاتصال بالخادم'));
+      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'رقم الهاتف أو كلمة المرور غير صحيحة'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
-  @override
-  Future<Either<Failure, UserEntity>> verifyOtp(String phone, String code, {String role = 'passenger'}) async {
-    try {
-      final response = await remoteDataSource.verifyOtp(phone, code, role: role);
-      if (response.success && response.data != null) {
-        final userModel = response.data!;
-        // Save token to secure storage & in-memory cache
-        if (userModel.token != null) {
-          DioClient.setToken(userModel.token);
-          await secureStorage.write(key: 'sanctum_token', value: userModel.token);
-        }
-        return Right(userModel);
-      } else {
-        return Left(ServerFailure(response.message));
-      }
-    } on DioException catch (e) {
-      if (e.error is LaravelValidationException) {
-        final exception = e.error as LaravelValidationException;
-        return Left(ValidationFailure(exception.message));
-      }
-      return const Left(ServerFailure('حدث خطأ أثناء الاتصال بالخادم'));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
+
 
   @override
   Future<Either<Failure, UserEntity>> registerPassenger({
@@ -76,12 +60,8 @@ class AuthRepositoryImpl implements AuthRepository {
         'password': password,
       });
       if (response.success && response.data != null) {
-        final userModel = response.data!;
-        if (userModel.token != null) {
-          DioClient.setToken(userModel.token);
-          await secureStorage.write(key: 'sanctum_token', value: userModel.token);
-        }
-        return Right(userModel);
+        await _saveToken(response.data!.token);
+        return Right(response.data!);
       } else {
         return Left(ServerFailure(response.message));
       }
@@ -118,12 +98,8 @@ class AuthRepositoryImpl implements AuthRepository {
         'plate_number': vehiclePlate,
       });
       if (response.success && response.data != null) {
-        final userModel = response.data!;
-        if (userModel.token != null) {
-          DioClient.setToken(userModel.token);
-          await secureStorage.write(key: 'sanctum_token', value: userModel.token);
-        }
-        return Right(userModel);
+        await _saveToken(response.data!.token);
+        return Right(response.data!);
       } else {
         return Left(ServerFailure(response.message));
       }
@@ -140,8 +116,14 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, void>> logout() async {
+    try {
+      // Call backend to invalidate the JWT token
+      await remoteDataSource.logoutFromServer();
+    } catch (_) {
+      // Even if backend call fails, clear local storage
+    }
     DioClient.setToken(null);
-    await secureStorage.delete(key: 'sanctum_token');
+    await secureStorage.delete(key: 'auth_token');
     return const Right(null);
   }
 }

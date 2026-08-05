@@ -315,7 +315,7 @@ class ParcelInfoCard extends StatelessWidget {
       isDark: isDark,
       children: [
         DropdownButtonFormField<String>(
-          value: selectedParcelType,
+          initialValue: selectedParcelType,
           style: _inputTextStyle(isDark),
           dropdownColor: isDark
               ? AppColors.surfaceElevatedDark

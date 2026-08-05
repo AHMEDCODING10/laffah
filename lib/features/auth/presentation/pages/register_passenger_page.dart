@@ -124,8 +124,6 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
               if (state is AuthSuccess) {
                 // تسجيل الراكب نجح - توجيه مباشر لشاشة الراكب الرئيسية
                 context.go(LaffahRoutes.passengerHome);
-              } else if (state is AuthCodeSent) {
-                context.push('/auth/otp?phone=${Uri.encodeComponent(state.phone)}');
               } else if (state is AuthFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

@@ -320,17 +320,14 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                                     ],
                                   ),
                                 ),
-                                Radio<String>(
-                                  value: method['id']!,
-                                  groupValue: _selectedMethod,
-                                  activeColor: const Color(0xFFFF6B00),
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      setState(() {
-                                        _selectedMethod = val;
-                                      });
-                                    }
-                                  },
+                                Icon(
+                                  isSelected
+                                      ? Icons.radio_button_checked_rounded
+                                      : Icons.radio_button_unchecked_rounded,
+                                  color: isSelected
+                                      ? const Color(0xFFFF6B00)
+                                      : AppColors.gray400,
+                                  size: 22,
                                 ),
                               ],
                             ),

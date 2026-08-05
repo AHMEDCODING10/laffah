@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/auth_event.dart';
-import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../domain/entities/profile_entity.dart';
+import '../bloc/profile_bloc.dart';
+import '../bloc/profile_event.dart';
+import '../bloc/profile_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 class PassengerProfileEditPage extends StatefulWidget {
-  const PassengerProfileEditPage({super.key});
+  final ProfileEntity? profile;
+
+  const PassengerProfileEditPage({super.key, this.profile});
 
   @override
   State<PassengerProfileEditPage> createState() => _PassengerProfileEditPageState();
@@ -16,9 +19,17 @@ class PassengerProfileEditPage extends StatefulWidget {
 
 class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'أحمد اليمني');
-  final _emailController = TextEditingController(text: 'ahmed@example.com');
-  final _phoneController = TextEditingController(text: '777123456');
+  late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.profile?.name ?? '');
+    _emailController = TextEditingController(text: widget.profile?.email ?? '');
+    _phoneController = TextEditingController(text: widget.profile?.phone ?? '');
+  }
 
   @override
   void dispose() {
@@ -30,10 +41,9 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
 
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
-      context.read<AuthBloc>().add(UpdateUserProfile(
+      context.read<ProfileBloc>().add(UpdateProfileEvent(
         name: _nameController.text,
         email: _emailController.text,
-        phone: _phoneController.text,
       ));
     }
   }
@@ -44,9 +54,9 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: BlocConsumer<AuthBloc, AuthState>(
+      child: BlocConsumer<ProfileBloc, ProfileState>(
         listener: (context, state) {
-          if (state is AuthProfileUpdated) {
+          if (state is ProfileLoaded) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('تم حفظ التعديلات بنجاح', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
@@ -57,6 +67,8 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
           }
         },
         builder: (context, state) {
+          final isLoading = state is ProfileLoading;
+
           return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -134,25 +146,23 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: state is AuthLoading ? null : _saveProfile,
+                    onPressed: isLoading ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary500,
                       shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD,
                       ),
                     ),
-                    child: state is AuthLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                    child: isLoading
+                        ? const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                           )
                         : const Text(
                             'حفظ التعديلات',
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
                               color: AppColors.white,
                             ),
                           ),

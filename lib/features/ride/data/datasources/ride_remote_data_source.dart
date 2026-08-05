@@ -12,6 +12,9 @@ abstract class RideRemoteDataSource {
   });
 
   Future<BaseResponseModel<void>> cancelRide(String rideId);
+
+  /// Returns the raw list of trip maps from the backend
+  Future<List<Map<String, dynamic>>> getTripHistory();
 }
 
 class RideRemoteDataSourceImpl implements RideRemoteDataSource {
@@ -44,5 +47,16 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
       ApiEndpoints.cancelRide(rideId),
     );
     return BaseResponseModel.fromJson(response.data, (data) {});
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getTripHistory() async {
+    final response = await dioClient.dio.get(ApiEndpoints.tripHistory);
+    final data = response.data;
+    if (data is Map && data.containsKey('data')) {
+      final list = data['data'] as List? ?? [];
+      return list.map((e) => e as Map<String, dynamic>).toList();
+    }
+    return [];
   }
 }

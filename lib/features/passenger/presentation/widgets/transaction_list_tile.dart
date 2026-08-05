@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
-import '../../data/datasources/fake_passenger_core_repository.dart';
+import '../../domain/entities/wallet_entity.dart';
 
-/// TransactionListTile — Displays a single wallet transaction item (deposit vs deduction).
+/// TransactionListTile — Displays a single wallet transaction item from the backend.
 class TransactionListTile extends StatelessWidget {
   final bool isDark;
-  final WalletTransactionModel transaction;
+  final TransactionEntity transaction;
 
   const TransactionListTile({
     super.key,
@@ -17,7 +17,7 @@ class TransactionListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDeposit = transaction.isDeposit;
+    final isDeposit = transaction.type == 'credit';
 
     return GlassBox(
       borderRadius: AppSpacing.radiusMD,
@@ -57,7 +57,7 @@ class TransactionListTile extends StatelessWidget {
                 ),
                 AppSpacing.h2,
                 Text(
-                  '${transaction.subtitle} • ${transaction.date}',
+                  transaction.date,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 11,

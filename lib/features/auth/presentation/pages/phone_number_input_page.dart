@@ -10,6 +10,7 @@ import '../../../../core/widgets/laffah_logo.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'auth_landing_page.dart';
 
 /// PhoneNumberInputPage - Dedicated, high-contrast login screen for Laffah (راكب / كابتن)
 /// Features Yemen +967 formatting, focus glow borders, and registration role selection.
@@ -34,7 +35,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
 
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
-  bool _isFormValid = false;
 
   @override
   void initState() {
@@ -49,14 +49,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         _isPasswordFocused = _passwordFocusNode.hasFocus;
       });
     });
-    _phoneController.addListener(_validateForm);
-    _passwordController.addListener(_validateForm);
-  }
-
-  void _validateForm() {
-    setState(() {
-      _isFormValid = _phoneController.text.trim().length == 9 && _passwordController.text.length >= 6;
-    });
   }
 
   @override
@@ -68,12 +60,16 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
     super.dispose();
   }
 
-  // ──────────────── بيانات حساب الاختبار الثابتة ──────────────────────────────────────
-
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       final String phoneDigits = _phoneController.text.trim();
-      context.read<AuthBloc>().add(SendOTPCode(phoneDigits));
+      final String fullPhoneNumber = '+967$phoneDigits';
+
+      // Fire Login Code event to BLoC
+      context.read<AuthBloc>().add(LoginRequested(
+        phone: fullPhoneNumber,
+        password: _passwordController.text,
+      ));
     }
   }
 
@@ -83,37 +79,76 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
 
     return Directionality(
       textDirection: TextDirection.rtl, // RTL layout
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          body: SafeArea(
-            child: BlocConsumer<AuthBloc, AuthState>(
+      child: Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: isDark ? AppColors.white : AppColors.gray900,
+              size: 20,
+            ),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          centerTitle: true,
+          title: Text(
+            'تسجيل الدخول',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: isDark ? AppColors.white : AppColors.gray900,
+            ),
+          ),
+        ),
+        body: SafeArea(
+          child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
-              if (state is AuthCodeSent) {
-                // Show high-fidelity snackbar for dev_otp testing
-                if (state.verificationId != 'register_flow' && state.verificationId.isNotEmpty) {
+              if (state is AuthSuccess) {
+                final isCapt = state.role == 'captain';
+                
+                if (_isCaptain && !isCapt) {
+                  context.read<AuthBloc>().add(const LogoutRequested());
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: const Color(0xFF10B981),
+                    const SnackBar(
+                      backgroundColor: AppColors.danger,
                       behavior: SnackBarBehavior.floating,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                      ),
                       content: Text(
-                        'كود التحقق للتجربة: ${state.verificationId}',
-                        style: const TextStyle(
+                        'هذا الحساب مسجل كراكب. يرجى اختيار تسجيل دخول راكب بدلاً من كابتن.',
+                        style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.white,
+                          fontSize: 12.5,
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                      duration: const Duration(seconds: 10),
                     ),
                   );
+                  return;
+                } else if (!_isCaptain && isCapt) {
+                  context.read<AuthBloc>().add(const LogoutRequested());
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      backgroundColor: AppColors.danger,
+                      behavior: SnackBarBehavior.floating,
+                      content: Text(
+                        'هذا الحساب مسجل ككابتن. يرجى اختيار تسجيل دخول كابتن بدلاً من راكب.',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ),
+                  );
+                  return;
                 }
-                context.push('/auth/otp?phone=${Uri.encodeComponent(state.phone)}&role=${_isCaptain ? "captain" : "passenger"}');
+
+                // Navigate to home based on verified role
+                if (mounted) {
+                  context.go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
+                }
               } else if (state is AuthFailure) {
                 // Show high-fidelity snackbar
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -209,38 +244,38 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                               const SizedBox(height: 20),
 
                               // Password Label
-                              const Text(
-                                'كلمة المرور:',
-                                style: TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.gray600,
-                                ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'كلمة المرور:',
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.gray600,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Handle forgot password flow
+                                    },
+                                    child: const Text(
+                                      'نسيت كلمة المرور؟',
+                                      style: TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFFF6B00),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               AppSpacing.h8,
 
                               // Password TextFormField
                               _buildPasswordTextField(isDark),
-
-                              AppSpacing.h8,
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    context.push(LaffahRoutes.forgotPassword);
-                                  },
-                                  child: const Text(
-                                    'نسيت كلمة المرور؟',
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFF6B00),
-                                    ),
-                                  ),
-                                ),
-                              ),
 
                               const SizedBox(height: 28),
 
@@ -249,29 +284,39 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                                 width: double.infinity,
                                 height: 52,
                                 child: ElevatedButton(
-                                  onPressed: (isLoading || !_isFormValid) ? null : _handleLogin,
+                                  onPressed: isLoading ? null : _handleLogin,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: _isFormValid ? const Color(0xFFFF6B00) : AppColors.gray300,
+                                    backgroundColor: const Color(0xFFFF6B00),
                                     foregroundColor: AppColors.white,
-                                    elevation: _isFormValid ? 2 : 0,
-                                    shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                                    elevation: 2,
+                                    shadowColor: const Color(0xFFFF6B00).withValues(alpha:0.3),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: AppSpacing.borderMD,
                                     ),
                                   ),
                                   child: isLoading
                                       ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
-                                        )
-                                      : const Text(
-                                          'تسجيل الدخول',
-                                          style: TextStyle(
-                                            fontFamily: 'IBM Plex Sans Arabic',
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.white,
+                                            strokeWidth: 2.5,
                                           ),
+                                        )
+                                      : const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'دخول واستلام رمز التحقق',
+                                              style: TextStyle(
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 13.5,
+                                              ),
+                                            ),
+                                            AppSpacing.w8,
+                                            Icon(Icons.arrow_back_rounded, size: 16), // Flipped for RTL
+                                          ],
                                         ),
                                 ),
                               ),
@@ -280,7 +325,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                         ),
                       ),
 
-
+                      const SizedBox(height: 36),
 
                       // Redirect to landing to register/create new account
                       Row(
@@ -297,7 +342,12 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                           const SizedBox(width: AppSpacing.s8),
                           GestureDetector(
                             onTap: () {
-                              context.pushReplacement(LaffahRoutes.authLanding);
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AuthLandingPage(),
+                                ),
+                              );
                             },
                             child: const Text(
                               'سجّل حساب جديد',
@@ -320,7 +370,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           ),
         ),
       ),
-      ),
     );
   }
 
@@ -329,10 +378,10 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
       height: 48,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100,
+        color: isDark ? AppColors.white.withValues(alpha:0.02) : AppColors.gray100,
         borderRadius: AppSpacing.borderMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha:0.04) : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -356,7 +405,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.bold,
                     fontSize: 12.5,
-                    color: !_isCaptain ? AppColors.white : AppColors.gray400,
+                    color: !_isCaptain ? AppColors.white : AppColors.gray500,
                   ),
                 ),
               ),
@@ -381,7 +430,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.bold,
                     fontSize: 12.5,
-                    color: _isCaptain ? AppColors.white : AppColors.gray400,
+                    color: _isCaptain ? AppColors.white : AppColors.gray500,
                   ),
                 ),
               ),
@@ -400,7 +449,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         boxShadow: [
           if (_isPhoneFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha:0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -410,10 +459,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         controller: _phoneController,
         focusNode: _phoneFocusNode,
         keyboardType: TextInputType.phone,
-        textInputAction: TextInputAction.next,
-        onFieldSubmitted: (_) {
-          FocusScope.of(context).requestFocus(_passwordFocusNode);
-        },
         textDirection: TextDirection.ltr, // Numeric digits left-to-right
         style: const TextStyle(
           fontFamily: 'monospace',
@@ -426,7 +471,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           FilteringTextInputFormatter.digitsOnly,
         ],
         decoration: InputDecoration(
-          hintText: '7XXXXXXXX',
+          hintText: '77XXXXXXX',
           hintStyle: TextStyle(
             fontFamily: 'monospace',
             letterSpacing: 1.0,
@@ -435,7 +480,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+          fillColor: isDark ? AppColors.white.withValues(alpha:0.02) : AppColors.gray50,
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
             color: _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -458,7 +503,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
               Container(
                 height: 22,
                 width: 1,
-                color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
+                color: isDark ? AppColors.white.withValues(alpha:0.1) : AppColors.gray300,
               ),
               const SizedBox(width: AppSpacing.s12),
             ],
@@ -466,7 +511,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+              color: isDark ? AppColors.white.withValues(alpha:0.05) : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -514,7 +559,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         boxShadow: [
           if (_isPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha:0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -524,14 +569,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         controller: _passwordController,
         focusNode: _passwordFocusNode,
         obscureText: _obscurePassword,
-        textInputAction: TextInputAction.done,
-        onFieldSubmitted: (_) {
-          if (_isFormValid) {
-            _handleLogin();
-          } else {
-            FocusScope.of(context).unfocus();
-          }
-        },
         style: TextStyle(
           fontFamily: _obscurePassword ? 'monospace' : 'IBM Plex Sans Arabic',
           fontSize: 14,
@@ -548,7 +585,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+          fillColor: isDark ? AppColors.white.withValues(alpha:0.02) : AppColors.gray50,
           suffixIcon: Icon(
             Icons.lock_rounded,
             color: _isPasswordFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -569,7 +606,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+              color: isDark ? AppColors.white.withValues(alpha:0.05) : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
