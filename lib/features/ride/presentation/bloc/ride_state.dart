@@ -170,6 +170,47 @@ class ParcelSubmitted extends RideState {
   List<Object?> get props => [data, trackingId, price];
 }
 
+<<<<<<< HEAD
+=======
+class ParcelOrderSubmitted extends RideState {
+  final ParcelData data;
+
+  const ParcelOrderSubmitted(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class RideScheduledSuccess extends RideState {
+  const RideScheduledSuccess();
+}
+
+// ============================================================
+// Trip History States
+// ============================================================
+class TripHistoryLoading extends RideState {
+  const TripHistoryLoading();
+}
+
+class TripHistoryLoaded extends RideState {
+  final List<Map<String, dynamic>> trips;
+
+  const TripHistoryLoaded(this.trips);
+
+  @override
+  List<Object?> get props => [trips];
+}
+
+class TripHistoryError extends RideState {
+  final String message;
+
+  const TripHistoryError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+>>>>>>> origin/admin-ahmed
 class RideError extends RideState {
   final String message;
 

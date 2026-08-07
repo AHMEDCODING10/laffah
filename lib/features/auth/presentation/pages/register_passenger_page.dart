@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -8,8 +10,6 @@ import '../../../../core/widgets/laffah_logo.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import 'phone_number_input_page.dart';
-import 'otp_verification_page.dart';
 
 /// RegisterPassengerPage - Premium account registration for Passengers (عملاء).
 /// Adheres to strict 8-point spacing, glassmorphic inputs, RTL, and terms consent checks.
@@ -41,6 +41,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
   bool _isConfirmPasswordFocused = false;
+  bool _isFormValid = false;
 
   @override
   void initState() {
@@ -49,6 +50,21 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
     _phoneFocusNode.addListener(() => setState(() => _isPhoneFocused = _phoneFocusNode.hasFocus));
     _passwordFocusNode.addListener(() => setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
     _confirmPasswordFocusNode.addListener(() => setState(() => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
+    
+    _nameController.addListener(_validateForm);
+    _phoneController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+    _confirmPasswordController.addListener(_validateForm);
+  }
+
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _nameController.text.trim().isNotEmpty &&
+          _phoneController.text.trim().length == 9 &&
+          _passwordController.text.length >= 6 &&
+          _passwordController.text == _confirmPasswordController.text &&
+          _agreeToTerms;
+    });
   }
 
   @override
@@ -84,8 +100,12 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
       final String phoneDigits = _phoneController.text.trim();
       final String fullPhone = '+967$phoneDigits';
 
-      // Submit OTP request to verify phone number
-      context.read<AuthBloc>().add(SendOTPCode(fullPhone));
+      // Submit Registration request
+      context.read<AuthBloc>().add(RegisterPassengerRequested(
+        name: _nameController.text.trim(),
+        phone: fullPhone,
+        password: _passwordController.text,
+      ));
     }
   }
 
@@ -95,42 +115,15 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
 
     return Directionality(
       textDirection: TextDirection.rtl, // RTL layout
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? AppColors.white : AppColors.gray900,
-              size: 20,
-            ),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-          centerTitle: true,
-          title: Text(
-            'حساب راكب جديد',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        ),
-        body: SafeArea(
-          child: BlocConsumer<AuthBloc, AuthState>(
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          body: SafeArea(
+            child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
-              if (state is AuthCodeSent) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => OTPVerificationPage(
-                      phoneNumber: state.phone,
-                    ),
-                  ),
-                );
+              if (state is AuthSuccess) {
+                // تسجيل الراكب نجح - توجيه مباشر لشاشة الراكب الرئيسية
+                context.go(LaffahRoutes.passengerHome);
               } else if (state is AuthFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -239,12 +232,12 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
                                 width: double.infinity,
                                 height: 52,
                                 child: ElevatedButton(
-                                  onPressed: isLoading ? null : _handleRegister,
+                                  onPressed: (isLoading || !_isFormValid) ? null : _handleRegister,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFF6B00),
+                                    backgroundColor: _isFormValid ? const Color(0xFFFF6B00) : AppColors.gray300,
                                     foregroundColor: AppColors.white,
-                                    elevation: 2,
-                                    shadowColor: const Color(0xFFFF6B00).withOpacity(0.3),
+                                    elevation: _isFormValid ? 2 : 0,
+                                    shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.3),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: AppSpacing.borderMD,
                                     ),
@@ -258,20 +251,13 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
                                             strokeWidth: 2.5,
                                           ),
                                         )
-                                      : const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'إنشاء الحساب وتأكيد رقمي',
-                                              style: TextStyle(
-                                                fontFamily: 'IBM Plex Sans Arabic',
-                                                fontWeight: FontWeight.w900,
-                                                fontSize: 13.5,
-                                              ),
-                                            ),
-                                            AppSpacing.w8,
-                                            Icon(Icons.check_circle_rounded, size: 16),
-                                          ],
+                                      : const Text(
+                                          'إنشاء الحساب وتأكيد رقمي',
+                                          style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 13.5,
+                                          ),
                                         ),
                                 ),
                               ),
@@ -297,12 +283,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
                           const SizedBox(width: AppSpacing.s8),
                           GestureDetector(
                             onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const PhoneNumberInputPage(),
-                                ),
-                              );
+                              context.pushReplacement('/auth/phone');
                             },
                             child: const Text(
                               'تسجيل الدخول مباشر',
@@ -325,6 +306,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             },
           ),
         ),
+      ),
       ),
     );
   }
@@ -352,7 +334,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         boxShadow: [
           if (_isNameFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -361,6 +343,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
       child: TextFormField(
         controller: _nameController,
         focusNode: _nameFocusNode,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_phoneFocusNode);
+        },
         keyboardType: TextInputType.name,
         style: TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
@@ -378,7 +364,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
           suffixIcon: Icon(
             Icons.person_rounded,
             color: _isNameFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -387,7 +373,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -427,7 +413,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         boxShadow: [
           if (_isPhoneFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -437,6 +423,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         controller: _phoneController,
         focusNode: _phoneFocusNode,
         keyboardType: TextInputType.phone,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_passwordFocusNode);
+        },
         textDirection: TextDirection.ltr,
         style: const TextStyle(
           fontFamily: 'monospace',
@@ -449,7 +439,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           FilteringTextInputFormatter.digitsOnly,
         ],
         decoration: InputDecoration(
-          hintText: '77XXXXXXX',
+          hintText: '7XXXXXXXX',
           hintStyle: TextStyle(
             fontFamily: 'monospace',
             letterSpacing: 1.0,
@@ -458,7 +448,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
             color: _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -481,7 +471,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
               Container(
                 height: 22,
                 width: 1,
-                color: isDark ? AppColors.white.withOpacity(0.1) : AppColors.gray300,
+                color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
               ),
               const SizedBox(width: AppSpacing.s12),
             ],
@@ -489,7 +479,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -532,7 +522,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         boxShadow: [
           if (_isPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -542,6 +532,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         controller: _passwordController,
         focusNode: _passwordFocusNode,
         obscureText: _obscurePassword,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
+        },
         style: TextStyle(
           fontFamily: _obscurePassword ? 'monospace' : 'IBM Plex Sans Arabic',
           fontSize: 14,
@@ -557,7 +551,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
           suffixIcon: Icon(
             Icons.lock_open_rounded,
             color: _isPasswordFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -574,7 +568,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -614,7 +608,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         boxShadow: [
           if (_isConfirmPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -624,6 +618,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         controller: _confirmPasswordController,
         focusNode: _confirmPasswordFocusNode,
         obscureText: _obscureConfirmPassword,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) {
+          FocusScope.of(context).requestFocus(FocusNode()); // Move to next logically or hide
+        },
         style: TextStyle(
           fontFamily: _obscureConfirmPassword ? 'monospace' : 'IBM Plex Sans Arabic',
           fontSize: 14,
@@ -639,7 +637,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
           suffixIcon: Icon(
             Icons.lock_rounded,
             color: _isConfirmPasswordFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -656,7 +654,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -706,7 +704,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
         filled: true,
-        fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+        fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
         suffixIcon: const Icon(
           Icons.card_giftcard_rounded,
           color: AppColors.gray600,
@@ -715,7 +713,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         enabledBorder: OutlineInputBorder(
           borderRadius: AppSpacing.borderSM,
           borderSide: BorderSide(
-            color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+            color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -741,7 +739,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             activeColor: const Color(0xFFFF6B00),
             checkColor: AppColors.white,
             side: BorderSide(
-              color: isDark ? AppColors.white.withOpacity(0.3) : AppColors.gray400,
+              color: isDark ? AppColors.white.withValues(alpha: 0.3) : AppColors.gray400,
               width: 1.5,
             ),
             shape: RoundedRectangleBorder(
@@ -750,6 +748,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             onChanged: (val) {
               setState(() {
                 _agreeToTerms = val ?? false;
+                _validateForm();
               });
             },
           ),
@@ -760,6 +759,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             onTap: () {
               setState(() {
                 _agreeToTerms = !_agreeToTerms;
+                _validateForm();
               });
             },
             child: Text(

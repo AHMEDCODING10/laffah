@@ -3,8 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
-import '../../../../ride/presentation/bloc/ride_bloc.dart';
-import '../../../../ride/presentation/bloc/ride_event.dart';
+import '../../bloc/parcel_bloc.dart';
+import '../../bloc/parcel_event.dart';
+import '../../bloc/parcel_state.dart';
 
 /// ParcelDeliveryFormBottomSheet - Form for entering parcel sender/recipient details, size, and type.
 class ParcelDeliveryFormBottomSheet extends StatefulWidget {
@@ -55,8 +56,8 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
       child: GlassBox(
         borderRadius: AppSpacing.radiusBottomSheet,
         customBgColor: isDark 
-            ? const Color(0xFF111827).withOpacity(0.9) 
-            : const Color(0xFFF9FAFB).withOpacity(0.9),
+            ? const Color(0xFF111827).withValues(alpha: 0.9) 
+            : const Color(0xFFF9FAFB).withValues(alpha: 0.9),
         padding: EdgeInsets.only(
           top: AppSpacing.s16,
           bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.s24,
@@ -75,7 +76,7 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
                     width: 48,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                      color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.15),
                       borderRadius: AppSpacing.radiusXS,
                     ),
                   ),
@@ -99,7 +100,7 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.05),
+                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.05),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -179,7 +180,7 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
                 AppSpacing.h12,
 
                 DropdownButtonFormField<String>(
-                  value: _selectedParcelType,
+                  initialValue: _selectedParcelType,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.bold,
@@ -260,11 +261,11 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
                     height: 50,
                     decoration: BoxDecoration(
                       color: _photoAttached 
-                          ? AppColors.success.withOpacity(0.08) 
-                          : AppColors.primary500.withOpacity(0.05),
+                          ? AppColors.success.withValues(alpha: 0.08) 
+                          : AppColors.primary500.withValues(alpha: 0.05),
                       borderRadius: AppSpacing.radiusSM,
                       border: Border.all(
-                        color: _photoAttached ? AppColors.success : AppColors.primary500.withOpacity(0.2),
+                        color: _photoAttached ? AppColors.success : AppColors.primary500.withValues(alpha: 0.2),
                         style: BorderStyle.solid,
                       ),
                     ),
@@ -300,65 +301,93 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
                 ),
                 AppSpacing.h24,
 
-                Container(
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: AppSpacing.radiusMD,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary500.withOpacity(0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        final parcelData = ParcelData(
-                          senderName: _senderNameController.text.trim(),
-                          senderPhone: _senderPhoneController.text.trim(),
-                          receiverName: _receiverNameController.text.trim(),
-                          receiverPhone: _receiverPhoneController.text.trim(),
-                          parcelType: _selectedParcelType,
-                          size: _selectedSize,
-                          notes: _notesController.text.trim(),
-                        );
-
-                        context.read<RideBloc>().add(SubmitParcelOrder(parcelData));
-                        Navigator.pop(context);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: AppColors.white,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
+                BlocConsumer<ParcelBloc, ParcelState>(
+                  listener: (context, state) {
+                    if (state is ParcelSubmittedSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('تم رفع طلب إرسال الطرد بنجاح! جاري البحث عن كابتن...'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    } else if (state is ParcelError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.message),
+                          backgroundColor: AppColors.danger,
+                        ),
+                      );
+                    }
+                  },
+                  builder: (context, state) {
+                    final isLoading = state is ParcelLoading;
+                    return Container(
+                      height: 54,
+                      decoration: BoxDecoration(
+                        gradient: isLoading ? null : AppColors.primaryGradient,
+                        color: isLoading ? (isDark ? AppColors.surfaceElevatedDark : AppColors.gray300) : null,
                         borderRadius: AppSpacing.radiusMD,
+                        boxShadow: isLoading ? [] : [
+                          BoxShadow(
+                            color: AppColors.primary500.withValues(alpha: 0.35),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'تقديم طلب التوصيل والبحث عن كابتن',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.white,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : () {
+                          if (_formKey.currentState!.validate()) {
+                            context.read<ParcelBloc>().add(SubmitParcelEvent(
+                              senderName: _senderNameController.text.trim(),
+                              senderPhone: _senderPhoneController.text.trim(),
+                              receiverName: _receiverNameController.text.trim(),
+                              receiverPhone: _receiverPhoneController.text.trim(),
+                              parcelType: _selectedParcelType,
+                              size: _selectedSize,
+                              notes: _notesController.text.trim(),
+                            ));
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: AppColors.white,
+                          shadowColor: Colors.transparent,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: AppSpacing.radiusMD,
                           ),
                         ),
-                        SizedBox(width: AppSpacing.s8),
-                        Icon(
-                          Icons.local_shipping_rounded,
-                          color: AppColors.white,
-                          size: 18,
+                        child: isLoading 
+                        ? const Center(
+                            child: SizedBox(
+                              width: 24, height: 24,
+                              child: CircularProgressIndicator(color: AppColors.primary500, strokeWidth: 2),
+                            ),
+                          )
+                        : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'تقديم طلب التوصيل والبحث عن كابتن',
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.white,
+                              ),
+                            ),
+                            SizedBox(width: AppSpacing.s8),
+                            Icon(
+                              Icons.local_shipping_rounded,
+                              color: AppColors.white,
+                              size: 18,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  }
                 ),
               ],
             ),
@@ -427,26 +456,26 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
       filled: true,
-      fillColor: isDark ? AppColors.surfaceElevatedDark.withOpacity(0.5) : AppColors.gray100,
+      fillColor: isDark ? AppColors.surfaceElevatedDark.withValues(alpha: 0.5) : AppColors.gray100,
       border: OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: BorderSide(color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray300),
+        borderSide: BorderSide(color: isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray300),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: BorderSide(color: isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray200),
+        borderSide: BorderSide(color: isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray200),
       ),
-      focusedBorder: OutlineInputBorder(
+      focusedBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: const BorderSide(color: AppColors.primary500, width: 1.5),
+        borderSide: BorderSide(color: AppColors.primary500, width: 1.5),
       ),
-      errorBorder: OutlineInputBorder(
+      errorBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: const BorderSide(color: AppColors.danger, width: 1.0),
+        borderSide: BorderSide(color: AppColors.danger, width: 1.0),
       ),
-      focusedErrorBorder: OutlineInputBorder(
+      focusedErrorBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+        borderSide: BorderSide(color: AppColors.danger, width: 1.5),
       ),
     );
   }
@@ -467,13 +496,13 @@ class _ParcelDeliveryFormBottomSheetState extends State<ParcelDeliveryFormBottom
           height: 104,
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primary500.withOpacity(0.08)
-                : (isDark ? AppColors.white.withOpacity(0.01) : AppColors.white),
+                ? AppColors.primary500.withValues(alpha: 0.08)
+                : (isDark ? AppColors.white.withValues(alpha: 0.01) : AppColors.white),
             borderRadius: AppSpacing.radiusSM,
             border: Border.all(
               color: isSelected
                   ? AppColors.primary500
-                  : (isDark ? AppColors.white.withOpacity(0.08) : AppColors.gray200),
+                  : (isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray200),
               width: isSelected ? 1.5 : 1.0,
             ),
           ),

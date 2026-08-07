@@ -35,8 +35,8 @@ class CaptainEnRouteCard extends StatelessWidget {
       child: GlassBox(
         borderRadius: AppSpacing.radiusBottomSheet,
         customBgColor: isDark 
-            ? const Color(0xFF111827).withOpacity(0.95) 
-            : Colors.white.withOpacity(0.95),
+            ? const Color(0xFF111827).withValues(alpha: 0.95) 
+            : Colors.white.withValues(alpha: 0.95),
         padding: const EdgeInsets.only(
           top: AppSpacing.s16,
           bottom: AppSpacing.s24,
@@ -52,7 +52,7 @@ class CaptainEnRouteCard extends StatelessWidget {
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                  color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.15),
                   borderRadius: AppSpacing.radiusXS,
                 ),
               ),
@@ -89,7 +89,7 @@ class CaptainEnRouteCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.s8),
                   decoration: BoxDecoration(
-                    color: AppColors.danger.withOpacity(0.1),
+                    color: AppColors.danger.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -106,10 +106,10 @@ class CaptainEnRouteCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.white.withOpacity(0.03) : AppColors.gray50,
+                color: isDark ? AppColors.white.withValues(alpha: 0.03) : AppColors.gray50,
                 borderRadius: AppSpacing.radiusMD,
                 border: Border.all(
-                  color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+                  color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
                 ),
               ),
               child: Row(
@@ -151,7 +151,7 @@ class CaptainEnRouteCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF6B00).withOpacity(0.1),
+                                color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
@@ -206,7 +206,7 @@ class CaptainEnRouteCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.s10),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -227,13 +227,13 @@ class CaptainEnRouteCard extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: onCall,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF22C55E).withOpacity(0.15),
+                      backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
                       foregroundColor: const Color(0xFF22C55E),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD,
-                        side: const BorderSide(color: Color(0xFF22C55E), width: 1),
+                        side: BorderSide(color: Color(0xFF22C55E), width: 1),
                       ),
                     ),
                     icon: const Icon(Icons.call_rounded, size: 20),
@@ -252,13 +252,13 @@ class CaptainEnRouteCard extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: onMessage,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6).withOpacity(0.15),
+                      backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.15),
                       foregroundColor: const Color(0xFF3B82F6),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD,
-                        side: const BorderSide(color: Color(0xFF3B82F6), width: 1),
+                        side: BorderSide(color: Color(0xFF3B82F6), width: 1),
                       ),
                     ),
                     icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
@@ -284,8 +284,8 @@ class CaptainEnRouteCard extends StatelessWidget {
                 onPressed: onCancel,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
-                  side: BorderSide(color: AppColors.danger.withOpacity(0.3)),
-                  shape: RoundedRectangleBorder(
+                  side: BorderSide(color: AppColors.danger.withValues(alpha: 0.3)),
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppSpacing.radiusMD,
                   ),
                 ),

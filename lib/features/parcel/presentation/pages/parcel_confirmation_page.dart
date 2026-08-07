@@ -15,8 +15,7 @@ class ParcelConfirmationPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -33,7 +32,7 @@ class ParcelConfirmationPage extends StatelessWidget {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withOpacity(0.1),
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -76,11 +75,11 @@ class ParcelConfirmationPage extends StatelessWidget {
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -114,7 +113,7 @@ class ParcelConfirmationPage extends StatelessWidget {
                         backgroundColor: isDark ? AppColors.gray800 : AppColors.gray100,
                         foregroundColor: isDark ? AppColors.white : AppColors.gray900,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(
+                        shape: const RoundedRectangleBorder(
                           borderRadius: AppSpacing.radiusMD,
                         ),
                       ),
@@ -143,7 +142,7 @@ class ParcelConfirmationPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF6B00),
                     foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD,
                     ),
                   ),

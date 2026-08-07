@@ -5,44 +5,34 @@ abstract class AuthState {
   const AuthState();
 }
 
-/// Initial state of the Auth flow.
+/// الحالة الابتدائية.
 class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
-/// Loading state for network transitions and async processes.
+/// حالة التحميل أثناء طلبات الشبكة.
 class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
-/// State emitted when the OTP has been successfully sent to the phone.
-class AuthCodeSent extends AuthState {
-  final String phone;
-  final String verificationId; // Mock verification ID
+/// حالة النجاح بعد تسجيل الدخول أو إنشاء حساب.
+class AuthSuccess extends AuthState {
+  final String role; // 'captain' or 'passenger'
 
-  const AuthCodeSent({
-    required this.phone,
-    required this.verificationId,
-  });
+  const AuthSuccess({this.role = 'passenger'});
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AuthCodeSent &&
+      other is AuthSuccess &&
           runtimeType == other.runtimeType &&
-          phone == other.phone &&
-          verificationId == other.verificationId;
+          role == other.role;
 
   @override
-  int get hashCode => phone.hashCode ^ verificationId.hashCode;
+  int get hashCode => role.hashCode;
 }
 
-/// State emitted when the OTP is successfully verified.
-class AuthSuccess extends AuthState {
-  const AuthSuccess();
-}
-
-/// State emitted when any error or validation failure occurs.
+/// حالة الخطأ عند فشل أي عملية.
 class AuthFailure extends AuthState {
   final String message;
 

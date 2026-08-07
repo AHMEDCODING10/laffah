@@ -1,33 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
-import 'package:latlong2/latlong.dart' as ll;
+import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 
-typedef MarkerTapCallback = void Function(String title, String snippet, ll.LatLng position);
+typedef MarkerTapCallback = void Function(String title, String snippet, LatLng position);
 
-/// LaffahMapView - Production-Grade Hybrid Interactive Map View for Laffah (راكب / كابتن)
-/// Configured for Sana'a metropolitan area (Latitude: 15.3694, Longitude: 44.1910).
-/// Uses 100% free OpenStreetMap & CartoDB tiles via flutter_map on Web and Mobile,
-/// requiring ZERO Google API keys or credit card registration.
+/// LaffahMapView — خريطة تفاعلية نظيفة تعتمد على flutter_map + LocationIQ
+/// لا تستخدم Google Maps بأي شكل من الأشكال
 class LaffahMapView extends StatefulWidget {
-  final Set<gmaps.Marker>? markers;
-  final Set<gmaps.Polyline>? polylines;
+  /// قائمة العلامات المخصصة (flutter_map Markers مباشرة)
+  final List<Marker>? markers;
+
+  /// قائمة المسارات للرسم على الخريطة
+  final List<Polyline>? polylines;
+
+  /// الوضع الليلي
   final bool isDark;
-  final gmaps.CameraPosition? initialPosition;
-  final void Function(gmaps.GoogleMapController)? onMapCreated;
+
+  /// الموقع الافتراضي عند فتح الخريطة
+  final LatLng? initialCenter;
+
+  /// مستوى التكبير الافتراضي
+  final double initialZoom;
+
+  /// موقع الكابتن الحالي (يُعرض كـ 🏍️ marker متحرك)
+  final LatLng? captainLocation;
+
+  /// هل يتم تتبع الكابتن وتوسيط الخريطة على موقعه؟
+  final bool followCaptain;
+
+  /// عرض بيانات تجريبية افتراضية (للتطوير فقط)
   final bool showDefaultMockData;
+
+  /// callback عند الضغط على أي marker
   final MarkerTapCallback? onMarkerTap;
+
+  static const LatLng _sanaaDefault = LatLng(15.3694, 44.1910);
 
   const LaffahMapView({
     super.key,
     this.markers,
     this.polylines,
     required this.isDark,
-    this.initialPosition,
-    this.onMapCreated,
-    this.showDefaultMockData = false,
+    this.initialCenter,
+    this.initialZoom = 14.5,
+    this.captainLocation,
+    this.followCaptain = false,
+    this.showDefaultMockData = true,
     this.onMarkerTap,
   });
 
@@ -36,120 +56,151 @@ class LaffahMapView extends StatefulWidget {
 }
 
 class _LaffahMapViewState extends State<LaffahMapView> {
-  final MapController _mapController = MapController();
-
-  static const ll.LatLng _sanaaCenter = ll.LatLng(15.3694, 44.1910);
-
+  late final MapController _mapController;
   double _currentZoom = 14.5;
+  LatLng? _lastCaptainLocation;
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+    _currentZoom = widget.initialZoom;
+    _lastCaptainLocation = widget.captainLocation;
+  }
+
+  @override
+  void didUpdateWidget(LaffahMapView old) {
+    super.didUpdateWidget(old);
+    // تتبع الكابتن: تحريك الخريطة تلقائياً عند تغيير موقعه
+    if (widget.followCaptain &&
+        widget.captainLocation != null &&
+        widget.captainLocation != _lastCaptainLocation) {
+      _lastCaptainLocation = widget.captainLocation;
+      _mapController.move(widget.captainLocation!, _currentZoom);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 100% Free Interactive Map (CartoDB Dark/Light Tiles)
-        FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            initialCenter: widget.initialPosition != null
-                ? ll.LatLng(
-                    widget.initialPosition!.target.latitude,
-                    widget.initialPosition!.target.longitude,
-                  )
-                : _sanaaCenter,
-            initialZoom: widget.initialPosition?.zoom ?? _currentZoom,
-            minZoom: 4.0,
-            maxZoom: 19.0,
-          ),
+        // ──────────────────────────────────────────
+        // الخريطة الأساسية
+        // ──────────────────────────────────────────
+        SizedBox.expand(
+          child: FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: widget.captainLocation ??
+                  widget.initialCenter ??
+                  LaffahMapView._sanaaDefault,
+              initialZoom: _currentZoom,
+              minZoom: 4.0,
+              maxZoom: 20.0,
+              onMapEvent: (event) {
+                if (event is MapEventMove) {
+                  _currentZoom = event.camera.zoom;
+                }
+              },
+            ),
           children: [
-            // High-Contrast CartoDB Tiles (Dark & Light themes)
+            // Tile Layer — CartoDB tiles (CORS-friendly for web + good quality)
             TileLayer(
               urlTemplate: widget.isDark
                   ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-                  : 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                  : 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.laffah.app',
-            ),
-            
-            // Route Polylines
-            PolylineLayer(
-              polylines: _buildFlutterMapPolylines(),
+              maxZoom: 20,
             ),
 
-            // Interactive Markers (Pickup A, Dropoff B, Captain Motorbike)
-            MarkerLayer(
-              markers: _buildFlutterMapMarkers(),
-            ),
+            // مسارات الرحلة (Polylines)
+            if (_allPolylines().isNotEmpty)
+              PolylineLayer(polylines: _allPolylines()),
+
+            // Markers (أيقونة الكابتن والمواقع)
+            if (_allMarkers().isNotEmpty)
+              MarkerLayer(markers: _allMarkers()),
           ],
         ),
+      ),
 
-        // Interactive Map Control Buttons (Zoom +, Zoom -, Recenter)
+        // ──────────────────────────────────────────
+        // أزرار التحكم (زووم + إعادة توسيط)
+        // ──────────────────────────────────────────
         Positioned(
-          left: 16,
-          bottom: 24,
+          right: 16,
+          bottom: 100,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildControlBtn(
+              _MapControlButton(
                 icon: Icons.add_rounded,
+                isDark: widget.isDark,
                 onPressed: () {
-                  _currentZoom = (_currentZoom + 0.8).clamp(4.0, 19.0);
+                  _currentZoom = (_currentZoom + 1.0).clamp(4.0, 20.0);
                   _mapController.move(_mapController.camera.center, _currentZoom);
                 },
               ),
               const SizedBox(height: 8),
-              _buildControlBtn(
+              _MapControlButton(
                 icon: Icons.remove_rounded,
+                isDark: widget.isDark,
                 onPressed: () {
-                  _currentZoom = (_currentZoom - 0.8).clamp(4.0, 19.0);
+                  _currentZoom = (_currentZoom - 1.0).clamp(4.0, 20.0);
                   _mapController.move(_mapController.camera.center, _currentZoom);
                 },
               ),
               const SizedBox(height: 8),
-              _buildControlBtn(
+              _MapControlButton(
                 icon: Icons.my_location_rounded,
+                isDark: widget.isDark,
+                color: const Color(0xFFFF6B00),
                 onPressed: () {
-                  _currentZoom = 14.5;
-                  _mapController.move(_sanaaCenter, _currentZoom);
+                  // إعادة التوسيط على موقع الكابتن أو مركز صنعاء
+                  final target = widget.captainLocation ?? LaffahMapView._sanaaDefault;
+                  _currentZoom = 15.5;
+                  _mapController.move(target, _currentZoom);
                 },
               ),
             ],
           ),
         ),
 
-        // Branded Location Badge
+        // ──────────────────────────────────────────
+        // شارة نوع الخريطة (LocationIQ أو OSM)
+        // ──────────────────────────────────────────
         Positioned(
-          top: 16,
-          right: 16,
+          top: 12,
+          left: 12,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: widget.isDark ? AppColors.surfaceDark.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9),
+              color: widget.isDark
+                  ? Colors.black.withValues(alpha: 0.7)
+                  : Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: widget.isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray200,
+                color: widget.isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.08),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 8,
-                ),
-              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.map_rounded,
-                  size: 14,
+                  size: 12,
                   color: Color(0xFFFF6B00),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 5),
                 Text(
-                  'خريطة صنعاء التفاعلية',
+                  'خريطة صنعاء',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: widget.isDark ? AppColors.white : AppColors.gray900,
+                    color: widget.isDark ? Colors.white : AppColors.gray900,
                   ),
                 ),
               ],
@@ -160,206 +211,179 @@ class _LaffahMapViewState extends State<LaffahMapView> {
     );
   }
 
-  Widget _buildControlBtn({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: widget.isDark ? const Color(0xFF141822) : Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: widget.isDark ? Colors.white12 : Colors.black12,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(0, 2),
+
+
+  /// جمع كل الـ Markers (المخصصة + موقع الكابتن + Mock Data)
+  List<Marker> _allMarkers() {
+    final list = <Marker>[];
+
+    // موقع الكابتن الحقيقي (أيقونة الدراجة النارية)
+    if (widget.captainLocation != null) {
+      list.add(_buildCaptainMarker(widget.captainLocation!));
+    }
+
+    // Markers المخصصة من الخارج
+    if (widget.markers != null) {
+      list.addAll(widget.markers!);
+    }
+
+    // بيانات تجريبية (للتطوير فقط)
+    if (widget.showDefaultMockData) {
+      list.addAll(_buildMockMarkers());
+    }
+
+    return list;
+  }
+
+  /// جمع كل الـ Polylines
+  List<Polyline> _allPolylines() {
+    final list = <Polyline>[];
+
+    if (widget.polylines != null) {
+      list.addAll(widget.polylines!);
+    }
+
+    if (widget.showDefaultMockData) {
+      list.add(_buildMockPolyline());
+    }
+
+    return list;
+  }
+
+  /// Marker الكابتن (دراجة نارية برتقالية)
+  Marker _buildCaptainMarker(LatLng pos) {
+    return Marker(
+      point: pos,
+      width: 52,
+      height: 52,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          widget.onMarkerTap?.call(
+            'موقعك الحالي',
+            'أنت هنا',
+            pos,
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFF6B00),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0xFFFF6B00),
+                blurRadius: 14,
+                spreadRadius: 3,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(icon, size: 20, color: const Color(0xFFFF6B00)),
-        onPressed: onPressed,
+          child: const Icon(
+            Icons.two_wheeler_rounded,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
       ),
     );
   }
 
-  List<Marker> _buildFlutterMapMarkers() {
-    final List<Marker> list = [];
-
-    // Convert external markers if provided
-    if (widget.markers != null && widget.markers!.isNotEmpty) {
-      for (final m in widget.markers!) {
-        final pos = ll.LatLng(m.position.latitude, m.position.longitude);
-        final title = m.infoWindow.title ?? 'موقع مخصص';
-        final snippet = m.infoWindow.snippet ?? '';
-
-        list.add(
-          Marker(
-            point: pos,
-            width: 48,
-            height: 48,
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                if (widget.onMarkerTap != null) {
-                  widget.onMarkerTap!(title, snippet, pos);
-                }
-              },
-              child: Tooltip(
-                message: title,
-                child: const Icon(
-                  Icons.location_on_rounded,
-                  color: Color(0xFFFF6B00),
-                  size: 36,
-                ),
-              ),
-            ),
-          ),
-        );
-      }
-    }
-
-    // Default Sana'a Pins (Pickup, Dropoff, Captain Motorbike)
-    if (widget.showDefaultMockData || list.isEmpty) {
-      list.addAll([
-        // Pickup Pin A - Hadda Street
-        Marker(
-          point: const ll.LatLng(15.3605, 44.1852),
-          width: 54,
-          height: 54,
-          child: GestureDetector(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              if (widget.onMarkerTap != null) {
-                widget.onMarkerTap!(
-                  'نقطة الانطلاق (A)',
-                  'شارع حدة - أمام مركز الكميم، صنعاء',
-                  const ll.LatLng(15.3605, 44.1852),
-                );
-              }
-            },
-            child: Tooltip(
-              message: 'نقطة الانطلاق (A): شارع حدة',
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
-                ),
-                child: const Icon(Icons.my_location_rounded, color: Colors.white, size: 22),
-              ),
-            ),
-          ),
+  /// بيانات تجريبية — نقاط التوصيل والانطلاق
+  List<Marker> _buildMockMarkers() => [
+        _buildLocationMarker(
+          pos: const LatLng(15.3605, 44.1852),
+          label: 'نقطة الانطلاق (A)',
+          snippet: 'شارع حدة — أمام مركز الكميم',
+          color: Colors.green,
+          icon: Icons.my_location_rounded,
         ),
-
-        // Drop-off Pin B - Sana'a University
-        Marker(
-          point: const ll.LatLng(15.3782, 44.1804),
-          width: 54,
-          height: 54,
-          child: GestureDetector(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              if (widget.onMarkerTap != null) {
-                widget.onMarkerTap!(
-                  'وجهة الوصول (B)',
-                  'جامعة صنعاء - البوابة الرئيسية، صنعاء',
-                  const ll.LatLng(15.3782, 44.1804),
-                );
-              }
-            },
-            child: Tooltip(
-              message: 'وجهة الوصول (B): جامعة صنعاء',
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
-                ),
-                child: const Icon(Icons.flag_rounded, color: Colors.white, size: 22),
-              ),
-            ),
-          ),
+        _buildLocationMarker(
+          pos: const LatLng(15.3782, 44.1804),
+          label: 'نقطة الوصول (B)',
+          snippet: 'جامعة صنعاء — البوابة الرئيسية',
+          color: Colors.redAccent,
+          icon: Icons.flag_rounded,
         ),
+      ];
 
-        // Captain Motorbike Marker
-        Marker(
-          point: const ll.LatLng(15.3688, 44.1824),
-          width: 60,
-          height: 60,
-          child: GestureDetector(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              if (widget.onMarkerTap != null) {
-                widget.onMarkerTap!(
-                  'موقع الدراجة النارية',
-                  'الكابتن متواجد بالقرب من شارع القاهرة، صنعاء',
-                  const ll.LatLng(15.3688, 44.1824),
-                );
-              }
-            },
-            child: Tooltip(
-              message: 'الكابتن علي (دراجة نارية)',
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0xFFFF6B00), blurRadius: 12, spreadRadius: 3),
-                  ],
-                ),
-                child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 26),
-              ),
-            ),
+  Marker _buildLocationMarker({
+    required LatLng pos,
+    required String label,
+    required String snippet,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Marker(
+      point: pos,
+      width: 48,
+      height: 48,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          widget.onMarkerTap?.call(label, snippet, pos);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
           ),
+          child: Icon(icon, color: Colors.white, size: 22),
         ),
-      ]);
-    }
-
-    return list;
+      ),
+    );
   }
 
-  List<Polyline> _buildFlutterMapPolylines() {
-    final List<Polyline> list = [];
-
-    if (widget.polylines != null && widget.polylines!.isNotEmpty) {
-      for (final p in widget.polylines!) {
-        list.add(
-          Polyline(
-            points: p.points.map((e) => ll.LatLng(e.latitude, e.longitude)).toList(),
-            color: p.color,
-            strokeWidth: p.width.toDouble(),
-          ),
-        );
-      }
-    }
-
-    if (widget.showDefaultMockData || list.isEmpty) {
-      list.add(
-        Polyline(
-          points: const [
-            ll.LatLng(15.3605, 44.1852),
-            ll.LatLng(15.3650, 44.1840),
-            ll.LatLng(15.3688, 44.1824),
-            ll.LatLng(15.3730, 44.1815),
-            ll.LatLng(15.3782, 44.1804),
-          ],
-          color: const Color(0xFFFF6B00),
-          strokeWidth: 4.5,
-        ),
+  Polyline _buildMockPolyline() => Polyline(
+        points: const [
+          LatLng(15.3605, 44.1852),
+          LatLng(15.3650, 44.1840),
+          LatLng(15.3688, 44.1824),
+          LatLng(15.3730, 44.1815),
+          LatLng(15.3782, 44.1804),
+        ],
+        color: const Color(0xFFFF6B00),
+        strokeWidth: 4.5,
       );
-    }
+}
 
-    return list;
+/// زر تحكم صغير في الخريطة
+class _MapControlButton extends StatelessWidget {
+  final IconData icon;
+  final bool isDark;
+  final Color? color;
+  final VoidCallback onPressed;
+
+  const _MapControlButton({
+    required this.icon,
+    required this.isDark,
+    required this.onPressed,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isDark ? const Color(0xFF1E2330) : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      elevation: 4,
+      shadowColor: Colors.black26,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onPressed();
+        },
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(
+            icon,
+            size: 20,
+            color: color ?? (isDark ? Colors.white70 : AppColors.gray700),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../bloc/trips/captain_trips_bloc.dart';
+import '../bloc/trips/captain_trips_event.dart';
+import '../bloc/trips/captain_trips_state.dart';
 
-import '../../../../core/router/app_router.dart';
-
-/// CaptainTripHistoryPage — Dedicated history page for Captains showing completed trips,
-/// earnings per trip, and canceled rides.
-class CaptainTripHistoryPage extends StatelessWidget {
+class CaptainTripHistoryPage extends StatefulWidget {
   const CaptainTripHistoryPage({super.key});
+
+  @override
+  State<CaptainTripHistoryPage> createState() => _CaptainTripHistoryPageState();
+}
+
+class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
+  late CaptainTripsBloc _tripsBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _tripsBloc = sl<CaptainTripsBloc>()..add(const FetchCaptainTrips(isRefresh: true));
+  }
+
+  @override
+  void dispose() {
+    _tripsBloc.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,95 +37,128 @@ class CaptainTripHistoryPage extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go(LaffahRoutes.captainHome);
-              }
-            },
-          ),
-          title: Text(
-            'سجل الرحلات',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: isDark ? AppColors.white : AppColors.gray900,
+      child: BlocProvider.value(
+        value: _tripsBloc,
+        child: Scaffold(
+          backgroundColor: isDark ? const Color(0xFF141822) : const Color(0xFFF7F9FC),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(LaffahRoutes.captainHome);
+                }
+              },
             ),
-          ),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(AppSpacing.s24),
-          children: [
-            _buildStatSummary(isDark),
-            AppSpacing.h32,
-            Text(
-              'رحلات اليوم',
+            title: Text(
+              'سجل الرحلات',
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
-                fontSize: 16,
                 fontWeight: FontWeight.w900,
+                fontSize: 18,
                 color: isDark ? AppColors.white : AppColors.gray900,
               ),
             ),
-            AppSpacing.h16,
-            _buildTripItem(
-              type: 'ride',
-              destination: 'جامعة صنعاء الجديدة',
-              time: '10:30 صباحاً',
-              earnings: '1,200',
-              status: 'مكتملة',
-              isDark: isDark,
-            ),
-            _buildTripItem(
-              type: 'parcel',
-              destination: 'حدة، مركز الكميم',
-              time: '09:15 صباحاً',
-              earnings: '1,500',
-              status: 'مكتملة',
-              isDark: isDark,
-            ),
-            _buildTripItem(
-              type: 'ride',
-              destination: 'شارع الستين الجنوبي',
-              time: '08:00 صباحاً',
-              earnings: '0',
-              status: 'ملغية',
-              isDark: isDark,
-            ),
-          ],
+          ),
+          body: BlocBuilder<CaptainTripsBloc, CaptainTripsState>(
+            builder: (context, state) {
+              if (state is CaptainTripsInitial || (state is CaptainTripsLoading && state.isFirstFetch)) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00)));
+              } else if (state is CaptainTripsError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+                      const SizedBox(height: 16),
+                      Text(state.message, style: TextStyle(color: isDark ? Colors.white : Colors.black, fontFamily: 'IBM Plex Sans Arabic')),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => _tripsBloc.add(const FetchCaptainTrips(isRefresh: true)),
+                        child: const Text('إعادة المحاولة', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                      )
+                    ],
+                  ),
+                );
+              } else if (state is CaptainTripsLoaded) {
+                return RefreshIndicator(
+                  color: const Color(0xFFFF6B00),
+                  onRefresh: () async {
+                    _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
+                  },
+                  child: ListView(
+                    padding: const EdgeInsets.all(AppSpacing.s24),
+                    children: [
+                      _buildStatSummary(state, isDark),
+                      AppSpacing.h32,
+                      Text(
+                        'قائمة الرحلات',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                        ),
+                      ),
+                      AppSpacing.h16,
+                      if (state.trips.isEmpty)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 40),
+                            child: Text('لا يوجد سجل رحلات حتى الآن.', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.gray500)),
+                          ),
+                        )
+                      else
+                        ...state.trips.map((trip) => _buildTripItem(
+                              type: trip.distance.contains('طرد') ? 'parcel' : 'ride', // Simplistic heuristic if no dedicated type field
+                              destination: trip.dropoff.isNotEmpty ? trip.dropoff : 'وجهة غير معروفة',
+                              time: trip.date,
+                              earnings: trip.price,
+                              status: trip.status,
+                              statusColor: trip.statusColor,
+                              isDark: isDark,
+                            )),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatSummary(bool isDark) {
+  Widget _buildStatSummary(CaptainTripsLoaded state, bool isDark) {
+    int totalTrips = state.trips.length;
+    double totalEarnings = state.trips.fold(0.0, (sum, trip) => sum + trip.grossFare);
+    // Simple heuristic for parcels based on status or type if available
+    int totalParcels = state.trips.where((t) => t.pickup.contains('طرد') || t.distance.contains('طرد')).length;
+    int rides = totalTrips - totalParcels;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF6B00).withOpacity(0.1),
+        color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
         borderRadius: AppSpacing.radiusLG,
         border: Border.all(
-          color: const Color(0xFFFF6B00).withOpacity(0.3),
+          color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _StatItem(title: 'الرحلات', value: '12', isDark: isDark),
-          Container(width: 1, height: 40, color: const Color(0xFFFF6B00).withOpacity(0.3)),
-          _StatItem(title: 'الطرود', value: '4', isDark: isDark),
-          Container(width: 1, height: 40, color: const Color(0xFFFF6B00).withOpacity(0.3)),
-          _StatItem(title: 'الأرباح', value: '14K', isDark: isDark),
+          _StatItem(title: 'الرحلات', value: rides.toString(), isDark: isDark),
+          Container(width: 1, height: 40, color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+          _StatItem(title: 'الطرود', value: totalParcels.toString(), isDark: isDark),
+          Container(width: 1, height: 40, color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+          _StatItem(title: 'الأرباح', value: '${totalEarnings.toInt()}', isDark: isDark),
         ],
       ),
     );
@@ -116,9 +170,10 @@ class CaptainTripHistoryPage extends StatelessWidget {
     required String time,
     required String earnings,
     required String status,
+    required Color statusColor,
     required bool isDark,
   }) {
-    final bool isCanceled = status == 'ملغية';
+    final bool isCanceled = status == 'ملغاة' || status == 'cancelled';
     final IconData icon = type == 'ride' ? Icons.motorcycle_rounded : Icons.inventory_2_rounded;
     final Color iconColor = type == 'ride' ? const Color(0xFFFF6B00) : const Color(0xFF3B82F6);
 
@@ -126,10 +181,10 @@ class CaptainTripHistoryPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.s16),
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        color: isDark ? const Color(0xFF1E2433) : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -137,7 +192,7 @@ class CaptainTripHistoryPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isCanceled ? AppColors.gray500.withOpacity(0.1) : iconColor.withOpacity(0.1),
+              color: isCanceled ? AppColors.gray500.withValues(alpha: 0.1) : iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: isCanceled ? AppColors.gray500 : iconColor, size: 24),
@@ -154,8 +209,9 @@ class CaptainTripHistoryPage extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: isDark ? AppColors.white : AppColors.gray900,
-                    decoration: isCanceled ? TextDecoration.lineThrough : null,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 AppSpacing.h4,
                 Text(
@@ -163,7 +219,7 @@ class CaptainTripHistoryPage extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 12,
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    color: isDark ? AppColors.gray400 : AppColors.gray500,
                   ),
                 ),
               ],
@@ -173,22 +229,20 @@ class CaptainTripHistoryPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                isCanceled ? '0 ريال' : '$earnings ريال',
+                earnings,
                 style: TextStyle(
-                  fontFamily: 'monospace',
+                  fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: isCanceled ? AppColors.gray500 : const Color(0xFF22C55E),
+                  color: isCanceled ? (isDark ? AppColors.gray400 : AppColors.gray500) : const Color(0xFFFF6B00),
                 ),
               ),
               AppSpacing.h4,
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isCanceled 
-                      ? AppColors.danger.withOpacity(0.1)
-                      : const Color(0xFF22C55E).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: AppSpacing.radiusSM,
                 ),
                 child: Text(
                   status,
@@ -196,7 +250,7 @@ class CaptainTripHistoryPage extends StatelessWidget {
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: isCanceled ? AppColors.danger : const Color(0xFF22C55E),
+                    color: statusColor,
                   ),
                 ),
               ),
@@ -213,7 +267,11 @@ class _StatItem extends StatelessWidget {
   final String value;
   final bool isDark;
 
-  const _StatItem({required this.title, required this.value, required this.isDark});
+  const _StatItem({
+    required this.title,
+    required this.value,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -222,22 +280,22 @@ class _StatItem extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 24,
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 20,
             fontWeight: FontWeight.w900,
             color: isDark ? AppColors.white : AppColors.gray900,
           ),
         ),
+        AppSpacing.h4,
         Text(
           title,
           style: TextStyle(
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 12,
-            color: isDark ? AppColors.gray400 : AppColors.gray600,
+            color: isDark ? AppColors.gray400 : AppColors.gray500,
           ),
         ),
       ],
     );
   }
 }
-

@@ -21,12 +21,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final List<Map<String, String>> _onboardingData = [
     {
       'title': 'مرحباً بك في لَفَّة',
-      'description': 'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات وتوصيل الدراجات النارية.',
+      'description': 'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات ظˆتوصيل الدراجات النارية.',
       'icon': 'motorcycle',
     },
     {
       'title': 'تجاوز الزحام',
-      'description': 'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز الاختناقات المرورية.',
+      'description': 'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز ط§لاختناقات المرورية.',
       'icon': 'speed',
     },
     {
@@ -62,8 +62,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        body: SafeArea(
+body: SafeArea(
           child: Column(
             children: [
               // Skip Button
@@ -115,10 +114,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   width: 160,
                                   height: 160,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6B00).withOpacity(0.1),
+                                    color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: const Color(0xFFFF6B00).withOpacity(0.3),
+                                      color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
                                       width: 2,
                                     ),
                                   ),
@@ -203,7 +202,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFF6B00),
                           foregroundColor: AppColors.white,
-                          shape: RoundedRectangleBorder(
+                          shape: const RoundedRectangleBorder(
                             borderRadius: AppSpacing.radiusMD,
                           ),
                         ),

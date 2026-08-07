@@ -175,17 +175,17 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
         borderRadius: AppSpacing.borderLG,
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200,
+          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
         ),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: AppColors.primary500.withOpacity(0.12),
+            backgroundColor: AppColors.primary500.withValues(alpha: 0.12),
             child: const Icon(
               Icons.person_rounded,
               color: AppColors.primary500,
@@ -209,7 +209,7 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                 AppSpacing.h4,
                 Text(
                   widget.vehicleInfo,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 11,
                     color: AppColors.gray500,
@@ -221,7 +221,7 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.12),
+              color: AppColors.success.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Row(
@@ -346,11 +346,11 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
               selected: isSelected,
               selectedColor: AppColors.primary500,
               checkmarkColor: AppColors.white,
-              backgroundColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray100,
+              backgroundColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary500 : (isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200),
+                  color: isSelected ? AppColors.primary500 : (isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
                 ),
               ),
               onSelected: (_) => _toggleTag(tag),
@@ -394,13 +394,13 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
                 decoration: BoxDecoration(
                   color: _selectedTipAmount == 0
-                      ? AppColors.primary500.withOpacity(0.12)
-                      : (isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray100),
+                      ? AppColors.primary500.withValues(alpha: 0.12)
+                      : (isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: _selectedTipAmount == 0
                         ? AppColors.primary500
-                        : (isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200),
+                        : (isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
                     width: _selectedTipAmount == 0 ? 1.5 : 1.0,
                   ),
                 ),
@@ -431,13 +431,13 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primary500.withOpacity(0.12)
-                          : (isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray100),
+                          ? AppColors.primary500.withValues(alpha: 0.12)
+                          : (isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primary500
-                            : (isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray200),
+                            : (isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
@@ -495,11 +495,11 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 12),
             filled: true,
-            fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+            fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
             enabledBorder: OutlineInputBorder(
               borderRadius: AppSpacing.borderSM,
               borderSide: BorderSide(
-                color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+                color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -519,10 +519,10 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s14),
       decoration: BoxDecoration(
-        color: AppColors.primary500.withOpacity(0.04),
+        color: AppColors.primary500.withValues(alpha: 0.04),
         borderRadius: AppSpacing.borderMD,
         border: Border.all(
-          color: AppColors.primary500.withOpacity(0.12),
+          color: AppColors.primary500.withValues(alpha: 0.12),
         ),
       ),
       child: Column(

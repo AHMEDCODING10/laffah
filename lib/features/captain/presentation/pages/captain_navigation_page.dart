@@ -322,7 +322,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                '${widget.passengerRating} ★',
+                                '${widget.passengerRating} âک…',
                                 style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Colors.black),
                               ),
                             ),

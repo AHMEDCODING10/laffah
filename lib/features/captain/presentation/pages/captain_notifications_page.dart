@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import 'captain_navigation_page.dart';
+import '../bloc/notifications/captain_notifications_bloc.dart';
+import '../bloc/notifications/captain_notifications_event.dart';
+import '../bloc/notifications/captain_notifications_state.dart';
 import 'widgets/captain_reject_reason_dialog.dart';
-import 'widgets/captain_order_details_dialog.dart';
 
-/// CaptainNotificationsPage — Dynamic notification logs, system alerts, and nearby trip requests panel.
-/// Fully customized for Sana'a motorcycle rides & parcel express delivery, supporting multi-stop trips,
-/// direct navigation acceptance, reject reason dialogs, and mark-all-as-read state.
 class CaptainNotificationsPage extends StatefulWidget {
   const CaptainNotificationsPage({super.key});
 
@@ -21,163 +22,26 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
   bool _isAllRead = false;
 
   final List<String> _categories = ['الطلبات الجديدة ⚡', 'تحديثات النظام 📢', 'التنبيهات 🔔'];
-
-  // Dynamic Nearby Orders List for Sana'a
-  late List<Map<String, dynamic>> _nearbyOrders;
-
-  // System Updates List
-  final List<Map<String, dynamic>> _systemUpdates = [
-    {
-      'title': 'تحديث عمولة منصة لَفَّة ⚡',
-      'description': 'نود إعلام كباتننا الأوفياء في صنعاء أنه تم تثبيت نسبة العمولة 10% فقط لدعم الدراجات النارية في اليمن.',
-      'timeTag': 'قبل ساعة',
-      'icon': Icons.shield_rounded,
-      'isRead': false,
-    },
-    {
-      'title': 'صيانة خوادم النظام الدورية',
-      'description': 'تنبيه: ستجرى صيانة دورية مجدولة لخوادم التطبيق يوم الجمعة القادم بين الساعة 2:00 ص و 3:00 ص.',
-      'timeTag': 'أمس',
-      'icon': Icons.settings_rounded,
-      'isRead': true,
-    },
-  ];
-
-  // General Alerts List
-  final List<Map<String, dynamic>> _generalAlerts = [
-    {
-      'title': 'تذكير السلامة المرورية 🏍️',
-      'description': 'عزيزي الكابتن: يرجى دائماً ارتداء الخوذة الواقية والتأكد من استخدام الأضواء الخافتة أثناء القيادة ليلاً في شوارع صنعاء.',
-      'timeTag': 'اليوم',
-      'icon': Icons.two_wheeler_rounded,
-      'isRead': false,
-    },
-    {
-      'title': 'تقييم راكب ممتاز 🌟',
-      'description': 'حصلت على تقييم 5 نجوم من الراكبة "سارة العامري" مع تعليق: "كابتن محترم وسريع جداً".',
-      'timeTag': 'أمس',
-      'icon': Icons.star_rounded,
-      'isRead': true,
-    },
-  ];
+  late CaptainNotificationsBloc _bloc;
 
   @override
   void initState() {
     super.initState();
-    _nearbyOrders = [
-      {
-        'id': 'LF-88293',
-        'title': 'طلب لَفَّة مشوار جديد',
-        'passengerName': 'محمد المقطري',
-        'passengerPhone': '+967 777 123 456',
-        'passengerRating': 4.9,
-        'description': 'العميل بانتظارك بالقرب من شارع المطار يطلب رحلة فورية إلى باب اليمن (صنعاء القديمة).',
-        'pickup': 'حي الروضة - شارع المطار، صنعاء',
-        'dropoff': 'باب اليمن - صنعاء القديمة',
-        'distance': '3.5 كم',
-        'eta': 'يصل خلال 8 دقائق',
-        'duration': '8 دقائق',
-        'price': '1,800 ر.ي',
-        'grossFare': 1800.0,
-        'timeTag': 'الآن',
-        'isParcel': false,
-      },
-      {
-        'id': 'LF-88290',
-        'title': 'مشوار متعدد المحطات والتوقفات ⚡',
-        'passengerName': 'المهندس ياسين',
-        'passengerPhone': '+967 771 999 888',
-        'passengerRating': 4.8,
-        'description': 'مشوار يتضمن توقفين: السوبرماركت للشراء ثم الصيدلية ثم التوصيل للمنزل في حدة.',
-        'pickup': 'شارع الستين - أمام مستشفى آزال',
-        'dropoff': 'حدة - قرب مركز الكميم',
-        'stops': [
-          'توقف 1: سوبرماركت الهدى (شارع الستين)',
-          'توقف 2: صيدلية النهدي (جولة حدة)',
-        ],
-        'distance': '5.8 كم',
-        'eta': 'استلام خلال 12 دقيقة',
-        'duration': '18 دقيقة',
-        'price': '2,800 ر.ي',
-        'grossFare': 2800.0,
-        'timeTag': 'قبل 5 دقائق',
-        'isParcel': false,
-      },
-      {
-        'id': 'LF-88285',
-        'title': 'طلب توصيل طرد سريع 📦',
-        'passengerName': 'مكتبة الجيل الجديد',
-        'passengerPhone': '+967 773 444 555',
-        'passengerRating': 5.0,
-        'description': 'شحنة مغلقة بحجم صغير جاهزة للاستلام من شارع الزبيري والتوصيل إلى المستشفى الجمهوري.',
-        'pickup': 'شارع الزبيري - تقاطع جولة كنعان',
-        'dropoff': 'المستشفى الجمهوري - شارع باب اليمن',
-        'distance': '4.8 كم',
-        'eta': 'استلام خلال 10 دقائق',
-        'duration': '10 دقائق',
-        'price': '2,200 ر.ي',
-        'grossFare': 2200.0,
-        'timeTag': 'قبل 15 دقيقة',
-        'isParcel': true,
-      },
-    ];
+    _bloc = sl<CaptainNotificationsBloc>();
+    _bloc.add(FetchNotificationsAndRequests());
   }
 
-  void _acceptAndNavigate(Map<String, dynamic> order) {
-    HapticFeedback.heavyImpact();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CaptainNavigationPage(
-          tripId: order['id'] ?? 'LF-88293',
-          passengerName: order['passengerName'] ?? 'الراكب',
-          passengerPhone: order['passengerPhone'] ?? '+967 777 000 000',
-          passengerRating: (order['passengerRating'] as num?)?.toDouble() ?? 4.9,
-          pickup: order['pickup'] ?? 'الاستلام',
-          dropoff: order['dropoff'] ?? 'الوصول',
-          fare: (order['grossFare'] as num?)?.toDouble() ?? 1800.0,
-          distance: order['distance'] ?? '3.5 كم',
-          duration: order['duration'] ?? '8 دقائق',
-        ),
-      ),
-    );
-  }
-
-  void _rejectOrder(Map<String, dynamic> order) {
-    CaptainRejectReasonDialog.show(
-      context: context,
-      orderTitle: order['title'] ?? 'الطلب',
-      onConfirmReject: (reason) {
-        setState(() {
-          _nearbyOrders.removeWhere((o) => o['id'] == order['id']);
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.danger,
-            content: Text(
-              'تم رفض الطلب (${order['id']}) بسبب: "$reason".',
-              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, fontSize: 13),
-            ),
-          ),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    _bloc.close();
+    super.dispose();
   }
 
   void _markAllAsRead() {
     HapticFeedback.lightImpact();
     setState(() {
       _isAllRead = true;
-      for (var u in _systemUpdates) {
-        u['isRead'] = true;
-      }
-      for (var a in _generalAlerts) {
-        a['isRead'] = true;
-      }
     });
-
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         backgroundColor: AppColors.success,
@@ -193,483 +57,424 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'التنبيهات والطلبات',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            fontFamily: 'IBM Plex Sans Arabic',
-            color: isDark ? AppColors.white : AppColors.gray900,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.done_all_rounded,
-              color: _isAllRead ? AppColors.gray500 : const Color(0xFFFF6B00),
+    return BlocProvider.value(
+      value: _bloc,
+      child: Scaffold(
+        backgroundColor: isDark ? const Color(0xFF141822) : const Color(0xFFF7F9FC),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+          title: Text(
+            'التنبيهات والطلبات',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'IBM Plex Sans Arabic',
+              color: isDark ? AppColors.white : AppColors.gray900,
             ),
-            tooltip: 'تحديد الكل كمقروء',
-            onPressed: _markAllAsRead,
           ),
-        ],
-      ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Column(
-          children: [
-            // Segmented Filter Tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
-              child: Container(
-                height: 46,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF141822).withValues(alpha: 0.8)
-                      : AppColors.gray100,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  children: List.generate(_categories.length, (index) {
-                    final isSelected = _activeCategoryIndex == index;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _activeCategoryIndex = index;
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFFFF6B00)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            _categories[index],
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.done_all_rounded,
+                color: _isAllRead ? AppColors.gray500 : const Color(0xFFFF6B00),
+              ),
+              tooltip: 'تحديد الكل كمقروء',
+              onPressed: _markAllAsRead,
+            ),
+          ],
+        ),
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Column(
+            children: [
+              // Segmented Filter Tabs
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+                child: Container(
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1E2433)
+                        : AppColors.gray100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    children: List.generate(_categories.length, (index) {
+                      final isSelected = _activeCategoryIndex == index;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _activeCategoryIndex = index;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
                               color: isSelected
-                                  ? Colors.white
-                                  : (isDark ? AppColors.gray400 : AppColors.gray600),
-                              fontFamily: 'IBM Plex Sans Arabic',
+                                  ? (isDark ? const Color(0xFFFF6B00) : AppColors.white)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: isSelected && !isDark
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.05),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      )
+                                    ]
+                                  : null,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              _categories[index],
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                color: isSelected
+                                    ? (isDark ? Colors.white : const Color(0xFFFF6B00))
+                                    : AppColors.gray500,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 ),
               ),
-            ),
+              
+              const SizedBox(height: AppSpacing.s8),
 
-            AppSpacing.h8,
-
-            // Category Tab View Content
-            Expanded(
-              child: _activeCategoryIndex == 0
-                  ? _buildTripRequestsList(isDark)
-                  : _activeCategoryIndex == 1
-                      ? _buildSystemUpdatesList(isDark)
-                      : _buildGeneralAlertsList(isDark),
-            ),
-          ],
+              Expanded(
+                child: BlocBuilder<CaptainNotificationsBloc, CaptainNotificationsState>(
+                  builder: (context, state) {
+                    if (state is CaptainNotificationsLoading) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00)));
+                    } else if (state is CaptainNotificationsError) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+                            const SizedBox(height: 16),
+                            Text(
+                              state.message,
+                              style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _bloc.add(FetchNotificationsAndRequests()),
+                              child: const Text('إعادة المحاولة'),
+                            )
+                          ],
+                        ),
+                      );
+                    } else if (state is CaptainNotificationsLoaded) {
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          _bloc.add(RefreshNotificationsAndRequests());
+                        },
+                        color: const Color(0xFFFF6B00),
+                        child: _buildListBasedOnCategory(state, isDark),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTripRequestsList(bool isDark) {
-    if (_nearbyOrders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle_outline_rounded, size: 48, color: AppColors.success),
-            AppSpacing.h12,
-            Text(
-              'لا توجد طلبات جديدة قريبة حالياً',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: isDark ? Colors.white : AppColors.gray900,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'سيتم إشعارك فور ورود أي مشوار جديد في صنعاء.',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 11.5, color: AppColors.gray500),
-            ),
-          ],
-        ),
+  Widget _buildListBasedOnCategory(CaptainNotificationsLoaded state, bool isDark) {
+    if (_activeCategoryIndex == 0) {
+      if (state.nearbyRequests.isEmpty) {
+        return _buildEmptyState('لا توجد طلبات قريبة حالياً.', Icons.radar, isDark);
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        itemCount: state.nearbyRequests.length,
+        itemBuilder: (context, index) {
+          final order = state.nearbyRequests[index];
+          return _buildOrderCard(order, isDark);
+        },
+      );
+    } else if (_activeCategoryIndex == 1) {
+      final systemUpdates = state.notifications.where((n) => n.type == 'system').toList();
+      if (systemUpdates.isEmpty) {
+        return _buildEmptyState('لا توجد تحديثات في النظام.', Icons.system_security_update_good, isDark);
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        itemCount: systemUpdates.length,
+        itemBuilder: (context, index) {
+          final notif = systemUpdates[index];
+          return _buildNotificationCard(notif, isDark);
+        },
+      );
+    } else {
+      final alerts = state.notifications.where((n) => n.type == 'alert').toList();
+      if (alerts.isEmpty) {
+        return _buildEmptyState('لا توجد تنبيهات جديدة.', Icons.notifications_none, isDark);
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        itemCount: alerts.length,
+        itemBuilder: (context, index) {
+          final notif = alerts[index];
+          return _buildNotificationCard(notif, isDark);
+        },
       );
     }
+  }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 90), // Bottom padding for floating bar
-      itemCount: _nearbyOrders.length,
-      physics: const BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
-        final order = _nearbyOrders[index];
-        return _buildInteractiveRequestCard(context, order, isDark);
-      },
+  Widget _buildEmptyState(String message, IconData icon, bool isDark) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 80, color: AppColors.gray400.withValues(alpha: 0.5)),
+                const SizedBox(height: 16),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 16,
+                    color: AppColors.gray500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildInteractiveRequestCard(BuildContext context, Map<String, dynamic> order, bool isDark) {
-    final bool isParcel = order['isParcel'] == true;
-    final List<String> stops = (order['stops'] as List<dynamic>?)?.cast<String>() ?? [];
-    final bool isMultiStop = stops.isNotEmpty;
-
+  Widget _buildOrderCard(dynamic order, bool isDark) {
+    final isParcel = order.isParcel;
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s14),
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      margin: const EdgeInsets.only(bottom: AppSpacing.s16),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF141822).withValues(alpha: 0.9)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? const Color(0xFF1E2433) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFFFF6B00).withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
         border: Border.all(
-          color: isMultiStop
-              ? const Color(0xFFFF6B00).withValues(alpha: 0.4)
-              : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06)),
-          width: isMultiStop ? 1.5 : 1.0,
+          color: isParcel ? AppColors.info.withValues(alpha: 0.3) : const Color(0xFFFF6B00).withValues(alpha: 0.2),
+          width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.14),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isParcel ? Icons.inventory_2_rounded : Icons.two_wheeler_rounded,
-                      size: 18,
-                      color: const Color(0xFFFF6B00),
-                    ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isParcel ? AppColors.info.withValues(alpha: 0.1) : const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                  AppSpacing.w10,
-                  Column(
+                  child: Icon(
+                    isParcel ? Icons.inventory_2_rounded : Icons.local_taxi_rounded,
+                    color: isParcel ? AppColors.info : const Color(0xFFFF6B00),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        order['title'] ?? '',
+                        order.title,
                         style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w900,
                           fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
                           color: isDark ? Colors.white : AppColors.gray900,
                         ),
                       ),
-                      if (isMultiStop)
-                        const Text(
-                          'توقفات متعددة',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFFF6B00),
-                            fontFamily: 'IBM Plex Sans Arabic',
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.person_rounded, size: 14, color: AppColors.gray500),
+                          const SizedBox(width: 4),
+                          Text(
+                            order.passengerName,
+                            style: const TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 13,
+                              color: AppColors.gray500,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.star_rounded, size: 14, color: AppColors.warning),
+                          const SizedBox(width: 2),
+                          Text(
+                            order.passengerRating.toString(),
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: isDark ? Colors.white : AppColors.gray800,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-              Text(
-                order['timeTag'] ?? '',
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  color: AppColors.gray500,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'IBM Plex Sans Arabic',
                 ),
-              ),
-            ],
-          ),
-
-          AppSpacing.h10,
-
-          Text(
-            order['description'] ?? '',
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: AppColors.gray600,
-              height: 1.4,
-              fontFamily: 'IBM Plex Sans Arabic',
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF2A3143) : AppColors.gray100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    order.timeTag,
+                    style: const TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.gray600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-
-          AppSpacing.h12,
-
-          // Info Badges Row & Price
-          Row(
-            children: [
-              _buildSmallBadge(isDark, Icons.navigation_rounded, order['distance'] ?? ''),
-              AppSpacing.w8,
-              _buildSmallBadge(isDark, Icons.timer_rounded, order['eta'] ?? ''),
-              const Spacer(),
-              Text(
-                order['price'] ?? '',
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFFFF6B00),
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-            ],
-          ),
-
-          AppSpacing.h16,
-
-          // Ergonomic Action Buttons Row (Accept, Details, Reject)
-          Row(
-            children: [
-              // Reject Button (Fixed 42px width)
-              SizedBox(
-                width: 42,
-                height: 44,
-                child: IconButton(
-                  style: IconButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: AppColors.danger.withValues(alpha: 0.12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  icon: const Icon(Icons.close_rounded, color: AppColors.danger, size: 20),
-                  tooltip: 'رفض الطلب',
-                  onPressed: () => _rejectOrder(order),
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Details Button
-              Expanded(
-                flex: 12,
-                child: SizedBox(
-                  height: 44,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      CaptainOrderDetailsDialog.show(
-                        context: context,
-                        order: order,
-                        onAccept: () => _acceptAndNavigate(order),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      foregroundColor: isDark ? AppColors.gray300 : AppColors.gray700,
-                      side: BorderSide(color: isDark ? Colors.white24 : AppColors.gray300),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: const Text(
-                      'التفاصيل',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Accept Button
-              Expanded(
-                flex: 20,
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _acceptAndNavigate(order),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      backgroundColor: const Color(0xFFFF6B00),
-                      foregroundColor: Colors.white,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.flash_on_rounded, size: 16),
-                    label: const Text(
-                      'قبول والبدء',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSmallBadge(bool isDark, IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.gray100,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: AppColors.gray500),
-          AppSpacing.w4,
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'IBM Plex Sans Arabic',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSystemUpdatesList(bool isDark) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-      itemCount: _systemUpdates.length,
-      physics: const BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
-        final item = _systemUpdates[index];
-        return _buildAlertCard(
-          isDark: isDark,
-          title: item['title'],
-          description: item['description'],
-          timeTag: item['timeTag'],
-          icon: item['icon'],
-          iconBg: const Color(0xFFFF6B00).withValues(alpha: 0.12),
-          iconColor: const Color(0xFFFF6B00),
-        );
-      },
-    );
-  }
-
-  Widget _buildGeneralAlertsList(bool isDark) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-      itemCount: _generalAlerts.length,
-      physics: const BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
-        final item = _generalAlerts[index];
-        return _buildAlertCard(
-          isDark: isDark,
-          title: item['title'],
-          description: item['description'],
-          timeTag: item['timeTag'],
-          icon: item['icon'],
-          iconBg: AppColors.success.withValues(alpha: 0.12),
-          iconColor: AppColors.success,
-        );
-      },
-    );
-  }
-
-  Widget _buildAlertCard({
-    required bool isDark,
-    required String title,
-    required String description,
-    required String timeTag,
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
-      padding: const EdgeInsets.all(AppSpacing.s14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.s8),
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, size: 20, color: iconColor),
-          ),
-          AppSpacing.w12,
-          Expanded(
+          
+          Divider(height: 1, color: isDark ? Colors.white10 : AppColors.gray200),
+          
+          // Details
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildRouteItem(Icons.my_location_rounded, order.pickup, isDark, true),
+                _buildRouteLine(isDark),
+                _buildRouteItem(Icons.location_on_rounded, order.dropoff, isDark, false, color: AppColors.primary),
+                
+                if (order.stops.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6B00).withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFF6B00).withValues(alpha: 0.1)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: order.stops.map<Widget>((s) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.add_location_alt_rounded, size: 16, color: Color(0xFFFF6B00)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(s, style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : Colors.black87, fontFamily: 'IBM Plex Sans Arabic'))),
+                          ],
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                ],
+                
+                const SizedBox(height: 16),
+                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        color: isDark ? Colors.white : AppColors.gray900,
-                      ),
-                    ),
-                    Text(
-                      timeTag,
-                      style: const TextStyle(
-                        fontSize: 9.5,
-                        color: AppColors.gray500,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                      ),
-                    ),
+                    _buildQuickStat(Icons.route_rounded, order.distance, isDark),
+                    _buildQuickStat(Icons.schedule_rounded, order.duration, isDark),
+                    _buildQuickStat(Icons.payments_rounded, order.price, isDark, isHighlight: true),
                   ],
                 ),
-                AppSpacing.h6,
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.gray600,
-                    height: 1.4,
-                    fontFamily: 'IBM Plex Sans Arabic',
+              ],
+            ),
+          ),
+          
+          // Actions
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      CaptainRejectReasonDialog.show(
+                        context: context,
+                        orderTitle: order.title,
+                        onConfirmReject: (reason) {
+                          _bloc.add(RefreshNotificationsAndRequests()); // Refresh after reject
+                        },
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: const BorderSide(color: AppColors.danger),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('رفض', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.heavyImpact();
+                      context.push(
+                        '/captain/navigation',
+                        extra: {
+                          'tripId': order.id,
+                          'passengerName': order.passengerName,
+                          'passengerPhone': order.passengerPhone,
+                          'passengerRating': order.passengerRating,
+                          'pickup': order.pickup,
+                          'dropoff': order.dropoff,
+                          'fare': order.grossFare,
+                          'distance': order.distance,
+                          'duration': order.duration,
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B00),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 0,
+                    ),
+                    child: const Text('قبول المشوار', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
                   ),
                 ),
               ],
@@ -677,6 +482,129 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNotificationCard(dynamic notif, bool isDark) {
+    bool isRead = notif.isRead || _isAllRead;
+    
+    IconData iconData = Icons.notifications;
+    if (notif.icon == 'shield') iconData = Icons.shield_rounded;
+    if (notif.icon == 'bike') iconData = Icons.two_wheeler_rounded;
+    if (notif.icon == 'star') iconData = Icons.star_rounded;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isRead
+            ? (isDark ? const Color(0xFF1A1F2C) : Colors.white)
+            : (isDark ? const Color(0xFF242A38) : AppColors.primary.withValues(alpha: 0.05)),
+        borderRadius: BorderRadius.circular(16),
+        border: isRead ? null : Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A3143) : AppColors.gray100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(iconData, color: isRead ? AppColors.gray500 : const Color(0xFFFF6B00), size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        notif.title,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: isRead ? FontWeight.w600 : FontWeight.bold,
+                          fontSize: 14,
+                          color: isDark ? Colors.white : AppColors.gray900,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      notif.timeTag,
+                      style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11,
+                        color: AppColors.gray500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  notif.description,
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 13,
+                    color: isDark ? Colors.white70 : AppColors.gray600,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRouteItem(IconData icon, String title, bool isDark, bool isPickup, {Color? color}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color ?? (isDark ? Colors.white70 : AppColors.gray500)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: isDark ? Colors.white : AppColors.gray800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRouteLine(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(right: 9, top: 4, bottom: 4),
+      height: 16,
+      width: 2,
+      color: isDark ? Colors.white24 : AppColors.gray300,
+    );
+  }
+
+  Widget _buildQuickStat(IconData icon, String value, bool isDark, {bool isHighlight = false}) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: isHighlight ? const Color(0xFFFF6B00) : AppColors.gray500),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
+            fontSize: 13,
+            color: isHighlight ? const Color(0xFFFF6B00) : (isDark ? Colors.white70 : AppColors.gray700),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -16,8 +16,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -43,7 +42,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E).withOpacity(0.1),
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -65,7 +64,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
               ),
               
               AppSpacing.h8,
-              Text(
+              const Text(
                 'الرجاء تحصيل المبلغ التالي من الراكب',
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
@@ -83,12 +82,12 @@ class CaptainRideInvoicePage extends StatelessWidget {
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: const Color(0xFFFF6B00).withOpacity(0.5),
+                    color: const Color(0xFFFF6B00).withValues(alpha: 0.5),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF6B00).withOpacity(0.1),
+                      color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
@@ -129,7 +128,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withOpacity(0.1),
+                        color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                         borderRadius: AppSpacing.radiusMD,
                       ),
                       child: const Text(
@@ -150,7 +149,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+                  color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
                   borderRadius: AppSpacing.radiusMD,
                 ),
                 child: Column(
@@ -179,7 +178,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF6B00),
                     foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD,
                     ),
                   ),

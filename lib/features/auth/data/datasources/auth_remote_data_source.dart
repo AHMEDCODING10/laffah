@@ -4,8 +4,11 @@ import '../../../../core/network/dio_client.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<BaseResponseModel<String>> sendOtp(String phone);
-  Future<BaseResponseModel<UserModel>> verifyOtp(String phone, String code);
+
+  Future<BaseResponseModel<UserModel>> registerPassenger(Map<String, dynamic> data);
+  Future<BaseResponseModel<UserModel>> registerCaptain(Map<String, dynamic> data);
+  Future<BaseResponseModel<UserModel>> login(String phone, String password);
+  Future<void> logoutFromServer();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -13,23 +16,37 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   AuthRemoteDataSourceImpl(this.dioClient);
 
+
   @override
-  Future<BaseResponseModel<String>> sendOtp(String phone) async {
+  Future<BaseResponseModel<UserModel>> login(String phone, String password) async {
     final response = await dioClient.dio.post(
-      ApiEndpoints.sendOtp,
-      data: {'phone': phone},
+      ApiEndpoints.login,
+      data: {'phone': phone, 'password': password},
     );
-    
-    return BaseResponseModel.fromJson(response.data, (data) => data['verification_id'] as String);
+    return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
+  }
+
+
+  @override
+  Future<BaseResponseModel<UserModel>> registerPassenger(Map<String, dynamic> data) async {
+    final response = await dioClient.dio.post(
+      ApiEndpoints.registerPassenger,
+      data: data,
+    );
+    return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
   }
 
   @override
-  Future<BaseResponseModel<UserModel>> verifyOtp(String phone, String code) async {
+  Future<BaseResponseModel<UserModel>> registerCaptain(Map<String, dynamic> data) async {
     final response = await dioClient.dio.post(
-      ApiEndpoints.verifyOtp,
-      data: {'phone': phone, 'code': code},
+      ApiEndpoints.registerCaptain,
+      data: data,
     );
-    
     return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
+  }
+
+  @override
+  Future<void> logoutFromServer() async {
+    await dioClient.dio.post(ApiEndpoints.logout);
   }
 }

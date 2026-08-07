@@ -20,8 +20,7 @@ class ParcelDeliveryProofPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -76,7 +75,7 @@ class ParcelDeliveryProofPage extends StatelessWidget {
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withOpacity(0.1) : AppColors.gray300,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
@@ -88,7 +87,7 @@ class ParcelDeliveryProofPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B00).withOpacity(0.1),
+                              color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFFF6B00), size: 40),
@@ -125,7 +124,7 @@ class ParcelDeliveryProofPage extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B00),
                       foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD,
                       ),
                     ),

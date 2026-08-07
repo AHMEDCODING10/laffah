@@ -1,76 +1,101 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/usecases/send_otp_usecase.dart';
-import '../../domain/usecases/verify_otp_usecase.dart';
+import '../../domain/usecases/login_usecase.dart';
+import '../../domain/usecases/register_passenger_usecase.dart';
+import '../../domain/usecases/register_captain_usecase.dart';
+import '../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
-/// AuthBloc - Manages Authentication State transitions using Clean Architecture
+/// AuthBloc — Clean Architecture auth state management.
+/// Handles Login (phone + password), Register Passenger, Register Captain, Logout.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final SendOtpUseCase sendOtpUseCase;
-  final VerifyOtpUseCase verifyOtpUseCase;
+  final LoginUseCase loginUseCase;
+  final RegisterPassengerUseCase registerPassengerUseCase;
+  final RegisterCaptainUseCase registerCaptainUseCase;
+  final AuthRepository authRepository;
 
   AuthBloc({
-    required this.sendOtpUseCase,
-    required this.verifyOtpUseCase,
+    required this.loginUseCase,
+    required this.registerPassengerUseCase,
+    required this.registerCaptainUseCase,
+    required this.authRepository,
   }) : super(const AuthInitial()) {
-    on<SendOTPCode>(_onSendOTPCode);
-    on<VerifyOTPCode>(_onVerifyOTPCode);
-    on<ResendOTPCode>(_onResendOTPCode);
+    on<LoginRequested>(_onLoginRequested);
+    on<RegisterPassengerRequested>(_onRegisterPassengerRequested);
+    on<RegisterCaptainRequested>(_onRegisterCaptainRequested);
+    on<LogoutRequested>(_onLogoutRequested);
   }
 
-  FutureOr<void> _onSendOTPCode(
-    SendOTPCode event,
+  // ─────────────────────────────────────────────
+  // LOGIN
+  // ─────────────────────────────────────────────
+  FutureOr<void> _onLoginRequested(
+    LoginRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-
-    final result = await sendOtpUseCase.call(event.phone);
-
+    final result = await loginUseCase.call(
+      phone: event.phone,
+      password: event.password,
+    );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (verificationId) => emit(AuthCodeSent(
-        phone: event.phone,
-        verificationId: verificationId,
-      )),
+      (userEntity) => emit(AuthSuccess(role: userEntity.role)),
     );
   }
 
-  FutureOr<void> _onVerifyOTPCode(
-    VerifyOTPCode event,
+  // ─────────────────────────────────────────────
+  // REGISTER PASSENGER
+  // ─────────────────────────────────────────────
+  FutureOr<void> _onRegisterPassengerRequested(
+    RegisterPassengerRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-    
-    // Assuming the event has phone and code, but original AuthEvent VerifyOTPCode only has code
-    // In a real flow, phone should be passed from UI or state.
-    // For now we will use a dummy phone if not available, or you need to update AuthEvent.
-    // Note: VerifyOTPCode event needs to be updated to include phone.
-    // Assuming we update VerifyOTPCode to include phone.
-    final String phone = (event as dynamic).phone ?? '777123456'; 
-
-    final result = await verifyOtpUseCase.call(phone, event.code);
-
+    final result = await registerPassengerUseCase.call(
+      name: event.name,
+      phone: event.phone,
+      password: event.password,
+    );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (userEntity) => emit(const AuthSuccess()),
+      (userEntity) => emit(const AuthSuccess(role: 'passenger')),
     );
   }
 
-  FutureOr<void> _onResendOTPCode(
-    ResendOTPCode event,
+  // ─────────────────────────────────────────────
+  // REGISTER CAPTAIN
+  // ─────────────────────────────────────────────
+  FutureOr<void> _onRegisterCaptainRequested(
+    RegisterCaptainRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-
-    final result = await sendOtpUseCase.call(event.phone);
-
+    final result = await registerCaptainUseCase.call(
+      name: event.name,
+      phone: event.phone,
+      password: event.password,
+      vehicleType: event.vehicleType,
+      vehicleModel: event.vehicleModel,
+      vehicleYear: event.vehicleYear,
+      vehiclePlate: event.vehiclePlate,
+    );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (verificationId) => emit(AuthCodeSent(
-        phone: event.phone,
-        verificationId: verificationId,
-      )),
+      (userEntity) => emit(const AuthSuccess(role: 'captain')),
     );
+  }
+
+  // ─────────────────────────────────────────────
+  // LOGOUT
+  // ─────────────────────────────────────────────
+  FutureOr<void> _onLogoutRequested(
+    LogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    await authRepository.logout();
+    emit(const AuthInitial());
   }
 }

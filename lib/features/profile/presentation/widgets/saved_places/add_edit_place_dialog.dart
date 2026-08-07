@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
+<<<<<<< HEAD
 import '../../../data/datasources/fake_profile_repository.dart';
+=======
+import '../../../data/models/saved_place_model.dart';
+>>>>>>> origin/admin-ahmed
 
 /// AddEditPlaceDialog — Modal form dialog for creating or editing saved places.
 class AddEditPlaceDialog extends StatefulWidget {
@@ -42,15 +46,24 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
 
   late TextEditingController _nameController;
   late TextEditingController _addressController;
+<<<<<<< HEAD
   late PlaceType _selectedType;
+=======
+  late String _selectedType;
+>>>>>>> origin/admin-ahmed
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.placeToEdit?.name ?? '');
     _addressController =
+<<<<<<< HEAD
         TextEditingController(text: widget.placeToEdit?.addressDetails ?? '');
     _selectedType = widget.placeToEdit?.type ?? PlaceType.custom;
+=======
+        TextEditingController(text: widget.placeToEdit?.address ?? '');
+    _selectedType = widget.placeToEdit?.type ?? 'custom';
+>>>>>>> origin/admin-ahmed
   }
 
   @override
@@ -60,6 +73,7 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
     super.dispose();
   }
 
+<<<<<<< HEAD
   IconData _getIconForType(PlaceType type) {
     switch (type) {
       case PlaceType.home:
@@ -77,17 +91,26 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
     }
   }
 
+=======
+>>>>>>> origin/admin-ahmed
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       final newPlace = SavedPlaceModel(
         id: widget.placeToEdit?.id ??
             'place_${DateTime.now().millisecondsSinceEpoch}',
         name: _nameController.text.trim(),
+<<<<<<< HEAD
         addressDetails: _addressController.text.trim(),
         latitude: widget.placeToEdit?.latitude ?? 15.3694,
         longitude: widget.placeToEdit?.longitude ?? 44.1910,
         type: _selectedType,
         icon: _getIconForType(_selectedType),
+=======
+        address: _addressController.text.trim(),
+        lat: widget.placeToEdit?.lat ?? 15.3694,
+        lng: widget.placeToEdit?.lng ?? 44.1910,
+        type: _selectedType,
+>>>>>>> origin/admin-ahmed
       );
 
       widget.onSave(newPlace);
@@ -200,6 +223,7 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
                     ),
                   ),
                   AppSpacing.h8,
+<<<<<<< HEAD
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -212,6 +236,20 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
                       _buildTypeChip('مخصص', PlaceType.custom),
                     ],
                   ),
+=======
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildTypeChip('منزل', 'home'),
+                        _buildTypeChip('عمل', 'work'),
+                        _buildTypeChip('جامعة', 'university'),
+                        _buildTypeChip('تسوق', 'shopping'),
+                        _buildTypeChip('تاريخي', 'historic'),
+                        _buildTypeChip('مخصص', 'custom'),
+                      ],
+                    ),
+>>>>>>> origin/admin-ahmed
 
                   AppSpacing.h20,
 
@@ -248,7 +286,11 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
     );
   }
 
+<<<<<<< HEAD
   Widget _buildTypeChip(String label, PlaceType type) {
+=======
+  Widget _buildTypeChip(String label, String type) {
+>>>>>>> origin/admin-ahmed
     final isSelected = _selectedType == type;
     return ChoiceChip(
       label: Text(

@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../domain/usecases/upload_document_usecase.dart';
 
 /// Enum representing the verification status of a document
 enum DocumentStatus {
@@ -59,26 +63,21 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
         title: 'البطاقة الشخصية (الهوية الوطنية)',
         description: 'صورة واضحة للوجهين الأمامي والخلفي للبطاقة الشخصية الذكية أو جواز السفر الساري.',
         icon: Icons.badge_rounded,
-        status: DocumentStatus.approved,
-        feedback: 'تم التحقق من رقم الهوية وتطابق الاسم مع الحساب بنجاح.',
-        filePath: 'mock_national_id.jpg',
+        status: DocumentStatus.empty,
       ),
       CaptainDocument(
         id: 'drivers_license',
         title: 'رخصة القيادة الشخصية',
         description: 'رخصة قيادة سارية المفعول صادرة من الإدارة العامة للمرور في الجمهورية اليمنية.',
         icon: Icons.card_membership_rounded,
-        status: DocumentStatus.underReview,
-        feedback: 'جاري مطابقة بيانات الرخصة وتاريخ الصلاحية مع إدارة المرور.',
-        filePath: 'mock_license.jpg',
+        status: DocumentStatus.empty,
       ),
       CaptainDocument(
         id: 'vehicle_ownership',
         title: 'كرت ملكية المركبة (الاستمارة)',
-        description: 'صورة واضحة لكرت الملكية الخاص بالدراجة النارية أو السيارة المستخدمة في التوصيل.',
+        description: 'صورة واضحة لكرت الملكية الخاص بالدراجة النارية أو ط§ظ„ط³ظٹط§رة المستخدمة في التوصيل.',
         icon: Icons.assignment_rounded,
-        status: DocumentStatus.rejected,
-        feedback: 'الصورة غير واضحة وتفاصيل كرت الملكية مطموسة. يرجى إعادة التصوير في إضاءة كافية وبزاوية مستقيمة لتسهيل قراءة رقم اللوحة.',
+        status: DocumentStatus.empty,
       ),
       CaptainDocument(
         id: 'criminal_record',
@@ -120,8 +119,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -234,13 +232,13 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
                 decoration: BoxDecoration(
                   color: progress == 1.0 
-                      ? AppColors.success.withOpacity(0.12)
-                      : AppColors.primary500.withOpacity(0.12),
+                      ? AppColors.success.withValues(alpha: 0.12)
+                      : AppColors.primary500.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: progress == 1.0 
-                        ? AppColors.success.withOpacity(0.3)
-                        : AppColors.primary500.withOpacity(0.3),
+                        ? AppColors.success.withValues(alpha: 0.3)
+                        : AppColors.primary500.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
@@ -266,7 +264,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                 Container(
                   height: 8,
                   width: double.infinity,
-                  color: isDark ? AppColors.white.withOpacity(0.06) : AppColors.gray200,
+                  color: isDark ? AppColors.white.withValues(alpha: 0.06) : AppColors.gray200,
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
@@ -314,10 +312,10 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: AppColors.info.withOpacity(0.08),
+        color: AppColors.info.withValues(alpha: 0.08),
         borderRadius: AppSpacing.borderSM,
         border: Border.all(
-          color: AppColors.info.withOpacity(0.2),
+          color: AppColors.info.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -344,7 +342,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                 ),
                 AppSpacing.h4,
                 Text(
-                  'يرجى التقاط صور واضحة ومباشرة دون انعكاسات ضوئية. تأكد من أن جميع زوايا المستند ظاهرة بوضوح وأن النصوص مقروءة لتفادي تأخير مراجعة الطلب.',
+                  'يرجى التقاط صور واضحة ومباشرة دون انعكاسات ضوئية. تأكد من أن جميع زوايا المستند ظاهرة بوضوح وأن النصوص مقروءة ظ„طھفادي تأخير مراجعة الطلب.',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 11,
@@ -393,12 +391,12 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark.withOpacity(0.6) : AppColors.white.withOpacity(0.9),
+          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.9),
           borderRadius: AppSpacing.borderLG,
           border: Border.all(
             color: doc.status == DocumentStatus.rejected
-                ? AppColors.danger.withOpacity(0.3)
-                : (isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray200),
+                ? AppColors.danger.withValues(alpha: 0.3)
+                : (isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
             width: doc.status == DocumentStatus.rejected ? 1.5 : 1.0,
           ),
         ),
@@ -413,10 +411,10 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                   padding: const EdgeInsets.all(AppSpacing.s10),
                   decoration: BoxDecoration(
                     color: doc.status == DocumentStatus.approved
-                        ? AppColors.success.withOpacity(0.1)
+                        ? AppColors.success.withValues(alpha: 0.1)
                         : (doc.status == DocumentStatus.rejected
-                            ? AppColors.danger.withOpacity(0.1)
-                            : AppColors.primary500.withOpacity(0.1)),
+                            ? AppColors.danger.withValues(alpha: 0.1)
+                            : AppColors.primary500.withValues(alpha: 0.1)),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -498,16 +496,16 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                 padding: const EdgeInsets.all(AppSpacing.s10),
                 decoration: BoxDecoration(
                   color: doc.status == DocumentStatus.rejected
-                      ? AppColors.danger.withOpacity(0.06)
+                      ? AppColors.danger.withValues(alpha: 0.06)
                       : (doc.status == DocumentStatus.approved
-                          ? AppColors.success.withOpacity(0.06)
-                          : AppColors.gray100.withOpacity(0.5)),
+                          ? AppColors.success.withValues(alpha: 0.06)
+                          : AppColors.gray100.withValues(alpha: 0.5)),
                   borderRadius: AppSpacing.borderSM,
                   border: Border.all(
                     color: doc.status == DocumentStatus.rejected
-                        ? AppColors.danger.withOpacity(0.15)
+                        ? AppColors.danger.withValues(alpha: 0.15)
                         : (doc.status == DocumentStatus.approved
-                            ? AppColors.success.withOpacity(0.15)
+                            ? AppColors.success.withValues(alpha: 0.15)
                             : AppColors.gray200),
                   ),
                 ),
@@ -581,11 +579,11 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         color: doc.status == DocumentStatus.underReview
-            ? btnColor.withOpacity(0.08)
-            : btnColor.withOpacity(0.12),
+            ? btnColor.withValues(alpha: 0.08)
+            : btnColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: btnColor.withOpacity(0.25),
+          color: btnColor.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -618,7 +616,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
         color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -740,10 +738,10 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                 width: double.infinity,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.primary500.withOpacity(0.05),
+                  color: AppColors.primary500.withValues(alpha: 0.05),
                   borderRadius: AppSpacing.borderMD,
                   border: Border.all(
-                    color: AppColors.success.withOpacity(0.2),
+                    color: AppColors.success.withValues(alpha: 0.2),
                   ),
                 ),
                 child: const Center(
@@ -829,7 +827,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
               ),
               AppSpacing.h12,
               const Text(
-                'لقد استلمنا ملفك بنجاح. يقوم فريق التحقق والامتثال بمطابقة البيانات مع المكاتب الحكومية ذات العلاقة في صنعاء. سنقوم بإرسال إشعار فوري فور تفعيلها.',
+                'لقد استلمنا ملفك بنجاح. يقوم فريق التحقق والامتثال بمطاط¨ظ‚ط© البيانات مع المكاتب الحكومية ذات العلاقة في صنعاء. ط³نقوم بإرسال إشعار فوري فور تفعيلها.',
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 13,
@@ -946,10 +944,10 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.s12),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withOpacity(0.08),
+                      color: AppColors.warning.withValues(alpha: 0.08),
                       borderRadius: AppSpacing.borderSM,
                       border: Border.all(
-                        color: AppColors.warning.withOpacity(0.2),
+                        color: AppColors.warning.withValues(alpha: 0.2),
                       ),
                     ),
                     child: const Row(
@@ -982,7 +980,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => _simulateDocumentUpload(doc, 'كاميرا'),
+                          onPressed: () => _handleDocumentUpload(doc, 'كاميرا'),
                           icon: const Icon(
                             Icons.photo_camera_rounded,
                             color: AppColors.primary500,
@@ -1008,7 +1006,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
                       AppSpacing.w16,
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () => _simulateDocumentUpload(doc, 'معرض الصور'),
+                          onPressed: () => _handleDocumentUpload(doc, 'معرض الصور'),
                           icon: const Icon(
                             Icons.photo_library_rounded,
                             color: AppColors.white,
@@ -1044,11 +1042,21 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
     );
   }
 
-  void _simulateDocumentUpload(CaptainDocument doc, String source) {
+  Future<void> _handleDocumentUpload(CaptainDocument doc, String source) async {
     // Close Bottom Sheet first
     Navigator.pop(context);
 
-    // Show persistent Loading SnackBar simulating upload & processing
+    final picker = ImagePicker();
+    final isCamera = source == 'كاميرا';
+    
+    final XFile? image = await picker.pickImage(
+      source: isCamera ? ImageSource.camera : ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (image == null) return;
+
+    // Show persistent Loading SnackBar for upload & processing
     final snackBar = SnackBar(
       backgroundColor: AppColors.black,
       duration: const Duration(seconds: 2),
@@ -1060,18 +1068,20 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
+                strokeWidth: 2,
               ),
             ),
-            AppSpacing.w16,
-            Text(
-              'جاري معالجة ورفع المستند من ($source)... يرجى الانتظار.',
-              style: const TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
+            AppSpacing.w12,
+            Expanded(
+              child: Text(
+                'جاري رفع الصورة وتشفيرها (حجم الملف: ${(await image.length() / 1024).toStringAsFixed(1)} KB)',
+                style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                ),
               ),
             ),
           ],
@@ -1079,118 +1089,124 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
       ),
     );
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
-    // After simulation delay, update state to underReview and clear rejected/empty feedback
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          doc.status = DocumentStatus.underReview;
-          doc.feedback = 'لقد قمنا باستلام الصورة المرفوعة من ($source) بنجاح. المستند الآن قيد المطابقة مع السجلات المعتمدة.';
-          doc.filePath = 'captured_image.png';
-        });
+    // Map document id to backend type expected by Laravel (id_card, driving_license, vehicle_registration)
+    String apiType = 'id_card';
+    if (doc.id == 'drivers_license') {
+      apiType = 'driving_license';
+    } else if (doc.id == 'vehicle_ownership') {
+      apiType = 'vehicle_registration';
+    } else if (doc.id == 'criminal_record') {
+      apiType = 'id_card';
+    }
 
-        // Show completed SnackBar
+    final result = await sl<UploadDocumentUseCase>()(File(image.path), apiType);
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: AppColors.success,
-            content: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle, color: AppColors.white, size: 20),
-                  AppSpacing.w12,
-                  Text(
-                    'تم رفع المستند بنجاح! جاري فحصه ومراجعته.',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ],
-              ),
+          SnackBar(
+            backgroundColor: AppColors.error,
+            content: Text(
+              'فشل رفع المستند: ${failure.message}',
+              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
             ),
           ),
         );
-      }
-    });
+      },
+      (data) {
+        setState(() {
+          doc.status = DocumentStatus.underReview;
+          doc.filePath = image.path;
+          doc.feedback = 'تم رفع المستند بنجاح وهو قيد المراجعة الآن.';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.success,
+            content: Text(
+              'تم رفع المستند بنجاح! 🎉',
+              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+            ),
+          ),
+        );
+      },
+    );
   }
+
 
   void _submitAllDocuments() {
     setState(() {
       _isSubmitting = true;
     });
 
-    // Simulate Server request to finalize captain profile review
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
+    // TODO: Submit to backend
+    setState(() {
+      _isSubmitting = false;
+    });
 
-        // Show Success dialog
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.surfaceDark
-                  : AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: AppSpacing.borderLG,
-              ),
-              icon: const Icon(
-                Icons.mark_email_read_rounded,
-                color: AppColors.success,
-                size: 50,
-              ),
-              title: const Text(
-                'تم تقديم الملف للمراجعة النهائية',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                ),
-              ),
-              content: const Text(
-                'تهانينا! لقد قمت بتقديم جميع وثائق توثيق حساب الكابتن بنجاح. سيقوم فريق لَفَّة (لفّة) بمراجعة الملف وتنشيط حسابك بالكامل خلال ساعات قليلة.\n\nيمكنك الآن استئناف استكشاف الواجهات ومحاكاة الرحلات في غضون ذلك.',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 13,
-                  height: 1.5,
-                  color: AppColors.gray600,
-                ),
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx); // Close dialog
-                    Navigator.pop(context); // Go back to Home or previous screen
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary500,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppSpacing.borderXS,
-                    ),
-                  ),
-                  child: const Text(
-                    'حسناً، الانتقال للرئيسية',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+    // Show Success dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.surfaceDark
+              : AppColors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppSpacing.borderLG,
+          ),
+          icon: const Icon(
+            Icons.mark_email_read_rounded,
+            color: AppColors.success,
+            size: 50,
+          ),
+          title: const Text(
+            'تم تقديم الملف للمراجعة النهائية',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
             ),
           ),
-        );
-      }
-    });
+          content: const Text(
+            'تهانينا! لقد قمت بتقديم جميع وثائق توثيق حساب الكابتن بنجاح. ط³ظٹظ‚ظˆم فريق لَفَّة (لفّة) بمراجعة الملف وتنشيط حسابك بالكامل خلال ساعات قليلة.\n\nيمكنك الآن استئناف استكشاف الواجهات ومحاكاة الرحلات في غضون ذلك.',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 13,
+              height: 1.5,
+              color: AppColors.gray600,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx); // Close dialog
+                Navigator.pop(context); // Go back to Home or previous screen
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary500,
+                foregroundColor: AppColors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppSpacing.borderXS,
+                ),
+              ),
+              child: const Text(
+                'حسناً، الانتقال للرئيسية',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

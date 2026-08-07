@@ -231,7 +231,7 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                   const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
                                   AppSpacing.w4,
                                   Text(
-                                    '${widget.passengerRating} ★',
+                                    '${widget.passengerRating} âک…',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,

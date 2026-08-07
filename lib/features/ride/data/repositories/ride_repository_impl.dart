@@ -4,11 +4,17 @@ import '../../../../core/error/failures.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/repositories/ride_repository.dart';
 import '../datasources/ride_remote_data_source.dart';
+import '../../../../core/network/websocket_client.dart';
+import '../models/ride_model.dart';
 
 class RideRepositoryImpl implements RideRepository {
   final RideRemoteDataSource remoteDataSource;
+  final LaffahWebSocketClient webSocketClient;
 
-  RideRepositoryImpl({required this.remoteDataSource});
+  RideRepositoryImpl({
+    required this.remoteDataSource,
+    required this.webSocketClient,
+  });
 
   @override
   Future<Either<Failure, RideEntity>> requestRide({
@@ -57,32 +63,42 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
-  Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId) {
-    return Stream<Either<Failure, RideEntity>>.periodic(const Duration(seconds: 3), (count) {
-      if (count == 0) {
-        return const Right<Failure, RideEntity>(RideEntity(
-          id: 'LFH-1234',
-          status: 'found',
-          price: 1500,
-          pickupLocation: '...',
-          dropoffLocation: '...',
-          captainName: 'أحمد صالح',
-          vehicleModel: 'Honda Wave 125',
-          vehiclePlate: '1234/ص',
-          rating: 4.8,
-        ));
+  Future<Either<Failure, List<Map<String, dynamic>>>> getTripHistory() async {
+    try {
+      final trips = await remoteDataSource.getTripHistory();
+      return Right(trips);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        return const Left(ServerFailure('انتهت جلسة الدخول، يرجى تسجيل الدخول مجدداً'));
       }
-      return const Right<Failure, RideEntity>(RideEntity(
-        id: 'LFH-1234',
-        status: 'in_progress',
-        price: 1500,
-        pickupLocation: '...',
-        dropoffLocation: '...',
-        captainName: 'أحمد صالح',
-        vehicleModel: 'Honda Wave 125',
-        vehiclePlate: '1234/ص',
-        rating: 4.8,
-      ));
-    }).take(2);
+      return const Left(ServerFailure('تعذّر تحميل سجل الرحلات. تحقق من اتصالك بالإنترنت'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId) {
+    // 1. Send connection request to the specific ride channel
+    webSocketClient.connect('trip.$rideId');
+
+    // 2. Map the incoming WebSocket events to Either<Failure, RideEntity>
+    return webSocketClient.events.map((eventData) {
+      try {
+        // Assume Laravel broadcasts a 'RideStatusUpdated' event with the ride data
+        if (eventData['event'] == 'RideStatusUpdated') {
+          final rideModel = RideModel.fromJson(eventData['data']);
+          return Right<Failure, RideEntity>(rideModel);
+        }
+        // For other events, we can return a default or ignore (though stream map requires a return)
+        // For now, if we can't parse, we return a ServerFailure. But usually we filter first.
+        return const Left<Failure, RideEntity>(ServerFailure('حدث غير معروف'));
+      } catch (e) {
+        return Left<Failure, RideEntity>(ServerFailure(e.toString()));
+      }
+    }).where((either) {
+      // Filter out 'unknown event' failures so we don't pollute the UI
+      return either.fold((f) => f.message != 'حدث غير معروف', (r) => true);
+    });
   }
 }

@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import '../../domain/usecases/request_ride_usecase.dart';
 import '../../domain/usecases/cancel_ride_usecase.dart';
+import '../../domain/usecases/get_trip_history_usecase.dart';
 import '../../../parcel/domain/usecases/submit_parcel_order_usecase.dart';
 
 export 'ride_event.dart';
@@ -88,11 +89,13 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   final RequestRideUseCase requestRideUseCase;
   final CancelRideUseCase cancelRideUseCase;
   final SubmitParcelOrderUseCase submitParcelOrderUseCase;
+  final GetTripHistoryUseCase getTripHistoryUseCase;
 
   RideBloc({
     required this.requestRideUseCase,
     required this.cancelRideUseCase,
     required this.submitParcelOrderUseCase,
+    required this.getTripHistoryUseCase,
   }) : super(const RideInitial()) {
     on<CalculateSingleTripFare>(_onCalculateSingleTripFare);
     on<ConfirmUnifiedBooking>(_onConfirmUnifiedBooking);
@@ -100,6 +103,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     on<SubmitParcelOrder>(_onSubmitParcelOrder);
     on<CancelRideRequested>(_onCancelRideRequested);
     on<SimulateRideStep>(_onSimulateRideStep);
+    on<ScheduleRide>(_onScheduleRide);
+    on<LoadTripHistoryEvent>(_onLoadTripHistory);
   }
 
   static const List<RideOption> rideTiers = [
@@ -338,4 +343,27 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       emit(const RideSearching());
     }
   }
+
+  Future<void> _onScheduleRide(
+    ScheduleRide event,
+    Emitter<RideState> emit,
+  ) async {
+    emit(const RideLoading());
+    await Future.delayed(const Duration(seconds: 1));
+    emit(const RideScheduledSuccess());
+  }
+
+  /// Loads trip history from the real backend API
+  Future<void> _onLoadTripHistory(
+    LoadTripHistoryEvent event,
+    Emitter<RideState> emit,
+  ) async {
+    emit(const TripHistoryLoading());
+    final result = await getTripHistoryUseCase();
+    result.fold(
+      (failure) => emit(TripHistoryError(failure.message)),
+      (trips) => emit(TripHistoryLoaded(trips)),
+    );
+  }
 }
+

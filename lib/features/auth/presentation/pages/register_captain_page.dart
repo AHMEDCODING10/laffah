@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -8,35 +10,13 @@ import '../../../../core/widgets/laffah_logo.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import 'phone_number_input_page.dart';
-import 'otp_verification_page.dart';
 
 // ============================================================
 // MOTORCYCLE-SPECIFIC DOMAIN DATA (EXCLUSIVELY MOTORCYCLES)
 // ============================================================
 
-/// Motorcycle brands that are commonly used in Yemen.
-const List<String> _kMotorcycleBrands = [
-  'هوندا (Honda)',
-  'ياماها (Yamaha)',
-  'سوزوكي (Suzuki)',
-  'كاواساكي (Kawasaki)',
-  'TVS',
-  'ليفان (Lifan)',
-  'هيرو (Hero)',
-  'رونكي (Ronki)',
-  'أخرى',
-];
+// (Motorcycle brands and engine sizes removed for simplification)
 
-/// Engine displacement options available on the registration form.
-const List<String> _kEngineSizes = [
-  '100cc – 110cc',
-  '125cc',
-  '150cc',
-  '160cc – 175cc',
-  '200cc',
-  '250cc فأكثر',
-];
 
 // ============================================================
 // PAGE CLASS
@@ -63,15 +43,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
   TextEditingController();
-  final TextEditingController _modelController = TextEditingController();
-  final TextEditingController _yearController = TextEditingController();
   final TextEditingController _plateController = TextEditingController();
-
-  // ──────────────────────────────────────────
-  // DROPDOWN / CHIP STATE
-  // ──────────────────────────────────────────
-  String _selectedBrand = _kMotorcycleBrands[0];
-  String _selectedEngineSize = _kEngineSizes[1]; // Default: 125cc
 
   // ──────────────────────────────────────────
   // VISIBILITY & AGREEMENT TOGGLES
@@ -87,17 +59,14 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
   final FocusNode _phoneFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
   final FocusNode _confirmPasswordFocusNode = FocusNode();
-  final FocusNode _modelFocusNode = FocusNode();
-  final FocusNode _yearFocusNode = FocusNode();
   final FocusNode _plateFocusNode = FocusNode();
 
   bool _isNameFocused = false;
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
   bool _isConfirmPasswordFocused = false;
-  bool _isModelFocused = false;
-  bool _isYearFocused = false;
   bool _isPlateFocused = false;
+  bool _isFormValid = false;
 
   @override
   void initState() {
@@ -110,12 +79,25 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
     _confirmPasswordFocusNode.addListener(() => setState(
             () => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
-    _modelFocusNode.addListener(
-            () => setState(() => _isModelFocused = _modelFocusNode.hasFocus));
-    _yearFocusNode.addListener(
-            () => setState(() => _isYearFocused = _yearFocusNode.hasFocus));
     _plateFocusNode.addListener(
             () => setState(() => _isPlateFocused = _plateFocusNode.hasFocus));
+            
+    _nameController.addListener(_validateForm);
+    _phoneController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+    _confirmPasswordController.addListener(_validateForm);
+    _plateController.addListener(_validateForm);
+  }
+
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _nameController.text.trim().isNotEmpty &&
+          _phoneController.text.trim().length == 9 &&
+          _passwordController.text.length >= 6 &&
+          _passwordController.text == _confirmPasswordController.text &&
+          _plateController.text.trim().isNotEmpty &&
+          _agreeToTerms;
+    });
   }
 
   @override
@@ -124,15 +106,11 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _modelController.dispose();
-    _yearController.dispose();
     _plateController.dispose();
     _nameFocusNode.dispose();
     _phoneFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
-    _modelFocusNode.dispose();
-    _yearFocusNode.dispose();
     _plateFocusNode.dispose();
     super.dispose();
   }
@@ -147,8 +125,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
 
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
+        const SnackBar(
+          content: Text(
             'يرجى الموافقة على شروط وأحكام منصة لَفَّة قبل المتابعة.',
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
@@ -159,7 +137,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
           behavior: SnackBarBehavior.floating,
           shape:
           RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
-          margin: const EdgeInsets.all(16),
+          margin: EdgeInsets.all(16),
         ),
       );
       return;
@@ -173,9 +151,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         phone: fullPhone,
         password: _passwordController.text,
         vehicleType: 'دراجة نارية', // ✅ نوع ثابت ومباشر بدون تعقيد
-        vehicleModel:
-        '${_selectedBrand.split(' ').first} ${_modelController.text.trim()} • $_selectedEngineSize',
-        vehicleYear: int.tryParse(_yearController.text.trim()) ?? 0,
+        vehicleModel: 'غير محدد',
+        vehicleYear: 2024,
         vehiclePlate: _plateController.text.trim(),
       ),
     );
@@ -191,9 +168,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-        isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -217,16 +192,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         ),
         body: BlocConsumer<AuthBloc, AuthState>(
           listener: (BuildContext context, AuthState state) {
-            if (state is AuthCodeSent) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      OTPVerificationPage(phoneNumber: state.phone),
-                ),
-              );
-            }
-            if (state is AuthFailure) {
+            if (state is AuthSuccess) {
+              // تسجيل الكابتن نجح - توجيه مباشر لشاشة الكابتن
+              context.go(LaffahRoutes.captainHome);
+            } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
@@ -237,7 +206,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
                   ),
                   backgroundColor: AppColors.danger,
                   behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD),
                   margin: const EdgeInsets.all(16),
                 ),
@@ -256,7 +225,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // ─── Header ─────────────
+                  // ——— Header ———————————————
                   const LaffahLogo(height: 80, width: 80, showSubtitle: false),
                   AppSpacing.h8,
                   Text(
@@ -281,7 +250,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
 
                   const SizedBox(height: 24),
 
-                  // ─── Registration Form ───
+                  // ——— Registration Form ———
                   GlassBox(
                     borderRadius: AppSpacing.radiusXL,
                     padding: const EdgeInsets.all(AppSpacing.s24),
@@ -315,41 +284,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
                           _buildSectionHeader('2. بيانات الدراجة النارية:'),
                           const SizedBox(height: 12),
 
-                          _buildLabel('ماركة الدراجة النارية:'),
-                          _buildBrandDropdown(isDark),
-                          const SizedBox(height: 16),
-
-                          _buildLabel('موديل الدراجة (مثال: Wave, R15):'),
-                          _buildModelField(isDark),
-                          const SizedBox(height: 16),
-
-                          _buildLabel('سعة المحرك (cc):'),
-                          _buildEngineSizeChips(isDark),
-                          const SizedBox(height: 16),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildLabel('سنة الصنع:'),
-                                    _buildYearField(isDark),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.s16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildLabel('رقم اللوحة:'),
-                                    _buildPlateField(isDark),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                          _buildLabel('رقم اللوحة المرورية:'),
+                          _buildPlateField(isDark),
 
                           const SizedBox(height: 24),
 
@@ -369,8 +305,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
                                 foregroundColor: AppColors.white,
                                 elevation: 2,
                                 shadowColor: const Color(0xFFFF6B00)
-                                    .withOpacity(0.35),
-                                shape: RoundedRectangleBorder(
+                                    .withValues(alpha: 0.35),
+                                shape: const RoundedRectangleBorder(
                                     borderRadius: AppSpacing.radiusMD),
                               ),
                               child: isLoading
@@ -424,12 +360,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
                       const SizedBox(width: AppSpacing.s8),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PhoneNumberInputPage(),
-                            ),
-                          );
+                          context.pushReplacement('/auth/phone');
                         },
                         child: const Text(
                           'سجّل دخولك',
@@ -465,7 +396,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF6B00).withOpacity(0.08),
+        color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
         borderRadius: AppSpacing.radiusSM,
       ),
       child: Text(
@@ -513,27 +444,27 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
       contentPadding:
       const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
       filled: true,
-      fillColor: isDark ? AppColors.white.withOpacity(0.02) : AppColors.gray50,
+      fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
       suffixIcon: suffixIcon,
       prefixIcon: prefixIcon,
       enabledBorder: OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
         borderSide: BorderSide(
           color:
-          isDark ? AppColors.white.withOpacity(0.05) : AppColors.gray300,
+          isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
         ),
       ),
-      focusedBorder: OutlineInputBorder(
+      focusedBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: const BorderSide(color: Color(0xFFFF6B00), width: 1.8),
+        borderSide: BorderSide(color: Color(0xFFFF6B00), width: 1.8),
       ),
-      errorBorder: OutlineInputBorder(
+      errorBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: const BorderSide(color: AppColors.danger),
+        borderSide: BorderSide(color: AppColors.danger),
       ),
-      focusedErrorBorder: OutlineInputBorder(
+      focusedErrorBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: const BorderSide(color: AppColors.danger, width: 1.8),
+        borderSide: BorderSide(color: AppColors.danger, width: 1.8),
       ),
     );
   }
@@ -546,7 +477,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         boxShadow: [
           if (_isNameFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -593,7 +524,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         boxShadow: [
           if (_isPhoneFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -603,6 +534,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         controller: _phoneController,
         focusNode: _phoneFocusNode,
         keyboardType: TextInputType.phone,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_passwordFocusNode);
+        },
         textDirection: TextDirection.ltr,
         style: const TextStyle(
           fontFamily: 'monospace',
@@ -617,7 +552,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         decoration: _buildInputDecoration(
           isDark: isDark,
           isFocused: _isPhoneFocused,
-          hintText: '77XXXXXXX',
+          hintText: '7XXXXXXXX',
           hintFontSize: 14,
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
@@ -643,7 +578,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
                 height: 22,
                 width: 1,
                 color: isDark
-                    ? AppColors.white.withOpacity(0.1)
+                    ? AppColors.white.withValues(alpha: 0.1)
                     : AppColors.gray300,
               ),
               const SizedBox(width: AppSpacing.s12),
@@ -674,7 +609,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         boxShadow: [
           if (_isPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -684,6 +619,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         controller: _passwordController,
         focusNode: _passwordFocusNode,
         obscureText: _obscurePassword,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
+        },
         style: TextStyle(
           fontFamily:
           _obscurePassword ? 'monospace' : 'IBM Plex Sans Arabic',
@@ -735,7 +674,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         boxShadow: [
           if (_isConfirmPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -745,6 +684,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         controller: _confirmPasswordController,
         focusNode: _confirmPasswordFocusNode,
         obscureText: _obscureConfirmPassword,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_plateFocusNode);
+        },
         style: TextStyle(
           fontFamily:
           _obscureConfirmPassword ? 'monospace' : 'IBM Plex Sans Arabic',
@@ -788,171 +731,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     );
   }
 
-  Widget _buildBrandDropdown(bool isDark) {
-    return DropdownButtonFormField<String>(
-      value: _selectedBrand,
-      dropdownColor: isDark
-          ? AppColors.surfaceElevatedDark
-          : AppColors.surfaceElevatedLight,
-      icon: const Icon(Icons.keyboard_arrow_down_rounded),
-      decoration: _buildInputDecoration(
-        isDark: isDark,
-        isFocused: false,
-        hintText: 'اختر الماركة',
-      ),
-      items: _kMotorcycleBrands.map((String brand) {
-        return DropdownMenuItem<String>(
-          value: brand,
-          child: Text(
-            brand,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        if (newValue != null) {
-          setState(() => _selectedBrand = newValue);
-        }
-      },
-    );
-  }
-
-  Widget _buildModelField(bool isDark) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        borderRadius: AppSpacing.radiusSM,
-        boxShadow: [
-          if (_isModelFocused)
-            BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-        ],
-      ),
-      child: TextFormField(
-        controller: _modelController,
-        focusNode: _modelFocusNode,
-        style: TextStyle(
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: 13.5,
-          fontWeight: FontWeight.bold,
-          color: isDark ? AppColors.white : AppColors.gray900,
-        ),
-        decoration: _buildInputDecoration(
-          isDark: isDark,
-          isFocused: _isModelFocused,
-          hintText: 'مثال: CG 125, Boxer 150',
-          suffixIcon: Icon(
-            Icons.two_wheeler_rounded,
-            color: _isModelFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
-            size: 20,
-          ),
-        ),
-        validator: (String? value) {
-          if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال موديل الدراجة';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildEngineSizeChips(bool isDark) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _kEngineSizes.map((String size) {
-        final bool isSelected = _selectedEngineSize == size;
-        return ChoiceChip(
-          label: Text(
-            size,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 11.5,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
-              color: isSelected
-                  ? AppColors.white
-                  : (isDark ? AppColors.gray300 : AppColors.gray700),
-            ),
-          ),
-          selected: isSelected,
-          selectedColor: const Color(0xFFFF6B00),
-          backgroundColor:
-          isDark ? AppColors.white.withOpacity(0.04) : AppColors.gray100,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppSpacing.radiusSM,
-            side: BorderSide(
-              color: isSelected
-                  ? const Color(0xFFFF6B00)
-                  : (isDark
-                  ? AppColors.white.withOpacity(0.08)
-                  : AppColors.gray300),
-            ),
-          ),
-          onSelected: (bool selected) {
-            if (selected) {
-              setState(() => _selectedEngineSize = size);
-            }
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildYearField(bool isDark) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        borderRadius: AppSpacing.radiusSM,
-        boxShadow: [
-          if (_isYearFocused)
-            BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-        ],
-      ),
-      child: TextFormField(
-        controller: _yearController,
-        focusNode: _yearFocusNode,
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(4),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: isDark ? AppColors.white : AppColors.gray900,
-        ),
-        decoration: _buildInputDecoration(
-          isDark: isDark,
-          isFocused: _isYearFocused,
-          hintText: '2022',
-        ),
-        validator: (String? value) {
-          if (value == null || value.trim().isEmpty) {
-            return 'مطلوب';
-          }
-          final int? year = int.tryParse(value.trim());
-          if (year == null || year < 2000 || year > DateTime.now().year + 1) {
-            return 'سنة غير صحيحة';
-          }
-          return null;
-        },
-      ),
-    );
-  }
+  // (Motorcycle UI helpers removed)
 
   Widget _buildPlateField(bool isDark) {
     return AnimatedContainer(
@@ -962,7 +741,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         boxShadow: [
           if (_isPlateFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withOpacity(0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -971,6 +750,14 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
       child: TextFormField(
         controller: _plateController,
         focusNode: _plateFocusNode,
+        textInputAction: TextInputAction.done,
+        onFieldSubmitted: (_) {
+          if (_isFormValid) {
+            _handleRegister();
+          } else {
+            FocusScope.of(context).unfocus();
+          }
+        },
         style: TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 13.5,
@@ -999,7 +786,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
         Checkbox(
           value: _agreeToTerms,
           activeColor: const Color(0xFFFF6B00),
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: AppSpacing.radiusXS,
           ),
           onChanged: (bool? val) {

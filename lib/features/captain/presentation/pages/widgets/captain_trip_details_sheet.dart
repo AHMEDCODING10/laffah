@@ -198,7 +198,7 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                     const Icon(Icons.star_rounded, size: 15, color: Colors.amber),
                                     AppSpacing.w4,
                                     Text(
-                                      '$passengerRating ★',
+                                      '$passengerRating âک…',
                                       style: const TextStyle(
                                         fontFamily: 'monospace',
                                         fontWeight: FontWeight.bold,

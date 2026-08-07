@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
@@ -87,7 +88,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 width: 48,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.white.withOpacity(0.12) : AppColors.gray300,
+                  color: isDark ? AppColors.white.withValues(alpha: 0.12) : AppColors.gray300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -96,10 +97,10 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.15),
+                  color: AppColors.success.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.success.withOpacity(0.3),
+                    color: AppColors.success.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -140,11 +141,11 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
                   color: isDark 
-                      ? AppColors.backgroundDark.withOpacity(0.4) 
-                      : AppColors.surfaceLight.withOpacity(0.6),
+                      ? AppColors.backgroundDark.withValues(alpha: 0.4) 
+                      : AppColors.surfaceLight.withValues(alpha: 0.6),
                   borderRadius: AppSpacing.borderLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withOpacity(0.06) : AppColors.gray200,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.06) : AppColors.gray200,
                     width: 1.0,
                   ),
                 ),
@@ -330,10 +331,16 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
               AppSpacing.h12,
 
               TextButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.of(context).pop();
-                  if (widget.onOpenSupportTicket != null) {
-                    widget.onOpenSupportTicket!();
+                  final Uri url = Uri.parse('whatsapp://send?phone=+967770291452');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  } else {
+                    final Uri phoneUrl = Uri.parse('tel:+967770291452');
+                    if (await canLaunchUrl(phoneUrl)) {
+                      await launchUrl(phoneUrl);
+                    }
                   }
                 },
                 style: TextButton.styleFrom(
@@ -349,7 +356,11 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     ),
                     AppSpacing.w8,
                     Text(
+<<<<<<< HEAD
                       'واجهت مشكلة؟ فتح تذكرة دعم',
+=======
+                      'تواصل مع الدعم الفني',
+>>>>>>> origin/admin-ahmed
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -367,3 +378,5 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
     );
   }
 }
+
+

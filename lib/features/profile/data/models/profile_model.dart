@@ -10,6 +10,11 @@ class ProfileModel extends ProfileEntity {
     super.email,
     super.avatarUrl,
     required super.role,
+    super.vehicleType,
+    super.vehicleModel,
+    super.plateNumber,
+    super.rating,
+    super.isVerified,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +25,13 @@ class ProfileModel extends ProfileEntity {
       email: json['email'],
       avatarUrl: json['avatar_url'],
       role: json['role'] ?? 'passenger',
+      vehicleType: json['captain_profile']?['vehicle_type'],
+      vehicleModel: json['captain_profile']?['vehicle_model'],
+      plateNumber: json['captain_profile']?['plate_number'],
+      rating: json['captain_profile']?['rating'] != null 
+          ? double.tryParse(json['captain_profile']['rating'].toString()) 
+          : null,
+      isVerified: json['captain_profile']?['is_verified'] == true || json['captain_profile']?['is_verified'] == 1,
     );
   }
 
@@ -31,6 +43,11 @@ class ProfileModel extends ProfileEntity {
       'email': email,
       'avatar_url': avatarUrl,
       'role': role,
+      'vehicle_type': vehicleType,
+      'vehicle_model': vehicleModel,
+      'plate_number': plateNumber,
+      'rating': rating,
+      'is_verified': isVerified,
     };
   }
 }

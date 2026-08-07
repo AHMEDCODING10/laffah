@@ -32,22 +32,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     setState(() => _isLoading = true);
     
-    // Simulate API call
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      // Usually would navigate to OTP verification for reset here
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'تم إرسال كود استعادة كلمة المرور',
-            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
-          ),
-          backgroundColor: AppColors.success,
+    // TODO: Connect to real API for password reset
+    setState(() => _isLoading = false);
+    // Usually would navigate to OTP verification for reset here
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'تم إرسال كود استعادة كلمة المرور',
+          style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
         ),
-      );
-      if (mounted) context.pop();
-    });
+        backgroundColor: AppColors.success,
+      ),
+    );
+    if (mounted) context.pop();
   }
 
   @override
@@ -63,8 +60,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
+appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -90,7 +86,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 AppSpacing.h12,
                 Text(
-                  'أدخل رقم هاتفك المسجل في لَفَّة وسنرسل لك رمزاً لإعادة تعيين كلمة المرور.',
+                  'أدخل رقم هاتفك المسجل في لَفَّة وسنرسل لك رمزاً لإعادة طھعيين كلمة المرور.',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 14,
@@ -103,10 +99,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 // Phone Field
                 Container(
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.white.withOpacity(0.03) : AppColors.gray50,
+                    color: isDark ? AppColors.white.withValues(alpha: 0.03) : AppColors.gray50,
                     borderRadius: AppSpacing.radiusMD, // ✅ تم التصحيح هنا
                     border: Border.all(
-                      color: isDark ? AppColors.white.withOpacity(0.1) : AppColors.gray300,
+                      color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
                     ),
                   ),
 
@@ -123,7 +119,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         ),
                       ),
                       AppSpacing.w12,
-                      Container(width: 1, height: 24, color: AppColors.gray400.withOpacity(0.5)),
+                      Container(width: 1, height: 24, color: AppColors.gray400.withValues(alpha: 0.5)),
                       AppSpacing.w12,
                       Expanded(
                         child: TextField(
@@ -162,7 +158,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B00),
                       foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD, // ✅ تم التعديل: تمرير الكائن مباشرة
                       ),
                     ),

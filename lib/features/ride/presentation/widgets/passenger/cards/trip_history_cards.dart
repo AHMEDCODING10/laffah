@@ -36,8 +36,13 @@ class ActiveTripCard extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSpacing.s8),
                     decoration: BoxDecoration(
                       color: isRide
+<<<<<<< HEAD
                           ? AppColors.primary500.withOpacity(0.12)
                           : AppColors.info.withOpacity(0.12),
+=======
+                          ? AppColors.primary500.withValues(alpha: 0.12)
+                          : AppColors.info.withValues(alpha: 0.12),
+>>>>>>> origin/admin-ahmed
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -79,7 +84,11 @@ class ActiveTripCard extends StatelessWidget {
                   vertical: AppSpacing.s4,
                 ),
                 decoration: BoxDecoration(
+<<<<<<< HEAD
                   color: AppColors.primary500.withOpacity(0.1),
+=======
+                  color: AppColors.primary500.withValues(alpha: 0.1),
+>>>>>>> origin/admin-ahmed
                   borderRadius: AppSpacing.borderXS,
                 ),
                 child: const Text(
@@ -142,7 +151,11 @@ class ActiveTripCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onCancel,
                   style: ElevatedButton.styleFrom(
+<<<<<<< HEAD
                     backgroundColor: AppColors.danger.withOpacity(0.12),
+=======
+                    backgroundColor: AppColors.danger.withValues(alpha: 0.12),
+>>>>>>> origin/admin-ahmed
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: AppSpacing.borderMD,
@@ -234,7 +247,11 @@ class ScheduledTripCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.s8),
                     decoration: BoxDecoration(
+<<<<<<< HEAD
                       color: AppColors.primary500.withOpacity(0.12),
+=======
+                      color: AppColors.primary500.withValues(alpha: 0.12),
+>>>>>>> origin/admin-ahmed
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -399,8 +416,13 @@ class PastTripCard extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSpacing.s8),
                     decoration: BoxDecoration(
                       color: isRide
+<<<<<<< HEAD
                           ? AppColors.primary500.withOpacity(0.1)
                           : AppColors.info.withOpacity(0.1),
+=======
+                          ? AppColors.primary500.withValues(alpha: 0.1)
+                          : AppColors.info.withValues(alpha: 0.1),
+>>>>>>> origin/admin-ahmed
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -598,7 +620,11 @@ class CancelledTripCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.s8),
                     decoration: BoxDecoration(
+<<<<<<< HEAD
                       color: AppColors.danger.withOpacity(0.12),
+=======
+                      color: AppColors.danger.withValues(alpha: 0.12),
+>>>>>>> origin/admin-ahmed
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -637,7 +663,11 @@ class CancelledTripCard extends StatelessWidget {
                   vertical: AppSpacing.s4,
                 ),
                 decoration: BoxDecoration(
+<<<<<<< HEAD
                   color: AppColors.danger.withOpacity(0.1),
+=======
+                  color: AppColors.danger.withValues(alpha: 0.1),
+>>>>>>> origin/admin-ahmed
                   borderRadius: AppSpacing.borderXS,
                 ),
                 child: const Text(
@@ -738,3 +768,7 @@ class CancelledTripCard extends StatelessWidget {
     );
   }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/admin-ahmed

@@ -4,7 +4,16 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
+<<<<<<< HEAD
 import '../../data/datasources/fake_profile_repository.dart';
+=======
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../presentation/bloc/profile_bloc.dart';
+import '../../presentation/bloc/profile_state.dart';
+import '../../presentation/bloc/profile_event.dart';
+import '../../domain/entities/saved_place_entity.dart';
+import '../../data/models/saved_place_model.dart';
+>>>>>>> origin/admin-ahmed
 import '../widgets/saved_places/add_edit_place_dialog.dart';
 import '../widgets/saved_places/saved_place_card.dart';
 
@@ -18,15 +27,26 @@ class SavedPlacesPage extends StatefulWidget {
 }
 
 class _SavedPlacesPageState extends State<SavedPlacesPage> {
+<<<<<<< HEAD
   late List<SavedPlaceModel> _savedPlaces;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   PlaceType? _selectedCategoryFilter;
+=======
+  List<SavedPlaceEntity> _savedPlaces = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String? _selectedCategoryFilter;
+>>>>>>> origin/admin-ahmed
 
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     _savedPlaces = FakeProfileRepository.getInitialSavedPlaces();
+=======
+    context.read<ProfileBloc>().add(GetSavedPlacesEvent());
+>>>>>>> origin/admin-ahmed
   }
 
   @override
@@ -35,37 +55,65 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     super.dispose();
   }
 
+<<<<<<< HEAD
   List<SavedPlaceModel> get _filteredPlaces {
     return _savedPlaces.where((place) {
       final matchesSearch = place.name.contains(_searchQuery) ||
           place.addressDetails.contains(_searchQuery);
+=======
+  List<SavedPlaceEntity> get _filteredPlaces {
+    return _savedPlaces.where((place) {
+      final matchesSearch = place.name.contains(_searchQuery) ||
+          place.address.contains(_searchQuery);
+>>>>>>> origin/admin-ahmed
       final matchesCategory = _selectedCategoryFilter == null ||
           place.type == _selectedCategoryFilter;
       return matchesSearch && matchesCategory;
     }).toList();
   }
 
+<<<<<<< HEAD
   void _onBookToPlace(SavedPlaceModel place) {
+=======
+  void _onBookToPlace(SavedPlaceEntity place) {
+>>>>>>> origin/admin-ahmed
     context.push(
       LaffahRoutes.passengerHome,
       extra: {
         'dropoff': place.name,
+<<<<<<< HEAD
         'lat': place.latitude,
         'lng': place.longitude,
+=======
+        'lat': place.lat,
+        'lng': place.lng,
+>>>>>>> origin/admin-ahmed
       },
     );
   }
 
+<<<<<<< HEAD
   void _showAddEditDialog([SavedPlaceModel? placeToEdit]) {
+=======
+  void _showAddEditDialog([SavedPlaceEntity? placeToEdit]) {
+>>>>>>> origin/admin-ahmed
     final isDark = Theme.of(context).brightness == Brightness.dark;
     AddEditPlaceDialog.show(
       context: context,
       isDark: isDark,
+<<<<<<< HEAD
       placeToEdit: placeToEdit,
       onSave: (savedModel) {
         setState(() {
           final index =
               _savedPlaces.indexWhere((p) => p.id == savedModel.id);
+=======
+      placeToEdit: placeToEdit as SavedPlaceModel?,
+      onSave: (savedModel) {
+        context.read<ProfileBloc>().add(AddSavedPlaceEvent(savedModel));
+        setState(() {
+          final index = _savedPlaces.indexWhere((p) => p.id == savedModel.id);
+>>>>>>> origin/admin-ahmed
           if (index != -1) {
             _savedPlaces[index] = savedModel;
           } else {
@@ -179,6 +227,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
 
             // Places List View
             Expanded(
+<<<<<<< HEAD
               child: _filteredPlaces.isEmpty
                   ? _buildEmptyState(isDark)
                   : ListView.builder(
@@ -200,6 +249,48 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                         );
                       },
                     ),
+=======
+              child: BlocConsumer<ProfileBloc, ProfileState>(
+                listener: (context, state) {
+                  if (state is SavedPlacesLoaded) {
+                    setState(() {
+                      _savedPlaces = state.places;
+                    });
+                  } else if (state is SavedPlaceAdded) {
+                    context.read<ProfileBloc>().add(GetSavedPlacesEvent());
+                  }
+                },
+                builder: (context, state) {
+                  if (state is ProfileLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  if (_filteredPlaces.isEmpty) {
+                    return _buildEmptyState(isDark);
+                  }
+                  
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s16,
+                      0,
+                      AppSpacing.s16,
+                      96,
+                    ),
+                    itemCount: _filteredPlaces.length,
+                    itemBuilder: (context, index) {
+                      final place = _filteredPlaces[index];
+                      return SavedPlaceCard(
+                        isDark: isDark,
+                        place: place as SavedPlaceModel, // Casting to model since the card might expect it
+                        onBookNow: () => _onBookToPlace(place),
+                        onEdit: () => _showAddEditDialog(place),
+                        onDelete: () => _deletePlace(place.id),
+                      );
+                    },
+                  );
+                },
+              ),
+>>>>>>> origin/admin-ahmed
             ),
           ],
         ),
@@ -210,11 +301,19 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   Widget _buildCategoryFilterPills(bool isDark) {
     final categories = [
       {'label': 'الكل', 'type': null},
+<<<<<<< HEAD
       {'label': 'المنزل', 'type': PlaceType.home},
       {'label': 'العمل', 'type': PlaceType.work},
       {'label': 'الجامعة', 'type': PlaceType.university},
       {'label': 'تسوق', 'type': PlaceType.shopping},
       {'label': 'تاريخي', 'type': PlaceType.historic},
+=======
+      {'label': 'المنزل', 'type': 'home'},
+      {'label': 'العمل', 'type': 'work'},
+      {'label': 'الجامعة', 'type': 'university'},
+      {'label': 'تسوق', 'type': 'shopping'},
+      {'label': 'تاريخي', 'type': 'historic'},
+>>>>>>> origin/admin-ahmed
     ];
 
     return SingleChildScrollView(
@@ -243,8 +342,12 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                   : AppColors.gray100,
               onSelected: (val) {
                 setState(() {
+<<<<<<< HEAD
                   _selectedCategoryFilter =
                       val ? (cat['type'] as PlaceType?) : null;
+=======
+                  _selectedCategoryFilter = val ? cat['type'] : null;
+>>>>>>> origin/admin-ahmed
                 });
               },
             ),

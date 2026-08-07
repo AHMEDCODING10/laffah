@@ -63,7 +63,7 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(AppSpacing.s16),
                   decoration: BoxDecoration(
-                    color: AppColors.primary500.withOpacity(0.12),
+                    color: AppColors.primary500.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Container(
