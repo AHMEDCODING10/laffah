@@ -356,89 +356,131 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
 
   Widget _buildRoleSegmentedToggle(bool isDark) {
     return Container(
-      height: 48,
-      padding: const EdgeInsets.all(4),
+      height: 54,
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.white.withValues(alpha: 0.02)
-            : AppColors.gray100,
+            ? AppColors.white.withValues(alpha: 0.03)
+            : AppColors.white.withValues(alpha: 0.4),
         borderRadius: AppSpacing.borderMD,
         border: Border.all(
           color: isDark
-              ? AppColors.white.withValues(alpha: 0.04)
-              : AppColors.gray200,
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.white.withValues(alpha: 0.6),
         ),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          // Passenger Button
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isCaptain = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: AppSpacing.borderSM,
-                  color: !_isCaptain
-                      ? const Color(0xFFFF6B00)
-                      : Colors.transparent,
-                  boxShadow: !_isCaptain
-                      ? [
-                          BoxShadow(
-                            color:
-                                const Color(0xFFFF6B00).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Text(
-                  'تسجيل دخول راكب',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12.5,
-                    color: !_isCaptain ? AppColors.white : AppColors.gray500,
+          // 1. Sliding Pill (Active Indicator)
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            alignment:
+                !_isCaptain ? Alignment.centerRight : Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1.0,
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: AppSpacing.borderSM,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF8E3C), Color(0xFFFF6B00)],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-          // Captain Button
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isCaptain = true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: AppSpacing.borderSM,
-                  color:
-                      _isCaptain ? const Color(0xFFFF6B00) : Colors.transparent,
-                  boxShadow: _isCaptain
-                      ? [
-                          BoxShadow(
-                            color:
-                                const Color(0xFFFF6B00).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+
+          // 2. Clickable Areas & Content
+          Row(
+            children: [
+              // Passenger Option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isCaptain = false),
+                  behavior: HitTestBehavior.opaque,
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                        color: !_isCaptain
+                            ? AppColors.white
+                            : (isDark ? AppColors.gray400 : AppColors.gray600),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('تسجيل راكب'),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOutBack,
+                            child: !_isCaptain
+                                ? const Padding(
+                                    padding: EdgeInsets.only(right: 6.0),
+                                    child: Icon(Icons.person_rounded,
+                                        size: 18, color: AppColors.white),
+                                  )
+                                : const SizedBox.shrink(),
                           ),
-                        ]
-                      : [],
-                ),
-                child: Text(
-                  'تسجيل دخول كابتن',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12.5,
-                    color: _isCaptain ? AppColors.white : AppColors.gray500,
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+
+              // Captain Option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isCaptain = true),
+                  behavior: HitTestBehavior.opaque,
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                        color: _isCaptain
+                            ? AppColors.white
+                            : (isDark ? AppColors.gray400 : AppColors.gray600),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('تسجيل كابتن'),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOutBack,
+                            child: _isCaptain
+                                ? const Padding(
+                                    padding: EdgeInsets.only(right: 6.0),
+                                    child: Icon(Icons.two_wheeler_rounded,
+                                        size: 18, color: AppColors.white),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
