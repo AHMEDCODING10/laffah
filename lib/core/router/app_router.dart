@@ -13,6 +13,7 @@ import '../../features/auth/presentation/pages/register_passenger_page.dart';
 import '../../features/auth/presentation/pages/register_captain_page.dart';
 import '../../features/auth/presentation/pages/onboarding_page.dart';
 
+import '../pages/coming_soon_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 
 // Passenger home
@@ -20,13 +21,9 @@ import '../../features/home/presentation/pages/home_dashboard_page.dart';
 
 // Passenger ride & history
 import '../../features/ride/presentation/pages/trip_history_page.dart';
-<<<<<<< HEAD
-import '../../features/ride/presentation/pages/active_trip_passenger_page.dart';
-=======
 import '../../features/ride/presentation/pages/passenger_schedule_ride_page.dart';
 import '../../features/ride/presentation/pages/passenger_ride_tracking_page.dart';
 import '../../features/ride/presentation/pages/passenger_ride_invoice_page.dart';
->>>>>>> origin/admin-ahmed
 
 // Captain core features
 import '../../features/captain/presentation/pages/captain_trip_history_page.dart';
@@ -82,22 +79,12 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   // AUTH FLOW
   // ──────────────────────────────────────────
-<<<<<<< HEAD
-  static const String authLanding = '/auth';
-  static const String authPhone = '/auth/phone';
-  static const String authOtp = '/auth/otp';
-  static const String authRegisterPassenger = '/auth/register/passenger';
-  static const String authRegisterCaptain = '/auth/register/captain';
-  static const String roleSelection = '/auth/role';
-  static const String forgotPassword = '/auth/forgot-password';
-=======
   static const String authLanding             = '/auth';
   static const String authPhone               = '/auth/phone';
   static const String authRegisterPassenger   = '/auth/register/passenger';
   static const String authRegisterCaptain     = '/auth/register/captain';
 
   static const String forgotPassword          = '/auth/forgot-password';
->>>>>>> origin/admin-ahmed
 
   // ──────────────────────────────────────────
   // PASSENGER — CORE
@@ -119,25 +106,20 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   // PASSENGER — PARCEL DELIVERY
   // ──────────────────────────────────────────
-  static const String passengerParcelSend = '/passenger/parcel/send';
+  static const String passengerParcelSend     = '/passenger/parcel/send';
   static const String passengerParcelTracking = '/passenger/parcel/tracking';
-<<<<<<< HEAD
-  static const String passengerParcelConfirm = '/passenger/parcel/confirm';
-  static const String passengerParcelHistory = '/passenger/parcel/history';
-  static const String parcelDeliveryProof = '/parcel/proof';
-=======
   static const String passengerParcelConfirm  = '/passenger/parcel/confirm';
   static const String passengerParcelHistory  = '/passenger/parcel/history';
-  static const String passengerParcelSend     = '/passenger/parcel/send';
   static const String parcelDeliveryProof     = '/parcel/proof';
->>>>>>> origin/admin-ahmed
 
   // ──────────────────────────────────────────
-  // PASSENGER — PROFILE
+  // PASSENGER — PROFILE & SUPPORT
   // ──────────────────────────────────────────
   static const String passengerProfile = '/passenger/profile';
   static const String passengerProfileEdit = '/passenger/profile/edit';
   static const String passengerSavedPlaces = '/passenger/profile/saved-places';
+  static const String passengerSupportTickets = '/passenger/support-tickets';
+  static const String roleSelection = '/auth/role';
 
   // ──────────────────────────────────────────
   // PASSENGER — SUPPORT
@@ -244,17 +226,6 @@ class AppRouter {
             const PhoneNumberInputPage(),
       ),
 
-<<<<<<< HEAD
-      GoRoute(
-        path: LaffahRoutes.authOtp,
-        name: 'auth-otp',
-        builder: (BuildContext context, GoRouterState state) {
-          final String phone = state.uri.queryParameters['phone'] ?? '';
-          return OTPVerificationPage(phoneNumber: phone);
-        },
-      ),
-=======
->>>>>>> origin/admin-ahmed
 
       GoRoute(
         path: LaffahRoutes.authRegisterPassenger,
@@ -271,16 +242,6 @@ class AppRouter {
       ),
 
       GoRoute(
-<<<<<<< HEAD
-        path: LaffahRoutes.roleSelection,
-        name: 'role-selection',
-        builder: (BuildContext context, GoRouterState state) =>
-            const RoleSelectionPage(),
-      ),
-
-      GoRoute(
-=======
->>>>>>> origin/admin-ahmed
         path: LaffahRoutes.forgotPassword,
         name: 'forgot-password',
         builder: (BuildContext context, GoRouterState state) =>
@@ -387,24 +348,12 @@ class AppRouter {
         path: LaffahRoutes.passengerRideTracking,
         name: 'passenger-ride-tracking',
         builder: (BuildContext context, GoRouterState state) =>
-<<<<<<< HEAD
-            const ActiveTripPassengerPage(),
-=======
         const PassengerRideTrackingPage(),
->>>>>>> origin/admin-ahmed
       ),
 
       GoRoute(
         path: LaffahRoutes.passengerRideInvoice,
         name: 'passenger-ride-invoice',
-<<<<<<< HEAD
-        builder: (BuildContext context, GoRouterState state) =>
-            const LaffahComingSoonPage(
-          featureNameAr: 'فاتورة الرحلة',
-          featureNameEn: 'Ride Invoice',
-          iconData: Icons.receipt_long_rounded,
-        ),
-=======
         builder: (BuildContext context, GoRouterState state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return PassengerRideInvoicePage(
@@ -414,22 +363,13 @@ class AppRouter {
             discount: (extra['discount'] as num?)?.toDouble() ?? 0.0,
           );
         },
->>>>>>> origin/admin-ahmed
       ),
 
       GoRoute(
         path: LaffahRoutes.passengerScheduleRide,
         name: 'passenger-schedule-ride',
         builder: (BuildContext context, GoRouterState state) =>
-<<<<<<< HEAD
-            const LaffahComingSoonPage(
-          featureNameAr: 'جدولة رحلة مسبقة',
-          featureNameEn: 'Schedule a Ride',
-          iconData: Icons.schedule_rounded,
-        ),
-=======
         const PassengerScheduleRidePage(),
->>>>>>> origin/admin-ahmed
       ),
 
       // ══════════════════════════════════════════
@@ -466,19 +406,10 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.passengerProfileEdit,
         name: 'passenger-profile-edit',
-<<<<<<< HEAD
-        builder: (BuildContext context, GoRouterState state) =>
-            const LaffahComingSoonPage(
-          featureNameAr: 'تعديل الملف الشخصي',
-          featureNameEn: 'Edit Profile',
-          iconData: Icons.edit_outlined,
-        ),
-=======
         builder: (BuildContext context, GoRouterState state) {
           final profile = state.extra as ProfileEntity?;
           return PassengerProfileEditPage(profile: profile);
         },
->>>>>>> origin/admin-ahmed
       ),
 
       GoRoute(
@@ -491,31 +422,9 @@ class AppRouter {
       // ══════════════════════════════════════════
       // PASSENGER — SUPPORT & INCIDENTS
       // ══════════════════════════════════════════
-<<<<<<< HEAD
-      GoRoute(
-        path: LaffahRoutes.passengerReportIncident,
-        name: 'passenger-report-incident',
-        builder: (BuildContext context, GoRouterState state) {
-          final Map<String, dynamic>? extra =
-              state.extra as Map<String, dynamic>?;
-          return ReportIncidentPage(
-            preFilledRideId: extra?['rideId'] as String?,
-            preFilledCaptainName: extra?['captainName'] as String?,
-          );
-        },
-      ),
-
-      GoRoute(
-        path: LaffahRoutes.passengerSupportTickets,
-        name: 'passenger-support-tickets',
-        builder: (BuildContext context, GoRouterState state) =>
-            const SupportTicketsPage(),
-      ),
-=======
 
 
 
->>>>>>> origin/admin-ahmed
 
       // ══════════════════════════════════════════
       // CAPTAIN — HOME DASHBOARD
@@ -524,14 +433,10 @@ class AppRouter {
         path: LaffahRoutes.captainHome,
         name: 'captain-home',
         builder: (BuildContext context, GoRouterState state) =>
-<<<<<<< HEAD
-            const CaptainHomePage(),
-=======
             BlocProvider<CaptainBloc>(
           create: (_) => di.sl<CaptainBloc>(),
           child: const CaptainHomePage(),
         ),
->>>>>>> origin/admin-ahmed
       ),
 
       // ══════════════════════════════════════════
@@ -601,15 +506,7 @@ class AppRouter {
         path: LaffahRoutes.captainBonus,
         name: 'captain-bonus',
         builder: (BuildContext context, GoRouterState state) =>
-<<<<<<< HEAD
-            const LaffahComingSoonPage(
-          featureNameAr: 'مكافآت وبونص الكباتن',
-          featureNameEn: 'Captain Bonuses & Rewards',
-          iconData: Icons.emoji_events_outlined,
-        ),
-=======
         const CaptainBonusPage(),
->>>>>>> origin/admin-ahmed
       ),
 
       // ══════════════════════════════════════════
@@ -636,15 +533,7 @@ class AppRouter {
         path: LaffahRoutes.captainSupport,
         name: 'captain-support',
         builder: (BuildContext context, GoRouterState state) =>
-<<<<<<< HEAD
-            const LaffahComingSoonPage(
-          featureNameAr: 'دعم ومساعدة الكباتن',
-          featureNameEn: 'Captain Support',
-          iconData: Icons.headset_mic_outlined,
-        ),
-=======
         const CaptainSupportPage(),
->>>>>>> origin/admin-ahmed
       ),
 
       // ══════════════════════════════════════════
@@ -702,30 +591,14 @@ class AppRouter {
         path: LaffahRoutes.privacyPolicy,
         name: 'privacy-policy',
         builder: (BuildContext context, GoRouterState state) =>
-<<<<<<< HEAD
-            const LaffahComingSoonPage(
-          featureNameAr: 'سياسة الخصوصية',
-          featureNameEn: 'Privacy Policy',
-          iconData: Icons.privacy_tip_outlined,
-        ),
-=======
         const PrivacyPolicyPage(),
->>>>>>> origin/admin-ahmed
       ),
 
       GoRoute(
         path: LaffahRoutes.termsOfService,
         name: 'terms-of-service',
         builder: (BuildContext context, GoRouterState state) =>
-<<<<<<< HEAD
-            const LaffahComingSoonPage(
-          featureNameAr: 'الشروط والأحكام',
-          featureNameEn: 'Terms of Service',
-          iconData: Icons.description_outlined,
-        ),
-=======
         const TermsOfServicePage(),
->>>>>>> origin/admin-ahmed
       ),
     ],
 

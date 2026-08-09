@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-<<<<<<< HEAD
-=======
 import 'package:url_launcher/url_launcher.dart';
->>>>>>> origin/admin-ahmed
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -109,9 +106,6 @@ class HomeSideDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.support_agent_rounded,
                     title: 'الدعم الفني والشكاوى',
-<<<<<<< HEAD
-                    route: LaffahRoutes.passengerSupportTickets,
-=======
                     onTap: () async {
                       Navigator.pop(context); // Close drawer
                       final Uri url = Uri.parse('whatsapp://send?phone=+967770291452');
@@ -124,7 +118,6 @@ class HomeSideDrawer extends StatelessWidget {
                         }
                       }
                     },
->>>>>>> origin/admin-ahmed
                   ),
                   _buildDrawerTile(
                     context: context,
@@ -136,14 +129,10 @@ class HomeSideDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.published_with_changes_rounded,
                     title: 'التبديل إلى وضع الكابتن',
-<<<<<<< HEAD
-                    route: LaffahRoutes.roleSelection,
-=======
                     onTap: () {
                       Navigator.pop(context);
                       // context.go(LaffahRoutes.roleSelection); // TODO: Implement role selection
                     },
->>>>>>> origin/admin-ahmed
                   ),
                 ],
               ),
@@ -158,12 +147,8 @@ class HomeSideDrawer extends StatelessWidget {
     required BuildContext context,
     required IconData icon,
     required String title,
-<<<<<<< HEAD
-    required String route,
-=======
     String? route,
     VoidCallback? onTap,
->>>>>>> origin/admin-ahmed
   }) {
     return ListTile(
       leading: Icon(icon, color: AppColors.primary500, size: 22),
@@ -176,17 +161,11 @@ class HomeSideDrawer extends StatelessWidget {
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
       ),
-<<<<<<< HEAD
-      onTap: () {
-        Navigator.pop(context); // Close drawer
-        context.go(route);
-=======
       onTap: onTap ?? () {
         Navigator.pop(context); // Close drawer
         if (route != null) {
           context.go(route);
         }
->>>>>>> origin/admin-ahmed
       },
     );
   }

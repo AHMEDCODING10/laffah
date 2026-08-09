@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-<<<<<<< HEAD
-import 'package:go_router/go_router.dart';
-import '../../../../../core/router/app_router.dart';
-=======
 
->>>>>>> origin/admin-ahmed
+import 'package:go_router/go_router.dart';
+
+import '../../../../../core/router/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
@@ -28,8 +26,6 @@ class RideSelectionBottomSheet extends StatefulWidget {
 class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   final String _fontFamily = 'Cairo';
   String _paymentMode = 'cash';
-<<<<<<< HEAD
-=======
   bool _isScheduled = false;
   DateTime? _scheduledTime;
   final List<String> _additionalDropoffs = [];
@@ -75,19 +71,14 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
       }
     }
   }
->>>>>>> origin/admin-ahmed
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-<<<<<<< HEAD
-
-=======
     
     // Dynamic price calculation based on dropoffs
     final double baseFare = 800.0 + (_additionalDropoffs.length * 400.0);
     
->>>>>>> origin/admin-ahmed
     return Directionality(
       textDirection: TextDirection.rtl,
       child: GlassBox(
@@ -148,11 +139,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             ),
             AppSpacing.h16,
 
-<<<<<<< HEAD
-            // Destinations Box (Pickup & Dropoff)
-=======
             // Locations List (Pickup, Dropoffs)
->>>>>>> origin/admin-ahmed
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
@@ -164,46 +151,6 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
               ),
               child: Column(
                 children: [
-<<<<<<< HEAD
-                  Row(
-                    children: [
-                      const Icon(Icons.my_location_rounded, color: AppColors.success, size: 16),
-                      AppSpacing.w10,
-                      Expanded(
-                        child: Text(
-                          widget.pickup,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: _fontFamily,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.white : AppColors.gray900,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4.0),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: SizedBox(
-                        height: 10,
-                        child: VerticalDivider(color: Colors.white24, width: 14, thickness: 1),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 16),
-                      AppSpacing.w10,
-                      Expanded(
-                        child: Text(
-                          widget.dropoff,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-=======
                   _buildLocationRow(Icons.my_location_rounded, AppColors.success, widget.pickup, isDark),
                   _buildDivider(),
                   _buildLocationRow(Icons.location_on_rounded, AppColors.danger, widget.dropoff, isDark, isBold: true),
@@ -236,7 +183,6 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         AppSpacing.w8,
                         Text(
                           'إضافة محطة توقف',
->>>>>>> origin/admin-ahmed
                           style: TextStyle(
                             fontFamily: _fontFamily,
                             fontSize: 13.5,
@@ -252,85 +198,6 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             ),
             AppSpacing.h16,
 
-<<<<<<< HEAD
-            // Single Delivery Fare Section (Replacing category cards)
-            Builder(
-              builder: (context) {
-                final metrics = RideBloc.calculateDynamicMetrics(widget.pickup, widget.dropoff);
-                final double calculatedFare = (metrics['fare'] as double?) ?? 800.0;
-
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s16,
-                    vertical: AppSpacing.s16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary500.withValues(alpha: isDark ? 0.12 : 0.08),
-                    borderRadius: AppSpacing.borderMD,
-                    border: Border.all(
-                      color: AppColors.primary500.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary500.withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.payments_rounded,
-                              color: AppColors.primary500,
-                              size: 20,
-                            ),
-                          ),
-                          AppSpacing.w12,
-                          Text(
-                            'سعر التوصيل',
-                            style: TextStyle(
-                              fontFamily: _fontFamily,
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.white : AppColors.gray900,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            calculatedFare.toStringAsFixed(0),
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                              color: AppColors.primary500,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'ريال يمني',
-                            style: TextStyle(
-                              fontFamily: _fontFamily,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-=======
             Text(
               'فئة التوصيل:',
               style: TextStyle(
@@ -433,15 +300,10 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   ),
                 ],
               ),
->>>>>>> origin/admin-ahmed
             ),
             AppSpacing.h16,
 
-<<<<<<< HEAD
-            // Payment Mode & Promo Row
-=======
             // Payment and Schedule Options
->>>>>>> origin/admin-ahmed
             Row(
               children: [
                 Expanded(
@@ -570,18 +432,12 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   context.read<RideBloc>().add(ConfirmUnifiedBooking(
                         pickup: widget.pickup,
                         dropoff: widget.dropoff,
-<<<<<<< HEAD
-                        fare: fare,
-                        distance: distance,
-                        duration: duration,
-=======
                         additionalDropoffs: _additionalDropoffs,
                         fare: baseFare,
                         distance: 6.8 + (_additionalDropoffs.length * 2),
                         duration: 15 + (_additionalDropoffs.length * 10),
                         isScheduled: _isScheduled,
                         scheduledTime: _scheduledTime,
->>>>>>> origin/admin-ahmed
                       ));
 
                   // 2. Close bottom sheet modal only

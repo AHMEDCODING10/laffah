@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
-<<<<<<< HEAD
-import '../../../data/datasources/fake_profile_repository.dart';
-=======
 import '../../../data/models/saved_place_model.dart';
->>>>>>> origin/admin-ahmed
 
 /// SavedPlaceCard — Card widget displaying a saved place item with single-tap booking trigger.
 class SavedPlaceCard extends StatelessWidget {
@@ -43,11 +39,7 @@ class SavedPlaceCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-<<<<<<< HEAD
-                  place.icon,
-=======
                   _getIconForType(place.type),
->>>>>>> origin/admin-ahmed
                   color: AppColors.primary500,
                   size: 20,
                 ),
@@ -68,11 +60,7 @@ class SavedPlaceCard extends StatelessWidget {
                     ),
                     AppSpacing.h2,
                     Text(
-<<<<<<< HEAD
-                      place.addressDetails,
-=======
                       place.address,
->>>>>>> origin/admin-ahmed
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 11.5,
@@ -154,11 +142,7 @@ class SavedPlaceCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-<<<<<<< HEAD
-                    '${place.latitude.toStringAsFixed(4)}, ${place.longitude.toStringAsFixed(4)}',
-=======
                     '${place.lat.toStringAsFixed(4)}, ${place.lng.toStringAsFixed(4)}',
->>>>>>> origin/admin-ahmed
                     style: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 11,
@@ -199,8 +183,6 @@ class SavedPlaceCard extends StatelessWidget {
       ),
     );
   }
-<<<<<<< HEAD
-=======
 
   IconData _getIconForType(String type) {
     switch (type) {
@@ -218,5 +200,4 @@ class SavedPlaceCard extends StatelessWidget {
         return Icons.place_rounded;
     }
   }
->>>>>>> origin/admin-ahmed
 }

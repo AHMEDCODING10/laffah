@@ -170,8 +170,6 @@ class ParcelSubmitted extends RideState {
   List<Object?> get props => [data, trackingId, price];
 }
 
-<<<<<<< HEAD
-=======
 class ParcelOrderSubmitted extends RideState {
   final ParcelData data;
 
@@ -210,7 +208,6 @@ class TripHistoryError extends RideState {
   List<Object?> get props => [message];
 }
 
->>>>>>> origin/admin-ahmed
 class RideError extends RideState {
   final String message;
 

@@ -4,11 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
-<<<<<<< HEAD
-import '../../../ride/presentation/bloc/ride_event.dart';
-import '../../../ride/presentation/bloc/ride_state.dart';
-=======
->>>>>>> origin/admin-ahmed
 
 /// CaptainFoundCard — Overlay card displayed when a captain accepts the passenger's ride request.
 class CaptainFoundCard extends StatelessWidget {

@@ -356,11 +356,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     ),
                     AppSpacing.w8,
                     Text(
-<<<<<<< HEAD
-                      'واجهت مشكلة؟ فتح تذكرة دعم',
-=======
                       'تواصل مع الدعم الفني',
->>>>>>> origin/admin-ahmed
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

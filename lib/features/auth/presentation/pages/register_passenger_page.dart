@@ -97,8 +97,11 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         return;
       }
 
-      final String phoneDigits = _phoneController.text.trim();
-      final String fullPhone = '+967$phoneDigits';
+      String phoneDigits = _phoneController.text.trim();
+      if (phoneDigits.startsWith('0')) {
+        phoneDigits = phoneDigits.substring(1);
+      }
+      final String fullPhone = phoneDigits.startsWith('+967') ? phoneDigits : '+967$phoneDigits';
 
       // Submit Registration request
       context.read<AuthBloc>().add(RegisterPassengerRequested(

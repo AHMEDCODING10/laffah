@@ -7,30 +7,17 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
-import '../../../parcel/presentation/widgets/parcel_delivery_form_bottom_sheet.dart';
+import '../../../../core/widgets/laffah_main_shell_scaffold.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
-<<<<<<< HEAD
-import '../../../ride/presentation/bloc/ride_event.dart';
-import '../../../ride/presentation/bloc/ride_state.dart';
-import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.dart';
-import '../../../ride/presentation/widgets/ride_selection_bottom_sheet.dart';
-import '../../data/datasources/fake_home_repository.dart';
-=======
 import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.dart';
 import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
 import '../../data/datasources/home_local_data_source.dart';
->>>>>>> origin/admin-ahmed
 import '../widgets/home_action_buttons_row.dart';
-import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_ride_status_cards.dart';
-import '../widgets/home_side_drawer.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/quick_destinations_section.dart';
 import '../widgets/recent_destinations_section.dart';
-<<<<<<< HEAD
-=======
 import 'location_search_page.dart';
->>>>>>> origin/admin-ahmed
 
 /// HomeDashboardPage — Refactored Passenger Home Dashboard for Laffah (لَفّة).
 /// Clean Architecture & Modular Widget Composition.
@@ -55,21 +42,12 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
   int _selectedQuickIndex = -1;
 
-<<<<<<< HEAD
-  late final List<Map<String, dynamic>> _quickDestinations;
-  late final List<Map<String, dynamic>> _recentDestinations;
-=======
   late List<Map<String, dynamic>> _quickDestinations = [];
   late List<Map<String, dynamic>> _recentDestinations = [];
->>>>>>> origin/admin-ahmed
 
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
-    _quickDestinations = FakeHomeRepository.getQuickDestinations();
-    _recentDestinations = FakeHomeRepository.getRecentDestinations();
-=======
     _quickDestinations = HomeLocalDataSource.getQuickDestinations();
     _loadRecentDestinations();
   }
@@ -81,7 +59,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         _recentDestinations = recent;
       });
     }
->>>>>>> origin/admin-ahmed
   }
 
   @override
@@ -91,8 +68,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     super.dispose();
   }
 
-<<<<<<< HEAD
-=======
   Future<void> _openSearchAndSelectRide() async {
     final result = await Navigator.push(
       context,
@@ -116,7 +91,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     }
   }
 
->>>>>>> origin/admin-ahmed
   void _showRideSelection() {
     showModalBottomSheet(
       context: context,
@@ -147,8 +121,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         resizeToAvoidBottomInset: false,
-        drawer: HomeSideDrawer(isDark: isDark),
-        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 0),
         body: Stack(
           children: [
             // ==========================================
@@ -255,13 +227,9 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                 child: HomeTopHeader(
                   isDark: isDark,
                   dropoffController: _dropoffController,
-<<<<<<< HEAD
-                  onSearchTap: _showRideSelection,
-=======
                   onSearchTap: _openSearchAndSelectRide,
->>>>>>> origin/admin-ahmed
                   onOpenDrawer: () {
-                    _scaffoldKey.currentState?.openDrawer();
+                    LaffahMainShellScaffold.openDrawer();
                   },
                 ),
               ),

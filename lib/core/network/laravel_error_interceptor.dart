@@ -22,20 +22,34 @@ class LaravelErrorInterceptor extends Interceptor {
     } else if (err.response?.statusCode == 422) {
       final data = err.response?.data;
       Map<String, List<String>> fieldErrors = {};
-      if (data != null && data is Map && data['errors'] is Map) {
-        (data['errors'] as Map<String, dynamic>).forEach((key, value) {
-          if (value is List) {
-            fieldErrors[key] = value.map((e) => e.toString()).toList();
-          } else if (value != null) {
-            fieldErrors[key] = [value.toString()];
+      String message = 'بيانات غير صالحة';
+
+      if (data != null && data is Map) {
+        if (data['errors'] is Map) {
+          (data['errors'] as Map<String, dynamic>).forEach((key, value) {
+            if (value is List && value.isNotEmpty) {
+              fieldErrors[key] = value.map((e) => e.toString()).toList();
+            } else if (value != null) {
+              fieldErrors[key] = [value.toString()];
+            }
+          });
+        }
+        
+        if (fieldErrors.isNotEmpty) {
+          final firstList = fieldErrors.values.first;
+          if (firstList.isNotEmpty) {
+            message = firstList.first;
           }
-        });
+        } else if (data['message'] != null) {
+          message = data['message'].toString();
+        }
       }
+
       return handler.reject(
         DioException(
           requestOptions: err.requestOptions,
           error: LaravelValidationException(
-            message: data is Map && data['message'] != null ? data['message'].toString() : 'بيانات غير صالحة',
+            message: message,
             fieldErrors: fieldErrors,
           ),
           response: err.response,

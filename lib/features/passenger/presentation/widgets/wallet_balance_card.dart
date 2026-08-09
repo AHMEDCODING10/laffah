@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import '../../../../core/theme/app_colors.dart';
-=======
->>>>>>> origin/admin-ahmed
 import '../../../../core/theme/app_spacing.dart';
 
 /// WalletBalanceCard — Displays balance in YER and action buttons for local top-up.
