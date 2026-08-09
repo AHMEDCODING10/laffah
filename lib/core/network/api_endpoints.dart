@@ -54,4 +54,8 @@ class ApiEndpoints {
   // Wallet Endpoints
   static const String walletBalance = '/wallet/balance';
   static const String walletRecharge = '/wallet/recharge';
+
+  // Geocoding Endpoints
+  static const String geocodeSearch = '/geocode/search';
+  static const String geocodeReverse = '/geocode/reverse';
 }

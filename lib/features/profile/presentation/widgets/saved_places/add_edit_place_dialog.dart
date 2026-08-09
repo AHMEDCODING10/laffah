@@ -131,7 +131,7 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
                           ? AppColors.white.withValues(alpha: 0.03)
                           : AppColors.gray50,
                       contentPadding: const EdgeInsets.all(AppSpacing.s12),
-                      border: OutlineInputBorder(borderRadius: AppSpacing.radiusSM),
+                      border: const OutlineInputBorder(borderRadius: AppSpacing.radiusSM),
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
@@ -159,7 +159,7 @@ class _AddEditPlaceDialogState extends State<AddEditPlaceDialog> {
                           ? AppColors.white.withValues(alpha: 0.03)
                           : AppColors.gray50,
                       contentPadding: const EdgeInsets.all(AppSpacing.s12),
-                      border: OutlineInputBorder(borderRadius: AppSpacing.radiusSM),
+                      border: const OutlineInputBorder(borderRadius: AppSpacing.radiusSM),
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {

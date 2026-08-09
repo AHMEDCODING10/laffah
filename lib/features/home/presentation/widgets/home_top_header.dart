@@ -24,167 +24,104 @@ class HomeTopHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s16,
-        vertical: AppSpacing.s8,
+      padding: const EdgeInsets.only(
+        left: AppSpacing.s16,
+        right: AppSpacing.s16,
+        top: AppSpacing.s24, // Added more top padding for safe area clearance
+        bottom: AppSpacing.s8,
       ),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              // Hamburger Menu Button (RTL -> Right side)
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceElevatedDark
-                      : AppColors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary500.withValues(alpha: 0.2),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          // Right (RTL Start): Hamburger Menu
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.menu_rounded,
-                    color: AppColors.primary500,
-                    size: 24,
-                  ),
-                  onPressed: onOpenDrawer,
-                ),
+              ],
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.menu_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900,
               ),
-
-              AppSpacing.w12,
-
-              // Title "الرئيسية"
-              Text(
-                'الرئيسية',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? AppColors.white : AppColors.gray900,
-                ),
-              ),
-
-              const Spacer(),
-
-              // Notifications Link Icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceElevatedDark
-                      : AppColors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.white.withValues(alpha: 0.08)
-                        : AppColors.gray200,
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.notifications_none_rounded,
-                    color: AppColors.gray700,
-                    size: 22,
-                  ),
-                  onPressed: () {
-                    context.push(LaffahRoutes.passengerNotifications);
-                  },
-                ),
-              ),
-            ],
+              onPressed: onOpenDrawer,
+            ),
           ),
+          
+          AppSpacing.w12,
 
-          AppSpacing.h12,
-
-          // Search Bar "إلى أين؟"
-          GestureDetector(
-            onTap: onSearchTap,
-            child: GlassBox(
-              borderRadius: AppSpacing.radiusMD,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s16,
-                vertical: 12,
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.search_rounded,
-                    color: AppColors.primary500,
-                    size: 24,
-                  ),
-                  AppSpacing.w12,
-                  Expanded(
-                    child: Text(
-                      dropoffController.text.isNotEmpty
-                          ? dropoffController.text
-                          : 'إلى أين؟ اختر وجهتك...',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 14,
-                        fontWeight: dropoffController.text.isNotEmpty
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: dropoffController.text.isNotEmpty
-                            ? (isDark ? AppColors.white : AppColors.gray900)
-                            : (isDark ? AppColors.gray500 : AppColors.gray600),
+          // Center: Search Bar (Expanded)
+          Expanded(
+            child: GestureDetector(
+              onTap: onSearchTap,
+              child: GlassBox(
+                borderRadius: BorderRadius.circular(24),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.primary500,
+                      size: 24,
+                    ),
+                    AppSpacing.w12,
+                    Expanded(
+                      child: Text(
+                        dropoffController.text.isNotEmpty
+                            ? dropoffController.text
+                            : 'إلى أين؟',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: dropoffController.text.isNotEmpty
+                              ? (isDark ? AppColors.white : AppColors.gray900)
+                              : (isDark ? AppColors.gray400 : AppColors.gray600),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary500.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.location_on_rounded,
-                          color: AppColors.primary500,
-                          size: 14,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'الخريطة',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+            ),
+          ),
+          
+          AppSpacing.w12,
+
+          // Left (RTL End): Notifications
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.notifications_none_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900,
+              ),
+              onPressed: () {
+                context.push(LaffahRoutes.passengerNotifications);
+              },
             ),
           ),
         ],

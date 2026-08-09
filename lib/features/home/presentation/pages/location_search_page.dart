@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/network/api_endpoints.dart';
 import 'pin_adjust_map_page.dart';
 
 class LocationSearchPage extends StatefulWidget {
@@ -53,21 +54,13 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
     });
 
     try {
-      // Using Free OpenStreetMap Nominatim API. Restricted to Yemen (ye).
+      // Using Laravel Backend Proxy to Nominatim API to bypass CORS/User-Agent limits
+      final String url = '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeSearch}';
       final response = await _dio.get(
-        'https://nominatim.openstreetmap.org/search',
+        url,
         queryParameters: {
           'q': query,
-          'format': 'json',
-          'limit': 5,
-          'countrycodes': 'ye',
-          'addressdetails': 1,
         },
-        options: Options(
-          headers: {
-            'User-Agent': 'com.pixelmind.laffah',
-          },
-        ),
       );
 
       if (response.statusCode == 200) {

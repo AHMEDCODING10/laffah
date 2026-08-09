@@ -1,10 +1,14 @@
+import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/network/api_endpoints.dart';
 
 class PinAdjustMapPage extends StatefulWidget {
   final String locationType;
@@ -22,17 +26,66 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
   final MapController _mapController = MapController();
   LatLng _centerPosition = const LatLng(15.3421, 44.2081); // Sanaa Default
   bool _isMoving = false;
+  String _currentStreetName = 'حرك الخريطة لتحديد الموقع';
+  bool _isLoadingAddress = false;
+  Timer? _debounce;
+  final Dio _dio = Dio();
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _dio.close();
+    super.dispose();
+  }
 
   void _onMapPositionChanged(MapCamera position, bool hasGesture) {
     setState(() {
       _centerPosition = position.center;
-      _isMoving = hasGesture;
+      if (hasGesture) {
+        _isMoving = true;
+        _currentStreetName = 'يتم التحديد...';
+        _isLoadingAddress = true;
+      }
     });
+
+    if (hasGesture) {
+      if (_debounce?.isActive ?? false) _debounce!.cancel();
+      _debounce = Timer(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          setState(() {
+            _isMoving = false;
+          });
+          _fetchAddress(_centerPosition.latitude, _centerPosition.longitude);
+        }
+      });
+    }
+  }
+
+  Future<void> _fetchAddress(double lat, double lon) async {
+    try {
+      final String url = '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeReverse}';
+      final response = await _dio.get(url, queryParameters: {'lat': lat, 'lon': lon});
+
+      if (response.statusCode == 200 && mounted) {
+        final data = response.data;
+        setState(() {
+          _currentStreetName = data['name'] ?? data['display_name'] ?? 'موقع محدد';
+          _isLoadingAddress = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _currentStreetName = 'موقع محدد من الخريطة';
+          _isLoadingAddress = false;
+        });
+      }
+    }
   }
 
   void _confirmLocation() {
     context.pop({
-      'name': 'موقع محدد من الخريطة',
+      'name': _isLoadingAddress ? 'موقع محدد من الخريطة' : _currentStreetName,
       'lat': _centerPosition.latitude,
       'lon': _centerPosition.longitude,
       'type': widget.locationType,
@@ -59,6 +112,7 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
               TileLayer(
                 urlTemplate: 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.pixelmind.laffah',
+                tileProvider: CancellableNetworkTileProvider(),
               ),
             ],
           ),
@@ -80,11 +134,11 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
                         borderRadius: AppSpacing.borderSM,
                       ),
                       child: Text(
-                        'حرك الخريطة لتحديد الموقع',
+                        _currentStreetName,
                         style: const TextStyle(
                           fontFamily: 'Cairo',
                           color: AppColors.white,
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

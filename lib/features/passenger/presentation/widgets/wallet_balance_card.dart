@@ -82,7 +82,7 @@ class WalletBalanceCard extends StatelessWidget {
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFFFF6B00),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD,
                     ),
                   ),

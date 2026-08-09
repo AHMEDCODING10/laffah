@@ -36,6 +36,9 @@ dependencies:
   geolocator: ^13.0.0
   web_socket_channel: ^3.0.1
   flutter_dotenv: ^6.0.1
+  flutter_map_cancellable_tile_provider: ^3.0.2
+  pusher_channels_flutter: ^2.4.0
+  laravel_echo: ^1.0.0-beta.1
 
 dev_dependencies:
   flutter_test:

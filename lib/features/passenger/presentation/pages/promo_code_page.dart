@@ -121,7 +121,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
                               horizontal: AppSpacing.s14,
                               vertical: AppSpacing.s12,
                             ),
-                            border: OutlineInputBorder(
+                            border: const OutlineInputBorder(
                               borderRadius: AppSpacing.radiusSM,
                               borderSide: BorderSide.none,
                             ),

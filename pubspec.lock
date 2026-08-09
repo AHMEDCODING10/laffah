@@ -403,6 +403,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
+  flutter_map_cancellable_tile_provider:
+    dependency: "direct main"
+    description:
+      name: flutter_map_cancellable_tile_provider
+      sha256: "03662220ce0cd784ad2f2a45c36fc379b8b315c74f5c12b5ff4a0515eab1acd1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
   flutter_map_marker_cluster:
     dependency: "direct main"
     description:
@@ -789,6 +797,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.12.0"
+  laravel_echo:
+    dependency: "direct main"
+    description:
+      name: laravel_echo
+      sha256: aec1c8a989f8718ffbb9864e746eed2181638e156d4e22724230a5be9cdf43ab
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0-beta.1"
   latlong2:
     dependency: "direct main"
     description:
@@ -1061,6 +1077,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
+  pusher_channels_flutter:
+    dependency: "direct main"
+    description:
+      name: pusher_channels_flutter
+      sha256: "0b06194d85d1665d21e634ea091917b28670fb6d585d76903a4f72d894906000"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0"
   rxdart:
     dependency: transitive
     description:

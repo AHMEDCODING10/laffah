@@ -4,11 +4,96 @@ import 'package:go_router/go_router.dart';
 import '../bloc/ride_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
 import '../../../../core/widgets/glass_box.dart';
+import '../../../../core/services/osrm_service.dart';
+import '../../../../core/services/echo_service.dart';
 
-class PassengerRideTrackingPage extends StatelessWidget {
+class PassengerRideTrackingPage extends StatefulWidget {
   const PassengerRideTrackingPage({super.key});
+
+  @override
+  State<PassengerRideTrackingPage> createState() => _PassengerRideTrackingPageState();
+}
+
+class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> with SingleTickerProviderStateMixin {
+  final OsrmService _osrmService = OsrmService();
+  final EchoService _echoService = EchoService();
+  List<LatLng> _routePoints = [];
+
+  LatLng _captainLocation = const LatLng(15.3500, 44.2000);
+  final LatLng _passengerLocation = const LatLng(15.3421, 44.2081);
+  double _captainHeading = 0.0;
+
+  late AnimationController _animController;
+  late Animation<double> _latTween;
+  late Animation<double> _lngTween;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRoute();
+    
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _latTween = Tween<double>(begin: _captainLocation.latitude, end: _captainLocation.latitude).animate(_animController);
+    _lngTween = Tween<double>(begin: _captainLocation.longitude, end: _captainLocation.longitude).animate(_animController);
+    
+    _animController.addListener(() {
+      setState(() {
+        _captainLocation = LatLng(_latTween.value, _lngTween.value);
+      });
+    });
+
+    _listenToLiveTracking();
+  }
+
+  void _listenToLiveTracking() {
+    _echoService.init().then((_) {
+      _echoService.listenToCaptainLocation('1', (data) {
+        if (!mounted) return;
+        
+        final double newLat = (data['lat'] as num).toDouble();
+        final double newLng = (data['lng'] as num).toDouble();
+        final double newHeading = (data['heading'] ?? 0.0) as double;
+
+        _latTween = Tween<double>(begin: _captainLocation.latitude, end: newLat).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeInOut)
+        );
+        _lngTween = Tween<double>(begin: _captainLocation.longitude, end: newLng).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeInOut)
+        );
+        
+        setState(() {
+          _captainHeading = newHeading;
+        });
+
+        _animController.forward(from: 0.0);
+        _fetchRoute(); // Recalculate route to passenger
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    _echoService.stopListeningToCaptainLocation('1');
+    super.dispose();
+  }
+
+  Future<void> _fetchRoute() async {
+    final data = await _osrmService.getRoute(_passengerLocation, _captainLocation);
+    if (data != null && mounted) {
+      setState(() {
+        _routePoints = data.points;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +110,21 @@ class PassengerRideTrackingPage extends StatelessWidget {
                 return Positioned.fill(
                   child: LaffahMapView(
                     isDark: isDark,
-                    showDefaultMockData: false, // Turned off mock data
+                    showDefaultMockData: false,
+                    followCaptain: true,
+                    // Real-time animated data
+                    captainLocation: _captainLocation, 
+                    passengerLocation: _passengerLocation,
+                    captainHeading: _captainHeading,
+                    polylines: _routePoints.isNotEmpty 
+                      ? [
+                          Polyline(
+                            points: _routePoints,
+                            color: AppColors.primary500,
+                            strokeWidth: 4.0,
+                          ),
+                        ]
+                      : [],
                   ),
                 );
               },

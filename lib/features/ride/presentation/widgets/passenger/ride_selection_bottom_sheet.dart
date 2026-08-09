@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../home/presentation/pages/location_search_page.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
 import '../../bloc/ride_bloc.dart';
 
+import 'package:latlong2/latlong.dart';
+import '../../../../../core/services/osrm_service.dart';
+
 class RideSelectionBottomSheet extends StatefulWidget {
   final String pickup;
   final String dropoff;
+  final LatLng? dropoffLatLng;
 
   const RideSelectionBottomSheet({
     super.key,
     required this.pickup,
     required this.dropoff,
+    this.dropoffLatLng,
   });
 
   @override
@@ -26,11 +32,60 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   bool _isScheduled = false;
   DateTime? _scheduledTime;
   final List<String> _additionalDropoffs = [];
+  
 
-  void _addDropoff() {
-    setState(() {
-      _additionalDropoffs.add('محطة توقف إضافية (حدد من الخريطة)');
-    });
+  double _distanceKm = 0.0;
+  double _durationMin = 0.0;
+  final OsrmService _osrmService = OsrmService();
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateRoute();
+  }
+
+  Future<void> _calculateRoute() async {
+    if (widget.dropoffLatLng != null) {
+      // Mock passenger location for Sanaaconster since ocation isn't active
+      const start = LatLng(15.3694, 44.1910); 
+      final data = await _osrmService.getRoute(start, widget.dropoffLatLng!);
+      
+      if (mounted) {
+        setState(() {
+          if (data != null) {
+            _distanceKm = data.distanceKm;
+            _durationMin = data.durationMin;
+          } else {
+            // Fallback
+            _distanceKm = 5.0;
+            _durationMin = 12.0;
+          }
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _distanceKm = 5.0;
+          _durationMin = 12.0;
+        });
+      }
+    }
+  }
+
+  Future<void> _addDropoff() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LocationSearchPage(locationType: 'dropoff'),
+      ),
+    );
+
+    if (result != null && result is Map<String, dynamic>) {
+      final locationName = result['name'] as String;
+      setState(() {
+        _additionalDropoffs.add(locationName);
+      });
+    }
   }
 
   void _removeDropoff(int index) {
@@ -73,8 +128,10 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // Dynamic price calculation based on dropoffs
-    final double baseFare = 800.0 + (_additionalDropoffs.length * 400.0);
+    // Dynamic price calculation based on actual distance
+    final double computedFare = 500.0 + (_distanceKm * 150.0) + (_additionalDropoffs.length * 400.0);
+    final double baseFare = computedFare > 800.0 ? computedFare : 800.0; // minimum fare
+    final int computedEta = _durationMin.toInt();
     
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -424,8 +481,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         dropoff: widget.dropoff,
                         additionalDropoffs: _additionalDropoffs,
                         fare: baseFare,
-                        distance: 6.8 + (_additionalDropoffs.length * 2),
-                        duration: 15 + (_additionalDropoffs.length * 10),
+                        distance: _distanceKm + (_additionalDropoffs.length * 2),
+                        duration: computedEta + (_additionalDropoffs.length * 10),
                         isScheduled: _isScheduled,
                         scheduledTime: _scheduledTime,
                       ));

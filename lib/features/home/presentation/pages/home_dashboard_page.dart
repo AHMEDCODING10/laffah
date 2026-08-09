@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
 import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.dart';
 import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
@@ -38,8 +39,9 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final TextEditingController _pickupController =
-      TextEditingController(text: 'شارع حدة، أمام مركز الكميم');
+      TextEditingController(text: 'موقعك الحالي');
   final TextEditingController _dropoffController = TextEditingController();
+  LatLng? _dropoffLatLng;
 
   int _selectedQuickIndex = -1;
 
@@ -80,6 +82,10 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _dropoffController.text = result['name'] ?? '';
+        _dropoffLatLng = LatLng(
+          result['lat'] as double,
+          result['lon'] as double,
+        );
       });
       // Save it as a recent destination
       await HomeLocalDataSource.saveRecentDestination({
@@ -106,6 +112,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
           dropoff: _dropoffController.text.trim().isNotEmpty
               ? _dropoffController.text.trim()
               : 'وجهة مختارة',
+          dropoffLatLng: _dropoffLatLng,
         ),
       ),
     );
@@ -139,6 +146,21 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                   return LaffahMapView(
                     isDark: isDark,
                     showDefaultMockData: status != 'idle',
+                    initialCenter: _dropoffLatLng,
+                    markers: _dropoffLatLng != null
+                        ? [
+                            Marker(
+                              point: _dropoffLatLng!,
+                              width: 40,
+                              height: 40,
+                              child: const Icon(
+                                Icons.location_on,
+                                color: AppColors.error,
+                                size: 40,
+                              ),
+                            )
+                          ]
+                        : null,
                   );
                 },
               ),

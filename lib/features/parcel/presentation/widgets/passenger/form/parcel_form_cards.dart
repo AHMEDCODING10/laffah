@@ -75,9 +75,9 @@ InputDecoration _inputDecoration({
             : AppColors.gray200,
       ),
     ),
-    focusedBorder: OutlineInputBorder(
+    focusedBorder: const OutlineInputBorder(
       borderRadius: AppSpacing.radiusSM,
-      borderSide: const BorderSide(
+      borderSide: BorderSide(
         color: AppColors.primary500,
         width: 1.5,
       ),

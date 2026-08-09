@@ -170,7 +170,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                           ? AppColors.white.withValues(alpha: 0.03)
                           : AppColors.gray100,
                       contentPadding: const EdgeInsets.all(AppSpacing.s12),
-                      border: OutlineInputBorder(
+                      border: const OutlineInputBorder(
                         borderRadius: AppSpacing.radiusMD,
                         borderSide: BorderSide.none,
                       ),
@@ -282,10 +282,10 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          GlassBox(
+          const GlassBox(
             borderRadius: AppSpacing.radiusFull,
-            padding: const EdgeInsets.all(AppSpacing.s20),
-            child: const Icon(
+            padding: EdgeInsets.all(AppSpacing.s20),
+            child: Icon(
               Icons.bookmark_border_rounded,
               size: 48,
               color: AppColors.gray400,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 
@@ -26,6 +28,10 @@ class LaffahMapView extends StatefulWidget {
 
   /// موقع الكابتن الحالي (يُعرض كـ 🏍️ marker متحرك)
   final LatLng? captainLocation;
+  final double captainHeading;
+
+  /// موقع الراكب (الانطلاق) 
+  final LatLng? passengerLocation;
 
   /// هل يتم تتبع الكابتن وتوسيط الخريطة على موقعه؟
   final bool followCaptain;
@@ -42,10 +48,12 @@ class LaffahMapView extends StatefulWidget {
     super.key,
     this.markers,
     this.polylines,
-    required this.isDark,
+    this.isDark = false,
     this.initialCenter,
     this.initialZoom = 14.5,
     this.captainLocation,
+    this.captainHeading = 0.0,
+    this.passengerLocation,
     this.followCaptain = false,
     this.showDefaultMockData = true,
     this.onMarkerTap,
@@ -71,12 +79,21 @@ class _LaffahMapViewState extends State<LaffahMapView> {
   @override
   void didUpdateWidget(LaffahMapView old) {
     super.didUpdateWidget(old);
-    // تتبع الكابتن: تحريك الخريطة تلقائياً عند تغيير موقعه
-    if (widget.followCaptain &&
-        widget.captainLocation != null &&
-        widget.captainLocation != _lastCaptainLocation) {
-      _lastCaptainLocation = widget.captainLocation;
-      _mapController.move(widget.captainLocation!, _currentZoom);
+    // تتبع الكابتن والتوسيط الذكي
+    if (widget.followCaptain && widget.captainLocation != null) {
+      if (widget.passengerLocation != null) {
+        // Auto-Bounding Box to fit both passenger and captain
+        final bounds = LatLngBounds.fromPoints([widget.captainLocation!, widget.passengerLocation!]);
+        _mapController.fitCamera(CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(50.0),
+        ));
+      } else if (widget.captainLocation != _lastCaptainLocation) {
+        _lastCaptainLocation = widget.captainLocation;
+        _mapController.move(widget.captainLocation!, _currentZoom);
+      }
+    } else if (widget.initialCenter != old.initialCenter && widget.initialCenter != null) {
+      _mapController.move(widget.initialCenter!, _currentZoom);
     }
   }
 
@@ -104,13 +121,14 @@ class _LaffahMapViewState extends State<LaffahMapView> {
               },
             ),
           children: [
-            // Tile Layer — CartoDB tiles (CORS-friendly for web + good quality)
+            // TileLayer with CancellableNetworkTileProvider for better Web/Mobile performance
             TileLayer(
               urlTemplate: widget.isDark
                   ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
                   : 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.laffah.app',
+              userAgentPackageName: 'com.pixelmind.laffah',
               maxZoom: 20,
+              tileProvider: CancellableNetworkTileProvider(),
             ),
 
             // مسارات الرحلة (Polylines)
@@ -254,35 +272,84 @@ class _LaffahMapViewState extends State<LaffahMapView> {
   Marker _buildCaptainMarker(LatLng pos) {
     return Marker(
       point: pos,
-      width: 52,
-      height: 52,
+      width: 100, // Widened for badge
+      height: 100, // Heightened for badge
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
           widget.onMarkerTap?.call(
-            'موقعك الحالي',
-            'أنت هنا',
+            'الكابتن',
+            'الكابتن هنا',
             pos,
           );
         },
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFFF6B00),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2.5),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0xFFFF6B00),
-                blurRadius: 14,
-                spreadRadius: 3,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            // ETA Badge
+            Positioned(
+              top: -10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: widget.isDark ? AppColors.white : AppColors.gray900,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '3 د',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: widget.isDark ? AppColors.gray900 : AppColors.white,
+                  ),
+                ),
               ),
-            ],
-          ),
-          child: const Icon(
-            Icons.two_wheeler_rounded,
-            color: Colors.white,
-            size: 24,
-          ),
+            ),
+            // The pulsing bike icon
+            TweenAnimationBuilder(
+              tween: Tween<double>(begin: 0.8, end: 1.0),
+              duration: const Duration(milliseconds: 1000),
+              curve: Curves.easeInOut,
+              builder: (context, double scale, child) {
+                return Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6B00),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B00).withValues(alpha: 0.6),
+                          blurRadius: 14 * scale,
+                          spreadRadius: 3 * scale,
+                        ),
+                      ],
+                    ),
+                    child: Transform.rotate(
+                      angle: widget.captainHeading * (math.pi / 180),
+                      child: const Icon(
+                        Icons.two_wheeler_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
