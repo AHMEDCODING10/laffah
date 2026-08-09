@@ -31,11 +31,24 @@ class LaravelErrorInterceptor extends Interceptor {
           }
         });
       }
+      String errorMessage = data is Map && data['message'] != null ? data['message'].toString() : 'بيانات غير صالحة';
+
+      if (fieldErrors.isNotEmpty) {
+        final firstError = fieldErrors.values.first.first;
+        if (firstError == 'validation.unique' || firstError.contains('unique')) {
+          errorMessage = 'رقم الهاتف مسجل مسبقاً في النظام. يرجى تسجيل الدخول.';
+        } else if (firstError.contains('validation.')) {
+           errorMessage = 'يرجى التحقق من البيانات المدخلة';
+        } else {
+          errorMessage = firstError;
+        }
+      }
+
       return handler.reject(
         DioException(
           requestOptions: err.requestOptions,
           error: LaravelValidationException(
-            message: data is Map && data['message'] != null ? data['message'].toString() : 'بيانات غير صالحة',
+            message: errorMessage,
             fieldErrors: fieldErrors,
           ),
           response: err.response,

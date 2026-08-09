@@ -766,12 +766,20 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
             borderRadius: AppSpacing.radiusXS,
           ),
           onChanged: (bool? val) {
-            setState(() => _agreeToTerms = val ?? false);
+            setState(() {
+              _agreeToTerms = val ?? false;
+              _validateForm();
+            });
           },
         ),
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _agreeToTerms = !_agreeToTerms),
+            onTap: () {
+              setState(() {
+                _agreeToTerms = !_agreeToTerms;
+                _validateForm();
+              });
+            },
             child: Text.rich(
               TextSpan(
                 text: 'أوافق على ',
