@@ -188,29 +188,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
       child: Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? AppColors.white : AppColors.gray900,
-              size: 20,
-            ),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-          centerTitle: true,
-          title: Text(
-            'تسجيل كابتن لَفَّة',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 17,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        ),
-        body: BlocConsumer<AuthBloc, AuthState>(
+        body: SafeArea(
+          child: BlocConsumer<AuthBloc, AuthState>(
           listener: (BuildContext context, AuthState state) {
             if (state is AuthSuccess) {
               // تسجيل الكابتن نجح - توجيه مباشر لشاشة الكابتن
@@ -376,6 +355,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
               ),
             );
           },
+        ),
         ),
       ),
     );
