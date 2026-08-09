@@ -98,7 +98,8 @@ class _SplashPageState extends State<SplashPage>
         final isCapt = roles != null &&
             roles.any((r) => r is Map && r['name'] == 'captain');
 
-        context.go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
+        context
+            .go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
       } else {
         // Token invalid or expired
         await _storage.delete(key: 'auth_token');

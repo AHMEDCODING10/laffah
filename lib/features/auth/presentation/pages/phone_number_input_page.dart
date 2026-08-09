@@ -12,6 +12,7 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../../core/widgets/primary_gradient_button.dart';
 import 'auth_landing_page.dart';
+import 'forgot_password_page.dart';
 
 /// PhoneNumberInputPage - Dedicated, high-contrast login screen for Laffah (راكب / كابتن)
 /// Features Yemen +967 formatting, focus glow borders, and registration role selection.
@@ -273,7 +274,13 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                     alignment: Alignment.centerLeft,
                                     child: GestureDetector(
                                       onTap: () {
-                                        // Handle forgot password flow
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ForgotPasswordPage(),
+                                          ),
+                                        );
                                       },
                                       child: const Text(
                                         'نسيت كلمة المرور؟',
@@ -293,7 +300,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                   PrimaryGradientButton(
                                     text: 'دخول',
                                     isLoading: isLoading,
-                                    icon: Icons.arrow_back_rounded,
                                     onPressed: _handleLogin,
                                   ),
                                 ],

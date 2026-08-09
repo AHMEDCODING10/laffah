@@ -21,17 +21,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final List<Map<String, String>> _onboardingData = [
     {
       'title': 'مرحباً بك في لَفَّة',
-      'description': 'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات ظˆتوصيل الدراجات النارية.',
+      'description':
+          'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات ظˆتوصيل الدراجات النارية.',
       'icon': 'motorcycle',
     },
     {
       'title': 'تجاوز الزحام',
-      'description': 'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز ط§لاختناقات المرورية.',
+      'description':
+          'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز ط§لاختناقات المرورية.',
       'icon': 'speed',
     },
     {
       'title': 'توصيل سريع وأمانات',
-      'description': 'ارسل طرودك وأماناتك بأسرع وقت مع كباتن موثوقين ومسجلين رسمياً لدينا.',
+      'description':
+          'ارسل طرودك وأماناتك بأسرع وقت مع كباتن موثوقين ومسجلين رسمياً لدينا.',
       'icon': 'delivery',
     },
   ];
@@ -62,7 +65,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-body: SafeArea(
+        body: SafeArea(
           child: Column(
             children: [
               // Skip Button
@@ -114,15 +117,18 @@ body: SafeArea(
                                   width: 160,
                                   height: 160,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                                    color: const Color(0xFFFF6B00)
+                                        .withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                                      color: const Color(0xFFFF6B00)
+                                          .withValues(alpha: 0.3),
                                       width: 2,
                                     ),
                                   ),
                                   child: Icon(
-                                    _getIconForType(_onboardingData[index]['icon']!),
+                                    _getIconForType(
+                                        _onboardingData[index]['icon']!),
                                     size: 80,
                                     color: const Color(0xFFFF6B00),
                                   ),
@@ -138,7 +144,8 @@ body: SafeArea(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? AppColors.white : AppColors.gray900,
+                              color:
+                                  isDark ? AppColors.white : AppColors.gray900,
                             ),
                           ),
                           AppSpacing.h16,
@@ -149,7 +156,9 @@ body: SafeArea(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 15,
                               height: 1.6,
-                              color: isDark ? AppColors.gray400 : AppColors.gray600,
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600,
                             ),
                           ),
                         ],
@@ -177,7 +186,9 @@ body: SafeArea(
                           decoration: BoxDecoration(
                             color: _currentPage == index
                                 ? const Color(0xFFFF6B00)
-                                : (isDark ? AppColors.gray700 : AppColors.gray300),
+                                : (isDark
+                                    ? AppColors.gray700
+                                    : AppColors.gray300),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),

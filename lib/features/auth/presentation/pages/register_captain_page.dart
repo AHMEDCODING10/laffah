@@ -190,172 +190,173 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
             isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
         body: SafeArea(
           child: BlocConsumer<AuthBloc, AuthState>(
-          listener: (BuildContext context, AuthState state) {
-            if (state is AuthSuccess) {
-              // تسجيل الكابتن نجح - توجيه مباشر لشاشة الكابتن
-              context.go(LaffahRoutes.captainHome);
-            } else if (state is AuthFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message,
-                    style: const TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.bold),
-                  ),
-                  backgroundColor: AppColors.danger,
-                  behavior: SnackBarBehavior.floating,
-                  shape: const RoundedRectangleBorder(
-                      borderRadius: AppSpacing.radiusMD),
-                  margin: const EdgeInsets.all(16),
-                ),
-              );
-            }
-          },
-          builder: (BuildContext context, AuthState state) {
-            final bool isLoading = state is AuthLoading;
-
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s24,
-                    vertical: AppSpacing.s16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // ——— Header ———————————————
-                      const LaffahLogo(
-                          height: 80, width: 80, showSubtitle: false),
-                      AppSpacing.h8,
-                      Text(
-                        'انضم ككابتن لَفَّة',
-                        style: TextStyle(
+            listener: (BuildContext context, AuthState state) {
+              if (state is AuthSuccess) {
+                // تسجيل الكابتن نجح - توجيه مباشر لشاشة الكابتن
+                context.go(LaffahRoutes.captainHome);
+              } else if (state is AuthFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      state.message,
+                      style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          color: isDark ? AppColors.white : AppColors.gray900,
-                        ),
-                      ),
-                      Text(
-                        'سجّل بياناتك وبيانات دراجتك النارية وابدأ بجني الأرباح فوراً',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 11.5,
-                          color: isDark ? AppColors.gray500 : AppColors.gray600,
-                          height: 1.4,
-                        ),
-                      ),
+                          fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: AppColors.danger,
+                    behavior: SnackBarBehavior.floating,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: AppSpacing.radiusMD),
+                    margin: const EdgeInsets.all(16),
+                  ),
+                );
+              }
+            },
+            builder: (BuildContext context, AuthState state) {
+              final bool isLoading = state is AuthLoading;
 
-                      const SizedBox(height: 24),
-
-                      // ——— Registration Form ———
-                      GlassBox(
-                        borderRadius: AppSpacing.radiusXL,
-                        padding: const EdgeInsets.all(AppSpacing.s24),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // SECTION 1: بيانات شخصية
-                              _buildSectionHeader(
-                                  '1. البيانات الشخصية للكابتن:'),
-                              const SizedBox(height: 12),
-
-                              _buildLabel('الاسم الرباعي الكامل:'),
-                              _buildNameField(isDark),
-                              const SizedBox(height: 16),
-
-                              _buildLabel('رقم الهاتف الجوال:'),
-                              _buildPhoneField(isDark),
-                              const SizedBox(height: 16),
-
-                              _buildLabel('كلمة المرور الجديدة:'),
-                              _buildPasswordField(isDark),
-                              const SizedBox(height: 16),
-
-                              _buildLabel('تأكيد كلمة المرور:'),
-                              _buildConfirmPasswordField(isDark),
-
-                              const SizedBox(height: 28),
-
-                              // SECTION 2: بيانات الدراجة النارية
-                              _buildSectionHeader('2. بيانات الدراجة النارية:'),
-                              const SizedBox(height: 12),
-
-                              _buildLabel('رقم اللوحة المرورية:'),
-                              _buildPlateField(isDark),
-
-                              const SizedBox(height: 24),
-
-                              // SECTION 3: الموافقة على الشروط
-                              _buildTermsCheckbox(isDark),
-
-                              const SizedBox(height: 28),
-
-                              // SUBMIT BUTTON
-                              PrimaryGradientButton(
-                                text: 'تقديم الطلب وتأكيد رقم الهاتف',
-                                isLoading: isLoading,
-                                icon: Icons.two_wheeler_rounded,
-                                onPressed:
-                                    _isFormValid ? _handleRegister : null,
-                              ),
-                            ],
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s24,
+                      vertical: AppSpacing.s16,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // ——— Header ———————————————
+                        const LaffahLogo(
+                            height: 80, width: 80, showSubtitle: false),
+                        AppSpacing.h8,
+                        Text(
+                          'انضم ككابتن لَفَّة',
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            color: isDark ? AppColors.white : AppColors.gray900,
                           ),
                         ),
-                      ),
+                        Text(
+                          'سجّل بياناتك وبيانات دراجتك النارية وابدأ بجني الأرباح فوراً',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontSize: 11.5,
+                            color:
+                                isDark ? AppColors.gray500 : AppColors.gray600,
+                            height: 1.4,
+                          ),
+                        ),
 
-                      const SizedBox(height: 28),
+                        const SizedBox(height: 24),
 
-                      // Back to login link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'لديك حساب كابتن مسجل بالفعل؟',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 13.5,
-                              color: isDark
-                                  ? AppColors.gray400
-                                  : AppColors.gray600,
+                        // ——— Registration Form ———
+                        GlassBox(
+                          borderRadius: AppSpacing.radiusXL,
+                          padding: const EdgeInsets.all(AppSpacing.s24),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // SECTION 1: بيانات شخصية
+                                _buildSectionHeader(
+                                    '1. البيانات الشخصية للكابتن:'),
+                                const SizedBox(height: 12),
+
+                                _buildLabel('الاسم الرباعي الكامل:'),
+                                _buildNameField(isDark),
+                                const SizedBox(height: 16),
+
+                                _buildLabel('رقم الهاتف الجوال:'),
+                                _buildPhoneField(isDark),
+                                const SizedBox(height: 16),
+
+                                _buildLabel('كلمة المرور الجديدة:'),
+                                _buildPasswordField(isDark),
+                                const SizedBox(height: 16),
+
+                                _buildLabel('تأكيد كلمة المرور:'),
+                                _buildConfirmPasswordField(isDark),
+
+                                const SizedBox(height: 28),
+
+                                // SECTION 2: بيانات الدراجة النارية
+                                _buildSectionHeader(
+                                    '2. بيانات الدراجة النارية:'),
+                                const SizedBox(height: 12),
+
+                                _buildLabel('رقم اللوحة المرورية:'),
+                                _buildPlateField(isDark),
+
+                                const SizedBox(height: 24),
+
+                                // SECTION 3: الموافقة على الشروط
+                                _buildTermsCheckbox(isDark),
+
+                                const SizedBox(height: 28),
+
+                                // SUBMIT BUTTON
+                                PrimaryGradientButton(
+                                  text: 'تقديم الطلب وتأكيد رقم الهاتف',
+                                  isLoading: isLoading,
+                                  onPressed:
+                                      _isFormValid ? _handleRegister : null,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: AppSpacing.s8),
-                          GestureDetector(
-                            onTap: () {
-                              context.pushReplacement('/auth/phone');
-                            },
-                            child: const Text(
-                              'سجّل دخولك',
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // Back to login link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'لديك حساب كابتن مسجل بالفعل؟',
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFFFF6B00),
-                                decoration: TextDecoration.underline,
-                                decorationColor: Color(0xFFFF6B00),
+                                color: isDark
+                                    ? AppColors.gray400
+                                    : AppColors.gray600,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: AppSpacing.s8),
+                            GestureDetector(
+                              onTap: () {
+                                context.pushReplacement('/auth/phone');
+                              },
+                              child: const Text(
+                                'سجّل دخولك',
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFFFF6B00),
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Color(0xFFFF6B00),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
 
-                      const SizedBox(height: 32),
-                    ],
+                        const SizedBox(height: 32),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
         ),
       ),
     );
