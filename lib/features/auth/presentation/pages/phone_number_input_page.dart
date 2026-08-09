@@ -307,7 +307,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
-                                              'دخول واستلام رمز التحقق',
+                                              'دخول',
                                               style: TextStyle(
                                                 fontFamily: 'IBM Plex Sans Arabic',
                                                 fontWeight: FontWeight.w900,
@@ -471,7 +471,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           FilteringTextInputFormatter.digitsOnly,
         ],
         decoration: InputDecoration(
-          hintText: '77XXXXXXX',
+          hintText: '7XXXXXXXX',
           hintStyle: TextStyle(
             fontFamily: 'monospace',
             letterSpacing: 1.0,
