@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
 import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.dart';

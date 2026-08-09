@@ -3,6 +3,16 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.google.maps.android" && requested.name == "android-maps-utils") {
+                useVersion("4.0.0")
+            }
+            if (requested.group == "org.jetbrains.kotlin") {
+                useVersion("2.1.20")
+            }
+        }
+    }
 }
 
 val newBuildDir: Directory =
