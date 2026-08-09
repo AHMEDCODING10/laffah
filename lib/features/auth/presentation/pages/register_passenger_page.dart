@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_logo.dart';
+import '../../../../core/widgets/primary_gradient_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -20,12 +21,18 @@ class RegisterPassengerPage extends StatefulWidget {
   State<RegisterPassengerPage> createState() => _RegisterPassengerPageState();
 }
 
-class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
+class _RegisterPassengerPageState extends State<RegisterPassengerPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _entranceController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _referralController = TextEditingController();
 
   bool _obscurePassword = true;
@@ -46,11 +53,28 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
   @override
   void initState() {
     super.initState();
-    _nameFocusNode.addListener(() => setState(() => _isNameFocused = _nameFocusNode.hasFocus));
-    _phoneFocusNode.addListener(() => setState(() => _isPhoneFocused = _phoneFocusNode.hasFocus));
-    _passwordFocusNode.addListener(() => setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
-    _confirmPasswordFocusNode.addListener(() => setState(() => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
-    
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
+    );
+    _entranceController.forward();
+
+    _nameFocusNode.addListener(
+        () => setState(() => _isNameFocused = _nameFocusNode.hasFocus));
+    _phoneFocusNode.addListener(
+        () => setState(() => _isPhoneFocused = _phoneFocusNode.hasFocus));
+    _passwordFocusNode.addListener(
+        () => setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
+    _confirmPasswordFocusNode.addListener(() => setState(
+        () => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
+
     _nameController.addListener(_validateForm);
     _phoneController.addListener(_validateForm);
     _passwordController.addListener(_validateForm);
@@ -78,6 +102,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
     _phoneFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
@@ -90,7 +115,8 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             behavior: SnackBarBehavior.floating,
             content: Text(
               'يرجى الموافقة على شروط الاستخدام وسياسة خصوصية لَفَّة للمتابعة',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
+              style:
+                  TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
             ),
           ),
         );
@@ -102,10 +128,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
 
       // Submit Registration request
       context.read<AuthBloc>().add(RegisterPassengerRequested(
-        name: _nameController.text.trim(),
-        phone: fullPhone,
-        password: _passwordController.text,
-      ));
+            name: _nameController.text.trim(),
+            phone: fullPhone,
+            password: _passwordController.text,
+          ));
     }
   }
 
@@ -118,195 +144,183 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
+          backgroundColor:
+              isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
           body: SafeArea(
             child: BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthSuccess) {
-                // تسجيل الراكب نجح - توجيه مباشر لشاشة الراكب الرئيسية
-                context.go(LaffahRoutes.passengerHome);
-              } else if (state is AuthFailure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: AppColors.danger,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppSpacing.borderMD,
+              listener: (context, state) {
+                if (state is AuthSuccess) {
+                  // تسجيل الراكب نجح - توجيه مباشر لشاشة الراكب الرئيسية
+                  context.go(LaffahRoutes.passengerHome);
+                } else if (state is AuthFailure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.danger,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppSpacing.borderMD,
+                      ),
+                      content: Text(
+                        state.message,
+                        style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                    content: Text(
-                      state.message,
-                      style: const TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                  );
+                }
+              },
+              builder: (context, state) {
+                final bool isLoading = state is AuthLoading;
+
+                return Center(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s24,
+                          vertical: AppSpacing.s16,
+                        ),
+                        child: Column(
+                          children: [
+                            const LaffahLogo(
+                              height: 90,
+                              width: 90,
+                              showSubtitle: false,
+                            ),
+                            AppSpacing.h8,
+                            Text(
+                              'انضم إلى ركاب لَفَّة',
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                color: isDark
+                                    ? AppColors.white
+                                    : AppColors.gray900,
+                              ),
+                            ),
+                            Text(
+                              'املأ بياناتك للبدء في طلب مشاوير آمنة وسهلة واقتصادية',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 12,
+                                color: isDark
+                                    ? AppColors.gray500
+                                    : AppColors.gray600,
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Glassmorphic Form Card
+                            GlassBox(
+                              borderRadius: AppSpacing.radiusXL,
+                              padding: const EdgeInsets.all(AppSpacing.s24),
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Full Name Field
+                                    _buildLabel('الاسم الكامل والأخير:'),
+                                    _buildNameField(isDark),
+
+                                    const SizedBox(height: 16),
+
+                                    // Phone Number Field
+                                    _buildLabel('رقم الهاتف الجوال:'),
+                                    _buildPhoneField(isDark),
+
+                                    const SizedBox(height: 16),
+
+                                    // Password Field
+                                    _buildLabel('كلمة المرور الجديدة:'),
+                                    _buildPasswordField(isDark),
+
+                                    const SizedBox(height: 16),
+
+                                    // Confirm Password Field
+                                    _buildLabel('تأكيد كلمة المرور:'),
+                                    _buildConfirmPasswordField(isDark),
+
+                                    const SizedBox(height: 16),
+
+                                    // Referral Code Field (Optional)
+                                    _buildLabel(
+                                        'رمز الإحالة / الدعوة (اختياري):'),
+                                    _buildReferralField(isDark),
+
+                                    const SizedBox(height: 20),
+
+                                    // Terms & Conditions Checkbox
+                                    _buildTermsCheckbox(isDark),
+
+                                    const SizedBox(height: 24),
+
+                                    // Register Button
+                                    PrimaryGradientButton(
+                                      text: 'إنشاء الحساب وتأكيد رقمي',
+                                      isLoading: isLoading,
+                                      onPressed:
+                                          _isFormValid ? _handleRegister : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 28),
+
+                            // Direct back to login link
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'لديك حساب بالفعل في لَفَّة؟',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 13.5,
+                                    color: isDark
+                                        ? AppColors.gray400
+                                        : AppColors.gray600,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.s8),
+                                GestureDetector(
+                                  onTap: () {
+                                    context.pushReplacement('/auth/phone');
+                                  },
+                                  child: const Text(
+                                    'تسجيل الدخول مباشر',
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFFFF6B00),
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 );
-              }
-            },
-            builder: (context, state) {
-              final bool isLoading = state is AuthLoading;
-
-              return Center(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s24,
-                    vertical: AppSpacing.s16,
-                  ),
-                  child: Column(
-                    children: [
-                      const LaffahLogo(
-                        height: 90,
-                        width: 90,
-                        showSubtitle: false,
-                      ),
-                      AppSpacing.h8,
-                      Text(
-                        'انضم إلى ركاب لَفَّة',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          color: isDark ? AppColors.white : AppColors.gray900,
-                        ),
-                      ),
-                      Text(
-                        'املأ بياناتك للبدء في طلب مشاوير آمنة وسهلة واقتصادية',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 12,
-                          color: isDark ? AppColors.gray500 : AppColors.gray600,
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 24),
-
-                      // Glassmorphic Form Card
-                      GlassBox(
-                        borderRadius: AppSpacing.radiusXL,
-                        padding: const EdgeInsets.all(AppSpacing.s24),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Full Name Field
-                              _buildLabel('الاسم الكامل والأخير:'),
-                              _buildNameField(isDark),
-
-                              const SizedBox(height: 16),
-
-                              // Phone Number Field
-                              _buildLabel('رقم الهاتف الجوال:'),
-                              _buildPhoneField(isDark),
-
-                              const SizedBox(height: 16),
-
-                              // Password Field
-                              _buildLabel('كلمة المرور الجديدة:'),
-                              _buildPasswordField(isDark),
-
-                              const SizedBox(height: 16),
-
-                              // Confirm Password Field
-                              _buildLabel('تأكيد كلمة المرور:'),
-                              _buildConfirmPasswordField(isDark),
-
-                              const SizedBox(height: 16),
-
-                              // Referral Code Field (Optional)
-                              _buildLabel('رمز الإحالة / الدعوة (اختياري):'),
-                              _buildReferralField(isDark),
-
-                              const SizedBox(height: 20),
-
-                              // Terms & Conditions Checkbox
-                              _buildTermsCheckbox(isDark),
-
-                              const SizedBox(height: 24),
-
-                              // Register Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: ElevatedButton(
-                                  onPressed: (isLoading || !_isFormValid) ? null : _handleRegister,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _isFormValid ? const Color(0xFFFF6B00) : AppColors.gray300,
-                                    foregroundColor: AppColors.white,
-                                    elevation: _isFormValid ? 2 : 0,
-                                    shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.3),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: AppSpacing.borderMD,
-                                    ),
-                                  ),
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            color: AppColors.white,
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
-                                      : const Text(
-                                          'إنشاء الحساب وتأكيد رقمي',
-                                          style: TextStyle(
-                                            fontFamily: 'IBM Plex Sans Arabic',
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 13.5,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // Direct back to login link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'لديك حساب بالفعل في لَفَّة؟',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 13.5,
-                              color: isDark ? AppColors.gray400 : AppColors.gray600,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.s8),
-                          GestureDetector(
-                            onTap: () {
-                              context.pushReplacement('/auth/phone');
-                            },
-                            child: const Text(
-                              'تسجيل الدخول مباشر',
-                              style: TextStyle(
-                                fontFamily: 'IBM Plex Sans Arabic',
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFFFF6B00),
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              );
-            },
+              },
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -362,9 +376,12 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             fontWeight: FontWeight.normal,
             color: isDark ? AppColors.gray600 : AppColors.gray400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+          fillColor: isDark
+              ? AppColors.white.withValues(alpha: 0.02)
+              : AppColors.gray50,
           suffixIcon: Icon(
             Icons.person_rounded,
             color: _isNameFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -373,7 +390,9 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.05)
+                  : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -446,12 +465,16 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             fontSize: 15,
             color: isDark ? AppColors.gray600 : AppColors.gray400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+          fillColor: isDark
+              ? AppColors.white.withValues(alpha: 0.02)
+              : AppColors.gray50,
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
-            color: _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            color:
+                _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: Row(
@@ -471,7 +494,9 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
               Container(
                 height: 22,
                 width: 1,
-                color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
+                color: isDark
+                    ? AppColors.white.withValues(alpha: 0.1)
+                    : AppColors.gray300,
               ),
               const SizedBox(width: AppSpacing.s12),
             ],
@@ -479,7 +504,9 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.05)
+                  : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -549,26 +576,36 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             fontSize: 12,
             color: isDark ? AppColors.gray600 : AppColors.gray400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+          fillColor: isDark
+              ? AppColors.white.withValues(alpha: 0.02)
+              : AppColors.gray50,
           suffixIcon: Icon(
             Icons.lock_open_rounded,
-            color: _isPasswordFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            color: _isPasswordFocused
+                ? const Color(0xFFFF6B00)
+                : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: IconButton(
             icon: Icon(
-              _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+              _obscurePassword
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
               color: AppColors.gray600,
               size: 20,
             ),
-            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            onPressed: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.05)
+                  : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -620,10 +657,12 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         obscureText: _obscureConfirmPassword,
         textInputAction: TextInputAction.next,
         onFieldSubmitted: (_) {
-          FocusScope.of(context).requestFocus(FocusNode()); // Move to next logically or hide
+          FocusScope.of(context)
+              .requestFocus(FocusNode()); // Move to next logically or hide
         },
         style: TextStyle(
-          fontFamily: _obscureConfirmPassword ? 'monospace' : 'IBM Plex Sans Arabic',
+          fontFamily:
+              _obscureConfirmPassword ? 'monospace' : 'IBM Plex Sans Arabic',
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: isDark ? AppColors.white : AppColors.gray900,
@@ -635,26 +674,36 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             fontSize: 12,
             color: isDark ? AppColors.gray600 : AppColors.gray400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+          fillColor: isDark
+              ? AppColors.white.withValues(alpha: 0.02)
+              : AppColors.gray50,
           suffixIcon: Icon(
             Icons.lock_rounded,
-            color: _isConfirmPasswordFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            color: _isConfirmPasswordFocused
+                ? const Color(0xFFFF6B00)
+                : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: IconButton(
             icon: Icon(
-              _obscureConfirmPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+              _obscureConfirmPassword
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
               color: AppColors.gray600,
               size: 20,
             ),
-            onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+            onPressed: () => setState(
+                () => _obscureConfirmPassword = !_obscureConfirmPassword),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.05)
+                  : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -702,9 +751,11 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
           fontSize: 12,
           color: isDark ? AppColors.gray600 : AppColors.gray400,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16, vertical: 14),
         filled: true,
-        fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+        fillColor:
+            isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
         suffixIcon: const Icon(
           Icons.card_giftcard_rounded,
           color: AppColors.gray600,
@@ -713,7 +764,9 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
         enabledBorder: OutlineInputBorder(
           borderRadius: AppSpacing.borderSM,
           borderSide: BorderSide(
-            color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+            color: isDark
+                ? AppColors.white.withValues(alpha: 0.05)
+                : AppColors.gray300,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -739,7 +792,9 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage> {
             activeColor: const Color(0xFFFF6B00),
             checkColor: AppColors.white,
             side: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha: 0.3) : AppColors.gray400,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.3)
+                  : AppColors.gray400,
               width: 1.5,
             ),
             shape: RoundedRectangleBorder(

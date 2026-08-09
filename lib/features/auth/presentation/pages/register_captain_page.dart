@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_logo.dart';
+import '../../../../core/widgets/primary_gradient_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -16,7 +17,6 @@ import '../bloc/auth_state.dart';
 // ============================================================
 
 // (Motorcycle brands and engine sizes removed for simplification)
-
 
 // ============================================================
 // PAGE CLASS
@@ -29,7 +29,12 @@ class RegisterCaptainPage extends StatefulWidget {
   State<RegisterCaptainPage> createState() => _RegisterCaptainPageState();
 }
 
-class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
+class _RegisterCaptainPageState extends State<RegisterCaptainPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _entranceController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   // ──────────────────────────────────────────
   // FORM KEY
   // ──────────────────────────────────────────
@@ -42,7 +47,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController _plateController = TextEditingController();
 
   // ──────────────────────────────────────────
@@ -71,17 +76,30 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
   @override
   void initState() {
     super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
+    );
+    _entranceController.forward();
+
     _nameFocusNode.addListener(
-            () => setState(() => _isNameFocused = _nameFocusNode.hasFocus));
+        () => setState(() => _isNameFocused = _nameFocusNode.hasFocus));
     _phoneFocusNode.addListener(
-            () => setState(() => _isPhoneFocused = _phoneFocusNode.hasFocus));
-    _passwordFocusNode.addListener(() =>
-        setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
+        () => setState(() => _isPhoneFocused = _phoneFocusNode.hasFocus));
+    _passwordFocusNode.addListener(
+        () => setState(() => _isPasswordFocused = _passwordFocusNode.hasFocus));
     _confirmPasswordFocusNode.addListener(() => setState(
-            () => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
+        () => _isConfirmPasswordFocused = _confirmPasswordFocusNode.hasFocus));
     _plateFocusNode.addListener(
-            () => setState(() => _isPlateFocused = _plateFocusNode.hasFocus));
-            
+        () => setState(() => _isPlateFocused = _plateFocusNode.hasFocus));
+
     _nameController.addListener(_validateForm);
     _phoneController.addListener(_validateForm);
     _passwordController.addListener(_validateForm);
@@ -112,6 +130,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
     _plateFocusNode.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
@@ -135,8 +154,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
           ),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
-          shape:
-          RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+          shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
           margin: EdgeInsets.all(16),
         ),
       );
@@ -146,16 +164,16 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     final String fullPhone = '+967${_phoneController.text.trim()}';
 
     context.read<AuthBloc>().add(
-      RegisterCaptainRequested(
-        name: _nameController.text.trim(),
-        phone: fullPhone,
-        password: _passwordController.text,
-        vehicleType: 'دراجة نارية', // ✅ نوع ثابت ومباشر بدون تعقيد
-        vehicleModel: 'غير محدد',
-        vehicleYear: 2024,
-        vehiclePlate: _plateController.text.trim(),
-      ),
-    );
+          RegisterCaptainRequested(
+            name: _nameController.text.trim(),
+            phone: fullPhone,
+            password: _passwordController.text,
+            vehicleType: 'دراجة نارية', // ✅ نوع ثابت ومباشر بدون تعقيد
+            vehicleModel: 'غير محدد',
+            vehicleYear: 2024,
+            vehiclePlate: _plateController.text.trim(),
+          ),
+        );
   }
 
   // ──────────────────────────────────────────
@@ -168,7 +186,9 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -216,169 +236,143 @@ appBar: AppBar(
           builder: (BuildContext context, AuthState state) {
             final bool isLoading = state is AuthLoading;
 
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s24,
-                vertical: AppSpacing.s16,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // ——— Header ———————————————
-                  const LaffahLogo(height: 80, width: 80, showSubtitle: false),
-                  AppSpacing.h8,
-                  Text(
-                    'انضم ككابتن لَفَّة',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      color: isDark ? AppColors.white : AppColors.gray900,
-                    ),
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s24,
+                    vertical: AppSpacing.s16,
                   ),
-                  Text(
-                    'سجّل بياناتك وبيانات دراجتك النارية وابدأ بجني الأرباح فوراً',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 11.5,
-                      color: isDark ? AppColors.gray500 : AppColors.gray600,
-                      height: 1.4,
-                    ),
-                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // ——— Header ———————————————
+                      const LaffahLogo(
+                          height: 80, width: 80, showSubtitle: false),
+                      AppSpacing.h8,
+                      Text(
+                        'انضم ككابتن لَفَّة',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                        ),
+                      ),
+                      Text(
+                        'سجّل بياناتك وبيانات دراجتك النارية وابدأ بجني الأرباح فوراً',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 11.5,
+                          color: isDark ? AppColors.gray500 : AppColors.gray600,
+                          height: 1.4,
+                        ),
+                      ),
 
-                  const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                  // ——— Registration Form ———
-                  GlassBox(
-                    borderRadius: AppSpacing.radiusXL,
-                    padding: const EdgeInsets.all(AppSpacing.s24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // SECTION 1: بيانات شخصية
-                          _buildSectionHeader('1. البيانات الشخصية للكابتن:'),
-                          const SizedBox(height: 12),
+                      // ——— Registration Form ———
+                      GlassBox(
+                        borderRadius: AppSpacing.radiusXL,
+                        padding: const EdgeInsets.all(AppSpacing.s24),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // SECTION 1: بيانات شخصية
+                              _buildSectionHeader(
+                                  '1. البيانات الشخصية للكابتن:'),
+                              const SizedBox(height: 12),
 
-                          _buildLabel('الاسم الرباعي الكامل:'),
-                          _buildNameField(isDark),
-                          const SizedBox(height: 16),
+                              _buildLabel('الاسم الرباعي الكامل:'),
+                              _buildNameField(isDark),
+                              const SizedBox(height: 16),
 
-                          _buildLabel('رقم الهاتف الجوال:'),
-                          _buildPhoneField(isDark),
-                          const SizedBox(height: 16),
+                              _buildLabel('رقم الهاتف الجوال:'),
+                              _buildPhoneField(isDark),
+                              const SizedBox(height: 16),
 
-                          _buildLabel('كلمة المرور الجديدة:'),
-                          _buildPasswordField(isDark),
-                          const SizedBox(height: 16),
+                              _buildLabel('كلمة المرور الجديدة:'),
+                              _buildPasswordField(isDark),
+                              const SizedBox(height: 16),
 
-                          _buildLabel('تأكيد كلمة المرور:'),
-                          _buildConfirmPasswordField(isDark),
+                              _buildLabel('تأكيد كلمة المرور:'),
+                              _buildConfirmPasswordField(isDark),
 
-                          const SizedBox(height: 28),
+                              const SizedBox(height: 28),
 
-                          // SECTION 2: بيانات الدراجة النارية
-                          _buildSectionHeader('2. بيانات الدراجة النارية:'),
-                          const SizedBox(height: 12),
+                              // SECTION 2: بيانات الدراجة النارية
+                              _buildSectionHeader('2. بيانات الدراجة النارية:'),
+                              const SizedBox(height: 12),
 
-                          _buildLabel('رقم اللوحة المرورية:'),
-                          _buildPlateField(isDark),
+                              _buildLabel('رقم اللوحة المرورية:'),
+                              _buildPlateField(isDark),
 
-                          const SizedBox(height: 24),
+                              const SizedBox(height: 24),
 
-                          // SECTION 3: الموافقة على الشروط
-                          _buildTermsCheckbox(isDark),
+                              // SECTION 3: الموافقة على الشروط
+                              _buildTermsCheckbox(isDark),
 
-                          const SizedBox(height: 28),
+                              const SizedBox(height: 28),
 
-                          // SUBMIT BUTTON
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              onPressed: isLoading ? null : _handleRegister,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6B00),
-                                foregroundColor: AppColors.white,
-                                elevation: 2,
-                                shadowColor: const Color(0xFFFF6B00)
-                                    .withValues(alpha: 0.35),
-                                shape: const RoundedRectangleBorder(
-                                    borderRadius: AppSpacing.radiusMD),
+                              // SUBMIT BUTTON
+                              PrimaryGradientButton(
+                                text: 'تقديم الطلب وتأكيد رقم الهاتف',
+                                isLoading: isLoading,
+                                icon: Icons.two_wheeler_rounded,
+                                onPressed:
+                                    _isFormValid ? _handleRegister : null,
                               ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.white,
-                                  strokeWidth: 2.5,
-                                ),
-                              )
-                                  : const Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'تقديم الطلب وتأكيد رقم الهاتف',
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13.5,
-                                    ),
-                                  ),
-                                  AppSpacing.w8,
-                                  Icon(Icons.two_wheeler_rounded,
-                                      size: 18),
-                                ],
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // Back to login link
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'لديك حساب كابتن مسجل بالفعل؟',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 13.5,
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s8),
+                          GestureDetector(
+                            onTap: () {
+                              context.pushReplacement('/auth/phone');
+                            },
+                            child: const Text(
+                              'سجّل دخولك',
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFFF6B00),
+                                decoration: TextDecoration.underline,
+                                decorationColor: Color(0xFFFF6B00),
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 28),
-
-                  // Back to login link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'لديك حساب كابتن مسجل بالفعل؟',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 13.5,
-                          color:
-                          isDark ? AppColors.gray400 : AppColors.gray600,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      GestureDetector(
-                        onTap: () {
-                          context.pushReplacement('/auth/phone');
-                        },
-                        child: const Text(
-                          'سجّل دخولك',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFFFF6B00),
-                            decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFFFF6B00),
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 32),
                     ],
                   ),
-
-                  const SizedBox(height: 32),
-                ],
+                ),
               ),
             );
           },
@@ -442,16 +436,18 @@ appBar: AppBar(
         color: isDark ? AppColors.gray600 : AppColors.gray400,
       ),
       contentPadding:
-      const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+          const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
       filled: true,
-      fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+      fillColor:
+          isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
       suffixIcon: suffixIcon,
       prefixIcon: prefixIcon,
       enabledBorder: OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
         borderSide: BorderSide(
-          color:
-          isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray300,
         ),
       ),
       focusedBorder: const OutlineInputBorder(
@@ -557,7 +553,7 @@ appBar: AppBar(
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
             color:
-            _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+                _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: Row(
@@ -624,8 +620,7 @@ appBar: AppBar(
           FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
         },
         style: TextStyle(
-          fontFamily:
-          _obscurePassword ? 'monospace' : 'IBM Plex Sans Arabic',
+          fontFamily: _obscurePassword ? 'monospace' : 'IBM Plex Sans Arabic',
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: isDark ? AppColors.white : AppColors.gray900,
@@ -690,7 +685,7 @@ appBar: AppBar(
         },
         style: TextStyle(
           fontFamily:
-          _obscureConfirmPassword ? 'monospace' : 'IBM Plex Sans Arabic',
+              _obscureConfirmPassword ? 'monospace' : 'IBM Plex Sans Arabic',
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: isDark ? AppColors.white : AppColors.gray900,
@@ -715,7 +710,7 @@ appBar: AppBar(
               size: 20,
             ),
             onPressed: () => setState(
-                    () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                () => _obscureConfirmPassword = !_obscureConfirmPassword),
           ),
         ),
         validator: (String? value) {
