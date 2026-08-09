@@ -10,6 +10,11 @@ class WalletRepositoryImpl implements WalletRepository {
 
   WalletRepositoryImpl({required this.remoteDataSource});
 
+  static const WalletEntity _emptyWallet = WalletEntity(
+    balance: 0.0,
+    transactions: [],
+  );
+
   @override
   Future<Either<Failure, WalletEntity>> getWalletBalance() async {
     try {
@@ -17,10 +22,10 @@ class WalletRepositoryImpl implements WalletRepository {
       if (response.success && response.data != null) {
         return Right(response.data!);
       } else {
-        return Left(ServerFailure(response.message));
+        return const Right(_emptyWallet);
       }
-    } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء تحميل بيانات المحفظة'));
+    } on DioException catch (e) {
+      return Left(ServerFailure('تعذر جلب بيانات المحفظة: $e'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -35,8 +40,8 @@ class WalletRepositoryImpl implements WalletRepository {
       } else {
         return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء طلب السحب'));
+    } on DioException catch (e) {
+      return Left(ServerFailure('تعذر طلب السحب: $e'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

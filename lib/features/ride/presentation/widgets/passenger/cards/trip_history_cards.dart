@@ -248,7 +248,7 @@ class ScheduledTripCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['type'],
+                        item['type'] ?? 'رحلة مجدولة',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -256,7 +256,7 @@ class ScheduledTripCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        item['time'],
+                        item['time'] ?? item['scheduledAt'] ?? 'غداً، 08:00 ص',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -269,7 +269,7 @@ class ScheduledTripCard extends StatelessWidget {
                 ],
               ),
               Text(
-                '${item['estimatedFare'].toStringAsFixed(0)} ريال مقدراً',
+                '${((item['estimatedFare'] ?? item['fare'] ?? item['price'] ?? 0) as num).toDouble().toStringAsFixed(0)} ريال مقدراً',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -416,7 +416,7 @@ class PastTripCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['type'],
+                        item['type'] ?? 'رحلة',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -424,7 +424,7 @@ class PastTripCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        item['date'],
+                        item['date'] ?? 'اليوم',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? AppColors.gray400 : AppColors.gray600,
@@ -436,7 +436,7 @@ class PastTripCard extends StatelessWidget {
                 ],
               ),
               Text(
-                '${item['fare'].toStringAsFixed(0)} ريال',
+                '${((item['fare'] ?? item['price'] ?? 0) as num).toDouble().toStringAsFixed(0)} ريال',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
@@ -495,9 +495,9 @@ class PastTripCard extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (ctx) => RatingAndSupportDialog(
-                      tripId: item['id'],
-                      captainName: item['captainName'],
-                      fare: item['fare'].toDouble(),
+                      tripId: item['id']?.toString() ?? '',
+                      captainName: item['captainName'] ?? 'الكابتن',
+                      fare: ((item['fare'] ?? item['price'] ?? 0) as num).toDouble(),
                     ),
                   );
                 },
@@ -612,7 +612,7 @@ class CancelledTripCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['type'],
+                        item['type'] ?? 'رحلة',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -620,7 +620,7 @@ class CancelledTripCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        item['date'],
+                        item['date'] ?? 'اليوم',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? AppColors.gray400 : AppColors.gray600,
@@ -683,7 +683,7 @@ class CancelledTripCard extends StatelessWidget {
               AppSpacing.w6,
               Expanded(
                 child: Text(
-                  'سبب الإلغاء: ${item['reason']}',
+                  'سبب الإلغاء: ${item['reason'] ?? 'تم الإلغاء بواسطة الراكب'}',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

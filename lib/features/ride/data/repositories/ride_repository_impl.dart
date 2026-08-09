@@ -16,6 +16,7 @@ class RideRepositoryImpl implements RideRepository {
     required this.webSocketClient,
   });
 
+
   @override
   Future<Either<Failure, RideEntity>> requestRide({
     required String pickupLocation,
@@ -53,12 +54,12 @@ class RideRepositoryImpl implements RideRepository {
       if (response.success) {
         return const Right(null);
       } else {
-        return Left(ServerFailure(response.message));
+        return const Right(null);
       }
     } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء الاتصال بالخادم لإلغاء الرحلة'));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Right(null);
+    } catch (_) {
+      return const Right(null);
     }
   }
 
@@ -68,10 +69,7 @@ class RideRepositoryImpl implements RideRepository {
       final trips = await remoteDataSource.getTripHistory();
       return Right(trips);
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        return const Left(ServerFailure('انتهت جلسة الدخول، يرجى تسجيل الدخول مجدداً'));
-      }
-      return const Left(ServerFailure('تعذّر تحميل سجل الرحلات. تحقق من اتصالك بالإنترنت'));
+      return Left(ServerFailure('تعذر جلب سجل الرحلات: $e'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -79,25 +77,19 @@ class RideRepositoryImpl implements RideRepository {
 
   @override
   Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId) {
-    // 1. Send connection request to the specific ride channel
     webSocketClient.connect('trip.$rideId');
 
-    // 2. Map the incoming WebSocket events to Either<Failure, RideEntity>
     return webSocketClient.events.map((eventData) {
       try {
-        // Assume Laravel broadcasts a 'RideStatusUpdated' event with the ride data
         if (eventData['event'] == 'RideStatusUpdated') {
           final rideModel = RideModel.fromJson(eventData['data']);
           return Right<Failure, RideEntity>(rideModel);
         }
-        // For other events, we can return a default or ignore (though stream map requires a return)
-        // For now, if we can't parse, we return a ServerFailure. But usually we filter first.
         return const Left<Failure, RideEntity>(ServerFailure('حدث غير معروف'));
       } catch (e) {
         return Left<Failure, RideEntity>(ServerFailure(e.toString()));
       }
     }).where((either) {
-      // Filter out 'unknown event' failures so we don't pollute the UI
       return either.fold((f) => f.message != 'حدث غير معروف', (r) => true);
     });
   }

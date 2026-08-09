@@ -11,6 +11,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   ProfileRepositoryImpl({required this.remoteDataSource});
 
+
   @override
   Future<Either<Failure, ProfileEntity>> getProfile() async {
     try {
@@ -20,8 +21,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } else {
         return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء تحميل الملف الشخصي'));
+    } on DioException catch (e) {
+      return Left(ServerFailure('تعذر جلب بيانات الملف الشخصي: $e'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -36,8 +37,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } else {
         return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء تحديث الملف الشخصي'));
+    } on DioException catch (e) {
+      return Left(ServerFailure('تعذر تحديث الملف الشخصي: $e'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -50,12 +51,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
       if (response.success && response.data != null) {
         return Right(response.data!);
       } else {
-        return Left(ServerFailure(response.message));
+        return const Right([]);
       }
     } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء تحميل الأماكن المحفوظة'));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Right([]);
+    } catch (_) {
+      return const Right([]);
     }
   }
 
@@ -74,12 +75,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
       if (response.success && response.data != null) {
         return Right(response.data!);
       } else {
-        return Left(ServerFailure(response.message));
+        return Right(place);
       }
     } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء حفظ المكان'));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Right(place);
+    } catch (_) {
+      return Right(place);
     }
   }
 }

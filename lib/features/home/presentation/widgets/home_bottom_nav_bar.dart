@@ -37,13 +37,13 @@ class HomeBottomNavBar extends StatelessWidget {
       },
       {
         'title': 'المحفظة',
-        'icon': Icons.account_balance_wallet_rounded,
+        'icon': Icons.account_balance_wallet_outlined,
         'activeIcon': Icons.account_balance_wallet_rounded,
         'route': LaffahRoutes.passengerWallet,
       },
       {
         'title': 'الحساب',
-        'icon': Icons.person_rounded,
+        'icon': Icons.person_outline_rounded,
         'activeIcon': Icons.person_rounded,
         'route': LaffahRoutes.passengerProfile,
       },
@@ -116,7 +116,8 @@ class HomeBottomNavBar extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? const Color(0xFFFF6B00).withValues(alpha: 0.14)
+                                ? const Color(0xFFFF6B00)
+                                    .withValues(alpha: 0.14)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -128,7 +129,9 @@ class HomeBottomNavBar extends StatelessWidget {
                                 scale: isSelected ? 1.15 : 1.0,
                                 duration: const Duration(milliseconds: 200),
                                 child: Icon(
-                                  isSelected ? item['activeIcon'] as IconData : item['icon'] as IconData,
+                                  isSelected
+                                      ? item['activeIcon'] as IconData
+                                      : item['icon'] as IconData,
                                   size: 22,
                                   color: isSelected
                                       ? const Color(0xFFFF6B00)

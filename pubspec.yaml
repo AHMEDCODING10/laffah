@@ -52,7 +52,7 @@ flutter:
   assets:
     - .env
     - assets/images/
-    - assets/icons/
+    #- assets/icons/
     - assets/fonts/
   fonts:
     - family: IBM Plex Sans Arabic

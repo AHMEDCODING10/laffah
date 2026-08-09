@@ -4,7 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../domain/entities/wallet_entity.dart';
 import '../bloc/wallet_bloc.dart';
 import '../bloc/wallet_event.dart';
@@ -122,7 +121,6 @@ class _WalletView extends StatelessWidget {
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
         appBar: const LaffahAppBar(title: 'محفظة لَفَّة'),
-        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 2),
         body: BlocBuilder<WalletBloc, WalletState>(
           builder: (context, state) {
             if (state is WalletLoading) {

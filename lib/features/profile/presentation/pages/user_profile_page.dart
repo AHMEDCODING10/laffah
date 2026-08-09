@@ -8,7 +8,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
-import '../../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
@@ -49,8 +48,11 @@ class _ProfileView extends StatelessWidget {
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
-        appBar: const LaffahAppBar(title: 'الملف الشخصي', showMenuButton: false),
-        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 3),
+        appBar: const LaffahAppBar(
+          title: 'الملف الشخصي',
+          showMenuButton: false,
+          showBackButton: false,
+        ),
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             // Show skeleton/loading while fetching
