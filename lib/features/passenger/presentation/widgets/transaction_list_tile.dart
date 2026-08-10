@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -68,7 +69,7 @@ class TransactionListTile extends StatelessWidget {
             ),
           ),
           Text(
-            '${isDeposit ? '+' : '-'}${transaction.amount.toStringAsFixed(0)} ريال',
+            AppLocalizations.of(context)!.pass_tx_amount(isDeposit ? '+' : '-', transaction.amount.toStringAsFixed(0)),
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,

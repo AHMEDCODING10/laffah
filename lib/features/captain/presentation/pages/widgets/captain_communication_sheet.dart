@@ -1,3 +1,4 @@
+import '../../../../../l10n/app_localizations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,11 +66,11 @@ class CaptainCommunicationSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    const List<String> quickMessages = [
-      'أنا وصلت موقع الاستلام وبانتظارك 📍',
-      'أنا في الطريق وفي الزحمة دقيقتين وأصل 🛵',
-      'يرجى التجهز والانتظار مكانك ⏱️',
-      'أنا واصل عند البوابة الرئيسية 🚪',
+    final List<String> quickMessages = [
+      AppLocalizations.of(context)!.capt_msg_arrived,
+      AppLocalizations.of(context)!.capt_msg_on_way,
+      AppLocalizations.of(context)!.capt_msg_get_ready,
+      AppLocalizations.of(context)!.capt_msg_at_gate,
     ];
 
     return Directionality(
@@ -170,9 +171,9 @@ class CaptainCommunicationSheet extends StatelessWidget {
                     AppSpacing.h20,
 
                     // Communication Channels (WhatsApp, Call, SMS)
-                    const Text(
-                      'اختر وسيلة المراسلة المباشرة:',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.capt_choose_messaging,
+                      style: const TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -188,7 +189,7 @@ class CaptainCommunicationSheet extends StatelessWidget {
                         Expanded(
                           child: _buildChannelCard(
                             isDark: isDark,
-                            label: 'محادثة واتساب',
+                            label: AppLocalizations.of(context)!.capt_whatsapp_chat,
                             icon: Icons.chat_rounded,
                             color: const Color(0xFF25D366),
                             onTap: () {
@@ -215,7 +216,7 @@ class CaptainCommunicationSheet extends StatelessWidget {
                         Expanded(
                           child: _buildChannelCard(
                             isDark: isDark,
-                            label: 'رسالة نصية SMS',
+                            label: AppLocalizations.of(context)!.capt_sms_chat,
                             icon: Icons.textsms_rounded,
                             color: const Color(0xFFFF6B00),
                             onTap: () {
@@ -241,9 +242,9 @@ class CaptainCommunicationSheet extends StatelessWidget {
                     AppSpacing.h20,
 
                     // Quick One-Tap Messages Section
-                    const Text(
-                      'أرسل رسالة سريعة بنقرة واحدة ⚡:',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.capt_quick_message,
+                      style: const TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontWeight: FontWeight.bold,
                         fontSize: 12,

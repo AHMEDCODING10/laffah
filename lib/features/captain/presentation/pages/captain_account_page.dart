@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -497,7 +498,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               _buildSettingItem(
                 icon: Icons.translate_rounded,
                 title: 'تغيير لغة التطبيق',
-                subtitle: _selectedLang == 'ar' ? 'العربية (🇾🇪 العربية)' : 'English (🇬🇧 English)',
+                subtitle: _selectedLang == 'ar' ? AppLocalizations.of(context)!.capt_arabic_ye : 'English (🇬🇧 English)',
                 onTap: () {
                   LanguageSelectorSheet.show(
                     context: context,
@@ -602,7 +603,8 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               // 6. LOG OUT BUTTON
               Material(
                 color: Colors.transparent,
-                child: Container(
+                borderRadius: BorderRadius.circular(20),
+                child: Ink(
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(20),
@@ -610,6 +612,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                   ),
                   child: ListTile(
                     onTap: () => _showLogoutConfirmDialog(context),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     leading: Container(
                       padding: const EdgeInsets.all(AppSpacing.s8),
                       decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
@@ -680,40 +683,44 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.s10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s10),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+            ),
+          ),
+          child: ListTile(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onTap();
+            },
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: const Color(0xFFFF6B00).withValues(alpha: 0.08), shape: BoxShape.circle),
+              child: Icon(icon, color: const Color(0xFFFF6B00), size: 20),
+            ),
+            title: Text(
+              title,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
+            ),
+            subtitle: Text(
+              subtitle,
+              style: const TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
           ),
         ),
-        child: ListTile(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: const Color(0xFFFF6B00).withValues(alpha: 0.08), shape: BoxShape.circle),
-          child: Icon(icon, color: const Color(0xFFFF6B00), size: 20),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(fontSize: 10.5, color: AppColors.gray500, fontFamily: 'IBM Plex Sans Arabic'),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildSwitchSettingItem({
     required IconData icon,

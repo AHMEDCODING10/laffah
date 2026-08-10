@@ -48,3 +48,18 @@ class AuthFailure extends AuthState {
   @override
   int get hashCode => message.hashCode;
 }
+
+class ForgotPasswordCodeSent extends AuthState {
+  final String phone;
+  const ForgotPasswordCodeSent({required this.phone});
+}
+
+class VerifyResetCodeSuccess extends AuthState {
+  final String phone;
+  final String code;
+  const VerifyResetCodeSuccess({required this.phone, required this.code});
+}
+
+class ResetPasswordSuccess extends AuthState {
+  const ResetPasswordSuccess();
+}

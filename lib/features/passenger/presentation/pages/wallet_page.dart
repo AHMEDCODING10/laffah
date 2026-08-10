@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -55,7 +56,7 @@ class _WalletView extends StatelessWidget {
               ),
               AppSpacing.h16,
               Text(
-                'اختر طريقة الشحن الإلكتروني المحلية',
+                AppLocalizations.of(context)!.pass_choose_recharge_method,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.w900,
@@ -64,9 +65,9 @@ class _WalletView extends StatelessWidget {
                 ),
               ),
               AppSpacing.h16,
-              _buildTopUpOption(ctx, 'حاسب / إيداع بنك الكريمي', Icons.account_balance_rounded, isDark),
-              _buildTopUpOption(ctx, 'محفظة فلوس (Floos)', Icons.account_balance_wallet_rounded, isDark),
-              _buildTopUpOption(ctx, 'محفظة جوالي (Jawali)', Icons.phone_android_rounded, isDark),
+              _buildTopUpOption(ctx, AppLocalizations.of(context)!.pass_haseb_kuraimi, Icons.account_balance_rounded, isDark),
+              _buildTopUpOption(ctx, AppLocalizations.of(context)!.pass_floos_wallet, Icons.account_balance_wallet_rounded, isDark),
+              _buildTopUpOption(ctx, AppLocalizations.of(context)!.pass_jawali_wallet, Icons.phone_android_rounded, isDark),
               AppSpacing.h16,
             ],
           ),
@@ -100,7 +101,7 @@ class _WalletView extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'جاري تحويلك لخيار شحن المحفظة عبر $title...',
+              AppLocalizations.of(context)!.pass_redirect_recharge(title),
               textAlign: TextAlign.right,
               style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
             ),
@@ -120,7 +121,8 @@ class _WalletView extends StatelessWidget {
       child: Scaffold(
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
-        appBar: const LaffahAppBar(title: 'محفظة لَفَّة'),
+        appBar: LaffahAppBar(title: AppLocalizations.of(context)!.pass_laffah_wallet),
+        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 2),
         body: BlocBuilder<WalletBloc, WalletState>(
           builder: (context, state) {
             if (state is WalletLoading) {
@@ -143,7 +145,7 @@ class _WalletView extends StatelessWidget {
                     ElevatedButton.icon(
                       onPressed: () => context.read<WalletBloc>().add(GetWalletBalanceEvent()),
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('إعادة المحاولة', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                      label: Text(AppLocalizations.of(context)!.pass_retry, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary500),
                     ),
                   ],
@@ -173,7 +175,7 @@ class _WalletView extends StatelessWidget {
                 ),
                 AppSpacing.h24,
                 Text(
-                  'سجل المعاملات المالية الحديثة',
+                  AppLocalizations.of(context)!.pass_recent_tx,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.w900,
@@ -187,7 +189,7 @@ class _WalletView extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.s24),
                       child: Text(
-                        'لا توجد معاملات بعد',
+                        AppLocalizations.of(context)!.pass_no_tx_yet,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           color: isDark ? AppColors.gray500 : AppColors.gray600,

@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -35,11 +36,11 @@ class _PromoCodePageState extends State<PromoCodePage> {
   void _applyPromoCode(String code) {
     if (code.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'يرجى إدخال رمز الخصم أولاً',
+            AppLocalizations.of(context)!.pass_enter_promo_first,
             textAlign: TextAlign.right,
-            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
           ),
           backgroundColor: AppColors.danger,
         ),
@@ -50,7 +51,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'تم تفعيل كود الخصم ($code) بنجاح!',
+          AppLocalizations.of(context)!.pass_promo_activated(code),
           textAlign: TextAlign.right,
           style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
         ),
@@ -69,7 +70,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
       child: Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: const LaffahAppBar(title: 'أكواد الخصم والعروض'),
+        appBar: LaffahAppBar(title: AppLocalizations.of(context)!.pass_promo_codes),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.s20,
@@ -86,7 +87,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'هل لديك كود خصم خاص؟',
+                    AppLocalizations.of(context)!.pass_have_promo,
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontWeight: FontWeight.w900,
@@ -107,7 +108,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
                             color: isDark ? AppColors.white : AppColors.gray900,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'أدخل رمز الخصم (مثال: LAFFAH20)',
+                            hintText: AppLocalizations.of(context)!.pass_enter_promo_hint,
                             hintStyle: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 12,
@@ -143,9 +144,9 @@ class _PromoCodePageState extends State<PromoCodePage> {
                             borderRadius: AppSpacing.borderSM,
                           ),
                         ),
-                        child: const Text(
-                          'تطبيق',
-                          style: TextStyle(
+                        child: Text(
+                          AppLocalizations.of(context)!.pass_apply,
+                          style: const TextStyle(
                             fontFamily: 'IBM Plex Sans Arabic',
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -163,7 +164,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
 
             // Active Promos Title
             Text(
-              'العروض والقسائم المتاحة لك',
+              AppLocalizations.of(context)!.pass_available_offers,
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontWeight: FontWeight.w900,

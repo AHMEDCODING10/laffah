@@ -44,14 +44,53 @@ class LaravelErrorInterceptor extends Interceptor {
           message = data['message'].toString();
         }
       }
+      String errorMessage = data is Map && data['message'] != null ? data['message'].toString() : message;
+
+      if (fieldErrors.isNotEmpty) {
+        final firstError = fieldErrors.values.first.first;
+        if (firstError == 'validation.unique' || firstError.contains('unique')) {
+          errorMessage = 'رقم الهاتف مسجل مسبقاً في النظام. يرجى تسجيل الدخول.';
+        } else if (firstError.contains('validation.')) {
+           errorMessage = 'يرجى التحقق من البيانات المدخلة';
+        } else {
+          errorMessage = firstError;
+        }
+      }
 
       return handler.reject(
         DioException(
           requestOptions: err.requestOptions,
           error: LaravelValidationException(
-            message: message,
+            message: errorMessage,
             fieldErrors: fieldErrors,
           ),
+          response: err.response,
+          type: err.type,
+        ),
+      );
+    } else if (err.response?.statusCode == 404) {
+      return handler.reject(
+        DioException(
+          requestOptions: err.requestOptions,
+          error: const ServerException('الخدمة المطلوبة غير متوفرة حالياً (404)'),
+          response: err.response,
+          type: err.type,
+        ),
+      );
+    } else if (err.response?.statusCode == 500) {
+      return handler.reject(
+        DioException(
+          requestOptions: err.requestOptions,
+          error: const ServerException('حدث خطأ داخلي في الخادم (500)، يرجى المحاولة لاحقاً'),
+          response: err.response,
+          type: err.type,
+        ),
+      );
+    } else if (err.type == DioExceptionType.connectionTimeout || err.type == DioExceptionType.connectionError) {
+      return handler.reject(
+        DioException(
+          requestOptions: err.requestOptions,
+          error: const ServerException('تعذر الاتصال بالخادم، يرجى التحقق من الاتصال بالشبكة'),
           response: err.response,
           type: err.type,
         ),

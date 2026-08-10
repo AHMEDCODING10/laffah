@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -5,12 +6,41 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_logo.dart';
 
-
-/// AuthLandingPage - Elegant gateway where passengers and captains begin their Laffah journey.
-/// Implements beautiful, high-contrast layouts, Glassmorphic cards, complete RTL support,
-/// explicit role routing, and clear "Skip" / "Login" actions.
-class AuthLandingPage extends StatelessWidget {
+class AuthLandingPage extends StatefulWidget {
   const AuthLandingPage({super.key});
+
+  @override
+  State<AuthLandingPage> createState() => _AuthLandingPageState();
+}
+
+class _AuthLandingPageState extends State<AuthLandingPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _entranceController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
+    );
+    _entranceController.forward();
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,224 +49,314 @@ class AuthLandingPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl, // RTL Layout first
       child: Scaffold(
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : const Color(0xFFF8F9FA), // Minimal light gray
         body: SafeArea(
           child: Center(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s24,
-                vertical: AppSpacing.s40,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                    // Brand Logo Mark
-                    const LaffahLogo(
-                      height: 120,
-                      width: 120,
-                      showSubtitle: false,
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    // Heading Promo Text
-                    Text(
-                      'مرحباً بك في لَفَّة',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? AppColors.white : AppColors.gray900,
-                        letterSpacing: -0.5,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s24,
+                    vertical: AppSpacing.s40,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Brand Logo Mark
+                      const LaffahLogo(
+                        height: 120,
+                        width: 120,
+                        showSubtitle: false,
                       ),
-                    ),
 
-                    AppSpacing.h8,
+                      const SizedBox(height: 40),
 
-                    Text(
-                      'اختر كيف تود استخدام التطبيق للبدء فوراً',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 14,
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
-                        height: 1.4,
-                      ),
-                    ),
-
-                    const SizedBox(height: 36),
-
-                    // 3. Option 1: Join as Passenger
-                    _buildRoleCard(
-                      context: context,
-                      isDark: isDark,
-                      title: 'طلب رحلة (راكب)',
-                      subtitle: 'ابحث عن كابتن، احسب أجرتك، وتنقّل بأمان.',
-                      icon: Icons.person_pin_circle_rounded,
-                      buttonText: 'إنشاء حساب راكب',
-                      onPressed: () {
-                        context.push('/auth/register/passenger');
-                      },
-                    ),
-
-                    AppSpacing.h20,
-
-                    // 4. Option 2: Join as Captain
-                    _buildRoleCard(
-                      context: context,
-                      isDark: isDark,
-                      title: 'انضم ككابتن (سائق)',
-                      subtitle: 'سجّل دراجتك، كُن رئيس نفسك وحقّق عوائد يومية.',
-                      icon: Icons.two_wheeler_rounded,
-                      buttonText: 'التسجيل ككابتن لَفَّة',
-                      accentColor: const Color(0xFFFF6B00),
-                      onPressed: () {
-                        context.push('/auth/register/captain');
-                      },
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    // 5. Existing Account Link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'لديك حساب بالفعل؟',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 14,
-                            color: isDark ? AppColors.gray400 : AppColors.gray600,
-                          ),
+                      // Heading Promo Text
+                      Text(
+                        AppLocalizations.of(context)!.auth_welcome,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                          letterSpacing: -0.5,
                         ),
-                        const SizedBox(width: AppSpacing.s8),
-                        GestureDetector(
-                          onTap: () {
-                            context.push('/auth/phone');
-                          },
-                          child: const Text(
-                            'تسجيل الدخول',
+                      ),
+
+                      AppSpacing.h8,
+
+                      Text(
+                        AppLocalizations.of(context)!.auth_choose_role,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 15,
+                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          height: 1.4,
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // Option 1: Join as Passenger
+                      AnimatedRoleCard(
+                        isDark: isDark,
+                        title: AppLocalizations.of(context)!.auth_role_passenger,
+                        subtitle: AppLocalizations.of(context)!.auth_role_passenger_desc,
+                        icon: Icons
+                            .location_on_rounded, // modernized location pin
+                        buttonText: AppLocalizations.of(context)!.auth_create_passenger,
+                        backgroundColor: isDark
+                            ? AppColors.surfaceElevatedDark
+                                .withValues(alpha: 0.7)
+                            : const Color(0xFFFFF6ED)
+                                .withValues(alpha: 0.8), // soft peach glass
+                        iconBackgroundColor: isDark
+                            ? AppColors.backgroundDark
+                            : const Color(0xFFFFE8B5), // refined yellow
+                        iconColor: const Color(0xFFFF6B00), // orange
+                        onPressed: () {
+                          context.push('/auth/register/passenger');
+                        },
+                      ),
+
+                      AppSpacing.h24,
+
+                      // Option 2: Join as Captain
+                      AnimatedRoleCard(
+                        isDark: isDark,
+                        title: AppLocalizations.of(context)!.auth_role_captain,
+                        subtitle:
+                            AppLocalizations.of(context)!.auth_role_captain_desc,
+                        icon: Icons.two_wheeler_rounded,
+                        buttonText: AppLocalizations.of(context)!.auth_create_captain,
+                        backgroundColor: isDark
+                            ? AppColors.surfaceElevatedDark
+                                .withValues(alpha: 0.7)
+                            : const Color(0xFFFBECE6)
+                                .withValues(alpha: 0.8), // coral-tinted glass
+                        iconBackgroundColor: isDark
+                            ? AppColors.backgroundDark
+                            : const Color(0xFFFFDBCA),
+                        iconColor: const Color(0xFFFF6B00),
+                        onPressed: () {
+                          context.push('/auth/register/captain');
+                        },
+                      ),
+
+                      const SizedBox(height: 48),
+
+                      // Existing Account Link
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.auth_already_have_account,
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFFFF6B00),
-                              decoration: TextDecoration.underline,
+                              fontSize: 15,
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: AppSpacing.s8),
+                          GestureDetector(
+                            onTap: () {
+                              context.push('/auth/phone');
+                            },
+                            child: Text(AppLocalizations.of(context)!.auth_login,
+                              style: const TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFFF6B00),
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ),
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildRoleCard({
-    required BuildContext context,
-    required bool isDark,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required String buttonText,
-    required VoidCallback onPressed,
-    Color accentColor = AppColors.gray900,
-  }) {
-    final bool isOrangeAccent = accentColor == const Color(0xFFFF6B00);
+class AnimatedRoleCard extends StatefulWidget {
+  final bool isDark;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String buttonText;
+  final VoidCallback onPressed;
+  final Color backgroundColor;
+  final Color iconBackgroundColor;
+  final Color iconColor;
 
-    return GlassBox(
-      borderRadius: AppSpacing.radiusXL,
-      padding: const EdgeInsets.all(AppSpacing.s20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.s12),
-                decoration: BoxDecoration(
-                  color: isOrangeAccent
-                      ? const Color(0xFFFF6B00).withValues(alpha: 0.12)
-                      : AppColors.primary500.withValues(alpha: 0.08),
-                  borderRadius: AppSpacing.borderSM,
-                ),
-                child: Icon(
-                  icon,
-                  color: isOrangeAccent ? const Color(0xFFFF6B00) : AppColors.primary500,
-                  size: 28,
-                ),
-              ),
-              AppSpacing.w16,
-              Expanded(
-                child: Column(
+  const AnimatedRoleCard({
+    super.key,
+    required this.isDark,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.buttonText,
+    required this.onPressed,
+    required this.backgroundColor,
+    required this.iconBackgroundColor,
+    required this.iconColor,
+  });
+
+  @override
+  State<AnimatedRoleCard> createState() => _AnimatedRoleCardState();
+}
+
+class _AnimatedRoleCardState extends State<AnimatedRoleCard> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _isPressed ? 0.96 : (_isHovered ? 1.02 : 1.0);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          widget.onPressed();
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedScale(
+          scale: scale,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          child: GlassBox(
+            customBgColor: widget.backgroundColor,
+            customBorderColor: widget.isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.white.withValues(alpha: 0.5),
+            borderRadius: AppSpacing.radiusXL,
+            padding: const EdgeInsets.all(AppSpacing.s24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? AppColors.white : AppColors.gray900,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: widget.isDark
+                                  ? AppColors.white
+                                  : AppColors.gray900,
+                            ),
+                          ),
+                          AppSpacing.h8,
+                          Text(
+                            widget.subtitle,
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 13,
+                              height: 1.5,
+                              color: widget.isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    AppSpacing.h4,
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 11.5,
-                        height: 1.4,
-                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    AppSpacing.w16,
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.s12),
+                      decoration: BoxDecoration(
+                        color: widget.iconBackgroundColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        widget.icon,
+                        color: widget.iconColor,
+                        size: 28,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          AppSpacing.h16,
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isOrangeAccent ? const Color(0xFFFF6B00) : AppColors.gray800,
-                foregroundColor: AppColors.white,
-                elevation: 0,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppSpacing.borderMD,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    buttonText,
-                    style: const TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
+                AppSpacing.h24,
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: AppSpacing.borderMD,
+                    gradient: LinearGradient(
+                      colors: _isHovered
+                          ? [const Color(0xFFFF8E3C), const Color(0xFFFFA564)]
+                          : [const Color(0xFFFF6B00), const Color(0xFFFF8E3C)],
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6B00)
+                            .withValues(alpha: _isHovered ? 0.5 : 0.3),
+                        blurRadius: _isHovered ? 16 : 12,
+                        offset: Offset(0, _isHovered ? 6 : 4),
+                      ),
+                    ],
                   ),
-                  AppSpacing.w8,
-                  const Icon(Icons.arrow_back_rounded, size: 16), // Flipped because of RTL
-                ],
-              ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.buttonText,
+                        style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      AppSpacing.w12,
+                      AnimatedPadding(
+                        padding: EdgeInsets.only(right: _isHovered ? 8.0 : 0.0),
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                        child: const Icon(Icons.arrow_back_rounded,
+                            size: 20, color: AppColors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

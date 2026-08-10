@@ -87,7 +87,10 @@ class GlassBox extends StatelessWidget {
                 width: 1.0,
               ),
             ),
-            child: child,
+            child: Material(
+              type: MaterialType.transparency,
+              child: child,
+            ),
           ),
         ),
       ),

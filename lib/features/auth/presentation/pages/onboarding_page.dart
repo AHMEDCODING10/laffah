@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,20 +19,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<Map<String, String>> _onboardingData = [
+  List<Map<String, String>> get _onboardingData => [
     {
-      'title': 'مرحباً بك في لَفَّة',
-      'description': 'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات ظˆتوصيل الدراجات النارية.',
+      'title': AppLocalizations.of(context)!.auth_welcome,
+      'description':
+          AppLocalizations.of(context)!.auth_onboard_1_desc,
       'icon': 'motorcycle',
     },
     {
-      'title': 'تجاوز الزحام',
-      'description': 'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز ط§لاختناقات المرورية.',
+      'title': AppLocalizations.of(context)!.auth_onboard_2_title,
+      'description':
+          AppLocalizations.of(context)!.auth_onboard_2_desc,
       'icon': 'speed',
     },
     {
-      'title': 'توصيل سريع وأمانات',
-      'description': 'ارسل طرودك وأماناتك بأسرع وقت مع كباتن موثوقين ومسجلين رسمياً لدينا.',
+      'title': AppLocalizations.of(context)!.auth_onboard_3_title,
+      'description':
+          AppLocalizations.of(context)!.auth_onboard_3_desc,
       'icon': 'delivery',
     },
   ];
@@ -62,7 +66,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-body: SafeArea(
+        body: SafeArea(
           child: Column(
             children: [
               // Skip Button
@@ -73,7 +77,7 @@ body: SafeArea(
                   child: TextButton(
                     onPressed: () => context.go(LaffahRoutes.authLanding),
                     child: Text(
-                      'تخطي',
+                      AppLocalizations.of(context)!.auth_skip,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontWeight: FontWeight.w700,
@@ -114,15 +118,18 @@ body: SafeArea(
                                   width: 160,
                                   height: 160,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                                    color: const Color(0xFFFF6B00)
+                                        .withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                                      color: const Color(0xFFFF6B00)
+                                          .withValues(alpha: 0.3),
                                       width: 2,
                                     ),
                                   ),
                                   child: Icon(
-                                    _getIconForType(_onboardingData[index]['icon']!),
+                                    _getIconForType(
+                                        _onboardingData[index]['icon']!),
                                     size: 80,
                                     color: const Color(0xFFFF6B00),
                                   ),
@@ -138,7 +145,8 @@ body: SafeArea(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? AppColors.white : AppColors.gray900,
+                              color:
+                                  isDark ? AppColors.white : AppColors.gray900,
                             ),
                           ),
                           AppSpacing.h16,
@@ -149,7 +157,9 @@ body: SafeArea(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 15,
                               height: 1.6,
-                              color: isDark ? AppColors.gray400 : AppColors.gray600,
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600,
                             ),
                           ),
                         ],
@@ -177,7 +187,9 @@ body: SafeArea(
                           decoration: BoxDecoration(
                             color: _currentPage == index
                                 ? const Color(0xFFFF6B00)
-                                : (isDark ? AppColors.gray700 : AppColors.gray300),
+                                : (isDark
+                                    ? AppColors.gray700
+                                    : AppColors.gray300),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -208,8 +220,8 @@ body: SafeArea(
                         ),
                         child: Text(
                           _currentPage == _onboardingData.length - 1
-                              ? 'ابدأ مشوارك الآن'
-                              : 'التالي',
+                              ? AppLocalizations.of(context)!.auth_start_journey
+                              : AppLocalizations.of(context)!.auth_next,
                           style: const TextStyle(
                             fontFamily: 'IBM Plex Sans Arabic',
                             fontWeight: FontWeight.w900,

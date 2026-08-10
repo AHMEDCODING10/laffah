@@ -25,6 +25,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterPassengerRequested>(_onRegisterPassengerRequested);
     on<RegisterCaptainRequested>(_onRegisterCaptainRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<ForgotPasswordRequested>(_onForgotPasswordRequested);
+    on<VerifyResetCodeRequested>(_onVerifyResetCodeRequested);
+    on<ResetPasswordRequested>(_onResetPasswordRequested);
   }
 
   // ─────────────────────────────────────────────
@@ -97,5 +100,44 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     await authRepository.logout();
     emit(const AuthInitial());
+  }
+
+  // ─────────────────────────────────────────────
+  // FORGOT PASSWORD
+  // ─────────────────────────────────────────────
+  FutureOr<void> _onForgotPasswordRequested(
+    ForgotPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await authRepository.forgotPassword(event.phone);
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (_) => emit(ForgotPasswordCodeSent(phone: event.phone)),
+    );
+  }
+
+  FutureOr<void> _onVerifyResetCodeRequested(
+    VerifyResetCodeRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await authRepository.verifyResetCode(event.phone, event.code);
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (_) => emit(VerifyResetCodeSuccess(phone: event.phone, code: event.code)),
+    );
+  }
+
+  FutureOr<void> _onResetPasswordRequested(
+    ResetPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await authRepository.resetPassword(event.phone, event.code, event.newPassword);
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (_) => emit(const ResetPasswordSuccess()),
+    );
   }
 }

@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +11,9 @@ import '../../../../core/widgets/laffah_logo.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../../../core/widgets/primary_gradient_button.dart';
 import 'auth_landing_page.dart';
+import 'forgot_password_page.dart';
 
 /// PhoneNumberInputPage - Dedicated, high-contrast login screen for Laffah (راكب / كابتن)
 /// Features Yemen +967 formatting, focus glow borders, and registration role selection.
@@ -21,11 +24,16 @@ class PhoneNumberInputPage extends StatefulWidget {
   State<PhoneNumberInputPage> createState() => _PhoneNumberInputPageState();
 }
 
-class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
+class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _entranceController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  
+
   bool _obscurePassword = true;
   bool _isCaptain = false; // Toggle login role context
 
@@ -39,6 +47,19 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
   @override
   void initState() {
     super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
+    );
+    _entranceController.forward();
+
     _phoneFocusNode.addListener(() {
       setState(() {
         _isPhoneFocused = _phoneFocusNode.hasFocus;
@@ -57,6 +78,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
     _passwordController.dispose();
     _phoneFocusNode.dispose();
     _passwordFocusNode.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
@@ -67,9 +89,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
 
       // Fire Login Code event to BLoC
       context.read<AuthBloc>().add(LoginRequested(
-        phone: fullPhoneNumber,
-        password: _passwordController.text,
-      ));
+            phone: fullPhoneNumber,
+            password: _passwordController.text,
+          ));
     }
   }
 
@@ -80,44 +102,23 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
     return Directionality(
       textDirection: TextDirection.rtl, // RTL layout
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? AppColors.white : AppColors.gray900,
-              size: 20,
-            ),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-          centerTitle: true,
-          title: Text(
-            'تسجيل الدخول',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-              color: isDark ? AppColors.white : AppColors.gray900,
-            ),
-          ),
-        ),
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
         body: SafeArea(
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthSuccess) {
                 final isCapt = state.role == 'captain';
-                
+
                 if (_isCaptain && !isCapt) {
                   context.read<AuthBloc>().add(const LogoutRequested());
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       backgroundColor: AppColors.danger,
                       behavior: SnackBarBehavior.floating,
                       content: Text(
-                        'هذا الحساب مسجل كراكب. يرجى اختيار تسجيل دخول راكب بدلاً من كابتن.',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.auth_err_acc_is_passenger,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
@@ -129,12 +130,12 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
                 } else if (!_isCaptain && isCapt) {
                   context.read<AuthBloc>().add(const LogoutRequested());
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       backgroundColor: AppColors.danger,
                       behavior: SnackBarBehavior.floating,
                       content: Text(
-                        'هذا الحساب مسجل ككابتن. يرجى اختيار تسجيل دخول كابتن بدلاً من راكب.',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.auth_err_acc_is_captain,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
@@ -147,7 +148,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
 
                 // Navigate to home based on verified role
                 if (mounted) {
-                  context.go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
+                  context.go(isCapt
+                      ? LaffahRoutes.captainHome
+                      : LaffahRoutes.passengerHome);
                 }
               } else if (state is AuthFailure) {
                 // Show high-fidelity snackbar
@@ -174,195 +177,176 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
               final bool isLoading = state is AuthLoading;
 
               return Center(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s24,
-                    vertical: AppSpacing.s16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Header Brand Identity
-                      const LaffahLogo(
-                        height: 100,
-                        width: 100,
-                        showSubtitle: false,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s24,
+                        vertical: AppSpacing.s16,
                       ),
-                      AppSpacing.h8,
-                      Text(
-                        'مرحباً بك مجدداً في لَفَّة',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          color: isDark ? AppColors.white : AppColors.gray900,
-                        ),
-                      ),
-                      Text(
-                        'سجّل دخولك لمتابعة مشاويرك وإدارة حسابك',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 12,
-                          color: isDark ? AppColors.gray500 : AppColors.gray600,
-                        ),
-                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Header Brand Identity
+                          const LaffahLogo(
+                            height: 100,
+                            width: 100,
+                            showSubtitle: false,
+                          ),
+                          AppSpacing.h8,
+                          Text(
+                            AppLocalizations.of(context)!.auth_welcome_back,
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                              color:
+                                  isDark ? AppColors.white : AppColors.gray900,
+                            ),
+                          ),
+                          Text(
+                            AppLocalizations.of(context)!.auth_login_desc,
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.gray500
+                                  : AppColors.gray600,
+                            ),
+                          ),
 
-                      const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                      // Glassmorphic Login Container
-                      GlassBox(
-                        borderRadius: AppSpacing.radiusXL,
-                        padding: const EdgeInsets.all(AppSpacing.s24),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Role Selection Toggle (عميل vs كابتن)
-                              Center(
-                                child: _buildRoleSegmentedToggle(isDark),
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Phone Label
-                              const Text(
-                                'رقم الهاتف المحمول:',
-                                style: TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.gray600,
-                                ),
-                              ),
-                              AppSpacing.h8,
-
-                              // Phone TextFormField with Yemen code prefix
-                              _buildPhoneTextField(isDark),
-
-                              const SizedBox(height: 20),
-
-                              // Password Label
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          // Glassmorphic Login Container
+                          GlassBox(
+                            borderRadius: AppSpacing.radiusXL,
+                            padding: const EdgeInsets.all(AppSpacing.s24),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'كلمة المرور:',
-                                    style: TextStyle(
+                                  // Role Selection Toggle (عميل vs كابتن)
+                                  Center(
+                                    child: _buildRoleSegmentedToggle(isDark),
+                                  ),
+
+                                  const SizedBox(height: 24),
+
+                                  // Phone Label
+                                  Text(AppLocalizations.of(context)!.auth_phone_label,
+                                    style: const TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.gray600,
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Handle forgot password flow
-                                    },
-                                    child: const Text(
-                                      'نسيت كلمة المرور؟',
-                                      style: TextStyle(
-                                        fontFamily: 'IBM Plex Sans Arabic',
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFFF6B00),
+                                  AppSpacing.h8,
+
+                                  // Phone TextFormField with Yemen code prefix
+                                  _buildPhoneTextField(isDark),
+
+                                  const SizedBox(height: 20),
+
+                                  // Password Label
+                                  Text(AppLocalizations.of(context)!.auth_password_label,
+                                    style: const TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.gray600,
+                                    ),
+                                  ),
+                                  AppSpacing.h8,
+
+                                  // Password TextFormField
+                                  _buildPasswordTextField(isDark),
+
+                                  const SizedBox(height: 12),
+
+                                  // Forgot Password (Moved to bottom of password field)
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ForgotPasswordPage(),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(AppLocalizations.of(context)!.auth_forgot_password,
+                                        style: const TextStyle(
+                                          fontFamily: 'IBM Plex Sans Arabic',
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFFF6B00),
+                                        ),
                                       ),
                                     ),
                                   ),
+
+                                  const SizedBox(height: 28),
+
+                                  // Submit/Login Button
+                                  PrimaryGradientButton(
+                                    text: AppLocalizations.of(context)!.auth_enter,
+                                    isLoading: isLoading,
+                                    onPressed: _handleLogin,
+                                  ),
                                 ],
                               ),
-                              AppSpacing.h8,
+                            ),
+                          ),
 
-                              // Password TextFormField
-                              _buildPasswordTextField(isDark),
+                          const SizedBox(height: 36),
 
-                              const SizedBox(height: 28),
-
-                              // Submit/Login Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: ElevatedButton(
-                                  onPressed: isLoading ? null : _handleLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFF6B00),
-                                    foregroundColor: AppColors.white,
-                                    elevation: 2,
-                                    shadowColor: const Color(0xFFFF6B00).withValues(alpha:0.3),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: AppSpacing.borderMD,
+                          // Redirect to landing to register/create new account
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.auth_dont_have_account,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 13.5,
+                                  color: isDark
+                                      ? AppColors.gray400
+                                      : AppColors.gray600,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.s8),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AuthLandingPage(),
                                     ),
+                                  );
+                                },
+                                child: Text(AppLocalizations.of(context)!.auth_register_new_account,
+                                  style: const TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFFFF6B00),
+                                    decoration: TextDecoration.underline,
                                   ),
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            color: AppColors.white,
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
-                                      : const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'دخول',
-                                              style: TextStyle(
-                                                fontFamily: 'IBM Plex Sans Arabic',
-                                                fontWeight: FontWeight.w900,
-                                                fontSize: 13.5,
-                                              ),
-                                            ),
-                                            AppSpacing.w8,
-                                            Icon(Icons.arrow_back_rounded, size: 16), // Flipped for RTL
-                                          ],
-                                        ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 36),
-
-                      // Redirect to landing to register/create new account
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'ليس لديك حساب في لَفَّة بعد؟',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 13.5,
-                              color: isDark ? AppColors.gray400 : AppColors.gray600,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.s8),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AuthLandingPage(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'سجّل حساب جديد',
-                              style: TextStyle(
-                                fontFamily: 'IBM Plex Sans Arabic',
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFFFF6B00),
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               );
@@ -375,66 +359,131 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
 
   Widget _buildRoleSegmentedToggle(bool isDark) {
     return Container(
-      height: 48,
-      padding: const EdgeInsets.all(4),
+      height: 54,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withValues(alpha:0.02) : AppColors.gray100,
+        color: isDark
+            ? AppColors.white.withValues(alpha: 0.03)
+            : AppColors.white.withValues(alpha: 0.4),
         borderRadius: AppSpacing.borderMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha:0.04) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.white.withValues(alpha: 0.6),
         ),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          // Passenger Button
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isCaptain = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: AppSpacing.borderSM,
-                  color: !_isCaptain
-                      ? const Color(0xFFFF6B00)
-                      : Colors.transparent,
-                ),
-                child: Text(
-                  'تسجيل دخول راكب',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12.5,
-                    color: !_isCaptain ? AppColors.white : AppColors.gray500,
+          // 1. Sliding Pill (Active Indicator)
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            alignment:
+                !_isCaptain ? Alignment.centerRight : Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1.0,
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: AppSpacing.borderSM,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF8E3C), Color(0xFFFF6B00)],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-          // Captain Button
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isCaptain = true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: AppSpacing.borderSM,
-                  color: _isCaptain
-                      ? const Color(0xFFFF6B00)
-                      : Colors.transparent,
-                ),
-                child: Text(
-                  'تسجيل دخول كابتن',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12.5,
-                    color: _isCaptain ? AppColors.white : AppColors.gray500,
+
+          // 2. Clickable Areas & Content
+          Row(
+            children: [
+              // Passenger Option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isCaptain = false),
+                  behavior: HitTestBehavior.opaque,
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                        color: !_isCaptain
+                            ? AppColors.white
+                            : (isDark ? AppColors.gray400 : AppColors.gray600),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(AppLocalizations.of(context)!.auth_register_passenger),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOutBack,
+                            child: !_isCaptain
+                                ? const Padding(
+                                    padding: EdgeInsets.only(right: 6.0),
+                                    child: Icon(Icons.person_rounded,
+                                        size: 18, color: AppColors.white),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+
+              // Captain Option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isCaptain = true),
+                  behavior: HitTestBehavior.opaque,
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                        color: _isCaptain
+                            ? AppColors.white
+                            : (isDark ? AppColors.gray400 : AppColors.gray600),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(AppLocalizations.of(context)!.auth_register_captain),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOutBack,
+                            child: _isCaptain
+                                ? const Padding(
+                                    padding: EdgeInsets.only(right: 6.0),
+                                    child: Icon(Icons.two_wheeler_rounded,
+                                        size: 18, color: AppColors.white),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -449,7 +498,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         boxShadow: [
           if (_isPhoneFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha:0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -478,12 +527,16 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
             fontSize: 15,
             color: isDark ? AppColors.gray600 : AppColors.gray400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha:0.02) : AppColors.gray50,
+          fillColor: isDark
+              ? AppColors.white.withValues(alpha: 0.02)
+              : AppColors.gray50,
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
-            color: _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            color:
+                _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: Row(
@@ -503,7 +556,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
               Container(
                 height: 22,
                 width: 1,
-                color: isDark ? AppColors.white.withValues(alpha:0.1) : AppColors.gray300,
+                color: isDark
+                    ? AppColors.white.withValues(alpha: 0.1)
+                    : AppColors.gray300,
               ),
               const SizedBox(width: AppSpacing.s12),
             ],
@@ -511,7 +566,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha:0.05) : AppColors.gray300,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.05)
+                  : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -537,13 +594,13 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال رقم الهاتف الجوال لتسجيل الدخول';
+            return AppLocalizations.of(context)!.auth_val_phone_req;
           }
           if (value.trim().length != 9) {
-            return 'الرقم اليمني الصحيح يجب أن يتكون من 9 خانات';
+            return AppLocalizations.of(context)!.auth_val_phone_yemen;
           }
           if (!value.trim().startsWith('7')) {
-            return 'يجب أن يبدأ رقم الهاتف بـ 7 (77 أو 73 أو 71 أو 70)';
+            return AppLocalizations.of(context)!.auth_val_phone_start;
           }
           return null;
         },
@@ -559,7 +616,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         boxShadow: [
           if (_isPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha:0.12),
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -576,24 +633,31 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
         decoration: InputDecoration(
-          hintText: 'أدخل كلمة المرور الخاصة بحسابك',
+          hintText: AppLocalizations.of(context)!.auth_enter_password,
           hintStyle: TextStyle(
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 12,
             fontWeight: FontWeight.normal,
             color: isDark ? AppColors.gray600 : AppColors.gray400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16, vertical: 14),
           filled: true,
-          fillColor: isDark ? AppColors.white.withValues(alpha:0.02) : AppColors.gray50,
+          fillColor: isDark
+              ? AppColors.white.withValues(alpha: 0.02)
+              : AppColors.gray50,
           suffixIcon: Icon(
             Icons.lock_rounded,
-            color: _isPasswordFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            color: _isPasswordFocused
+                ? const Color(0xFFFF6B00)
+                : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: IconButton(
             icon: Icon(
-              _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+              _obscurePassword
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
               color: AppColors.gray600,
               size: 20,
             ),
@@ -606,7 +670,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: BorderSide(
-              color: isDark ? AppColors.white.withValues(alpha:0.05) : AppColors.gray300,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.05)
+                  : AppColors.gray300,
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -632,10 +698,10 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage> {
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'يرجى كتابة كلمة المرور المعتمدة';
+            return AppLocalizations.of(context)!.auth_val_pass_req;
           }
           if (value.length < 6) {
-            return 'يجب ألا تقل كلمة المرور عن 6 أحرف';
+            return AppLocalizations.of(context)!.auth_val_pass_length;
           }
           return null;
         },

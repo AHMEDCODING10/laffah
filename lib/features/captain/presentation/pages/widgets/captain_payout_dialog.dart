@@ -1,3 +1,4 @@
+import '../../../../../l10n/app_localizations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,41 +42,48 @@ class CaptainPayoutDialog extends StatefulWidget {
 class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _accountController = TextEditingController(text: '771234567');
-  String _selectedMethod = 'صرافة الكريمي (أم فلوس)';
+  String? _selectedMethod;
   String? _errorMessage;
 
-  final List<Map<String, String>> _payoutMethods = const [
+  List<Map<String, String>> get _payoutMethods => [
     {
-      'id': 'صرافة الكريمي (أم فلوس)',
+      'id': AppLocalizations.of(context)!.capt_kuraimi,
       'name': 'صرافة الكريمي Express (أم فلوس)',
-      'desc': 'إرسال حوالة سحب نقدية فورية برقم الهوية',
+      'desc': AppLocalizations.of(context)!.capt_kuraimi_desc,
       'icon': 'kuraimi',
     },
     {
-      'id': 'محفظة جيب',
-      'name': 'محفظة جيب (Jeeb Wallet - بنك اليمن والكويت)',
-      'desc': 'تحويل إلكتروني فوري لحساب محفظة جيب الرقمية',
+      'id': AppLocalizations.of(context)!.capt_jeeb,
+      'name': AppLocalizations.of(context)!.capt_jeeb_full,
+      'desc': AppLocalizations.of(context)!.capt_jeeb_desc,
       'icon': 'jeeb',
     },
     {
-      'id': 'محفظة فلوسك',
-      'name': 'محفظة فلوسك (Floosak - بنك اليمن الدولي)',
-      'desc': 'سحب فوري إلى حساب محفظة فلوسك الرقمية',
+      'id': AppLocalizations.of(context)!.capt_floosak,
+      'name': AppLocalizations.of(context)!.capt_floosak_full,
+      'desc': AppLocalizations.of(context)!.capt_floosak_desc,
       'icon': 'floosak',
     },
     {
-      'id': 'محفظة جوالي',
-      'name': 'محفظة جوالي (Jwali Wallet)',
-      'desc': 'تحويل مباشر لحساب محفظة جوالي المسجل',
+      'id': AppLocalizations.of(context)!.capt_jwali,
+      'name': AppLocalizations.of(context)!.capt_jwali_full,
+      'desc': AppLocalizations.of(context)!.capt_jwali_desc,
       'icon': 'jwali',
     },
     {
-      'id': 'محفظة ون كاش',
-      'name': 'محفظة ون كاش (OneCash)',
-      'desc': 'تحويل فوري إلى حساب محفظة ون كاش',
+      'id': AppLocalizations.of(context)!.capt_onecash,
+      'name': AppLocalizations.of(context)!.capt_onecash_full,
+      'desc': AppLocalizations.of(context)!.capt_onecash_desc,
       'icon': 'onecash',
     },
   ];
+
+  @override
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _selectedMethod ??= AppLocalizations.of(context)!.capt_kuraimi;
+  }
 
   @override
   void dispose() {
@@ -101,7 +109,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
 
     if (requestedAmount == null || requestedAmount <= 0) {
       setState(() {
-        _errorMessage = 'يرجى إدخال مبلغ سحب صحيح بالريال اليمني';
+        _errorMessage = AppLocalizations.of(context)!.capt_val_withdraw_amount;
       });
       return;
     }
@@ -115,14 +123,14 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
 
     if (accountNum.isEmpty || accountNum.length < 7) {
       setState(() {
-        _errorMessage = 'يرجى إدخال رقم الهاتف أو رقم الحساب البنكي بشكل صحيح';
+        _errorMessage = AppLocalizations.of(context)!.capt_val_phone_or_acc;
       });
       return;
     }
 
     HapticFeedback.heavyImpact();
     Navigator.pop(context);
-    widget.onConfirmPayout(requestedAmount, _selectedMethod, accountNum);
+    widget.onConfirmPayout(requestedAmount, _selectedMethod!, accountNum);
   }
 
   @override
@@ -239,9 +247,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                       AppSpacing.h20,
 
                       // Method Picker Title
-                      const Text(
-                        'اختر جهة وسيلة التحويل المحلي',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.capt_choose_transfer_method,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
@@ -338,9 +346,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                       AppSpacing.h16,
 
                       // Amount Input Field
-                      const Text(
-                        'المبلغ المراد تحويله (بالريال اليمني)',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.capt_transfer_amount,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
@@ -371,17 +379,17 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             fontSize: 18,
                             color: isDark ? Colors.white : AppColors.gray900,
                           ),
-                          decoration: const InputDecoration(
-                            hintText: 'أدخل المبلغ هنا (مثال: 2000)',
-                            hintStyle: TextStyle(
+                          decoration: InputDecoration(
+                            hintText: AppLocalizations.of(context)!.capt_enter_amount_hint,
+                            hintStyle: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 13,
                               color: AppColors.gray500,
                               fontWeight: FontWeight.normal,
                             ),
                             border: InputBorder.none,
-                            suffixText: 'ر.ي',
-                            suffixStyle: TextStyle(
+                            suffixText: AppLocalizations.of(context)!.capt_yer,
+                            suffixStyle: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.bold,
                               color: Color(0xFFFF6B00),
@@ -395,20 +403,20 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          _buildQuickChip('1,000 ر.ي', 1000.0, isDark),
+                          _buildQuickChip(AppLocalizations.of(context)!.capt_1000_yer, 1000.0, isDark),
                           const SizedBox(width: 8),
-                          _buildQuickChip('2,000 ر.ي', 2000.0, isDark),
+                          _buildQuickChip(AppLocalizations.of(context)!.capt_2000_yer, 2000.0, isDark),
                           const SizedBox(width: 8),
-                          _buildQuickChip('كامل الرصيد', widget.availableBalance, isDark, isFull: true),
+                          _buildQuickChip(AppLocalizations.of(context)!.capt_full_balance, widget.availableBalance, isDark, isFull: true),
                         ],
                       ),
 
                       AppSpacing.h16,
 
                       // Account / Phone Number Input
-                      const Text(
-                        'رقم الهاتف أو رقم حساب المحفظة',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.capt_phone_or_wallet_acc,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
@@ -476,9 +484,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             ),
                           ),
                           icon: const Icon(Icons.send_rounded, size: 20),
-                          label: const Text(
-                            'تأكيد طلب التحويل الآن ⚡',
-                            style: TextStyle(
+                          label: Text(
+                            AppLocalizations.of(context)!.capt_confirm_transfer_now,
+                            style: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.w900,
                               fontSize: 15,

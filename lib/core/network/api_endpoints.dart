@@ -25,6 +25,9 @@ class ApiEndpoints {
   static const String logout           = '/auth/logout';
   static const String registerPassenger = '/auth/register-passenger';
   static const String registerCaptain   = '/auth/register-captain';
+  static const String forgotPassword    = '/auth/forgot-password';
+  static const String verifyResetCode   = '/auth/verify-reset-code';
+  static const String resetPassword     = '/auth/reset-password';
 
   // Profile / User Endpoints
   static const String userProfile = '/user/profile';

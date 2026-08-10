@@ -10,7 +10,8 @@ import 'features/captain/presentation/bloc/core/captain_bloc.dart';
 import 'features/parcel/presentation/bloc/parcel_bloc.dart';
 import 'features/profile/presentation/bloc/profile_bloc.dart';
 import 'features/passenger/presentation/bloc/wallet_bloc.dart';
-
+import 'core/bloc/locale/locale_bloc.dart';
+import 'core/bloc/locale/locale_event.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/theme/theme_controller.dart';
@@ -96,6 +97,10 @@ Future<void> main() async {
         BlocProvider<WalletBloc>(
           create: (_) => di.sl<WalletBloc>(),
           lazy: true,
+        ),
+        BlocProvider<LocaleBloc>(
+          create: (_) => di.sl<LocaleBloc>()..add(LoadSavedLocale()),
+          lazy: false,
         ),
       ],
       child: const LaffahApp(),

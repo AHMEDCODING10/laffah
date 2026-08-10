@@ -8,6 +8,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_logo.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// SplashPage — يتحقق من توكن الجلسة ويوجه للصفحة المناسبة بناءً على دور المستخدم.
 class SplashPage extends StatefulWidget {
@@ -98,7 +99,8 @@ class _SplashPageState extends State<SplashPage>
         final isCapt = roles != null &&
             roles.any((r) => r is Map && r['name'] == 'captain');
 
-        context.go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
+        context
+            .go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
       } else {
         // Token invalid or expired
         await _storage.delete(key: 'auth_token');
@@ -198,7 +200,7 @@ class _SplashPageState extends State<SplashPage>
                       ),
                       AppSpacing.h12,
                       Text(
-                        'لفتك معنا أسرع',
+                        AppLocalizations.of(context)!.splash_subtitle,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontSize: 12,

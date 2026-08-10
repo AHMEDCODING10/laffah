@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -145,20 +144,14 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                 child: BlocBuilder<CaptainBloc, CaptainState>(
                   builder: (context, state) {
                     final captainPos = state is CaptainLocationUpdated ? state.position : null;
-                    final polylines = (state is TripAccepted && state.routePoints.isNotEmpty)
-                        ? [
-                            Polyline(
-                              points: state.routePoints,
-                              color: const Color(0xFFFF6B00),
-                              strokeWidth: 5.0,
-                            ),
-                          ]
+                    final routePoints = (state is TripAccepted && state.routePoints.isNotEmpty)
+                        ? state.routePoints
                         : null;
 
                     return LaffahMapView(
                       isDark: isDark,
                       captainLocation: captainPos,
-                      polylines: polylines,
+                      routePoints: routePoints,
                       followCaptain: true,
                       showDefaultMockData: false,
                       onMarkerTap: (title, snippet, pos) {
@@ -269,10 +262,11 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
   Widget _buildTopStatusGlassPanel(BuildContext context, bool isDark, bool isOnline, bool hasInternet) {
     if (!hasInternet) {
       return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 40),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.redAccent.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(30),
           boxShadow: const [
             BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
           ],
@@ -283,7 +277,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
             Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
             SizedBox(width: 8),
             Text(
-              'لا يوجد اتصال بالإنترنت - يتم إعادة المحاولة...',
+              'لا يوجد اتصال بالإنترنت',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -295,94 +289,85 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
         ),
       );
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF141822).withValues(alpha: 0.88)
-            : Colors.white.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+    
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.heavyImpact();
+        widget.onOnlineChanged(!isOnline);
+        context.read<CaptainBloc>().add(ToggleOnlineStatus(!isOnline));
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.symmetric(horizontal: 30),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        decoration: BoxDecoration(
+          color: isOnline 
+              ? const Color(0xFF00C853).withValues(alpha: 0.95) // Vibrant Green when online
+              : (isDark ? const Color(0xFF1E2330).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.95)),
+          borderRadius: BorderRadius.circular(40),
+          border: Border.all(
+            color: isOnline 
+                ? const Color(0xFF00E676).withValues(alpha: 0.5) 
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05)),
+            width: 1.5,
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: isOnline ? AppColors.success : AppColors.gray500,
-                  shape: BoxShape.circle,
-                  boxShadow: isOnline
-                      ? [
-                          BoxShadow(
-                            color: AppColors.success.withValues(alpha: 0.6),
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                isOnline ? 'متصل الآن (جاهز لاستقبال الطلبات)' : 'أنت منقطع حالياً',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  color: isDark ? Colors.white : AppColors.gray900,
-                ),
-              ),
-            ],
-          ),
-
-          // Online Switch
-          SizedBox(
-            height: 44,
-            child: Switch(
-              value: isOnline,
-              activeThumbColor: const Color(0xFFFF6B00),
-              onChanged: (val) {
-                HapticFeedback.mediumImpact();
-                widget.onOnlineChanged(val);
-                context.read<CaptainBloc>().add(ToggleOnlineStatus(val));
-              },
+          boxShadow: [
+            BoxShadow(
+              color: isOnline 
+                  ? const Color(0xFF00C853).withValues(alpha: 0.4) 
+                  : Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: isOnline ? 20 : 12,
+              spreadRadius: isOnline ? 4 : 0,
+              offset: const Offset(0, 6),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                isOnline ? Icons.power_rounded : Icons.power_off_rounded,
+                key: ValueKey(isOnline),
+                color: isOnline ? Colors.white : (isDark ? Colors.white : AppColors.gray900),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              isOnline ? 'أنت متصل - جاري البحث' : 'اضغط للاتصال وبدء العمل',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'IBM Plex Sans Arabic',
+                color: isOnline ? Colors.white : (isDark ? Colors.white : AppColors.gray900),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildOfflineGuidanceCard(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF141822).withValues(alpha: 0.9)
-            : Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? const Color(0xFF1E2330).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.98),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white12 : Colors.black12,
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
         ),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
-            blurRadius: 16,
-            offset: Offset(0, 4),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -392,36 +377,37 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.14),
+                  color: const Color(0xFFF1F3F5),
                   shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black12),
                 ),
                 child: const Icon(
                   Icons.power_settings_new_rounded,
-                  color: Color(0xFFFF6B00),
-                  size: 22,
+                  color: AppColors.gray700,
+                  size: 26,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ابدأ استقبال الطلبات الآن',
+                      'أنت غير متصل الآن',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'IBM Plex Sans Arabic',
                         color: isDark ? Colors.white : AppColors.gray900,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     const Text(
-                      'قم بتفعيل زر الاتصال في الأعلى للبدء بربح المشاوير في صنعاء',
+                      'اضغط على الزر بالأعلى لتصبح متاحاً لاستقبال الطلبات',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12.5,
                         color: AppColors.gray500,
                         fontFamily: 'IBM Plex Sans Arabic',
                       ),
@@ -438,20 +424,20 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
 
   Widget _buildSearchingOrdersCard(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF141822).withValues(alpha: 0.92)
-            : Colors.white.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? const Color(0xFF1E2330).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.98),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+          color: const Color(0xFF00C853).withValues(alpha: 0.3),
+          width: 2,
         ),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
-            blurRadius: 16,
-            offset: Offset(0, 4),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -459,18 +445,18 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(
-            width: 20,
-            height: 20,
+            width: 24,
+            height: 24,
             child: CircularProgressIndicator(
-              strokeWidth: 2.8,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B00)),
+              strokeWidth: 3.0,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00C853)),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Text(
-            'جاري البحث عن طلبات قريبة في صنعاء...',
+            'جاري البحث عن طلبات...',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w900,
               fontFamily: 'IBM Plex Sans Arabic',
               color: isDark ? Colors.white : AppColors.gray900,

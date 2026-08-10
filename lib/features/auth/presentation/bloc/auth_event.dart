@@ -97,3 +97,21 @@ class RegisterCaptainRequested extends AuthEvent {
 class LogoutRequested extends AuthEvent {
   const LogoutRequested();
 }
+
+class ForgotPasswordRequested extends AuthEvent {
+  final String phone;
+  const ForgotPasswordRequested({required this.phone});
+}
+
+class VerifyResetCodeRequested extends AuthEvent {
+  final String phone;
+  final String code;
+  const VerifyResetCodeRequested({required this.phone, required this.code});
+}
+
+class ResetPasswordRequested extends AuthEvent {
+  final String phone;
+  final String code;
+  final String newPassword;
+  const ResetPasswordRequested({required this.phone, required this.code, required this.newPassword});
+}
