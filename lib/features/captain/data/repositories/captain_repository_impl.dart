@@ -131,7 +131,7 @@ class CaptainRepositoryImpl implements CaptainRepository {
                   id: e['id']?.toString() ?? '',
                   status: e['status'] ?? 'غير معروف',
                   statusColor: _getStatusColor(e['status'] ?? ''),
-                  passengerName: e['passenger_name'] ?? 'الراكب',
+                  passengerName: e['passenger_name'] ?? 'راكب',
                   passengerPhone: e['passenger_phone'] ?? '',
                   rating: (e['passenger_rating'] as num?)?.toDouble() ?? 5.0,
                   pickup: e['pickup_location'] ?? '',
@@ -158,7 +158,7 @@ class CaptainRepositoryImpl implements CaptainRepository {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'completed':
-      case 'تم الانتهاء':
+      case 'مكتملة':
         return const Color(0xFF16A34A);
       case 'cancelled':
       case 'ملغاة':

@@ -8,7 +8,6 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_map/flutter_map.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
 import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.dart';
 import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
@@ -16,7 +15,6 @@ import '../../data/datasources/home_local_data_source.dart';
 import '../widgets/home_action_buttons_row.dart';
 import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_ride_status_cards.dart';
-import '../widgets/home_side_drawer.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/quick_destinations_section.dart';
 import '../widgets/recent_destinations_section.dart';
@@ -130,7 +128,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         resizeToAvoidBottomInset: false,
-        drawer: HomeSideDrawer(isDark: isDark),
         bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 0),
         body: Stack(
           children: [
@@ -148,20 +145,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                     isDark: isDark,
                     showDefaultMockData: status != 'idle',
                     initialCenter: _dropoffLatLng,
-                    markers: _dropoffLatLng != null
-                        ? [
-                            Marker(
-                              point: _dropoffLatLng!,
-                              width: 40,
-                              height: 40,
-                              child: const Icon(
-                                Icons.location_on,
-                                color: AppColors.error,
-                                size: 40,
-                              ),
-                            )
-                          ]
-                        : null,
+                    dropoffLocation: _dropoffLatLng,
                   );
                 },
               ),
@@ -254,9 +238,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                   isDark: isDark,
                   dropoffController: _dropoffController,
                   onSearchTap: _openSearchAndSelectRide,
-                  onOpenDrawer: () {
-                    _scaffoldKey.currentState?.openDrawer();
-                  },
                 ),
               ),
             ),

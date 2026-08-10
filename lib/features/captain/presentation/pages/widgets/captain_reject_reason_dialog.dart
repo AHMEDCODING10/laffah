@@ -1,3 +1,4 @@
+import '../../../../../l10n/app_localizations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,15 +37,22 @@ class CaptainRejectReasonDialog extends StatefulWidget {
 }
 
 class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
-  String _selectedReason = 'الموقع بعيد جداً عن دراجتي';
+  String? _selectedReason;
 
-  final List<String> _reasons = const [
-    'الموقع بعيد جداً عن دراجتي النارية',
-    'الأجرة والمبلغ غير متناسبين مع المسافة',
-    'لدي عطل فني في الدراجة النارية حالياً',
-    'انشغال أو عدم التفرغ في الوقت الحالي',
-    'سبب آخر',
+  List<String> get _reasons => [
+    AppLocalizations.of(context)!.capt_reject_reason_far_2,
+    AppLocalizations.of(context)!.capt_reject_reason_fare,
+    AppLocalizations.of(context)!.capt_reject_reason_breakdown,
+    AppLocalizations.of(context)!.capt_reject_reason_busy,
+    AppLocalizations.of(context)!.capt_reject_reason_other,
   ];
+
+  @override
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _selectedReason ??= AppLocalizations.of(context)!.capt_reject_reason_far;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,9 +103,9 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'تأكيد رفض الطلب',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.capt_confirm_reject,
+                              style: const TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontWeight: FontWeight.w900,
                                 fontSize: 16,
@@ -120,9 +128,9 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
 
                   AppSpacing.h16,
 
-                  const Text(
-                    'حدد سبب رفض الطلب لمساعدتنا في تحسين التوزيع:',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.capt_reject_reason_title,
+                    style: const TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -211,16 +219,16 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                           onPressed: () {
                             HapticFeedback.heavyImpact();
                             Navigator.pop(context);
-                            widget.onConfirmReject(_selectedReason);
+                            widget.onConfirmReject(_selectedReason!);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.danger,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: const Text(
-                            'تأكيد الرفض',
-                            style: TextStyle(
+                          child: Text(
+                            AppLocalizations.of(context)!.capt_confirm_reject_btn,
+                            style: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.w900,
                               fontSize: 13,

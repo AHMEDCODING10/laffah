@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -88,7 +89,7 @@ class _NotificationsPageState extends State<NotificationsPage>
             ),
           ),
           title: Text(
-            'الإشعارات والتنبيهات',
+            AppLocalizations.of(context)!.pass_notifications,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 18,
@@ -130,26 +131,26 @@ class _NotificationsPageState extends State<NotificationsPage>
                   fontWeight: FontWeight.bold,
                   fontSize: 11.5,
                 ),
-                tabs: const [
+                tabs: [
                   Tab(
-                    icon: Icon(Icons.apps_rounded, size: 20),
-                    text: 'الكل',
+                    icon: const Icon(Icons.apps_rounded, size: 20),
+                    text: AppLocalizations.of(context)!.pass_all,
                   ),
                   Tab(
-                    icon: Icon(Icons.directions_car_rounded, size: 20),
-                    text: 'الرحلات',
+                    icon: const Icon(Icons.directions_car_rounded, size: 20),
+                    text: AppLocalizations.of(context)!.pass_rides,
                   ),
                   Tab(
-                    icon: Icon(Icons.inventory_2_rounded, size: 20),
-                    text: 'الطرود',
+                    icon: const Icon(Icons.inventory_2_rounded, size: 20),
+                    text: AppLocalizations.of(context)!.pass_parcels,
                   ),
                   Tab(
-                    icon: Icon(Icons.chat_bubble_outline_rounded, size: 20),
-                    text: 'الرسائل',
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                    text: AppLocalizations.of(context)!.pass_messages,
                   ),
                   Tab(
-                    icon: Icon(Icons.local_offer_rounded, size: 20),
-                    text: 'العروض',
+                    icon: const Icon(Icons.local_offer_rounded, size: 20),
+                    text: AppLocalizations.of(context)!.pass_offers,
                   ),
                 ],
               ),
@@ -197,7 +198,7 @@ class _NotificationsPageState extends State<NotificationsPage>
           ),
           AppSpacing.h16,
           Text(
-            'لا توجد إشعارات في هذا التصنيف حالياً',
+            AppLocalizations.of(context)!.pass_no_notifications,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.bold,

@@ -39,7 +39,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (e.error is LaravelValidationException) {
         return Left(ValidationFailure((e.error as LaravelValidationException).message));
       }
-      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'رقم الهاتف أو كلمة المرور غير صحيحة'));
+      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Invalid credentials'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -70,7 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
         final exception = e.error as LaravelValidationException;
         return Left(ValidationFailure(exception.message));
       }
-      return const Left(ServerFailure('حدث خطأ أثناء الاتصال بالخادم'));
+      return const Left(ServerFailure('Server Error'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -108,7 +108,7 @@ class AuthRepositoryImpl implements AuthRepository {
         final exception = e.error as LaravelValidationException;
         return Left(ValidationFailure(exception.message));
       }
-      return const Left(ServerFailure('حدث خطأ أثناء الاتصال بالخادم'));
+      return const Left(ServerFailure('Server Error'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -125,5 +125,62 @@ class AuthRepositoryImpl implements AuthRepository {
     DioClient.setToken(null);
     await secureStorage.delete(key: 'auth_token');
     return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, void>> forgotPassword(String phone) async {
+    try {
+      final response = await remoteDataSource.forgotPassword(phone);
+      if (response.success) {
+        return const Right(null);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return const Left(ServerFailure('Phone number not registered'));
+      }
+      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Error sending code'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> verifyResetCode(String phone, String code) async {
+    try {
+      final response = await remoteDataSource.verifyResetCode(phone, code);
+      if (response.success) {
+        return const Right(null);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        return const Left(ServerFailure('Invalid code'));
+      }
+      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Error verifying code'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resetPassword(String phone, String code, String newPassword) async {
+    try {
+      final response = await remoteDataSource.resetPassword(phone, code, newPassword);
+      if (response.success) {
+        return const Right(null);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        return const Left(ServerFailure('Invalid data'));
+      }
+      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Error setting password'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }

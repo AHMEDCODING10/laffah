@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -110,13 +111,13 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
     if (_formKey.currentState!.validate()) {
       if (!_agreeToTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
             content: Text(
-              'يرجى الموافقة على شروط الاستخدام وسياسة خصوصية لَفَّة للمتابعة',
+              AppLocalizations.of(context)!.auth_val_terms_req,
               style:
-                  TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
+                  const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
             ),
           ),
         );
@@ -195,7 +196,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                             ),
                             AppSpacing.h8,
                             Text(
-                              'انضم إلى ركاب لَفَّة',
+                              AppLocalizations.of(context)!.auth_join_passenger,
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontWeight: FontWeight.w900,
@@ -206,7 +207,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                               ),
                             ),
                             Text(
-                              'املأ بياناتك للبدء في طلب مشاوير آمنة وسهلة واقتصادية',
+                              AppLocalizations.of(context)!.auth_join_passenger_desc,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
@@ -229,7 +230,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // Full Name Field
-                                    _buildLabel('الاسم الكامل والأخير:'),
+                                    _buildLabel(AppLocalizations.of(context)!.auth_full_name_last),
                                     _buildNameField(isDark),
 
                                     const SizedBox(height: 16),
@@ -241,20 +242,20 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                                     const SizedBox(height: 16),
 
                                     // Password Field
-                                    _buildLabel('كلمة المرور الجديدة:'),
+                                    _buildLabel(AppLocalizations.of(context)!.auth_new_password),
                                     _buildPasswordField(isDark),
 
                                     const SizedBox(height: 16),
 
                                     // Confirm Password Field
-                                    _buildLabel('تأكيد كلمة المرور:'),
+                                    _buildLabel(AppLocalizations.of(context)!.auth_confirm_password),
                                     _buildConfirmPasswordField(isDark),
 
                                     const SizedBox(height: 16),
 
                                     // Referral Code Field (Optional)
                                     _buildLabel(
-                                        'رمز الإحالة / الدعوة (اختياري):'),
+                                        AppLocalizations.of(context)!.auth_ref_code),
                                     _buildReferralField(isDark),
 
                                     const SizedBox(height: 20),
@@ -266,7 +267,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
 
                                     // Register Button
                                     PrimaryGradientButton(
-                                      text: 'إنشاء الحساب وتأكيد رقمي',
+                                      text: AppLocalizations.of(context)!.auth_create_acc_confirm,
                                       isLoading: isLoading,
                                       onPressed:
                                           _isFormValid ? _handleRegister : null,
@@ -283,7 +284,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  'لديك حساب بالفعل في لَفَّة؟',
+                                  AppLocalizations.of(context)!.auth_already_have_laffah,
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 13.5,
@@ -297,9 +298,8 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                                   onTap: () {
                                     context.pushReplacement('/auth/phone');
                                   },
-                                  child: const Text(
-                                    'تسجيل الدخول مباشر',
-                                    style: TextStyle(
+                                  child: Text(AppLocalizations.of(context)!.auth_login_direct,
+                                    style: const TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w900,
@@ -369,7 +369,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
         decoration: InputDecoration(
-          hintText: 'مثال: جلال أحمد الوادعي',
+          hintText: AppLocalizations.of(context)!.auth_ex_name_2,
           hintStyle: TextStyle(
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 12,
@@ -413,10 +413,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال اسمك الثنائي أو الثلاثي بالكامل';
+            return AppLocalizations.of(context)!.auth_val_name_2_3;
           }
           if (value.trim().split(' ').length < 2) {
-            return 'يرجى كتابة الاسم واللقب على الأقل لتسهيل التعرف عليك';
+            return AppLocalizations.of(context)!.auth_val_name_surname;
           }
           return null;
         },
@@ -530,10 +530,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
             return 'يرجى إدخال رقم الهاتف الجوال';
           }
           if (value.trim().length != 9) {
-            return 'الرقم اليمني الصحيح يجب أن يتكون من 9 خانات';
+            return AppLocalizations.of(context)!.auth_val_phone_yemen;
           }
           if (!value.trim().startsWith('7')) {
-            return 'يجب أن يبدأ رقم الهاتف بـ 7';
+            return AppLocalizations.of(context)!.auth_val_phone_start_7;
           }
           return null;
         },
@@ -570,7 +570,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
         decoration: InputDecoration(
-          hintText: 'يجب ألا تقل عن 6 خانات',
+          hintText: AppLocalizations.of(context)!.auth_val_min_6,
           hintStyle: TextStyle(
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 12,
@@ -626,10 +626,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'يرجى تحديد كلمة مرور آمنة لحسابك';
+            return AppLocalizations.of(context)!.auth_val_secure_pass;
           }
           if (value.length < 6) {
-            return 'يجب أن تحتوي كلمة المرور على 6 أحرف أو أرقام على الأقل';
+            return AppLocalizations.of(context)!.auth_val_pass_6_chars;
           }
           return null;
         },
@@ -668,7 +668,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
         decoration: InputDecoration(
-          hintText: 'أعد كتابة كلمة المرور السابقة',
+          hintText: AppLocalizations.of(context)!.auth_retype_pass,
           hintStyle: TextStyle(
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 12,
@@ -724,10 +724,10 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'يرجى تأكيد كلمة المرور';
+            return AppLocalizations.of(context)!.auth_val_confirm_pass_req;
           }
           if (value != _passwordController.text) {
-            return 'كلمة المرور غير متطابقة مع كلمة السر المدخلة';
+            return AppLocalizations.of(context)!.auth_val_pass_not_match;
           }
           return null;
         },
@@ -745,7 +745,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         color: isDark ? AppColors.white : AppColors.gray900,
       ),
       decoration: InputDecoration(
-        hintText: 'رمز الإحالة (دعوة صديق)',
+        hintText: AppLocalizations.of(context)!.auth_ref_code_hint,
         hintStyle: TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 12,
@@ -818,7 +818,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
               });
             },
             child: Text(
-              'أوافق على شروط الاستخدام وقوانين منصة لَفَّة (لفّة) لخدمات سيارات الأجرة وتوصيل الطرود وسياسة الخصوصية وحقوق المستخدم في الجمهورية اليمنية.',
+              AppLocalizations.of(context)!.auth_terms_long,
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontSize: 11,

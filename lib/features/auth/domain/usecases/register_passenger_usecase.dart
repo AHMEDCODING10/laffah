@@ -14,7 +14,7 @@ class RegisterPassengerUseCase {
     required String password,
   }) async {
     if (phone.isEmpty || name.isEmpty || password.isEmpty) {
-      return const Left(ValidationFailure('الرجاء إدخال كافة البيانات المطلوبة'));
+      return const Left(ValidationFailure('Missing data'));
     }
     return await repository.registerPassenger(
       name: name,

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../bloc/ride_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -116,15 +115,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
                     captainLocation: _captainLocation, 
                     passengerLocation: _passengerLocation,
                     captainHeading: _captainHeading,
-                    polylines: _routePoints.isNotEmpty 
-                      ? [
-                          Polyline(
-                            points: _routePoints,
-                            color: AppColors.primary500,
-                            strokeWidth: 4.0,
-                          ),
-                        ]
-                      : [],
+                    routePoints: _routePoints.isNotEmpty ? _routePoints : null,
                   ),
                 );
               },

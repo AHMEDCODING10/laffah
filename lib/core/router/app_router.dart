@@ -13,6 +13,8 @@ import '../../features/auth/presentation/pages/register_captain_page.dart';
 import '../../features/auth/presentation/pages/onboarding_page.dart';
 
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_otp_page.dart';
+import '../../features/auth/presentation/pages/reset_password_page.dart';
 
 // Passenger home
 import '../../features/home/presentation/pages/home_dashboard_page.dart';
@@ -82,6 +84,8 @@ abstract class LaffahRoutes {
   static const String authRegisterCaptain     = '/auth/register/captain';
 
   static const String forgotPassword          = '/auth/forgot-password';
+  static const String forgotPasswordOtp       = '/auth/forgot-password/otp';
+  static const String resetPassword           = '/auth/reset-password';
 
   // ──────────────────────────────────────────
   // PASSENGER — CORE
@@ -224,6 +228,27 @@ class AppRouter {
         name: 'forgot-password',
         builder: (BuildContext context, GoRouterState state) =>
         const ForgotPasswordPage(),
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.forgotPasswordOtp,
+        name: 'forgot-password-otp',
+        builder: (BuildContext context, GoRouterState state) {
+          final phone = state.extra as String? ?? '';
+          return ForgotPasswordOtpPage(phone: phone);
+        },
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.resetPassword,
+        name: 'reset-password',
+        builder: (BuildContext context, GoRouterState state) {
+          final args = state.extra as Map<String, String>? ?? {};
+          return ResetPasswordPage(
+            phone: args['phone'] ?? '',
+            code: args['code'] ?? '',
+          );
+        },
       ),
 
       // ══════════════════════════════════════════

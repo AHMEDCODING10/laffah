@@ -1,3 +1,4 @@
+import '../../../../../l10n/app_localizations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -37,21 +38,21 @@ class CaptainTripDetailsSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final String tripId = trip['id'] ?? 'LF-00000';
-    final String status = trip['status'] ?? 'تم الانتهاء';
+    final String status = trip['status'] ?? AppLocalizations.of(context)!.capt_trip_done;
     final Color statusColor = (trip['statusColor'] as Color?) ?? AppColors.success;
-    final String passengerName = trip['passengerName'] ?? 'الراكب';
+    final String passengerName = trip['passengerName'] ?? AppLocalizations.of(context)!.capt_passenger;
     final String passengerPhone = trip['passengerPhone'] ?? '+967 777 000 000';
     final double passengerRating = (trip['rating'] as num?)?.toDouble() ?? 5.0;
-    final String pickup = trip['pickup'] ?? 'موقع الانطلاق';
-    final String dropoff = trip['dropoff'] ?? 'وجهة الوصول';
-    final String priceStr = trip['price'] ?? '0 ر.ي';
+    final String pickup = trip['pickup'] ?? AppLocalizations.of(context)!.capt_pickup_loc;
+    final String dropoff = trip['dropoff'] ?? AppLocalizations.of(context)!.capt_dropoff_loc;
+    final String priceStr = trip['price'] ?? AppLocalizations.of(context)!.capt_0_yer;
     final double grossFare = (trip['grossFare'] as num?)?.toDouble() ?? 2400.0;
     final double platformFee = grossFare * 0.10;
     final double netEarnings = grossFare - platformFee;
-    final String dateStr = trip['date'] ?? 'اليوم';
-    final String distanceStr = trip['distance'] ?? '4.5 كم';
+    final String dateStr = trip['date'] ?? AppLocalizations.of(context)!.capt_today;
+    final String distanceStr = trip['distance'] ?? AppLocalizations.of(context)!.capt_4_5_km;
     final String durationStr = trip['duration'] ?? '12 دقيقة';
-    final String paymentMethod = trip['paymentMethod'] ?? 'نقداً (Cash)';
+    final String paymentMethod = trip['paymentMethod'] ?? AppLocalizations.of(context)!.capt_cash;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -267,9 +268,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'نقطة الانطلاق (A)',
-                                      style: TextStyle(
+                                    Text(
+                                      AppLocalizations.of(context)!.capt_point_a,
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.green,
@@ -318,9 +319,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'وجهة الوصول (B)',
-                                      style: TextStyle(
+                                    Text(
+                                      AppLocalizations.of(context)!.capt_point_b,
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.redAccent,
@@ -351,15 +352,15 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildSpecTile(isDark, Icons.map_rounded, 'المسافة', distanceStr),
+                          child: _buildSpecTile(isDark, Icons.map_rounded, AppLocalizations.of(context)!.capt_distance, distanceStr),
                         ),
                         AppSpacing.w10,
                         Expanded(
-                          child: _buildSpecTile(isDark, Icons.schedule_rounded, 'المدّة', durationStr),
+                          child: _buildSpecTile(isDark, Icons.schedule_rounded, AppLocalizations.of(context)!.capt_duration, durationStr),
                         ),
                         AppSpacing.w10,
                         Expanded(
-                          child: _buildSpecTile(isDark, Icons.two_wheeler_rounded, 'وسيلة النقل', 'دراجة نارية'),
+                          child: _buildSpecTile(isDark, Icons.two_wheeler_rounded, AppLocalizations.of(context)!.capt_transport_mode, 'دراجة نارية'),
                         ),
                       ],
                     ),
@@ -382,9 +383,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'الحسبة المالية للمشوار',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.capt_financial_calc,
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w900,
@@ -410,15 +411,15 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildFinanceRow('إجمالي الأجرة الحقيقية', priceStr, isDark, false),
+                          _buildFinanceRow(AppLocalizations.of(context)!.capt_total_actual_fare, priceStr, isDark, false),
                           const SizedBox(height: 6),
-                          _buildFinanceRow('عمولة منصة لَفَّة (10%)', '-${platformFee.toStringAsFixed(0)} ر.ي', isDark, false),
+                          _buildFinanceRow(AppLocalizations.of(context)!.capt_laffah_commission, '-${platformFee.toStringAsFixed(0)} ر.ي', isDark, false),
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 8),
                             child: Divider(height: 1),
                           ),
                           _buildFinanceRow(
-                            'صافي أرباحك من المشوار',
+                            AppLocalizations.of(context)!.capt_net_earnings,
                             '${netEarnings.toStringAsFixed(0)} ر.ي',
                             isDark,
                             true,
@@ -439,10 +440,10 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                               onPressed: () {
                                 HapticFeedback.lightImpact();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text(
-                                      'جاري استخراج فاتورة المشوار الرسمية...',
-                                      style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                                      AppLocalizations.of(context)!.capt_extracting_invoice,
+                                      style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
                                     ),
                                     backgroundColor: AppColors.info,
                                   ),
@@ -457,9 +458,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                 ),
                               ),
                               icon: const Icon(Icons.receipt_rounded, size: 18),
-                              label: const Text(
-                                'الفاتورة 📄',
-                                style: TextStyle(
+                              label: Text(
+                                AppLocalizations.of(context)!.capt_invoice,
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13.5,
@@ -485,9 +486,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                 ),
                               ),
                               icon: const Icon(Icons.check_circle_rounded, size: 18),
-                              label: const Text(
-                                'إغلاق التفاصيل',
-                                style: TextStyle(
+                              label: Text(
+                                AppLocalizations.of(context)!.capt_close_details,
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.w900,
                                   fontSize: 13.5,

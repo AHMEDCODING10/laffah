@@ -1,3 +1,4 @@
+import '../../../../../l10n/app_localizations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -118,7 +119,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'تعديل الملف الشخصي',
+            AppLocalizations.of(context)!.capt_edit_profile,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -128,16 +129,16 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
           ),
           AppSpacing.h20,
           // Full Name
-          _buildTextFieldLabel('الاسم الكامل للكابتن'),
+          _buildTextFieldLabel(AppLocalizations.of(context)!.capt_full_name),
           _buildInputField(
             controller: _nameController,
-            hint: 'أدخل الاسم الثلاثي',
+            hint: AppLocalizations.of(context)!.capt_enter_name_3,
             icon: Icons.person_outline_rounded,
             isDark: isDark,
           ),
           AppSpacing.h16,
           // Phone Number
-          _buildTextFieldLabel('رقم الهاتف الجوال'),
+          _buildTextFieldLabel(AppLocalizations.of(context)!.capt_mobile_number),
           _buildInputField(
             controller: _phoneController,
             hint: '77XXXXXXX',
@@ -159,9 +160,9 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            child: const Text(
-              'حفظ التعديلات 💾',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900, fontSize: 14),
+            child: Text(
+              AppLocalizations.of(context)!.capt_save_changes,
+              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900, fontSize: 14),
             ),
           ),
           AppSpacing.h16,
@@ -187,7 +188,7 @@ class VehicleDetailsSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'بيانات دراجة النقل / المركبة',
+            AppLocalizations.of(context)!.capt_bike_data,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -196,11 +197,11 @@ class VehicleDetailsSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h16,
-          _buildInfoRow('نوع الدراجة النارية', vehicleInfo['type'] ?? '', isDark),
-          _buildInfoRow('الموديل وسنة الصنع', vehicleInfo['model'] ?? '', isDark),
-          _buildInfoRow('رقم لوحة الأرقام', vehicleInfo['plate'] ?? '', isDark),
-          _buildInfoRow('نوع رخصة القيادة', vehicleInfo['license'] ?? '', isDark),
-          _buildInfoRow('الفحص الدوري الفني', 'سليم وموثق ✔️', isDark, color: AppColors.success),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_bike_type, vehicleInfo['type'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_model_year, vehicleInfo['model'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_plate_num, vehicleInfo['plate'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_license_type, vehicleInfo['license'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_periodic_inspection, AppLocalizations.of(context)!.capt_valid_documented, isDark, color: AppColors.success),
           AppSpacing.h24,
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
@@ -243,8 +244,8 @@ class OfficialDocumentsSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h16,
-          _buildDocumentTile(context, 'بطاقة الهوية الشخصية (اليمنية)', 'id_card', isDark),
-          _buildDocumentTile(context, 'كرت ملكية الدراجة النارية', 'vehicle_registration', isDark),
+          _buildDocumentTile(context, AppLocalizations.of(context)!.capt_yemeni_id, 'id_card', isDark),
+          _buildDocumentTile(context, AppLocalizations.of(context)!.capt_bike_ownership_card, 'vehicle_registration', isDark),
           AppSpacing.h24,
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
@@ -293,9 +294,9 @@ class OfficialDocumentsSheet extends StatelessWidget {
             onPressed: () {
               // TODO: Implement image picker and upload logic using type
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   backgroundColor: AppColors.primary,
-                  content: Text('جاري فتح المعرض...', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                  content: Text(AppLocalizations.of(context)!.capt_opening_gallery, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
                 )
               );
             },
@@ -306,7 +307,7 @@ class OfficialDocumentsSheet extends StatelessWidget {
               minimumSize: const Size(0, 32),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('رفع', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 12)),
+            child: Text(AppLocalizations.of(context)!.capt_upload, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 12)),
           ),
         ],
       ),
@@ -354,25 +355,25 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
             ),
           ),
           AppSpacing.h16,
-          _buildTextFieldLabel('كلمة المرور الحالية'),
-          _buildInputField(controller: _oldController, hint: 'أدخل كلمة المرور الحالية', icon: Icons.lock_outline_rounded, isDark: isDark, obscureText: true),
+          _buildTextFieldLabel(AppLocalizations.of(context)!.capt_current_password),
+          _buildInputField(controller: _oldController, hint: AppLocalizations.of(context)!.capt_enter_current_pass, icon: Icons.lock_outline_rounded, isDark: isDark, obscureText: true),
           AppSpacing.h12,
           _buildTextFieldLabel('كلمة المرور الجديدة'),
-          _buildInputField(controller: _newController, hint: 'أدخل كلمة المرور الجديدة', icon: Icons.lock_open_rounded, isDark: isDark, obscureText: true),
+          _buildInputField(controller: _newController, hint: AppLocalizations.of(context)!.capt_enter_new_pass, icon: Icons.lock_open_rounded, isDark: isDark, obscureText: true),
           AppSpacing.h12,
-          _buildTextFieldLabel('تأكيد كلمة المرور الجديدة'),
-          _buildInputField(controller: _confirmController, hint: 'أعد إدخال كلمة المرور الجديدة', icon: Icons.verified_user_outlined, isDark: isDark, obscureText: true),
+          _buildTextFieldLabel(AppLocalizations.of(context)!.capt_confirm_new_pass),
+          _buildInputField(controller: _confirmController, hint: AppLocalizations.of(context)!.capt_reenter_new_pass, icon: Icons.verified_user_outlined, isDark: isDark, obscureText: true),
           AppSpacing.h24,
           ElevatedButton(
             onPressed: () {
               HapticFeedback.heavyImpact();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   backgroundColor: AppColors.success,
                   content: Text(
-                    'تم تحديث كلمة المرور بنجاح 🔒',
-                    style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+                    AppLocalizations.of(context)!.capt_pass_updated_success,
+                    style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
                   ),
                 ),
               );
@@ -383,9 +384,9 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            child: const Text(
-              'تأكيد التغيير الآن',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900),
+            child: Text(
+              AppLocalizations.of(context)!.capt_confirm_change_now,
+              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900),
             ),
           ),
           AppSpacing.h16,
@@ -409,7 +410,7 @@ class HelpCenterSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'مركز مساعدة الكباتن',
+            AppLocalizations.of(context)!.capt_help_center,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -418,9 +419,9 @@ class HelpCenterSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h16,
-          _buildHelpCard('طرق زيادة الدخل اليومي والأسبوعي 📈', 'الالتزام بقبول الطلبات المتتالية وتفعيل خدمات الطرود في أوقات الذروة يزيد أرباحك بنسبة 35%.', isDark),
-          _buildHelpCard('دليل نقل وتوصيل الطرود بأمان 📦', 'تأكد دائماً من تغليف الطرد بشكل جيد ومراجعته مع العميل المرسل قبل الاستلام وتسليمه للمستلم.', isDark),
-          _buildHelpCard('قواعد السلامة المرورية والقيادة الآمنة 🏍️', 'التزم بالخوذة الواقية والسرعة المحددة في شوارع صنعاء وتجنب السرعة الزائدة حفاظاً على سلامتك.', isDark),
+          _buildHelpCard(AppLocalizations.of(context)!.capt_ways_increase_income, AppLocalizations.of(context)!.capt_increase_income_desc, isDark),
+          _buildHelpCard(AppLocalizations.of(context)!.capt_guide_parcels, AppLocalizations.of(context)!.capt_guide_parcels_desc, isDark),
+          _buildHelpCard(AppLocalizations.of(context)!.capt_safety_rules, AppLocalizations.of(context)!.capt_safety_rules_desc, isDark),
           AppSpacing.h24,
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
@@ -428,7 +429,7 @@ class HelpCenterSheet extends StatelessWidget {
               side: const BorderSide(color: Color(0xFFFF6B00)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text('فهمت', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context)!.capt_understood, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
           ),
           AppSpacing.h16,
         ],
@@ -486,18 +487,18 @@ class FAQSheet extends StatefulWidget {
 class _FAQSheetState extends State<FAQSheet> {
   int _expandedIndex = -1;
 
-  final List<Map<String, String>> _faqs = const [
+  List<Map<String, String>> get _faqs => [
     {
-      'q': 'ما هي عمولة تطبيق لَفَّة المخصومة من الكابتن؟',
-      'a': 'عمولة المنصة ثابتة وهي 10% فقط من إجمالي قيمة الأجرة الفعلية للرحلة لضمان توفير أعلى ربح ممكن لكابتن الدراجة النارية.',
+      'q': AppLocalizations.of(context)!.capt_faq_q1,
+      'a': AppLocalizations.of(context)!.capt_faq_a1,
     },
     {
-      'q': 'متى وبأي وسيلة يتم تحويل رصيد الأرباح؟',
-      'a': 'يتم تحويل الأرباح فوريّاً عند تقديم الطلب عبر صرافة الكريمي (أم فلوس)، أو محافظ جيب، أو فلوسك، أو جوالي، أو ون كاش في اليمن.',
+      'q': AppLocalizations.of(context)!.capt_faq_q2,
+      'a': AppLocalizations.of(context)!.capt_faq_a2,
     },
     {
-      'q': 'ماذا يحدث في حال إلغاء العميل للمشوار بعد وصولي؟',
-      'a': 'يتم احتساب تعويض مالي مباشر لصالح الكابتن (رسوم إلغاء العميل) ويضاف تلقائياً إلى رصيد محفظتك القابل للسحب.',
+      'q': AppLocalizations.of(context)!.capt_faq_q3,
+      'a': AppLocalizations.of(context)!.capt_faq_a3,
     },
   ];
 
@@ -511,7 +512,7 @@ class _FAQSheetState extends State<FAQSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'الأسئلة الشائعة والأجوبة',
+            AppLocalizations.of(context)!.capt_faqs_title,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -624,15 +625,15 @@ class DirectSupportSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h12,
-          const Text(
-            'فريق دعم الكباتن المخصص في صنعاء متواجد لمساعدتك 24 ساعة طوال أيام الأسبوع.',
-            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 11.5, color: AppColors.gray500, height: 1.4),
+          Text(
+            AppLocalizations.of(context)!.capt_support_desc,
+            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 11.5, color: AppColors.gray500, height: 1.4),
           ),
           AppSpacing.h16,
           // Phone Support
           _buildContactButton(
             isDark: isDark,
-            label: 'اتصال هاتفي مباشر بالدعم',
+            label: AppLocalizations.of(context)!.capt_call_support,
             icon: Icons.phone_in_talk_rounded,
             color: const Color(0xFFFF6B00),
             onTap: () async {
@@ -647,7 +648,7 @@ class DirectSupportSheet extends StatelessWidget {
           // WhatsApp Support
           _buildContactButton(
             isDark: isDark,
-            label: 'مراسلة عبر واتساب الدعم',
+            label: AppLocalizations.of(context)!.capt_whatsapp_support,
             icon: Icons.chat_rounded,
             color: const Color(0xFF25D366),
             onTap: () async {
@@ -720,7 +721,7 @@ class TermsAndPrivacySheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            isPrivacy ? 'سياسة الخصوصية وسرية البيانات' : 'الشروط والأحكام ووثيقة الاستخدام',
+            isPrivacy ? AppLocalizations.of(context)!.capt_privacy_policy : AppLocalizations.of(context)!.capt_terms_conditions,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -731,8 +732,8 @@ class TermsAndPrivacySheet extends StatelessWidget {
           AppSpacing.h16,
           Text(
             isPrivacy
-                ? 'يلتزم تطبيق لَفَّة بحفظ كامل خصوصية بيانات كباتن الدراجات النارية والعملاء في صنعاء. نقوم بجمع إحداثيات الموقع الجغرافي فقط أثناء تشغيل حالة الاتصال وجاري العمل لتقديم أفضل مسار ومطابقة للرحلات. لا نقوم بمشاركة أي بيانات مع أي طرف ثالث على الإطلاق.'
-                : 'يقر الكابتن المسجل في لَفَّة بضرورة الالتزام بقواعد المرور والتعليمات المنصوص عليها في اليمن، وضمان سلامة الطرود المنقولة والالتزام بالتسعيرة الرسمية المحسوبة عبر خوارزميات التطبيق دون زيادة أو تغيير. تحتفظ المنصة بحق إيقاف الحسابات المخالفة للبنود.',
+                ? AppLocalizations.of(context)!.capt_privacy_desc
+                : AppLocalizations.of(context)!.capt_terms_desc,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 12,
@@ -748,7 +749,7 @@ class TermsAndPrivacySheet extends StatelessWidget {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text('أوافق', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900)),
+            child: Text(AppLocalizations.of(context)!.capt_agree, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900)),
           ),
           AppSpacing.h16,
         ],
@@ -794,7 +795,7 @@ class LanguageSelectorSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'اختر لغة التطبيق / Select Language',
+            AppLocalizations.of(context)!.capt_select_language,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
@@ -804,7 +805,7 @@ class LanguageSelectorSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h20,
-          _buildLangOption(context, 'العربية (🇾🇪 العربية)', 'ar', isDark),
+          _buildLangOption(context, AppLocalizations.of(context)!.capt_arabic_ye, 'ar', isDark),
           _buildLangOption(context, 'English (🇬🇧 English)', 'en', isDark),
           AppSpacing.h16,
         ],

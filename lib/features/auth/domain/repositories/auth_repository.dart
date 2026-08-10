@@ -20,4 +20,7 @@ abstract class AuthRepository {
     required String vehiclePlate,
   });
   Future<Either<Failure, void>> logout();
+  Future<Either<Failure, void>> forgotPassword(String phone);
+  Future<Either<Failure, void>> verifyResetCode(String phone, String code);
+  Future<Either<Failure, void>> resetPassword(String phone, String code, String newPassword);
 }

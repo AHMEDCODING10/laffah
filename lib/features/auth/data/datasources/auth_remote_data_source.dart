@@ -9,6 +9,9 @@ abstract class AuthRemoteDataSource {
   Future<BaseResponseModel<UserModel>> registerCaptain(Map<String, dynamic> data);
   Future<BaseResponseModel<UserModel>> login(String phone, String password);
   Future<void> logoutFromServer();
+  Future<BaseResponseModel<dynamic>> forgotPassword(String phone);
+  Future<BaseResponseModel<dynamic>> verifyResetCode(String phone, String code);
+  Future<BaseResponseModel<dynamic>> resetPassword(String phone, String code, String newPassword);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -48,5 +51,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> logoutFromServer() async {
     await dioClient.dio.post(ApiEndpoints.logout);
+  }
+
+  @override
+  Future<BaseResponseModel<dynamic>> forgotPassword(String phone) async {
+    final response = await dioClient.dio.post(
+      ApiEndpoints.forgotPassword,
+      data: {'phone': phone},
+    );
+    return BaseResponseModel.fromJson(response.data, (data) => data);
+  }
+
+  @override
+  Future<BaseResponseModel<dynamic>> verifyResetCode(String phone, String code) async {
+    final response = await dioClient.dio.post(
+      ApiEndpoints.verifyResetCode,
+      data: {'phone': phone, 'code': code},
+    );
+    return BaseResponseModel.fromJson(response.data, (data) => data);
+  }
+
+  @override
+  Future<BaseResponseModel<dynamic>> resetPassword(String phone, String code, String newPassword) async {
+    final response = await dioClient.dio.post(
+      ApiEndpoints.resetPassword,
+      data: {'phone': phone, 'code': code, 'password': newPassword},
+    );
+    return BaseResponseModel.fromJson(response.data, (data) => data);
   }
 }

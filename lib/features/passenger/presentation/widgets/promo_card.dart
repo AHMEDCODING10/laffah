@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -124,9 +125,9 @@ class PromoCard extends StatelessWidget {
                     borderRadius: AppSpacing.borderSM,
                   ),
                 ),
-                child: const Text(
-                  'استخدام الكود',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.pass_use_code,
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.bold,
                     fontSize: 11.5,

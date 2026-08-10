@@ -1,3 +1,4 @@
+import '../../../../../l10n/app_localizations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,12 +32,12 @@ class CaptainTransactionsSheet extends StatefulWidget {
 }
 
 class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
-  String _selectedFilter = 'الكل'; // 'الكل', 'أرباح', 'سحوبات'
+  String _selectedFilter = 'الكل'; // 'الكل', AppLocalizations.of(context)!.capt_earnings, AppLocalizations.of(context)!.capt_withdrawals
 
   List<CaptainTransactionEntity> get _filteredTransactions {
-    if (_selectedFilter == 'أرباح') {
+    if (_selectedFilter == AppLocalizations.of(context)!.capt_earnings) {
       return widget.transactions.where((t) => !t.isNegative).toList();
-    } else if (_selectedFilter == 'سحوبات') {
+    } else if (_selectedFilter == AppLocalizations.of(context)!.capt_withdrawals) {
       return widget.transactions.where((t) => t.isNegative).toList();
     }
     return widget.transactions;
@@ -76,13 +77,13 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('المبلغ', '${item.isNegative ? '-' : '+'} ${item.amount} ر.ي', isDark, isHighlight: true),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_amount, '${item.isNegative ? '-' : '+'} ${item.amount} ر.ي', isDark, isHighlight: true),
               const SizedBox(height: 8),
-              _buildDetailRow('الحالة', item.status, isDark),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_status, item.status, isDark),
               const SizedBox(height: 8),
-              _buildDetailRow('الوقت والتاريخ', item.date, isDark),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_time_date, item.date, isDark),
               const SizedBox(height: 8),
-              _buildDetailRow('الرقم المرجعي', item.refId, isDark),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_ref_number, item.refId, isDark),
             ],
           ),
           actions: [
@@ -187,7 +188,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'سجل المعاملات والتحويلات المالية',
+                        AppLocalizations.of(context)!.capt_tx_history,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.w900,
@@ -209,9 +210,9 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                     children: [
                       _buildTabChip('الكل', _selectedFilter == 'الكل', isDark),
                       const SizedBox(width: 8),
-                      _buildTabChip('أرباح', _selectedFilter == 'أرباح', isDark, color: AppColors.success),
+                      _buildTabChip(AppLocalizations.of(context)!.capt_earnings, _selectedFilter == AppLocalizations.of(context)!.capt_earnings, isDark, color: AppColors.success),
                       const SizedBox(width: 8),
-                      _buildTabChip('سحوبات', _selectedFilter == 'سحوبات', isDark, color: AppColors.danger),
+                      _buildTabChip(AppLocalizations.of(context)!.capt_withdrawals, _selectedFilter == AppLocalizations.of(context)!.capt_withdrawals, isDark, color: AppColors.danger),
                     ],
                   ),
 
@@ -222,7 +223,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                     child: list.isEmpty
                         ? Center(
                             child: Text(
-                              'لا توجد معاملات ماليّة في هذه الفئة',
+                              AppLocalizations.of(context)!.capt_no_tx_category,
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 13,

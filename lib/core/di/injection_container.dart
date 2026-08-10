@@ -4,6 +4,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../network/dio_client.dart';
 import '../network/websocket_client.dart';
 import '../network/network_info.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../bloc/locale/locale_bloc.dart';
 import '../services/pusher_service.dart';
 import '../services/routing_service.dart';
 import '../storage/secure_storage_service.dart';
@@ -66,6 +68,11 @@ Future<void> init() async {
   // ==========================
   // Core / Network / Storage
   // ==========================
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton(() => sharedPreferences);
+
+  sl.registerFactory(() => LocaleBloc(sharedPreferences: sl()));
+
   sl.registerLazySingleton(() => Connectivity());
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
 

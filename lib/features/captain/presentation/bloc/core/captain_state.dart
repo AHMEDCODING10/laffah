@@ -224,7 +224,7 @@ class TripCompleted extends CaptainState {
   final double fare;
   final String totalDistance;
   final String totalDuration;
-  final String paymentMethod; // e.g., "نقداً (Cash)"
+  final String paymentMethod; // e.g., AppLocalizations.of(context)!.capt_cash
 
   const TripCompleted({
     required this.tripId,

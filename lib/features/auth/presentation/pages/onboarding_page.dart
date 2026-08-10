@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,23 +19,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<Map<String, String>> _onboardingData = [
+  List<Map<String, String>> get _onboardingData => [
     {
-      'title': 'مرحباً بك في لَفَّة',
+      'title': AppLocalizations.of(context)!.auth_welcome,
       'description':
-          'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات ظˆتوصيل الدراجات النارية.',
+          AppLocalizations.of(context)!.auth_onboard_1_desc,
       'icon': 'motorcycle',
     },
     {
-      'title': 'تجاوز الزحام',
+      'title': AppLocalizations.of(context)!.auth_onboard_2_title,
       'description':
-          'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز ط§لاختناقات المرورية.',
+          AppLocalizations.of(context)!.auth_onboard_2_desc,
       'icon': 'speed',
     },
     {
-      'title': 'توصيل سريع وأمانات',
+      'title': AppLocalizations.of(context)!.auth_onboard_3_title,
       'description':
-          'ارسل طرودك وأماناتك بأسرع وقت مع كباتن موثوقين ومسجلين رسمياً لدينا.',
+          AppLocalizations.of(context)!.auth_onboard_3_desc,
       'icon': 'delivery',
     },
   ];
@@ -76,7 +77,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   child: TextButton(
                     onPressed: () => context.go(LaffahRoutes.authLanding),
                     child: Text(
-                      'تخطي',
+                      AppLocalizations.of(context)!.auth_skip,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontWeight: FontWeight.w700,
@@ -219,8 +220,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         ),
                         child: Text(
                           _currentPage == _onboardingData.length - 1
-                              ? 'ابدأ مشوارك الآن'
-                              : 'التالي',
+                              ? AppLocalizations.of(context)!.auth_start_journey
+                              : AppLocalizations.of(context)!.auth_next,
                           style: const TextStyle(
                             fontFamily: 'IBM Plex Sans Arabic',
                             fontWeight: FontWeight.w900,

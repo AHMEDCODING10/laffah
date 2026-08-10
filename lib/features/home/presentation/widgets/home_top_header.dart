@@ -11,14 +11,12 @@ class HomeTopHeader extends StatelessWidget {
   final bool isDark;
   final TextEditingController dropoffController;
   final VoidCallback onSearchTap;
-  final VoidCallback onOpenDrawer;
 
   const HomeTopHeader({
     super.key,
     required this.isDark,
     required this.dropoffController,
     required this.onSearchTap,
-    required this.onOpenDrawer,
   });
 
   @override
@@ -33,33 +31,7 @@ class HomeTopHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Right (RTL Start): Hamburger Menu
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.menu_rounded,
-                color: isDark ? AppColors.white : AppColors.gray900,
-              ),
-              onPressed: onOpenDrawer,
-            ),
-          ),
-          
-          AppSpacing.w12,
-
-          // Center: Search Bar (Expanded)
+          // Left (RTL End): Notifications
           Expanded(
             child: GestureDetector(
               onTap: onSearchTap,

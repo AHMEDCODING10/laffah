@@ -1,3 +1,4 @@
+import '../../../../../l10n/app_localizations.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -151,9 +152,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                   color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
                                 ),
                               ),
-                              child: const Text(
-                                'طلب مشوار جديد ⚡',
-                                style: TextStyle(
+                              child: Text(
+                                AppLocalizations.of(context)!.capt_new_ride_req,
+                                style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFFFF6B00),
@@ -255,9 +256,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text(
-                                'الأجرة المتوقعة',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.capt_expected_fare,
+                                style: const TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'IBM Plex Sans Arabic',
@@ -313,9 +314,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'نقطة الانطلاق (A)',
-                                      style: TextStyle(
+                                    Text(
+                                      AppLocalizations.of(context)!.capt_point_a,
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.green,
@@ -367,9 +368,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'وجهة الوصول (B)',
-                                      style: TextStyle(
+                                    Text(
+                                      AppLocalizations.of(context)!.capt_point_b,
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.redAccent,
@@ -403,7 +404,7 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                           child: _buildSpecCard(
                             isDark,
                             Icons.map_rounded,
-                            'المسافة الفردية',
+                            AppLocalizations.of(context)!.capt_single_distance,
                             widget.distance,
                           ),
                         ),
@@ -412,7 +413,7 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                           child: _buildSpecCard(
                             isDark,
                             Icons.schedule_rounded,
-                            'الزمان المقدر',
+                            AppLocalizations.of(context)!.capt_est_time,
                             widget.duration,
                           ),
                         ),
@@ -475,9 +476,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                 ),
                               ),
                               icon: const Icon(Icons.flash_on_rounded, size: 20),
-                              label: const Text(
-                                'قبول الطلب الآن',
-                                style: TextStyle(
+                              label: Text(
+                                AppLocalizations.of(context)!.capt_accept_order_now,
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14.5,

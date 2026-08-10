@@ -1,9 +1,14 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/primary_gradient_button.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 /// ForgotPasswordPage — Secure password reset flow for Captains (Passengers use OTP only).
 /// Focuses on matching Laffah's dark theme and large touch targets for easy usage on the road.
@@ -23,7 +28,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   final TextEditingController _phoneController = TextEditingController();
   final FocusNode _phoneFocusNode = FocusNode();
   bool _isPhoneFocused = false;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -51,10 +55,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   void _handleResetRequest() {
     if (_phoneController.text.trim().length != 9) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'يرجى إدخال رقم هاتف صحيح مكون من 9 خانات',
-            style: TextStyle(
+            AppLocalizations.of(context)!.auth_val_phone_9_digits,
+            style: const TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontWeight: FontWeight.bold),
           ),
@@ -64,27 +68,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    // TODO: Connect to real API for password reset
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'تم إرسال كود استعادة كلمة المرور',
-            style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderMD),
-        ),
-      );
-      context.pop();
-    });
+    final phone = _phoneController.text.trim();
+    context.read<AuthBloc>().add(ForgotPasswordRequested(phone: phone));
   }
 
   @override
@@ -113,9 +98,29 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
             onPressed: () => context.pop(),
           ),
         ),
-        body: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
+        body: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                  backgroundColor: AppColors.danger,
+                ),
+              );
+            } else if (state is ForgotPasswordCodeSent) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.auth_pass_reset_sent, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+              // Navigate to OTP page
+              context.push('/auth/forgot-password/otp', extra: state.phone);
+            }
+          },
+          child: SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
             child: SlideTransition(
               position: _slideAnimation,
               child: Padding(
@@ -125,7 +130,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                   children: [
                     AppSpacing.h24,
                     Text(
-                      'نسيت كلمة المرور؟',
+                      AppLocalizations.of(context)!.auth_forgot_password,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 28,
@@ -135,7 +140,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                     ),
                     AppSpacing.h12,
                     Text(
-                      'أدخل رقم هاتفك المسجل في لَفَّة وسنرسل لك رمزاً لإعادة طھعيين كلمة المرور.',
+                      AppLocalizations.of(context)!.auth_reset_pass_desc,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 14,
@@ -243,16 +248,21 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                     const Spacer(),
 
                     // Submit Button
-                    PrimaryGradientButton(
-                      text: 'إرسال الرمز',
-                      isLoading: _isLoading,
-                      onPressed: _handleResetRequest,
+                    BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, state) {
+                        return PrimaryGradientButton(
+                          text: AppLocalizations.of(context)!.auth_send_code,
+                          isLoading: state is AuthLoading,
+                          onPressed: state is AuthLoading ? () {} : _handleResetRequest,
+                        );
+                      },
                     ),
                     AppSpacing.h32,
                   ],
                 ),
               ),
             ),
+          ),
           ),
         ),
       ),

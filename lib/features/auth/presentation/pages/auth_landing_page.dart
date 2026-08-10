@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -78,7 +79,7 @@ class _AuthLandingPageState extends State<AuthLandingPage>
 
                       // Heading Promo Text
                       Text(
-                        'مرحباً بك في لَفَّة',
+                        AppLocalizations.of(context)!.auth_welcome,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
@@ -92,7 +93,7 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                       AppSpacing.h8,
 
                       Text(
-                        'اختر كيف تود استخدام التطبيق للبدء فوراً',
+                        AppLocalizations.of(context)!.auth_choose_role,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
@@ -107,11 +108,11 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                       // Option 1: Join as Passenger
                       AnimatedRoleCard(
                         isDark: isDark,
-                        title: 'طلب رحلة (راكب)',
-                        subtitle: 'ابحث عن كابتن، احسب أجرتك، وتنقّل بأمان.',
+                        title: AppLocalizations.of(context)!.auth_role_passenger,
+                        subtitle: AppLocalizations.of(context)!.auth_role_passenger_desc,
                         icon: Icons
                             .location_on_rounded, // modernized location pin
-                        buttonText: 'إنشاء حساب راكب',
+                        buttonText: AppLocalizations.of(context)!.auth_create_passenger,
                         backgroundColor: isDark
                             ? AppColors.surfaceElevatedDark
                                 .withValues(alpha: 0.7)
@@ -131,11 +132,11 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                       // Option 2: Join as Captain
                       AnimatedRoleCard(
                         isDark: isDark,
-                        title: 'انضم ككابتن (سائق)',
+                        title: AppLocalizations.of(context)!.auth_role_captain,
                         subtitle:
-                            'سجّل دراجتك، كُن رئيس نفسك، وحقّق عوائد يومية.',
+                            AppLocalizations.of(context)!.auth_role_captain_desc,
                         icon: Icons.two_wheeler_rounded,
-                        buttonText: 'التسجيل ككابتن لَفَّة',
+                        buttonText: AppLocalizations.of(context)!.auth_create_captain,
                         backgroundColor: isDark
                             ? AppColors.surfaceElevatedDark
                                 .withValues(alpha: 0.7)
@@ -157,7 +158,7 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'لديك حساب بالفعل؟',
+                            AppLocalizations.of(context)!.auth_already_have_account,
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 15,
@@ -171,9 +172,8 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                             onTap: () {
                               context.push('/auth/phone');
                             },
-                            child: const Text(
-                              'تسجيل الدخول',
-                              style: TextStyle(
+                            child: Text(AppLocalizations.of(context)!.auth_login,
+                              style: const TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,

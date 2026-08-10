@@ -214,7 +214,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         fare: currentState.fare,
         totalDistance: '8.4 كم',
         totalDuration: '24 دقيقة',
-        paymentMethod: 'نقداً (Cash)',
+        paymentMethod: 'نقداً',
       ));
     }
   }

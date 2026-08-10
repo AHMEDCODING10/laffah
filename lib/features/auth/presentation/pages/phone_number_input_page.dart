@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -112,12 +113,12 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                 if (_isCaptain && !isCapt) {
                   context.read<AuthBloc>().add(const LogoutRequested());
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       backgroundColor: AppColors.danger,
                       behavior: SnackBarBehavior.floating,
                       content: Text(
-                        'هذا الحساب مسجل كراكب. يرجى اختيار تسجيل دخول راكب بدلاً من كابتن.',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.auth_err_acc_is_passenger,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
@@ -129,12 +130,12 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                 } else if (!_isCaptain && isCapt) {
                   context.read<AuthBloc>().add(const LogoutRequested());
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       backgroundColor: AppColors.danger,
                       behavior: SnackBarBehavior.floating,
                       content: Text(
-                        'هذا الحساب مسجل ككابتن. يرجى اختيار تسجيل دخول كابتن بدلاً من راكب.',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.auth_err_acc_is_captain,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
@@ -197,7 +198,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                           ),
                           AppSpacing.h8,
                           Text(
-                            'مرحباً بك مجدداً في لَفَّة',
+                            AppLocalizations.of(context)!.auth_welcome_back,
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.w900,
@@ -207,7 +208,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                             ),
                           ),
                           Text(
-                            'سجّل دخولك لمتابعة مشاويرك وإدارة حسابك',
+                            AppLocalizations.of(context)!.auth_login_desc,
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 12,
@@ -236,9 +237,8 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                   const SizedBox(height: 24),
 
                                   // Phone Label
-                                  const Text(
-                                    'رقم الهاتف المحمول:',
-                                    style: TextStyle(
+                                  Text(AppLocalizations.of(context)!.auth_phone_label,
+                                    style: const TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -253,9 +253,8 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                   const SizedBox(height: 20),
 
                                   // Password Label
-                                  const Text(
-                                    'كلمة المرور:',
-                                    style: TextStyle(
+                                  Text(AppLocalizations.of(context)!.auth_password_label,
+                                    style: const TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -282,9 +281,8 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                           ),
                                         );
                                       },
-                                      child: const Text(
-                                        'نسيت كلمة المرور؟',
-                                        style: TextStyle(
+                                      child: Text(AppLocalizations.of(context)!.auth_forgot_password,
+                                        style: const TextStyle(
                                           fontFamily: 'IBM Plex Sans Arabic',
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -298,7 +296,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
 
                                   // Submit/Login Button
                                   PrimaryGradientButton(
-                                    text: 'دخول',
+                                    text: AppLocalizations.of(context)!.auth_enter,
                                     isLoading: isLoading,
                                     onPressed: _handleLogin,
                                   ),
@@ -314,7 +312,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'ليس لديك حساب في لَفَّة بعد؟',
+                                AppLocalizations.of(context)!.auth_dont_have_account,
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13.5,
@@ -334,9 +332,8 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                     ),
                                   );
                                 },
-                                child: const Text(
-                                  'سجّل حساب جديد',
-                                  style: TextStyle(
+                                child: Text(AppLocalizations.of(context)!.auth_register_new_account,
+                                  style: const TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w900,
@@ -430,7 +427,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('تسجيل راكب'),
+                          Text(AppLocalizations.of(context)!.auth_register_passenger),
                           AnimatedSize(
                             duration: const Duration(milliseconds: 350),
                             curve: Curves.easeOutBack,
@@ -468,7 +465,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('تسجيل كابتن'),
+                          Text(AppLocalizations.of(context)!.auth_register_captain),
                           AnimatedSize(
                             duration: const Duration(milliseconds: 350),
                             curve: Curves.easeOutBack,
@@ -597,13 +594,13 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال رقم الهاتف الجوال لتسجيل الدخول';
+            return AppLocalizations.of(context)!.auth_val_phone_req;
           }
           if (value.trim().length != 9) {
-            return 'الرقم اليمني الصحيح يجب أن يتكون من 9 خانات';
+            return AppLocalizations.of(context)!.auth_val_phone_yemen;
           }
           if (!value.trim().startsWith('7')) {
-            return 'يجب أن يبدأ رقم الهاتف بـ 7 (77 أو 73 أو 71 أو 70)';
+            return AppLocalizations.of(context)!.auth_val_phone_start;
           }
           return null;
         },
@@ -636,7 +633,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
         decoration: InputDecoration(
-          hintText: 'أدخل كلمة المرور الخاصة بحسابك',
+          hintText: AppLocalizations.of(context)!.auth_enter_password,
           hintStyle: TextStyle(
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 12,
@@ -701,10 +698,10 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'يرجى كتابة كلمة المرور المعتمدة';
+            return AppLocalizations.of(context)!.auth_val_pass_req;
           }
           if (value.length < 6) {
-            return 'يجب ألا تقل كلمة المرور عن 6 أحرف';
+            return AppLocalizations.of(context)!.auth_val_pass_length;
           }
           return null;
         },

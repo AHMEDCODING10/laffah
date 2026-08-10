@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -144,18 +145,18 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
 
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'يرجى الموافقة على شروط وأحكام منصة لَفَّة قبل المتابعة.',
-            style: TextStyle(
+            AppLocalizations.of(context)!.auth_val_terms,
+            style: const TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.bold,
             ),
           ),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
-          margin: EdgeInsets.all(16),
+          shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+          margin: const EdgeInsets.all(16),
         ),
       );
       return;
@@ -168,8 +169,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
             name: _nameController.text.trim(),
             phone: fullPhone,
             password: _passwordController.text,
-            vehicleType: 'دراجة نارية', // ✅ نوع ثابت ومباشر بدون تعقيد
-            vehicleModel: 'غير محدد',
+            vehicleType: AppLocalizations.of(context)!.auth_motorcycle, // ✅ نوع ثابت ومباشر بدون تعقيد
+            vehicleModel: AppLocalizations.of(context)!.auth_unspecified,
             vehicleYear: 2024,
             vehiclePlate: _plateController.text.trim(),
           ),
@@ -233,7 +234,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                             height: 80, width: 80, showSubtitle: false),
                         AppSpacing.h8,
                         Text(
-                          'انضم ككابتن لَفَّة',
+                          AppLocalizations.of(context)!.auth_join_as_captain,
                           style: TextStyle(
                             fontFamily: 'IBM Plex Sans Arabic',
                             fontWeight: FontWeight.w900,
@@ -242,7 +243,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                           ),
                         ),
                         Text(
-                          'سجّل بياناتك وبيانات دراجتك النارية وابدأ بجني الأرباح فوراً',
+                          AppLocalizations.of(context)!.auth_join_captain_desc,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'IBM Plex Sans Arabic',
@@ -266,10 +267,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                               children: [
                                 // SECTION 1: بيانات شخصية
                                 _buildSectionHeader(
-                                    '1. البيانات الشخصية للكابتن:'),
+                                    AppLocalizations.of(context)!.auth_capt_personal_data),
                                 const SizedBox(height: 12),
 
-                                _buildLabel('الاسم الرباعي الكامل:'),
+                                _buildLabel(AppLocalizations.of(context)!.auth_full_name_4),
                                 _buildNameField(isDark),
                                 const SizedBox(height: 16),
 
@@ -277,21 +278,21 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                                 _buildPhoneField(isDark),
                                 const SizedBox(height: 16),
 
-                                _buildLabel('كلمة المرور الجديدة:'),
+                                _buildLabel(AppLocalizations.of(context)!.auth_new_password),
                                 _buildPasswordField(isDark),
                                 const SizedBox(height: 16),
 
-                                _buildLabel('تأكيد كلمة المرور:'),
+                                _buildLabel(AppLocalizations.of(context)!.auth_confirm_password),
                                 _buildConfirmPasswordField(isDark),
 
                                 const SizedBox(height: 28),
 
                                 // SECTION 2: بيانات الدراجة النارية
                                 _buildSectionHeader(
-                                    '2. بيانات الدراجة النارية:'),
+                                    AppLocalizations.of(context)!.auth_bike_data),
                                 const SizedBox(height: 12),
 
-                                _buildLabel('رقم اللوحة المرورية:'),
+                                _buildLabel(AppLocalizations.of(context)!.auth_plate_number),
                                 _buildPlateField(isDark),
 
                                 const SizedBox(height: 24),
@@ -303,7 +304,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
 
                                 // SUBMIT BUTTON
                                 PrimaryGradientButton(
-                                  text: 'تقديم الطلب وتأكيد رقم الهاتف',
+                                  text: AppLocalizations.of(context)!.auth_submit_request,
                                   isLoading: isLoading,
                                   onPressed:
                                       _isFormValid ? _handleRegister : null,
@@ -320,7 +321,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'لديك حساب كابتن مسجل بالفعل؟',
+                              AppLocalizations.of(context)!.auth_already_capt,
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 13.5,
@@ -334,9 +335,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                               onTap: () {
                                 context.pushReplacement('/auth/phone');
                               },
-                              child: const Text(
-                                'سجّل دخولك',
-                                style: TextStyle(
+                              child: Text(AppLocalizations.of(context)!.auth_login_now,
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w900,
@@ -473,7 +473,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         decoration: _buildInputDecoration(
           isDark: isDark,
           isFocused: _isNameFocused,
-          hintText: 'مثال: محمد علي أحمد الحاشدي',
+          hintText: AppLocalizations.of(context)!.auth_ex_name_4,
           suffixIcon: Icon(
             Icons.person_rounded,
             color: _isNameFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
@@ -482,10 +482,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         ),
         validator: (String? value) {
           if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال اسم الكابتن بالكامل';
+            return AppLocalizations.of(context)!.auth_val_capt_name_req;
           }
           if (value.trim().split(' ').length < 3) {
-            return 'يرجى إدخال الاسم الثلاثي أو الرباعي الكامل';
+            return AppLocalizations.of(context)!.auth_val_name_3_4;
           }
           return null;
         },
@@ -564,13 +564,13 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         ),
         validator: (String? value) {
           if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال رقم الجوال';
+            return AppLocalizations.of(context)!.auth_val_phone_req_2;
           }
           if (value.trim().length != 9) {
-            return 'رقم الهاتف يجب أن يتكون من 9 خانات';
+            return AppLocalizations.of(context)!.auth_val_phone_9_digits_2;
           }
           if (!value.trim().startsWith('7')) {
-            return 'رقم الجوال اليمني يبدأ بـ 7';
+            return AppLocalizations.of(context)!.auth_val_phone_yemen_start;
           }
           return null;
         },
@@ -609,7 +609,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         decoration: _buildInputDecoration(
           isDark: isDark,
           isFocused: _isPasswordFocused,
-          hintText: 'يجب ألا تقل عن 6 خانات',
+          hintText: AppLocalizations.of(context)!.auth_val_min_6,
           suffixIcon: Icon(
             Icons.lock_open_rounded,
             color: _isPasswordFocused
@@ -631,10 +631,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         ),
         validator: (String? value) {
           if (value == null || value.isEmpty) {
-            return 'يرجى تعيين كلمة المرور';
+            return AppLocalizations.of(context)!.auth_val_set_pass;
           }
           if (value.length < 6) {
-            return 'أدخل 6 خانات على الأقل';
+            return AppLocalizations.of(context)!.auth_val_enter_6;
           }
           return null;
         },
@@ -674,7 +674,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         decoration: _buildInputDecoration(
           isDark: isDark,
           isFocused: _isConfirmPasswordFocused,
-          hintText: 'تأكيد كلمة المرور السابقة',
+          hintText: AppLocalizations.of(context)!.auth_val_confirm_pass_prev,
           suffixIcon: Icon(
             Icons.lock_rounded,
             color: _isConfirmPasswordFocused
@@ -696,10 +696,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         ),
         validator: (String? value) {
           if (value == null || value.isEmpty) {
-            return 'يرجى تأكيد كلمة المرور';
+            return AppLocalizations.of(context)!.auth_val_confirm_pass_req;
           }
           if (value != _passwordController.text) {
-            return 'كلمة المرور غير مطابقة';
+            return AppLocalizations.of(context)!.auth_val_pass_mismatch;
           }
           return null;
         },
@@ -743,11 +743,11 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         decoration: _buildInputDecoration(
           isDark: isDark,
           isFocused: _isPlateFocused,
-          hintText: 'أ ب ج 1234',
+          hintText: AppLocalizations.of(context)!.auth_ex_plate,
         ),
         validator: (String? value) {
           if (value == null || value.trim().isEmpty) {
-            return 'مطلوب';
+            return AppLocalizations.of(context)!.auth_required;
           }
           return null;
         },
@@ -782,22 +782,22 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
             },
             child: Text.rich(
               TextSpan(
-                text: 'أوافق على ',
+                text: AppLocalizations.of(context)!.auth_agree_to,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 11.5,
                   color: isDark ? AppColors.gray400 : AppColors.gray700,
                 ),
-                children: const [
+                children: [
                   TextSpan(
-                    text: 'الشروط والأحكام وسياسة الخصوصية',
-                    style: TextStyle(
+                    text: AppLocalizations.of(context)!.auth_terms_policy,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFFF6B00),
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  TextSpan(text: ' الخاصة بكباتن لَفَّة.'),
+                  TextSpan(text: AppLocalizations.of(context)!.auth_capt_terms_suffix),
                 ],
               ),
             ),

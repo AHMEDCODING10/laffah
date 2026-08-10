@@ -1,59 +1,50 @@
-import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 
-typedef MarkerTapCallback = void Function(String title, String snippet, LatLng position);
+typedef MarkerTapCallback = void Function(
+    String title, String snippet, LatLng position);
 
-/// LaffahMapView — خريطة تفاعلية نظيفة تعتمد على flutter_map + LocationIQ
-/// لا تستخدم Google Maps بأي شكل من الأشكال
+// ─────────────────────────────────────────────────────────────────────────────
+// LaffahMapView — Premium live map component
+// Features:
+//   • Smooth animated captain marker position transitions (Uber-style)
+//   • GPS accuracy pulse ring around captain
+//   • Animated gradient route polyline with border
+//   • Auto bearing rotation based on heading
+//   • Tile caching for faster reload
+//   • High-quality MapTiler vector-style raster tiles (@2x HiDPI)
+//   • Smart follow mode that respects user zoom/pan
+// ─────────────────────────────────────────────────────────────────────────────
 class LaffahMapView extends StatefulWidget {
-  /// قائمة العلامات المخصصة (flutter_map Markers مباشرة)
-  final List<Marker>? markers;
-
-  /// قائمة المسارات للرسم على الخريطة
-  final List<Polyline>? polylines;
-
-  /// الوضع الليلي
   final bool isDark;
-
-  /// الموقع الافتراضي عند فتح الخريطة
   final LatLng? initialCenter;
-
-  /// مستوى التكبير الافتراضي
   final double initialZoom;
-
-  /// موقع الكابتن الحالي (يُعرض كـ 🏍️ marker متحرك)
   final LatLng? captainLocation;
   final double captainHeading;
-
-  /// موقع الراكب (الانطلاق) 
   final LatLng? passengerLocation;
-
-  /// هل يتم تتبع الكابتن وتوسيط الخريطة على موقعه؟
+  final List<LatLng>? routePoints;
+  final LatLng? dropoffLocation;
   final bool followCaptain;
-
-  /// عرض بيانات تجريبية افتراضية (للتطوير فقط)
   final bool showDefaultMockData;
-
-  /// callback عند الضغط على أي marker
   final MarkerTapCallback? onMarkerTap;
 
   static const LatLng _sanaaDefault = LatLng(15.3694, 44.1910);
+  static const String mapTilerKey = 'Ucu928ZnAuiAkBLP4pZE';
 
   const LaffahMapView({
     super.key,
-    this.markers,
-    this.polylines,
     this.isDark = false,
     this.initialCenter,
-    this.initialZoom = 14.5,
+    this.initialZoom = 15.0,
     this.captainLocation,
     this.captainHeading = 0.0,
     this.passengerLocation,
+    this.routePoints,
+    this.dropoffLocation,
     this.followCaptain = false,
     this.showDefaultMockData = true,
     this.onMarkerTap,
@@ -63,91 +54,518 @@ class LaffahMapView extends StatefulWidget {
   State<LaffahMapView> createState() => _LaffahMapViewState();
 }
 
-class _LaffahMapViewState extends State<LaffahMapView> {
+class _LaffahMapViewState extends State<LaffahMapView>
+    with TickerProviderStateMixin {
   late final MapController _mapController;
-  double _currentZoom = 14.5;
-  LatLng? _lastCaptainLocation;
+
+  // ── Pulse animation for captain presence ring ──────────────────────────────
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnim;
+
+  // ── Smooth position interpolation (Uber-style smooth marker movement) ──────
+  late AnimationController _positionController;
+  late Animation<double> _latAnim;
+  late Animation<double> _lngAnim;
+
+  // ── Smooth heading (bearing) interpolation ────────────────────────────────
+  late AnimationController _headingController;
+  late Animation<double> _headingAnim;
+
+  /// Displayed captain position (animated, not raw GPS)
+  LatLng _displayedCaptainPos = const LatLng(0, 0);
+  double _displayedHeading = 0.0;
+
+  /// True when user has manually panned/zoomed — pauses auto-follow.
+  bool _userInteracted = false;
 
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
-    _currentZoom = widget.initialZoom;
-    _lastCaptainLocation = widget.captainLocation;
+
+    // Pulse animation — repeating breath effect
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _pulseAnim = CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut);
+
+    // Position smooth animation controller
+    _positionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _latAnim = Tween<double>(begin: 0, end: 0).animate(_positionController);
+    _lngAnim = Tween<double>(begin: 0, end: 0).animate(_positionController);
+    _positionController.addListener(_onPositionAnimationTick);
+
+    // Heading smooth animation controller
+    _headingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _headingAnim = Tween<double>(begin: 0, end: 0).animate(
+      CurvedAnimation(parent: _headingController, curve: Curves.easeOut),
+    );
+    _headingController.addListener(() {
+      if (mounted) setState(() => _displayedHeading = _headingAnim.value);
+    });
+
+    // Initialise displayed position
+    if (widget.captainLocation != null) {
+      _displayedCaptainPos = widget.captainLocation!;
+    }
+    _displayedHeading = widget.captainHeading;
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    _pulseController.dispose();
+    _positionController.dispose();
+    _headingController.dispose();
+    super.dispose();
+  }
+
+  // ── Position animation tick ────────────────────────────────────────────────
+  void _onPositionAnimationTick() {
+    if (!mounted) return;
+    setState(() {
+      _displayedCaptainPos = LatLng(_latAnim.value, _lngAnim.value);
+    });
+  }
+
+  // ── Smooth movement: animate to new captain location ──────────────────────
+  void _animateCaptainTo(LatLng newPos) {
+    final oldLat = _displayedCaptainPos.latitude;
+    final oldLng = _displayedCaptainPos.longitude;
+
+    _positionController.stop();
+    _latAnim = Tween<double>(begin: oldLat, end: newPos.latitude).animate(
+      CurvedAnimation(parent: _positionController, curve: Curves.easeInOut),
+    );
+    _lngAnim = Tween<double>(begin: oldLng, end: newPos.longitude).animate(
+      CurvedAnimation(parent: _positionController, curve: Curves.easeInOut),
+    );
+    _positionController.forward(from: 0);
+  }
+
+  // ── Smooth heading rotation ───────────────────────────────────────────────
+  void _animateHeadingTo(double newHeading) {
+    // Shortest rotation path
+    double diff = newHeading - _displayedHeading;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    _headingController.stop();
+    _headingAnim = Tween<double>(
+      begin: _displayedHeading,
+      end: _displayedHeading + diff,
+    ).animate(
+      CurvedAnimation(parent: _headingController, curve: Curves.easeOut),
+    );
+    _headingController.forward(from: 0);
   }
 
   @override
   void didUpdateWidget(LaffahMapView old) {
     super.didUpdateWidget(old);
-    // تتبع الكابتن والتوسيط الذكي
+
+    // Animate captain position when it changes
+    if (widget.captainLocation != null &&
+        widget.captainLocation != old.captainLocation) {
+      _animateCaptainTo(widget.captainLocation!);
+    }
+
+    // Animate heading when it changes
+    if (widget.captainHeading != old.captainHeading) {
+      _animateHeadingTo(widget.captainHeading);
+    }
+
+    // Camera follow logic — respect user interaction flag
+    if (_userInteracted) return;
+
     if (widget.followCaptain && widget.captainLocation != null) {
       if (widget.passengerLocation != null) {
-        // Auto-Bounding Box to fit both passenger and captain
-        final bounds = LatLngBounds.fromPoints([widget.captainLocation!, widget.passengerLocation!]);
-        _mapController.fitCamera(CameraFit.bounds(
-          bounds: bounds,
-          padding: const EdgeInsets.all(50.0),
-        ));
-      } else if (widget.captainLocation != _lastCaptainLocation) {
-        _lastCaptainLocation = widget.captainLocation;
-        _mapController.move(widget.captainLocation!, _currentZoom);
+        // Fit both in view during trip
+        final bounds = LatLngBounds.fromPoints([
+          widget.captainLocation!,
+          widget.passengerLocation!,
+        ]);
+        _mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: bounds,
+            padding: const EdgeInsets.fromLTRB(50, 150, 50, 200),
+          ),
+        );
+      } else if (widget.captainLocation != old.captainLocation) {
+        // Pan only — preserve current zoom
+        _mapController.move(
+          widget.captainLocation!,
+          _mapController.camera.zoom,
+        );
       }
-    } else if (widget.initialCenter != old.initialCenter && widget.initialCenter != null) {
-      _mapController.move(widget.initialCenter!, _currentZoom);
+    } else if (widget.initialCenter != old.initialCenter &&
+        widget.initialCenter != null) {
+      _mapController.move(widget.initialCenter!, _mapController.camera.zoom);
     }
   }
 
+  // ── Map interaction detection ─────────────────────────────────────────────
+  void _onMapEvent(MapEvent event) {
+    if (event is MapEventMove) {
+      if (event.source == MapEventSource.dragStart ||
+          event.source == MapEventSource.multiFingerGestureStart ||
+          event.source == MapEventSource.scrollWheel ||
+          event.source == MapEventSource.doubleTap ||
+          event.source == MapEventSource.doubleTapHold) {
+        if (!_userInteracted) setState(() => _userInteracted = true);
+      }
+    }
+  }
+
+  // ── Re-center and resume auto-follow ─────────────────────────────────────
+  void _reCenter() {
+    setState(() => _userInteracted = false);
+    final target = widget.captainLocation ??
+        widget.initialCenter ??
+        LaffahMapView._sanaaDefault;
+    _mapController.move(target, widget.initialZoom);
+  }
+
+  // ── Tile URL — HiDPI @2x tiles for sharper quality ───────────────────────
+  String get _tileUrl {
+    if (widget.isDark) {
+      return 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}@2x.png?key=${LaffahMapView.mapTilerKey}';
+    }
+    return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=${LaffahMapView.mapTilerKey}';
+  }
+
+  LatLng get _initialCenter =>
+      widget.captainLocation ??
+      widget.initialCenter ??
+      LaffahMapView._sanaaDefault;
+
+  // ── Markers ───────────────────────────────────────────────────────────────
+  List<Marker> _buildMarkers() {
+    final markers = <Marker>[];
+
+    // Captain marker — animated position + heading + pulse ring
+    if (widget.captainLocation != null) {
+      markers.add(
+        Marker(
+          point: _displayedCaptainPos,
+          width: 80,
+          height: 80,
+          child: AnimatedBuilder(
+            animation: _pulseAnim,
+            builder: (context, _) {
+              final pulseVal = _pulseAnim.value;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  // ── Outer accuracy pulse ring ──────────────────────────
+                  Container(
+                    width: 70 + (pulseVal * 12),
+                    height: 70 + (pulseVal * 12),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFFF6B00)
+                          .withValues(alpha: 0.08 + pulseVal * 0.06),
+                      border: Border.all(
+                        color: const Color(0xFFFF6B00)
+                            .withValues(alpha: 0.2 + pulseVal * 0.15),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  // ── Inner pulsing glow ─────────────────────────────────
+                  Container(
+                    width: 48 + (pulseVal * 6),
+                    height: 48 + (pulseVal * 6),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFFF6B00)
+                          .withValues(alpha: 0.15 + pulseVal * 0.1),
+                    ),
+                  ),
+                  // ── Captain icon with heading rotation ─────────────────
+                  Transform.rotate(
+                    angle: _displayedHeading * (math.pi / 180),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF6B00),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF6B00)
+                                .withValues(alpha: 0.45 + pulseVal * 0.25),
+                            blurRadius: 16 + pulseVal * 8,
+                            spreadRadius: 2 + pulseVal * 3,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.navigation_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Passenger / pickup marker
+    if (widget.passengerLocation != null) {
+      markers.add(
+        Marker(
+          point: widget.passengerLocation!,
+          width: 50,
+          height: 60,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2196F3),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2196F3).withValues(alpha: 0.4),
+                      blurRadius: 14,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.person_rounded,
+                    color: Colors.white, size: 22),
+              ),
+              Container(
+                width: 2.5,
+                height: 10,
+                color: const Color(0xFF2196F3),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Dropoff marker
+    if (widget.dropoffLocation != null) {
+      markers.add(
+        Marker(
+          point: widget.dropoffLocation!,
+          width: 50,
+          height: 60,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF44336),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF44336).withValues(alpha: 0.4),
+                      blurRadius: 14,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.flag_rounded,
+                    color: Colors.white, size: 20),
+              ),
+              Container(
+                width: 2.5,
+                height: 10,
+                color: const Color(0xFFF44336),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Mock markers
+    if (widget.showDefaultMockData && widget.captainLocation == null) {
+      markers.add(_buildMockMarker(
+        const LatLng(15.3605, 44.1852),
+        const Color(0xFF4CAF50),
+        'نقطة الالتقاء',
+        'موقع الانطلاق',
+        Icons.trip_origin_rounded,
+      ));
+      markers.add(_buildMockMarker(
+        const LatLng(15.3782, 44.1804),
+        const Color(0xFFF44336),
+        'الوجهة',
+        'نقطة الوصول',
+        Icons.location_on_rounded,
+      ));
+    }
+
+    return markers;
+  }
+
+  Marker _buildMockMarker(
+    LatLng point,
+    Color color,
+    String title,
+    String snippet,
+    IconData icon,
+  ) {
+    return Marker(
+      point: point,
+      width: 44,
+      height: 44,
+      child: GestureDetector(
+        onTap: () => widget.onMarkerTap?.call(title, snippet, point),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.4),
+                blurRadius: 10,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
+      ),
+    );
+  }
+
+  // ── Polylines with border (shadow) for depth ──────────────────────────────
+  List<Polyline> _buildPolylines() {
+    final List<LatLng> points = widget.routePoints ??
+        (widget.showDefaultMockData
+            ? const [
+                LatLng(15.3605, 44.1852),
+                LatLng(15.3650, 44.1840),
+                LatLng(15.3688, 44.1824),
+                LatLng(15.3730, 44.1815),
+                LatLng(15.3782, 44.1804),
+              ]
+            : []);
+
+    if (points.isEmpty) return [];
+
+    return [
+      // Shadow / border line (darker, thicker)
+      Polyline(
+        points: points,
+        color: Colors.black.withValues(alpha: 0.18),
+        strokeWidth: 8.0,
+        strokeCap: StrokeCap.round,
+        strokeJoin: StrokeJoin.round,
+      ),
+      // Main orange route line
+      Polyline(
+        points: points,
+        color: const Color(0xFFFF6B00),
+        strokeWidth: 5.5,
+        strokeCap: StrokeCap.round,
+        strokeJoin: StrokeJoin.round,
+      ),
+      // White center highlight
+      Polyline(
+        points: points,
+        color: Colors.white.withValues(alpha: 0.3),
+        strokeWidth: 2.0,
+        strokeCap: StrokeCap.round,
+        strokeJoin: StrokeJoin.round,
+      ),
+    ];
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // ──────────────────────────────────────────
-        // الخريطة الأساسية
-        // ──────────────────────────────────────────
-        SizedBox.expand(
-          child: FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: widget.captainLocation ??
-                  widget.initialCenter ??
-                  LaffahMapView._sanaaDefault,
-              initialZoom: _currentZoom,
-              minZoom: 4.0,
-              maxZoom: 20.0,
-              onMapEvent: (event) {
-                if (event is MapEventMove) {
-                  _currentZoom = event.camera.zoom;
-                }
-              },
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: _initialCenter,
+            initialZoom: widget.initialZoom,
+            minZoom: 4,
+            maxZoom: 19,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all,
             ),
+            onMapEvent: _onMapEvent,
+          ),
           children: [
-            // TileLayer with CancellableNetworkTileProvider for better Web/Mobile performance
+            // ── HiDPI tile layer with caching ──────────────────────────
             TileLayer(
-              urlTemplate: widget.isDark
-                  ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-                  : 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.pixelmind.laffah',
-              maxZoom: 20,
-              tileProvider: CancellableNetworkTileProvider(),
+              urlTemplate: _tileUrl,
+              userAgentPackageName: 'com.laffah.app',
+              maxZoom: 19,
+              retinaMode: true,
+              tileDisplay: const TileDisplay.fadeIn(
+                duration: Duration(milliseconds: 250),
+                startOpacity: 0.0,
+              ),
+              // Keep 2 extra zoom level tiles in memory for smooth transitions
+              keepBuffer: 4,
+              panBuffer: 2,
             ),
 
-            // مسارات الرحلة (Polylines)
-            if (_allPolylines().isNotEmpty)
-              PolylineLayer(polylines: _allPolylines()),
+            // ── Route with border effect ───────────────────────────────
+            if (_buildPolylines().isNotEmpty)
+              PolylineLayer(polylines: _buildPolylines()),
 
-            // Markers (أيقونة الكابتن والمواقع)
-            if (_allMarkers().isNotEmpty)
-              MarkerLayer(markers: _allMarkers()),
+            // ── Markers ────────────────────────────────────────────────
+            MarkerLayer(markers: _buildMarkers()),
+
+            // ── Scale bar ──────────────────────────────────────────────
+            const Scalebar(
+              alignment: Alignment.bottomLeft,
+              padding: EdgeInsets.fromLTRB(12, 0, 0, 14),
+              lineColor: Color(0xFFFF6B00),
+              textStyle: TextStyle(
+                color: Color(0xFFFF6B00),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'IBM Plex Sans Arabic',
+              ),
+            ),
+
+            // ── Attribution ────────────────────────────────────────────
+            RichAttributionWidget(
+              attributions: [
+                TextSourceAttribution('MapTiler', onTap: () {}),
+                TextSourceAttribution('OSM contributors', onTap: () {}),
+              ],
+              alignment: AttributionAlignment.bottomLeft,
+              showFlutterMapAttribution: false,
+            ),
           ],
         ),
-      ),
 
-        // ──────────────────────────────────────────
-        // أزرار التحكم (زووم + إعادة توسيط)
-        // ──────────────────────────────────────────
+        // ── Map Controls ──────────────────────────────────────────────
         Positioned(
           right: 16,
-          bottom: 100,
+          bottom: 160,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -155,8 +573,11 @@ class _LaffahMapViewState extends State<LaffahMapView> {
                 icon: Icons.add_rounded,
                 isDark: widget.isDark,
                 onPressed: () {
-                  _currentZoom = (_currentZoom + 1.0).clamp(4.0, 20.0);
-                  _mapController.move(_mapController.camera.center, _currentZoom);
+                  if (!_userInteracted) setState(() => _userInteracted = true);
+                  _mapController.move(
+                    _mapController.camera.center,
+                    _mapController.camera.zoom + 1,
+                  );
                 },
               ),
               const SizedBox(height: 8),
@@ -164,257 +585,92 @@ class _LaffahMapViewState extends State<LaffahMapView> {
                 icon: Icons.remove_rounded,
                 isDark: widget.isDark,
                 onPressed: () {
-                  _currentZoom = (_currentZoom - 1.0).clamp(4.0, 20.0);
-                  _mapController.move(_mapController.camera.center, _currentZoom);
+                  if (!_userInteracted) setState(() => _userInteracted = true);
+                  _mapController.move(
+                    _mapController.camera.center,
+                    _mapController.camera.zoom - 1,
+                  );
                 },
               ),
               const SizedBox(height: 8),
-              _MapControlButton(
-                icon: Icons.my_location_rounded,
-                isDark: widget.isDark,
-                color: const Color(0xFFFF6B00),
-                onPressed: () {
-                  // إعادة التوسيط على موقع الكابتن أو مركز صنعاء
-                  final target = widget.captainLocation ?? LaffahMapView._sanaaDefault;
-                  _currentZoom = 15.5;
-                  _mapController.move(target, _currentZoom);
-                },
+              // Follow/re-center button — changes colour based on follow state
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                child: _MapControlButton(
+                  icon: _userInteracted
+                      ? Icons.gps_not_fixed_rounded
+                      : Icons.my_location_rounded,
+                  isDark: widget.isDark,
+                  color: _userInteracted
+                      ? (widget.isDark ? Colors.white54 : AppColors.gray400)
+                      : const Color(0xFFFF6B00),
+                  onPressed: _reCenter,
+                ),
               ),
             ],
           ),
         ),
 
-        // ──────────────────────────────────────────
-        // شارة نوع الخريطة (LocationIQ أو OSM)
-        // ──────────────────────────────────────────
-        Positioned(
-          top: 12,
-          left: 12,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: widget.isDark
-                  ? Colors.black.withValues(alpha: 0.7)
-                  : Colors.white.withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: widget.isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.08),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.map_rounded,
-                  size: 12,
-                  color: Color(0xFFFF6B00),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'خريطة صنعاء',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: widget.isDark ? Colors.white : AppColors.gray900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-
-
-  /// جمع كل الـ Markers (المخصصة + موقع الكابتن + Mock Data)
-  List<Marker> _allMarkers() {
-    final list = <Marker>[];
-
-    // موقع الكابتن الحقيقي (أيقونة الدراجة النارية)
-    if (widget.captainLocation != null) {
-      list.add(_buildCaptainMarker(widget.captainLocation!));
-    }
-
-    // Markers المخصصة من الخارج
-    if (widget.markers != null) {
-      list.addAll(widget.markers!);
-    }
-
-    // بيانات تجريبية (للتطوير فقط)
-    if (widget.showDefaultMockData) {
-      list.addAll(_buildMockMarkers());
-    }
-
-    return list;
-  }
-
-  /// جمع كل الـ Polylines
-  List<Polyline> _allPolylines() {
-    final list = <Polyline>[];
-
-    if (widget.polylines != null) {
-      list.addAll(widget.polylines!);
-    }
-
-    if (widget.showDefaultMockData) {
-      list.add(_buildMockPolyline());
-    }
-
-    return list;
-  }
-
-  /// Marker الكابتن (دراجة نارية برتقالية)
-  Marker _buildCaptainMarker(LatLng pos) {
-    return Marker(
-      point: pos,
-      width: 100, // Widened for badge
-      height: 100, // Heightened for badge
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onMarkerTap?.call(
-            'الكابتن',
-            'الكابتن هنا',
-            pos,
-          );
-        },
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            // ETA Badge
-            Positioned(
-              top: -10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: widget.isDark ? AppColors.white : AppColors.gray900,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '3 د',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: widget.isDark ? AppColors.gray900 : AppColors.white,
-                  ),
-                ),
-              ),
-            ),
-            // The pulsing bike icon
-            TweenAnimationBuilder(
-              tween: Tween<double>(begin: 0.8, end: 1.0),
-              duration: const Duration(milliseconds: 1000),
-              curve: Curves.easeInOut,
-              builder: (context, double scale, child) {
-                return Transform.scale(
-                  scale: scale,
+        // ── "Return to follow" floating pill ──────────────────────────
+        if (_userInteracted &&
+            widget.followCaptain &&
+            widget.captainLocation != null)
+          Positioned(
+            bottom: 160,
+            left: 0,
+            right: 90,
+            child: Center(
+              child: AnimatedScale(
+                scale: _userInteracted ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.elasticOut,
+                child: GestureDetector(
+                  onTap: _reCenter,
                   child: Container(
-                    width: 44,
-                    height: 44,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B00),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2.5),
+                      borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF6B00).withValues(alpha: 0.6),
-                          blurRadius: 14 * scale,
-                          spreadRadius: 3 * scale,
+                          color:
+                              const Color(0xFFFF6B00).withValues(alpha: 0.45),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: Transform.rotate(
-                      angle: widget.captainHeading * (math.pi / 180),
-                      child: const Icon(
-                        Icons.two_wheeler_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.my_location_rounded,
+                            color: Colors.white, size: 15),
+                        SizedBox(width: 7),
+                        Text(
+                          'العودة للمتابعة',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'IBM Plex Sans Arabic',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// بيانات تجريبية — نقاط التوصيل والانطلاق
-  List<Marker> _buildMockMarkers() => [
-        _buildLocationMarker(
-          pos: const LatLng(15.3605, 44.1852),
-          label: 'نقطة الانطلاق (A)',
-          snippet: 'شارع حدة — أمام مركز الكميم',
-          color: Colors.green,
-          icon: Icons.my_location_rounded,
-        ),
-        _buildLocationMarker(
-          pos: const LatLng(15.3782, 44.1804),
-          label: 'نقطة الوصول (B)',
-          snippet: 'جامعة صنعاء — البوابة الرئيسية',
-          color: Colors.redAccent,
-          icon: Icons.flag_rounded,
-        ),
-      ];
-
-  Marker _buildLocationMarker({
-    required LatLng pos,
-    required String label,
-    required String snippet,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Marker(
-      point: pos,
-      width: 48,
-      height: 48,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.mediumImpact();
-          widget.onMarkerTap?.call(label, snippet, pos);
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
           ),
-          child: Icon(icon, color: Colors.white, size: 22),
-        ),
-      ),
+      ],
     );
   }
-
-  Polyline _buildMockPolyline() => Polyline(
-        points: const [
-          LatLng(15.3605, 44.1852),
-          LatLng(15.3650, 44.1840),
-          LatLng(15.3688, 44.1824),
-          LatLng(15.3730, 44.1815),
-          LatLng(15.3782, 44.1804),
-        ],
-        color: const Color(0xFFFF6B00),
-        strokeWidth: 4.5,
-      );
 }
 
-/// زر تحكم صغير في الخريطة
+// ─────────────────────────────────────────────────────────────────────────────
+// Map Control Button Widget
+// ─────────────────────────────────────────────────────────────────────────────
 class _MapControlButton extends StatelessWidget {
   final IconData icon;
   final bool isDark;
@@ -430,24 +686,42 @@ class _MapControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isDark ? const Color(0xFF1E2330) : Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      elevation: 4,
-      shadowColor: Colors.black26,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onPressed();
-        },
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(
-            icon,
-            size: 20,
-            color: color ?? (isDark ? Colors.white70 : AppColors.gray700),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF1E2330).withValues(alpha: 0.95)
+            : Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onPressed();
+          },
+          child: SizedBox(
+            width: 46,
+            height: 46,
+            child: Icon(
+              icon,
+              size: 22,
+              color: color ?? (isDark ? Colors.white70 : AppColors.gray700),
+            ),
           ),
         ),
       ),

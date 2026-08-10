@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_spacing.dart';
 
@@ -36,7 +37,7 @@ class WalletBalanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'الرصيد المتاح',
+            AppLocalizations.of(context)!.pass_available_balance,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 14,
@@ -58,11 +59,11 @@ class WalletBalanceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
-                  'ريال (YER)',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.pass_yer,
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -87,9 +88,9 @@ class WalletBalanceCard extends StatelessWidget {
                     ),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 20),
-                  label: const Text(
-                    'شحن رصيد المحفظة',
-                    style: TextStyle(
+                  label: Text(
+                    AppLocalizations.of(context)!.pass_recharge_wallet,
+                    style: const TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontWeight: FontWeight.bold,
                       fontSize: 13,

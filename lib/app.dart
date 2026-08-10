@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'l10n/app_localizations.dart';
+import 'core/bloc/locale/locale_bloc.dart';
+import 'core/bloc/locale/locale_state.dart';
 import 'core/theme/theme_controller.dart';
 
 /// LaffahApp — Root Application Widget for لَفَّة
@@ -19,42 +23,40 @@ class LaffahApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.instance,
       builder: (context, currentThemeMode, child) {
-        return MaterialApp.router(
-          // App identity
-          title: 'لَفَّة',
-          debugShowCheckedModeBanner: false,
+        return BlocBuilder<LocaleBloc, LocaleState>(
+          builder: (context, localeState) {
+            return MaterialApp.router(
+              // App identity
+              title: 'لَفَّة',
+              debugShowCheckedModeBanner: false,
 
-          // Declarative GoRouter navigation
-          routerConfig: AppRouter.router,
+              // Declarative GoRouter navigation
+              routerConfig: AppRouter.router,
 
-          // Laffah Design System theming (Light Mode Default)
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: currentThemeMode,
+              // Laffah Design System theming (Light Mode Default)
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: currentThemeMode,
 
-          // Yemeni Arabic locale — primary market
-          locale: const Locale('ar', 'YE'),
-          supportedLocales: const [
-            Locale('ar', 'YE'),
-            Locale('ar', 'SA'),
-            Locale('ar'),
-            Locale('en'),
-          ],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+              // Dynamic locale management
+              locale: localeState.locale,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
 
-          // Global builder: enforce RTL + disable text scaling
-          builder: (BuildContext context, Widget? child) {
-            return MediaQuery.withClampedTextScaling(
-              minScaleFactor: 1.0,
-              maxScaleFactor: 1.3,
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: child ?? const SizedBox.shrink(),
-              ),
+              // Global builder: enforce Directionality and text scaling
+              builder: (BuildContext context, Widget? child) {
+                return MediaQuery.withClampedTextScaling(
+                  minScaleFactor: 1.0,
+                  maxScaleFactor: 1.3,
+                  child: Directionality(
+                    // Automatically adjust direction based on the current locale
+                    textDirection: localeState.locale.languageCode == 'ar'
+                        ? TextDirection.rtl
+                        : TextDirection.ltr,
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                );
+              },
             );
           },
         );
