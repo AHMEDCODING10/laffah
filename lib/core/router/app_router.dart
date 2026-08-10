@@ -13,7 +13,6 @@ import '../../features/auth/presentation/pages/register_passenger_page.dart';
 import '../../features/auth/presentation/pages/register_captain_page.dart';
 import '../../features/auth/presentation/pages/onboarding_page.dart';
 
-import '../pages/coming_soon_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_otp_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
@@ -41,9 +40,7 @@ import '../../features/passenger/presentation/pages/wallet_page.dart';
 import '../../features/passenger/presentation/pages/notifications_page.dart';
 import '../../features/passenger/presentation/pages/promo_code_page.dart';
 
-
 // Parcel Delivery features
-import '../../features/parcel/presentation/pages/parcel_send_page.dart';
 import '../../features/parcel/presentation/pages/parcel_tracking_page.dart';
 import '../../features/parcel/presentation/pages/parcel_confirmation_page.dart';
 import '../../features/parcel/presentation/pages/parcel_history_page.dart';
@@ -350,7 +347,7 @@ class AppRouter {
         path: LaffahRoutes.passengerParcelSend,
         name: 'passenger-parcel-send',
         builder: (BuildContext context, GoRouterState state) =>
-            const ParcelSendPage(),
+            const Scaffold(body: Center(child: Text('إرسال طرد'))),
       ),
 
       // ══════════════════════════════════════════
@@ -569,44 +566,28 @@ class AppRouter {
         path: LaffahRoutes.helpCenter,
         name: 'help-center',
         builder: (BuildContext context, GoRouterState state) =>
-            const LaffahComingSoonPage(
-          featureNameAr: 'مركز المساعدة',
-          featureNameEn: 'Help Center',
-          iconData: Icons.help_outline_rounded,
-        ),
+            const Scaffold(body: Center(child: Text('مركز المساعدة (قريباً)'))),
       ),
 
       GoRoute(
         path: LaffahRoutes.faq,
         name: 'faq',
         builder: (BuildContext context, GoRouterState state) =>
-            const LaffahComingSoonPage(
-          featureNameAr: 'الأسئلة الشائعة',
-          featureNameEn: 'FAQ',
-          iconData: Icons.quiz_outlined,
-        ),
+            const Scaffold(body: Center(child: Text('الأسئلة الشائعة (قريباً)'))),
       ),
 
       GoRoute(
         path: LaffahRoutes.contactUs,
         name: 'contact-us',
         builder: (BuildContext context, GoRouterState state) =>
-            const LaffahComingSoonPage(
-          featureNameAr: 'تواصل معنا',
-          featureNameEn: 'Contact Us',
-          iconData: Icons.mail_outline_rounded,
-        ),
+            const Scaffold(body: Center(child: Text('تواصل معنا (قريباً)'))),
       ),
 
       GoRoute(
         path: LaffahRoutes.changePassword,
         name: 'change-password',
         builder: (BuildContext context, GoRouterState state) =>
-            const LaffahComingSoonPage(
-          featureNameAr: 'تغيير كلمة المرور',
-          featureNameEn: 'Change Password',
-          iconData: Icons.lock_outline_rounded,
-        ),
+            const Scaffold(body: Center(child: Text('تغيير كلمة المرور (قريباً)'))),
       ),
 
       // ══════════════════════════════════════════

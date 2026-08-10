@@ -24,8 +24,8 @@ class CaptainFloatingBottomBar extends StatelessWidget {
 
     final List<_CaptainNavItem> items = [
       _CaptainNavItem(icon: Icons.navigation_rounded, label: AppLocalizations.of(context)!.capt_nav_home),
-      _CaptainNavItem(icon: Icons.receipt_long_rounded, label: 'الرحلات'),
-      _CaptainNavItem(icon: Icons.account_balance_wallet_rounded, label: 'الأرباح'),
+      const _CaptainNavItem(icon: Icons.receipt_long_rounded, label: 'الرحلات'),
+      const _CaptainNavItem(icon: Icons.account_balance_wallet_rounded, label: 'الأرباح'),
       _CaptainNavItem(icon: Icons.notifications_rounded, label: AppLocalizations.of(context)!.capt_nav_alerts),
       _CaptainNavItem(icon: Icons.person_rounded, label: AppLocalizations.of(context)!.capt_nav_account),
     ];

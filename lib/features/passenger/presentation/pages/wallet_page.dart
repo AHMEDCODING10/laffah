@@ -122,7 +122,6 @@ class _WalletView extends StatelessWidget {
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
         appBar: LaffahAppBar(title: AppLocalizations.of(context)!.pass_laffah_wallet),
-        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 2),
         body: BlocBuilder<WalletBloc, WalletState>(
           builder: (context, state) {
             if (state is WalletLoading) {
