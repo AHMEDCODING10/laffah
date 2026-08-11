@@ -53,7 +53,11 @@ class __TripHistoryViewState extends State<_TripHistoryView>
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
-        appBar: const LaffahAppBar(title: 'رحلاتي وحجوزاتي'),
+        appBar: const LaffahAppBar(
+          title: 'رحلاتي وحجوزاتي',
+          showMenuButton: false,
+          showBackButton: false,
+        ),
         body: BlocBuilder<RideBloc, RideState>(
           builder: (context, state) {
             if (state is TripHistoryLoading) {

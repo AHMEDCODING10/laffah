@@ -20,7 +20,7 @@ class LaffahBottomNavigationBar extends StatelessWidget {
     final List<Map<String, dynamic>> navItems = [
       {
         'title': 'الرئيسية',
-        'icon': Icons.home_outlined,
+        'icon': Icons.home_rounded,
         'activeIcon': Icons.home_rounded,
       },
       {
@@ -30,12 +30,12 @@ class LaffahBottomNavigationBar extends StatelessWidget {
       },
       {
         'title': 'المحفظة',
-        'icon': Icons.account_balance_wallet_outlined,
+        'icon': Icons.account_balance_wallet_rounded,
         'activeIcon': Icons.account_balance_wallet_rounded,
       },
       {
         'title': 'الحساب',
-        'icon': Icons.person_outline_rounded,
+        'icon': Icons.person_rounded,
         'activeIcon': Icons.person_rounded,
       },
     ];
@@ -88,7 +88,8 @@ class LaffahBottomNavigationBar extends StatelessWidget {
                     onTap: () => onTap(index),
                     borderRadius: BorderRadius.circular(36),
                     splashColor: AppColors.primary500.withValues(alpha: 0.1),
-                    highlightColor: AppColors.primary500.withValues(alpha: 0.05),
+                    highlightColor:
+                        AppColors.primary500.withValues(alpha: 0.05),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Column(
@@ -138,4 +139,3 @@ class LaffahBottomNavigationBar extends StatelessWidget {
     );
   }
 }
-

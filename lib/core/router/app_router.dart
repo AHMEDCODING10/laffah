@@ -41,6 +41,7 @@ import '../../features/passenger/presentation/pages/notifications_page.dart';
 import '../../features/passenger/presentation/pages/promo_code_page.dart';
 
 // Parcel Delivery features
+import '../../features/parcel/presentation/pages/parcel_send_page.dart';
 import '../../features/parcel/presentation/pages/parcel_tracking_page.dart';
 import '../../features/parcel/presentation/pages/parcel_confirmation_page.dart';
 import '../../features/parcel/presentation/pages/parcel_history_page.dart';
@@ -347,7 +348,7 @@ class AppRouter {
         path: LaffahRoutes.passengerParcelSend,
         name: 'passenger-parcel-send',
         builder: (BuildContext context, GoRouterState state) =>
-            const Scaffold(body: Center(child: Text('إرسال طرد'))),
+            const ParcelSendPage(),
       ),
 
       // ══════════════════════════════════════════

@@ -13,7 +13,6 @@ import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.d
 import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
 import '../../data/datasources/home_local_data_source.dart';
 import '../widgets/home_action_buttons_row.dart';
-import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_ride_status_cards.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/quick_destinations_section.dart';
@@ -128,7 +127,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         resizeToAvoidBottomInset: false,
-        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 0),
         body: Stack(
           children: [
             // ==========================================

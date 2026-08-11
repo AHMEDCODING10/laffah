@@ -37,13 +37,13 @@ class HomeBottomNavBar extends StatelessWidget {
       },
       {
         'title': 'المحفظة',
-        'icon': Icons.account_balance_wallet_outlined,
+        'icon': Icons.account_balance_wallet_rounded,
         'activeIcon': Icons.account_balance_wallet_rounded,
         'route': LaffahRoutes.passengerWallet,
       },
       {
         'title': 'الحساب',
-        'icon': Icons.person_outline_rounded,
+        'icon': Icons.person_rounded,
         'activeIcon': Icons.person_rounded,
         'route': LaffahRoutes.passengerProfile,
       },
