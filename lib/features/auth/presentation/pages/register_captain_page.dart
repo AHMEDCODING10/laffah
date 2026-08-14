@@ -155,7 +155,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           ),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
-          shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+          shape:
+              const RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -169,7 +170,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
             name: _nameController.text.trim(),
             phone: fullPhone,
             password: _passwordController.text,
-            vehicleType: AppLocalizations.of(context)!.auth_motorcycle, // ✅ نوع ثابت ومباشر بدون تعقيد
+            vehicleType: AppLocalizations.of(context)!
+                .auth_motorcycle, //  نوع ثابت ومباشر بدون تعقيد
             vehicleModel: AppLocalizations.of(context)!.auth_unspecified,
             vehicleYear: 2024,
             vehiclePlate: _plateController.text.trim(),
@@ -184,9 +186,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
         body: SafeArea(
@@ -267,32 +267,38 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                               children: [
                                 // SECTION 1: بيانات شخصية
                                 _buildSectionHeader(
-                                    AppLocalizations.of(context)!.auth_capt_personal_data),
+                                    AppLocalizations.of(context)!
+                                        .auth_capt_personal_data),
                                 const SizedBox(height: 12),
 
-                                _buildLabel(AppLocalizations.of(context)!.auth_full_name_4),
+                                _buildLabel(AppLocalizations.of(context)!
+                                    .auth_full_name_4),
                                 _buildNameField(isDark),
                                 const SizedBox(height: 16),
 
-                                _buildLabel('رقم الهاتف الجوال:'),
+                                _buildLabel(AppLocalizations.of(context)!.capt_mobile_number),
                                 _buildPhoneField(isDark),
                                 const SizedBox(height: 16),
 
-                                _buildLabel(AppLocalizations.of(context)!.auth_new_password),
+                                _buildLabel(AppLocalizations.of(context)!
+                                    .auth_new_password),
                                 _buildPasswordField(isDark),
                                 const SizedBox(height: 16),
 
-                                _buildLabel(AppLocalizations.of(context)!.auth_confirm_password),
+                                _buildLabel(AppLocalizations.of(context)!
+                                    .auth_confirm_password),
                                 _buildConfirmPasswordField(isDark),
 
                                 const SizedBox(height: 28),
 
                                 // SECTION 2: بيانات الدراجة النارية
                                 _buildSectionHeader(
-                                    AppLocalizations.of(context)!.auth_bike_data),
+                                    AppLocalizations.of(context)!
+                                        .auth_bike_data),
                                 const SizedBox(height: 12),
 
-                                _buildLabel(AppLocalizations.of(context)!.auth_plate_number),
+                                _buildLabel(AppLocalizations.of(context)!
+                                    .auth_plate_number),
                                 _buildPlateField(isDark),
 
                                 const SizedBox(height: 24),
@@ -304,7 +310,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
 
                                 // SUBMIT BUTTON
                                 PrimaryGradientButton(
-                                  text: AppLocalizations.of(context)!.auth_submit_request,
+                                  text: AppLocalizations.of(context)!
+                                      .auth_submit_request,
                                   isLoading: isLoading,
                                   onPressed:
                                       _isFormValid ? _handleRegister : null,
@@ -335,7 +342,8 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                               onTap: () {
                                 context.pushReplacement('/auth/phone');
                               },
-                              child: Text(AppLocalizations.of(context)!.auth_login_now,
+                              child: Text(
+                                AppLocalizations.of(context)!.auth_login_now,
                                 style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13.5,
@@ -358,7 +366,6 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
             },
           ),
         ),
-      ),
     );
   }
 
@@ -797,7 +804,9 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  TextSpan(text: AppLocalizations.of(context)!.auth_capt_terms_suffix),
+                  TextSpan(
+                      text:
+                          AppLocalizations.of(context)!.auth_capt_terms_suffix),
                 ],
               ),
             ),

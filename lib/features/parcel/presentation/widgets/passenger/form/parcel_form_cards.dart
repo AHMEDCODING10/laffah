@@ -52,9 +52,7 @@ InputDecoration _inputDecoration({
     ),
     suffixIcon: suffixIcon,
     filled: true,
-    fillColor: isDark
-        ? const Color(0x08FFFFFF)
-        : AppColors.gray50,
+    fillColor: isDark ? const Color(0x08FFFFFF) : AppColors.gray50,
     contentPadding: const EdgeInsets.symmetric(
       horizontal: AppSpacing.s14,
       vertical: AppSpacing.s12,
@@ -317,9 +315,8 @@ class ParcelInfoCard extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: selectedParcelType,
           style: _inputTextStyle(isDark),
-          dropdownColor: isDark
-              ? AppColors.surfaceElevatedDark
-              : AppColors.white,
+          dropdownColor:
+              isDark ? AppColors.surfaceElevatedDark : AppColors.white,
           icon: const Icon(
             Icons.keyboard_arrow_down_rounded,
             color: AppColors.primary500,

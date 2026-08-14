@@ -14,12 +14,12 @@ class EchoService {
   Future<void> init() async {
     try {
       final PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
-      
+
       // We configure Pusher client to connect to our local Reverb server.
       // Replace with your actual local IP (e.g. 192.168.x.x) or domain instead of localhost if testing on real device.
       const String key = String.fromEnvironment('VITE_PUSHER_APP_KEY',
           defaultValue: '68404469b114b177fd46'); // Your Pusher/Reverb Key
-      
+
       await pusher.init(
         apiKey: key,
         cluster: 'eu',
@@ -32,18 +32,21 @@ class EchoService {
         broadcaster: EchoBroadcasterType.Pusher,
         client: pusher,
       );
-      
+
       debugPrint("EchoService initialized successfully connected to Reverb!");
     } catch (e) {
       debugPrint("EchoService initialization error: $e");
     }
   }
 
-  void listenToCaptainLocation(String captainId, Function(Map<String, dynamic>) onLocationUpdate) {
+  void listenToCaptainLocation(
+      String captainId, Function(Map<String, dynamic>) onLocationUpdate) {
     if (_echo == null) return;
-    
+
     // We used a public Channel in our Laravel Event
-    _echo!.channel('captain-location.$captainId').listen('CaptainLocationUpdated', (e) {
+    _echo!
+        .channel('captain-location.$captainId')
+        .listen('CaptainLocationUpdated', (e) {
       if (e != null) {
         onLocationUpdate(e as Map<String, dynamic>);
       }

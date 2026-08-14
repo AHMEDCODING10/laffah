@@ -28,10 +28,11 @@ class ProfileModel extends ProfileEntity {
       vehicleType: json['captain_profile']?['vehicle_type'],
       vehicleModel: json['captain_profile']?['vehicle_model'],
       plateNumber: json['captain_profile']?['plate_number'],
-      rating: json['captain_profile']?['rating'] != null 
-          ? double.tryParse(json['captain_profile']['rating'].toString()) 
+      rating: json['captain_profile']?['rating'] != null
+          ? double.tryParse(json['captain_profile']['rating'].toString())
           : null,
-      isVerified: json['captain_profile']?['is_verified'] == true || json['captain_profile']?['is_verified'] == 1,
+      isVerified: json['captain_profile']?['is_verified'] == true ||
+          json['captain_profile']?['is_verified'] == 1,
     );
   }
 

@@ -78,13 +78,17 @@ class ProfileUserHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      userName,
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                        color: isDark ? AppColors.white : AppColors.gray900,
+                    Flexible(
+                      child: Text(
+                        userName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                        ),
                       ),
                     ),
                     AppSpacing.w8,

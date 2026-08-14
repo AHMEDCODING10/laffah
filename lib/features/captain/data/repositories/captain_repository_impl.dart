@@ -38,7 +38,8 @@ class CaptainRepositoryImpl implements CaptainRepository {
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (e) {
-      return Left(ServerFailure('تعذر تحديث الحالة. يرجى التحقق من اتصالك بالإنترنت. $e'));
+      return Left(ServerFailure(
+          'تعذر تحديث الحالة. يرجى التحقق من اتصالك بالإنترنت. $e'));
     } catch (e) {
       return Left(ServerFailure('حدث خطأ غير متوقع: $e'));
     }
@@ -80,16 +81,52 @@ class CaptainRepositoryImpl implements CaptainRepository {
       } else {
         return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء الاستجابة لطلب الرحلة'));
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409 || e.response?.statusCode == 400) {
+        final serverMsg = e.response?.data is Map && e.response?.data['message'] != null
+            ? e.response?.data['message'].toString()
+            : 'عذراً، سبقك كابتن آخر بقبول هذا المشوار.';
+        return Left(ServerFailure(serverMsg ?? 'عذراً، سبقك كابتن آخر بقبول هذا المشوار.'));
+      }
+      return const Left(
+          ServerFailure('حدث خطأ أثناء الرد على طلب المشوار.'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
+
   @override
-  Future<Either<Failure, void>> requestPayout(double amount, String method, String accountNumber) async {
+  Future<Either<Failure, void>> updateTripStatus({
+    required String tripId,
+    required String status,
+  }) async {
     try {
-      final response = await remoteDataSource.requestPayout(amount, method, accountNumber);
+      final response = await remoteDataSource.updateTripStatus(
+        tripId: tripId,
+        status: status,
+      );
+
+      if (response.success) {
+        return const Right(null);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      final serverMsg = e.response?.data is Map && e.response?.data['message'] != null
+          ? e.response?.data['message'].toString()
+          : 'حدث خطأ أثناء تحديث حالة المشوار مع الخادم.';
+      return Left(ServerFailure(serverMsg!));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> requestPayout(
+      double amount, String method, String accountNumber) async {
+    try {
+      final response =
+          await remoteDataSource.requestPayout(amount, method, accountNumber);
       if (response.success) {
         return const Right(null);
       } else {
@@ -124,7 +161,8 @@ class CaptainRepositoryImpl implements CaptainRepository {
     String statusFilter = 'الكل',
   }) async {
     try {
-      final response = await remoteDataSource.getCaptainTrips(page, statusFilter);
+      final response =
+          await remoteDataSource.getCaptainTrips(page, statusFilter);
       if (response.success && response.data != null) {
         final trips = response.data!
             .map((e) => CaptainTripEntity(
@@ -182,52 +220,60 @@ class CaptainRepositoryImpl implements CaptainRepository {
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (_) {
-      return const Left(ServerFailure('تعذر جلب تفاصيل المحفظة. يرجى التحقق من اتصالك بالإنترنت.'));
+      return const Left(ServerFailure(
+          'تعذر جلب تفاصيل المحفظة. يرجى التحقق من اتصالك بالإنترنت.'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<CaptainNotificationEntity>>> getNotifications() async {
+  Future<Either<Failure, List<CaptainNotificationEntity>>>
+      getNotifications() async {
     try {
       final response = await remoteDataSource.getNotifications();
       if (response.success && response.data != null) {
         final notifications = response.data!
-            .map((e) => CaptainNotificationModel.fromJson(e as Map<String, dynamic>))
+            .map((e) =>
+                CaptainNotificationModel.fromJson(e as Map<String, dynamic>))
             .toList();
         return Right(notifications);
       } else {
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (_) {
-      return const Left(ServerFailure('تعذر جلب التنبيهات. يرجى التحقق من اتصالك بالإنترنت.'));
+      return const Left(ServerFailure(
+          'تعذر جلب التنبيهات. يرجى التحقق من اتصالك بالإنترنت.'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<CaptainTripRequestEntity>>> getNearbyRequests() async {
+  Future<Either<Failure, List<CaptainTripRequestEntity>>>
+      getNearbyRequests() async {
     try {
       final response = await remoteDataSource.getNearbyRequests();
       if (response.success && response.data != null) {
         final requests = response.data!
-            .map((e) => CaptainTripRequestModel.fromJson(e as Map<String, dynamic>))
+            .map((e) =>
+                CaptainTripRequestModel.fromJson(e as Map<String, dynamic>))
             .toList();
         return Right(requests);
       } else {
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (_) {
-      return const Left(ServerFailure('تعذر جلب الطلبات القريبة. يرجى التحقق من اتصالك بالإنترنت.'));
+      return const Left(ServerFailure(
+          'تعذر جلب الطلبات القريبة. يرجى التحقق من اتصالك بالإنترنت.'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> uploadDocument(File file, String type) async {
+  Future<Either<Failure, Map<String, dynamic>>> uploadDocument(
+      File file, String type) async {
     try {
       final response = await remoteDataSource.uploadDocument(file, type);
       if (response.success && response.data != null) {

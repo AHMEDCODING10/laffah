@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
@@ -8,10 +9,8 @@ class PrivacyPolicyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+
+    return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -24,7 +23,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
           centerTitle: true,
           title: Text(
-            'سياسة الخصوصية',
+            AppLocalizations.of(context)!.privacy_policy_title,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -38,40 +37,34 @@ class PrivacyPolicyPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('مقدمة', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.privacy_policy_intro_title, isDark),
               _buildSectionText(
-                'نحن في تطبيق "لَفَّة" نقدر خصوصيتك بشكل كبير ونلتزم بحماية بياناتك الشخصية. توضح هذه السياسة كيف نقوم بجمع واستخدام وحماية معلوماتك عند استخدام تطبيقنا المخصص للنقل في اليمن وتحديداً صنعاء.',
+                AppLocalizations.of(context)!.privacy_policy_intro_text,
                 isDark,
               ),
               AppSpacing.h24,
-              
-              _buildSectionTitle('المعلومات التي نجمعها', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.privacy_policy_data_title, isDark),
               _buildSectionText(
-                '• بيانات التسجيل: الاسم، رقم الهاتف، والبريد الإلكتروني.\n'
-                '• بيانات الموقع (GPS): نجمع بيانات موقعك الحالي لربطك بأقرب كابتن متاح.\n'
-                '• بيانات المعاملات: تفاصيل الرحلات، المبالغ المدفوعة، وتقييمات الكباتن.',
+                AppLocalizations.of(context)!.privacy_policy_data_text,
                 isDark,
               ),
               AppSpacing.h24,
-
-              _buildSectionTitle('كيف نستخدم معلوماتك', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.privacy_policy_usage_title, isDark),
               _buildSectionText(
-                'نستخدم هذه المعلومات لتقديم خدماتنا وتحسينها، لضمان سلامتك أثناء الرحلة، ולتوفير دعم فني سريع وفعال.',
+                AppLocalizations.of(context)!.privacy_policy_usage_text,
                 isDark,
               ),
               AppSpacing.h24,
-
-              _buildSectionTitle('حماية البيانات', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.privacy_policy_protection_title, isDark),
               _buildSectionText(
-                'يتم تشفير كافة بياناتك الحساسة وحفظها في خوادم آمنة. نحن لا نشارك بياناتك مع أي جهات خارجية لأغراض تسويقية.',
+                AppLocalizations.of(context)!.privacy_policy_protection_text,
                 isDark,
               ),
               AppSpacing.h32,
-              
-              const Center(
+              Center(
                 child: Text(
-                  'آخر تحديث: 2026',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.privacy_policy_last_updated,
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     color: AppColors.gray500,
                     fontSize: 12,
@@ -82,7 +75,6 @@ class PrivacyPolicyPage extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 

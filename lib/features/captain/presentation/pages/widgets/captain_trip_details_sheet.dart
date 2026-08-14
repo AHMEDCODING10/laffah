@@ -38,21 +38,30 @@ class CaptainTripDetailsSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final String tripId = trip['id'] ?? 'LF-00000';
-    final String status = trip['status'] ?? AppLocalizations.of(context)!.capt_trip_done;
-    final Color statusColor = (trip['statusColor'] as Color?) ?? AppColors.success;
-    final String passengerName = trip['passengerName'] ?? AppLocalizations.of(context)!.capt_passenger;
+    final String status =
+        trip['status'] ?? AppLocalizations.of(context)!.capt_trip_done;
+    final Color statusColor =
+        (trip['statusColor'] as Color?) ?? AppColors.success;
+    final String passengerName =
+        trip['passengerName'] ?? AppLocalizations.of(context)!.capt_passenger;
     final String passengerPhone = trip['passengerPhone'] ?? '+967 777 000 000';
     final double passengerRating = (trip['rating'] as num?)?.toDouble() ?? 5.0;
-    final String pickup = trip['pickup'] ?? AppLocalizations.of(context)!.capt_pickup_loc;
-    final String dropoff = trip['dropoff'] ?? AppLocalizations.of(context)!.capt_dropoff_loc;
-    final String priceStr = trip['price'] ?? AppLocalizations.of(context)!.capt_0_yer;
+    final String pickup =
+        trip['pickup'] ?? AppLocalizations.of(context)!.capt_pickup_loc;
+    final String dropoff =
+        trip['dropoff'] ?? AppLocalizations.of(context)!.capt_dropoff_loc;
+    final String priceStr =
+        trip['price'] ?? AppLocalizations.of(context)!.capt_0_yer;
     final double grossFare = (trip['grossFare'] as num?)?.toDouble() ?? 2400.0;
     final double platformFee = grossFare * 0.10;
     final double netEarnings = grossFare - platformFee;
-    final String dateStr = trip['date'] ?? AppLocalizations.of(context)!.capt_today;
-    final String distanceStr = trip['distance'] ?? AppLocalizations.of(context)!.capt_4_5_km;
-    final String durationStr = trip['duration'] ?? '12 دقيقة';
-    final String paymentMethod = trip['paymentMethod'] ?? AppLocalizations.of(context)!.capt_cash;
+    final String dateStr =
+        trip['date'] ?? AppLocalizations.of(context)!.capt_today;
+    final String distanceStr =
+        trip['distance'] ?? AppLocalizations.of(context)!.capt_4_5_km;
+    final String durationStr = trip['duration'] ?? AppLocalizations.of(context)!.capt_12_min;
+    final String paymentMethod =
+        trip['paymentMethod'] ?? AppLocalizations.of(context)!.capt_cash;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -80,9 +89,12 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                 color: isDark
                     ? const Color(0xFF141822).withValues(alpha: 0.94)
                     : Colors.white.withValues(alpha: 0.96),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(32)),
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.06),
                 ),
               ),
               child: SingleChildScrollView(
@@ -113,12 +125,13 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'تفاصيل الرحلة #$tripId',
+                              AppLocalizations.of(context)!.capt_trip_details_id(tripId),
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontWeight: FontWeight.w900,
                                 fontSize: 18,
-                                color: isDark ? Colors.white : AppColors.gray900,
+                                color:
+                                    isDark ? Colors.white : AppColors.gray900,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -134,11 +147,13 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
                             color: statusColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                            border: Border.all(
+                                color: statusColor.withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             status,
@@ -159,17 +174,22 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : AppColors.gray50,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : AppColors.gray200,
                         ),
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
                             radius: 24,
-                            backgroundColor: const Color(0xFFFF6B00).withValues(alpha: 0.18),
+                            backgroundColor:
+                                const Color(0xFFFF6B00).withValues(alpha: 0.18),
                             child: Text(
                               passengerName.isNotEmpty ? passengerName[0] : 'ع',
                               style: const TextStyle(
@@ -191,12 +211,15 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 15,
-                                    color: isDark ? Colors.white : AppColors.gray900,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.gray900,
                                   ),
                                 ),
                                 Row(
                                   children: [
-                                    const Icon(Icons.star_rounded, size: 15, color: Colors.amber),
+                                    const Icon(Icons.star_rounded,
+                                        size: 15, color: Colors.amber),
                                     AppSpacing.w4,
                                     Text(
                                       '$passengerRating âک…',
@@ -229,7 +252,8 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
-                              icon: const Icon(Icons.phone_rounded, color: AppColors.success, size: 20),
+                              icon: const Icon(Icons.phone_rounded,
+                                  color: AppColors.success, size: 20),
                               onPressed: () => _makePhoneCall(passengerPhone),
                             ),
                           ),
@@ -243,10 +267,14 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : AppColors.gray50,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : AppColors.gray200,
                         ),
                       ),
                       child: Column(
@@ -269,7 +297,8 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      AppLocalizations.of(context)!.capt_point_a,
+                                      AppLocalizations.of(context)!
+                                          .capt_point_a,
                                       style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -283,7 +312,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'IBM Plex Sans Arabic',
-                                        color: isDark ? Colors.white : AppColors.gray900,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.gray900,
                                       ),
                                     ),
                                   ],
@@ -320,7 +351,8 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      AppLocalizations.of(context)!.capt_point_b,
+                                      AppLocalizations.of(context)!
+                                          .capt_point_b,
                                       style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -334,7 +366,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'IBM Plex Sans Arabic',
-                                        color: isDark ? Colors.white : AppColors.gray900,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.gray900,
                                       ),
                                     ),
                                   ],
@@ -352,15 +386,27 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildSpecTile(isDark, Icons.map_rounded, AppLocalizations.of(context)!.capt_distance, distanceStr),
+                          child: _buildSpecTile(
+                              isDark,
+                              Icons.map_rounded,
+                              AppLocalizations.of(context)!.capt_distance,
+                              distanceStr),
                         ),
                         AppSpacing.w10,
                         Expanded(
-                          child: _buildSpecTile(isDark, Icons.schedule_rounded, AppLocalizations.of(context)!.capt_duration, durationStr),
+                          child: _buildSpecTile(
+                              isDark,
+                              Icons.schedule_rounded,
+                              AppLocalizations.of(context)!.capt_duration,
+                              durationStr),
                         ),
                         AppSpacing.w10,
                         Expanded(
-                          child: _buildSpecTile(isDark, Icons.two_wheeler_rounded, AppLocalizations.of(context)!.capt_transport_mode, 'دراجة نارية'),
+                          child: _buildSpecTile(
+                              isDark,
+                              Icons.two_wheeler_rounded,
+                              AppLocalizations.of(context)!.capt_transport_mode,
+                              AppLocalizations.of(context)!.capt_motorcycle),
                         ),
                       ],
                     ),
@@ -374,7 +420,8 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                         color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFFFF6B00).withValues(alpha: 0.25),
+                          color:
+                              const Color(0xFFFF6B00).withValues(alpha: 0.25),
                         ),
                       ),
                       child: Column(
@@ -384,7 +431,8 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                AppLocalizations.of(context)!.capt_financial_calc,
+                                AppLocalizations.of(context)!
+                                    .capt_financial_calc,
                                 style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13,
@@ -393,9 +441,11 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                                  color: const Color(0xFFFF6B00)
+                                      .withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -411,16 +461,26 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildFinanceRow(AppLocalizations.of(context)!.capt_total_actual_fare, priceStr, isDark, false),
+                          _buildFinanceRow(
+                              AppLocalizations.of(context)!
+                                  .capt_total_actual_fare,
+                              priceStr,
+                              isDark,
+                              false),
                           const SizedBox(height: 6),
-                          _buildFinanceRow(AppLocalizations.of(context)!.capt_laffah_commission, '-${platformFee.toStringAsFixed(0)} ر.ي', isDark, false),
+                          _buildFinanceRow(
+                              AppLocalizations.of(context)!
+                                  .capt_laffah_commission,
+                              '-${platformFee.toStringAsFixed(0)} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
+                              isDark,
+                              false),
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 8),
                             child: Divider(height: 1),
                           ),
                           _buildFinanceRow(
                             AppLocalizations.of(context)!.capt_net_earnings,
-                            '${netEarnings.toStringAsFixed(0)} ر.ي',
+                            '${netEarnings.toStringAsFixed(0)} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
                             isDark,
                             true,
                           ),
@@ -442,8 +502,10 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      AppLocalizations.of(context)!.capt_extracting_invoice,
-                                      style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                                      AppLocalizations.of(context)!
+                                          .capt_extracting_invoice,
+                                      style: const TextStyle(
+                                          fontFamily: 'IBM Plex Sans Arabic'),
                                     ),
                                     backgroundColor: AppColors.info,
                                   ),
@@ -451,7 +513,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                               },
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
-                                  color: isDark ? Colors.white24 : AppColors.gray300,
+                                  color: isDark
+                                      ? Colors.white24
+                                      : AppColors.gray300,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -485,9 +549,11 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              icon: const Icon(Icons.check_circle_rounded, size: 18),
+                              icon: const Icon(Icons.check_circle_rounded,
+                                  size: 18),
                               label: Text(
-                                AppLocalizations.of(context)!.capt_close_details,
+                                AppLocalizations.of(context)!
+                                    .capt_close_details,
                                 style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.w900,
@@ -510,14 +576,17 @@ class CaptainTripDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSpecTile(bool isDark, IconData icon, String label, String value) {
+  Widget _buildSpecTile(
+      bool isDark, IconData icon, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
+        color:
+            isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color:
+              isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Column(
@@ -550,7 +619,8 @@ class CaptainTripDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildFinanceRow(String label, String value, bool isDark, bool isHighlight) {
+  Widget _buildFinanceRow(
+      String label, String value, bool isDark, bool isHighlight) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -571,7 +641,9 @@ class CaptainTripDetailsSheet extends StatelessWidget {
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: isHighlight ? 16 : 13,
             fontWeight: FontWeight.w900,
-            color: isHighlight ? const Color(0xFFFF6B00) : (isDark ? Colors.white : AppColors.gray900),
+            color: isHighlight
+                ? const Color(0xFFFF6B00)
+                : (isDark ? Colors.white : AppColors.gray900),
           ),
         ),
       ],

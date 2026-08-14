@@ -11,7 +11,8 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
     on<RequestPayoutEvent>(_onRequestPayout);
   }
 
-  Future<void> _onGetWalletBalance(GetWalletBalanceEvent event, Emitter<WalletState> emit) async {
+  Future<void> _onGetWalletBalance(
+      GetWalletBalanceEvent event, Emitter<WalletState> emit) async {
     emit(WalletLoading());
     final result = await repository.getWalletBalance();
     result.fold(
@@ -20,9 +21,11 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
     );
   }
 
-  Future<void> _onRequestPayout(RequestPayoutEvent event, Emitter<WalletState> emit) async {
+  Future<void> _onRequestPayout(
+      RequestPayoutEvent event, Emitter<WalletState> emit) async {
     emit(WalletLoading());
-    final result = await repository.requestPayout(event.amount, event.accountNumber);
+    final result =
+        await repository.requestPayout(event.amount, event.accountNumber);
     result.fold(
       (failure) => emit(WalletError(failure.message)),
       (_) => emit(WalletPayoutRequested()),

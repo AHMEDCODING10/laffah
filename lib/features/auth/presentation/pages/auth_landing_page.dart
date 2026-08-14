@@ -46,9 +46,7 @@ class _AuthLandingPageState extends State<AuthLandingPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl, // RTL Layout first
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: isDark
             ? AppColors.backgroundDark
             : const Color(0xFFF8F9FA), // Minimal light gray
@@ -108,11 +106,14 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                       // Option 1: Join as Passenger
                       AnimatedRoleCard(
                         isDark: isDark,
-                        title: AppLocalizations.of(context)!.auth_role_passenger,
-                        subtitle: AppLocalizations.of(context)!.auth_role_passenger_desc,
+                        title:
+                            AppLocalizations.of(context)!.auth_role_passenger,
+                        subtitle: AppLocalizations.of(context)!
+                            .auth_role_passenger_desc,
                         icon: Icons
                             .location_on_rounded, // modernized location pin
-                        buttonText: AppLocalizations.of(context)!.auth_create_passenger,
+                        buttonText:
+                            AppLocalizations.of(context)!.auth_create_passenger,
                         backgroundColor: isDark
                             ? AppColors.surfaceElevatedDark
                                 .withValues(alpha: 0.7)
@@ -133,10 +134,11 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                       AnimatedRoleCard(
                         isDark: isDark,
                         title: AppLocalizations.of(context)!.auth_role_captain,
-                        subtitle:
-                            AppLocalizations.of(context)!.auth_role_captain_desc,
+                        subtitle: AppLocalizations.of(context)!
+                            .auth_role_captain_desc,
                         icon: Icons.two_wheeler_rounded,
-                        buttonText: AppLocalizations.of(context)!.auth_create_captain,
+                        buttonText:
+                            AppLocalizations.of(context)!.auth_create_captain,
                         backgroundColor: isDark
                             ? AppColors.surfaceElevatedDark
                                 .withValues(alpha: 0.7)
@@ -154,11 +156,13 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                       const SizedBox(height: 48),
 
                       // Existing Account Link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            AppLocalizations.of(context)!.auth_already_have_account,
+                            AppLocalizations.of(context)!
+                                .auth_already_have_account,
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 15,
@@ -172,7 +176,8 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                             onTap: () {
                               context.push('/auth/phone');
                             },
-                            child: Text(AppLocalizations.of(context)!.auth_login,
+                            child: Text(
+                              AppLocalizations.of(context)!.auth_login,
                               style: const TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 15,
@@ -193,7 +198,6 @@ class _AuthLandingPageState extends State<AuthLandingPage>
             ),
           ),
         ),
-      ),
     );
   }
 }

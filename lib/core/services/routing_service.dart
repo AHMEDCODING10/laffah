@@ -34,16 +34,18 @@ class RouteResult {
 /// خدمة OSRM لحساب المسارات — مجانية 100% لا تحتاج مفتاح API
 /// تعتمد على سيرفر demo رسمي من مشروع OSRM مفتوح المصدر
 class RoutingService {
-  static const String _osrmBase = 'http://router.project-osrm.org/route/v1/driving';
-  
+  static const String _osrmBase =
+      'http://router.project-osrm.org/route/v1/driving';
+
   final Dio _dio;
 
-  RoutingService() : _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 15),
-    ),
-  );
+  RoutingService()
+      : _dio = Dio(
+          BaseOptions(
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 15),
+          ),
+        );
 
   /// جلب مسار بين نقطتين
   /// [from] نقطة الانطلاق
@@ -52,7 +54,8 @@ class RoutingService {
   Future<RouteResult?> getRoute(LatLng from, LatLng to) async {
     try {
       // OSRM يستقبل الإحداثيات بترتيب: lng,lat (عكس المعتاد)
-      final url = '$_osrmBase/${from.longitude},${from.latitude};${to.longitude},${to.latitude}'
+      final url =
+          '$_osrmBase/${from.longitude},${from.latitude};${to.longitude},${to.latitude}'
           '?overview=full&geometries=geojson&steps=false';
 
       final response = await _dio.get(url);
@@ -66,11 +69,11 @@ class RoutingService {
         if (routes == null || routes.isEmpty) return null;
 
         final route = routes[0] as Map<String, dynamic>;
-        
+
         // استخراج نقاط المسار من GeoJSON
         final geometry = route['geometry'] as Map<String, dynamic>;
         final coordinates = geometry['coordinates'] as List;
-        
+
         final points = coordinates.map<LatLng>((coord) {
           final list = coord as List;
           return LatLng(
@@ -81,9 +84,10 @@ class RoutingService {
 
         // المسافة بالمتر → كيلومتر
         final distanceKm = ((route['distance'] as num).toDouble()) / 1000.0;
-        
+
         // الوقت بالثواني → دقائق
-        final durationMinutes = ((route['duration'] as num).toDouble() / 60).round();
+        final durationMinutes =
+            ((route['duration'] as num).toDouble() / 60).round();
 
         return RouteResult(
           points: points,

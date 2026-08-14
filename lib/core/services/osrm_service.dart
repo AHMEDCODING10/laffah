@@ -29,17 +29,18 @@ class OsrmService {
         final data = response.data;
         if (data['routes'] != null && data['routes'].isNotEmpty) {
           final route = data['routes'][0];
-          
+
           // Distance in meters to km
           final distanceKm = (route['distance'] as num).toDouble() / 1000.0;
-          
+
           // Duration in seconds to minutes
           final durationMin = (route['duration'] as num).toDouble() / 60.0;
-          
+
           // Parse GeoJSON geometry
           final coordinates = route['geometry']['coordinates'] as List;
           final List<LatLng> points = coordinates.map((coord) {
-            return LatLng((coord[1] as num).toDouble(), (coord[0] as num).toDouble());
+            return LatLng(
+                (coord[1] as num).toDouble(), (coord[0] as num).toDouble());
           }).toList();
 
           return OsrmRouteData(

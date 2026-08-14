@@ -13,7 +13,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<AddSavedPlaceEvent>(_onAddSavedPlace);
   }
 
-  Future<void> _onGetProfile(GetProfileEvent event, Emitter<ProfileState> emit) async {
+  Future<void> _onGetProfile(
+      GetProfileEvent event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
     final result = await repository.getProfile();
     result.fold(
@@ -22,16 +23,19 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     );
   }
 
-  Future<void> _onUpdateProfile(UpdateProfileEvent event, Emitter<ProfileState> emit) async {
+  Future<void> _onUpdateProfile(
+      UpdateProfileEvent event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
-    final result = await repository.updateProfile(name: event.name, email: event.email);
+    final result =
+        await repository.updateProfile(name: event.name, email: event.email);
     result.fold(
       (failure) => emit(ProfileError(failure.message)),
       (profile) => emit(ProfileLoaded(profile)),
     );
   }
 
-  Future<void> _onGetSavedPlaces(GetSavedPlacesEvent event, Emitter<ProfileState> emit) async {
+  Future<void> _onGetSavedPlaces(
+      GetSavedPlacesEvent event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
     final result = await repository.getSavedPlaces();
     result.fold(
@@ -40,7 +44,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     );
   }
 
-  Future<void> _onAddSavedPlace(AddSavedPlaceEvent event, Emitter<ProfileState> emit) async {
+  Future<void> _onAddSavedPlace(
+      AddSavedPlaceEvent event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
     final result = await repository.addSavedPlace(event.place);
     result.fold(

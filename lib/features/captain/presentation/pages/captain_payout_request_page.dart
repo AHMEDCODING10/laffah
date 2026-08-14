@@ -9,10 +9,10 @@ import '../bloc/core/captain_state.dart';
 
 /// Enum representing the status of a payout transaction
 enum PayoutStatus {
-  completed,   // تم التحويل بنجاح
-  pending,     // قيد المراجعة والتحقق
-  processing,  // جاري إرسال الحوالة
-  failed,      // فشل الإرسال / مرفوض
+  completed, // تم التحويل بنجاح
+  pending, // قيد المراجعة والتحقق
+  processing, // جاري إرسال الحوالة
+  failed, // فشل الإرسال / مرفوض
 }
 
 /// Model class representing a payout method
@@ -64,7 +64,8 @@ class CaptainPayoutRequestPage extends StatefulWidget {
   const CaptainPayoutRequestPage({super.key});
 
   @override
-  State<CaptainPayoutRequestPage> createState() => _CaptainPayoutRequestPageState();
+  State<CaptainPayoutRequestPage> createState() =>
+      _CaptainPayoutRequestPageState();
 }
 
 class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
@@ -76,7 +77,7 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
 
   late List<PayoutMethod> _payoutMethods;
   late List<PayoutTransaction> _transactions;
-  
+
   PayoutMethod? _selectedMethod;
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _accountController = TextEditingController();
@@ -105,7 +106,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
         id: 'kuraimi',
         name: 'الكريمي إكسبرس / حساب الكريمي',
         logoText: 'K',
-        description: 'تحويل مباشر إلى حسابك في بنك الكريمي الإسلامي أو استلام كحوالة عبر الهوية.',
+        description:
+            'تحويل مباشر إلى حسابك في بنك الكريمي الإسلامي أو استلام كحوالة عبر الهوية.',
         icon: Icons.account_balance_rounded,
         feeDescription: 'رسوم التحويل: 1% (حد أدنى 100 ريال)',
       ),
@@ -113,7 +115,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
         id: 'floos',
         name: 'خدمة فلوس موبايل (Floos)',
         logoText: 'F',
-        description: 'إرسال سريع ومباشر إلى محفظة فلوس الإلكترونية المرتبطة برقم هاتفك.',
+        description:
+            'إرسال سريع ومباشر إلى محفظة فلوس الإلكترونية المرتبطة برقم هاتفك.',
         icon: Icons.phone_android_rounded,
         feeDescription: 'بدون رسوم تحويل إضافية',
       ),
@@ -121,7 +124,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
         id: 'al_najm',
         name: 'النجم إكسبرس للشبكات',
         logoText: 'N',
-        description: 'إرسال حوالة فورية بالاسم ورقم الهاتف قابلة للاستلام من أي فرع في صنعاء وبقية المحافظات.',
+        description:
+            'إرسال حوالة فورية بالاسم ورقم الهاتف قابلة للاستلام من أي فرع في صنعاء وبقية المحافظات.',
         icon: Icons.alt_route_rounded,
         feeDescription: 'رسوم الشبكة: 1.5%',
       ),
@@ -177,7 +181,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                   color: isDark ? AppColors.white : AppColors.gray900,
                   size: 20,
                 ),
-                onPressed: () => context.mounted ? Navigator.maybePop(context) : null,
+                onPressed: () =>
+                    context.mounted ? Navigator.maybePop(context) : null,
               ),
               centerTitle: true,
               title: Text(
@@ -192,7 +197,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
             ),
             body: SafeArea(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
                 children: [
                   _buildBalanceDashboard(isDark),
                   AppSpacing.h24,
@@ -229,14 +235,16 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.shield_outlined, color: AppColors.success, size: 12),
+                    Icon(Icons.shield_outlined,
+                        color: AppColors.success, size: 12),
                     AppSpacing.w4,
                     Text(
                       'رصيد آمن',
@@ -252,7 +260,7 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               ),
             ],
           ),
-          
+
           AppSpacing.h8,
 
           Row(
@@ -330,7 +338,9 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               Container(
                 height: 36,
                 width: 1,
-                color: isDark ? AppColors.white.withValues(alpha: 0.06) : AppColors.gray200,
+                color: isDark
+                    ? AppColors.white.withValues(alpha: 0.06)
+                    : AppColors.gray200,
               ),
               AppSpacing.w16,
               Expanded(
@@ -377,12 +387,17 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
 
           AppSpacing.h16,
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.02)
+                  : AppColors.gray50,
               borderRadius: AppSpacing.borderSM,
               border: Border.all(
-                color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray100,
+                color: isDark
+                    ? AppColors.white.withValues(alpha: 0.04)
+                    : AppColors.gray100,
               ),
             ),
             child: Row(
@@ -418,10 +433,14 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.9),
+        color: isDark
+            ? AppColors.surfaceDark.withValues(alpha: 0.6)
+            : AppColors.white.withValues(alpha: 0.9),
         borderRadius: AppSpacing.borderXL,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.04)
+              : AppColors.gray200,
         ),
       ),
       child: Form(
@@ -489,13 +508,18 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                   fontWeight: FontWeight.normal,
                   color: isDark ? AppColors.gray600 : AppColors.gray400,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16, vertical: 14),
                 filled: true,
-                fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+                fillColor: isDark
+                    ? AppColors.white.withValues(alpha: 0.02)
+                    : AppColors.gray50,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: AppSpacing.borderSM,
                   borderSide: BorderSide(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.05)
+                        : AppColors.gray300,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -555,7 +579,10 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               controller: _accountController,
               keyboardType: TextInputType.text,
               style: TextStyle(
-                fontFamily: _selectedMethod?.id == 'floos' || _selectedMethod?.id == 'jeeb' ? 'monospace' : 'IBM Plex Sans Arabic',
+                fontFamily: _selectedMethod?.id == 'floos' ||
+                        _selectedMethod?.id == 'jeeb'
+                    ? 'monospace'
+                    : 'IBM Plex Sans Arabic',
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -571,13 +598,18 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                   fontWeight: FontWeight.normal,
                   color: isDark ? AppColors.gray600 : AppColors.gray400,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16, vertical: 14),
                 filled: true,
-                fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+                fillColor: isDark
+                    ? AppColors.white.withValues(alpha: 0.02)
+                    : AppColors.gray50,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: AppSpacing.borderSM,
                   borderSide: BorderSide(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.05)
+                        : AppColors.gray300,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -623,7 +655,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
             _isSubmitting
                 ? const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.primary500),
                     ),
                   )
                 : SizedBox(
@@ -651,7 +684,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                             ),
                           ),
                           AppSpacing.w8,
-                          Icon(Icons.arrow_back, size: 18), // Left because of RTL
+                          Icon(Icons.arrow_back,
+                              size: 18), // Left because of RTL
                         ],
                       ),
                     ),
@@ -666,18 +700,23 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+        color:
+            isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
         borderRadius: AppSpacing.borderSM,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray300,
         ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<PayoutMethod>(
           value: _selectedMethod,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary500),
-          dropdownColor: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: AppColors.primary500),
+          dropdownColor:
+              isDark ? AppColors.surfaceElevatedDark : AppColors.white,
           borderRadius: AppSpacing.borderMD,
           items: _payoutMethods.map((PayoutMethod method) {
             return DropdownMenuItem<PayoutMethod>(
@@ -841,7 +880,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               AppSpacing.w6,
               Expanded(
                 child: Text(
-                  _selectedMethod?.id == 'floos' || _selectedMethod?.id == 'jeeb'
+                  _selectedMethod?.id == 'floos' ||
+                          _selectedMethod?.id == 'jeeb'
                       ? 'وقت معالجة الطلب: فوري وتلقائي على مدار 24 ساعة.'
                       : 'وقت معالجة الطلب: خلال ساعتين عمل (مواعيد المطابقة والتحويل من 8:00 صباحاً وحتى 10:00 مساءً).',
                   style: TextStyle(
@@ -930,10 +970,14 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s14),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.8),
+        color: isDark
+            ? AppColors.surfaceDark.withValues(alpha: 0.6)
+            : AppColors.white.withValues(alpha: 0.8),
         borderRadius: AppSpacing.borderLG,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.04)
+              : AppColors.gray200,
         ),
       ),
       child: Column(
@@ -957,14 +1001,14 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.w900,
                   fontSize: 14,
-                  color: txn.status == PayoutStatus.failed ? AppColors.danger : AppColors.primary500,
+                  color: txn.status == PayoutStatus.failed
+                      ? AppColors.danger
+                      : AppColors.primary500,
                 ),
               ),
             ],
           ),
-          
           AppSpacing.h8,
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -986,11 +1030,9 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               ),
             ],
           ),
-
           AppSpacing.h10,
           const Divider(height: 1, thickness: 0.5),
           AppSpacing.h10,
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1023,7 +1065,6 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               ),
             ],
           ),
-
           if (txn.rejectionReason != null) ...[
             AppSpacing.h10,
             Container(
@@ -1032,7 +1073,8 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               decoration: BoxDecoration(
                 color: AppColors.danger.withValues(alpha: 0.05),
                 borderRadius: AppSpacing.borderSM,
-                border: Border.all(color: AppColors.danger.withValues(alpha: 0.12)),
+                border:
+                    Border.all(color: AppColors.danger.withValues(alpha: 0.12)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1069,16 +1111,17 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     if (_formKey.currentState!.validate()) {
       final amt = double.parse(_amountController.text);
       context.read<CaptainBloc>().add(RequestPayout(
-        amount: amt,
-        method: _selectedMethod!.id,
-        accountDetails: _accountController.text,
-      ));
+            amount: amt,
+            method: _selectedMethod!.id,
+            accountDetails: _accountController.text,
+          ));
     }
   }
 
   void _showPayoutSuccessDialog(double amt) {
-    final isInstant = _selectedMethod?.id == 'floos' || _selectedMethod?.id == 'jeeb';
-    
+    final isInstant =
+        _selectedMethod?.id == 'floos' || _selectedMethod?.id == 'jeeb';
+
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
@@ -1091,12 +1134,16 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
             borderRadius: AppSpacing.borderLG,
           ),
           icon: Icon(
-            isInstant ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+            isInstant
+                ? Icons.check_circle_rounded
+                : Icons.pending_actions_rounded,
             color: AppColors.success,
             size: 50,
           ),
           title: Text(
-            isInstant ? 'تم التحويل الفوري بنجاح' : 'تم استلام طلب السحب المالي',
+            isInstant
+                ? 'تم التحويل الفوري بنجاح'
+                : 'تم استلام طلب السحب المالي',
             style: const TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -1142,7 +1189,7 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
     // Return formatted number like 15,000 without using external dependency
     final String str = amount.toInt().toString();
     if (str.length <= 3) return str;
-    
+
     final List<String> parts = [];
     int end = str.length;
     while (end > 0) {

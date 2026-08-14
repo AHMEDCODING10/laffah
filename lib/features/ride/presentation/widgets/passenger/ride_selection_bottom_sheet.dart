@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 import '../../../../home/presentation/pages/location_search_page.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -13,17 +14,20 @@ import '../../../../../core/services/osrm_service.dart';
 class RideSelectionBottomSheet extends StatefulWidget {
   final String pickup;
   final String dropoff;
+  final LatLng? pickupLatLng;
   final LatLng? dropoffLatLng;
 
   const RideSelectionBottomSheet({
     super.key,
     required this.pickup,
     required this.dropoff,
+    this.pickupLatLng,
     this.dropoffLatLng,
   });
 
   @override
-  State<RideSelectionBottomSheet> createState() => _RideSelectionBottomSheetState();
+  State<RideSelectionBottomSheet> createState() =>
+      _RideSelectionBottomSheetState();
 }
 
 class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
@@ -32,7 +36,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   bool _isScheduled = false;
   DateTime? _scheduledTime;
   final List<String> _additionalDropoffs = [];
-  
+  final List<Map<String, dynamic>> _structuredStops = [];
 
   double _distanceKm = 0.0;
   double _durationMin = 0.0;
@@ -45,11 +49,10 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   }
 
   Future<void> _calculateRoute() async {
+    final start = widget.pickupLatLng ?? const LatLng(15.3694, 44.1910);
     if (widget.dropoffLatLng != null) {
-      // Mock passenger location for Sanaaconster since ocation isn't active
-      const start = LatLng(15.3694, 44.1910); 
       final data = await _osrmService.getRoute(start, widget.dropoffLatLng!);
-      
+
       if (mounted) {
         setState(() {
           if (data != null) {
@@ -81,9 +84,17 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
     );
 
     if (result != null && result is Map<String, dynamic>) {
-      final locationName = result['name'] as String;
+      final locationName = (result['name'] ?? 'موقف إضافي') as String;
+      final lat = (result['lat'] as num?)?.toDouble() ?? 15.3600;
+      final lon = (result['lon'] as num?)?.toDouble() ?? 44.1900;
+
       setState(() {
         _additionalDropoffs.add(locationName);
+        _structuredStops.add({
+          'address': locationName,
+          'latitude': lat,
+          'longitude': lon,
+        });
       });
     }
   }
@@ -91,8 +102,12 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   void _removeDropoff(int index) {
     setState(() {
       _additionalDropoffs.removeAt(index);
+      if (index < _structuredStops.length) {
+        _structuredStops.removeAt(index);
+      }
     });
   }
+
 
   Future<void> _pickScheduleTime() async {
     final now = DateTime.now();
@@ -112,12 +127,14 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
         firstDate: now,
         lastDate: now.add(const Duration(days: 7)),
         builder: (context, child) {
-          return Directionality(textDirection: TextDirection.rtl, child: child!);
+          return Directionality(
+              textDirection: TextDirection.rtl, child: child!);
         },
       );
       if (date != null) {
         setState(() {
-          _scheduledTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+          _scheduledTime =
+              DateTime(date.year, date.month, date.day, time.hour, time.minute);
           _isScheduled = true;
         });
       }
@@ -127,18 +144,19 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     // Dynamic price calculation based on actual distance
-    final double computedFare = 500.0 + (_distanceKm * 150.0) + (_additionalDropoffs.length * 400.0);
-    final double baseFare = computedFare > 800.0 ? computedFare : 800.0; // minimum fare
+    final double computedFare =
+        500.0 + (_distanceKm * 150.0) + (_additionalDropoffs.length * 400.0);
+    final double baseFare =
+        computedFare > 800.0 ? computedFare : 800.0; // minimum fare
     final int computedEta = _durationMin.toInt();
-    
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: GlassBox(
+
+    final l10n = AppLocalizations.of(context)!;
+    return GlassBox(
         borderRadius: AppSpacing.radiusBottomSheet,
-        customBgColor: isDark 
-            ? const Color(0xFF111827).withValues(alpha: 0.9) 
+        customBgColor: isDark
+            ? const Color(0xFF111827).withValues(alpha: 0.9)
             : const Color(0xFFF9FAFB).withValues(alpha: 0.9),
         padding: const EdgeInsets.only(
           top: AppSpacing.s16,
@@ -155,7 +173,9 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.15),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.15),
                   borderRadius: AppSpacing.radiusXS,
                 ),
               ),
@@ -166,7 +186,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'تفاصيل حجز اللفة',
+                  l10n.pass_ride_details,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -179,7 +199,9 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.05),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.04)
+                          : Colors.black.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -197,18 +219,25 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100,
+                color: isDark
+                    ? AppColors.white.withValues(alpha: 0.02)
+                    : AppColors.gray100,
                 borderRadius: AppSpacing.borderSM,
                 border: Border.all(
-                  color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
+                  color: isDark
+                      ? AppColors.white.withValues(alpha: 0.04)
+                      : AppColors.gray200,
                 ),
               ),
               child: Column(
                 children: [
-                  _buildLocationRow(Icons.my_location_rounded, AppColors.success, widget.pickup, isDark),
+                  _buildLocationRow(Icons.my_location_rounded,
+                      AppColors.success, widget.pickup, isDark),
                   _buildDivider(),
-                  _buildLocationRow(Icons.location_on_rounded, AppColors.danger, widget.dropoff, isDark, isBold: true),
-                  
+                  _buildLocationRow(Icons.location_on_rounded, AppColors.danger,
+                      widget.dropoff, isDark,
+                      isBold: true),
+
                   // Additional Dropoffs
                   ...List.generate(_additionalDropoffs.length, (index) {
                     return Column(
@@ -216,27 +245,34 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         _buildDivider(),
                         Row(
                           children: [
-                            Expanded(child: _buildLocationRow(Icons.add_location_alt_rounded, AppColors.warning, _additionalDropoffs[index], isDark)),
+                            Expanded(
+                                child: _buildLocationRow(
+                                    Icons.add_location_alt_rounded,
+                                    AppColors.warning,
+                                    _additionalDropoffs[index],
+                                    isDark)),
                             GestureDetector(
                               onTap: () => _removeDropoff(index),
-                              child: const Icon(Icons.remove_circle_outline, color: AppColors.danger, size: 18),
+                              child: const Icon(Icons.remove_circle_outline,
+                                  color: AppColors.danger, size: 18),
                             )
                           ],
                         ),
                       ],
                     );
                   }),
-                  
+
                   AppSpacing.h8,
                   GestureDetector(
                     onTap: _addDropoff,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.add_circle_outline, color: AppColors.primary500, size: 18),
+                        const Icon(Icons.add_circle_outline,
+                            color: AppColors.primary500, size: 18),
                         AppSpacing.w8,
                         Text(
-                          'إضافة محطة توقف',
+                          l10n.pass_ride_add_stop,
                           style: TextStyle(
                             fontFamily: _fontFamily,
                             fontSize: 12,
@@ -253,7 +289,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             AppSpacing.h16,
 
             Text(
-              'فئة التوصيل:',
+              l10n.pass_ride_category,
               style: TextStyle(
                 fontFamily: _fontFamily,
                 fontSize: 12.5,
@@ -280,7 +316,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                       color: AppColors.primary500.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.two_wheeler_rounded, color: AppColors.primary500, size: 24),
+                    child: const Icon(Icons.two_wheeler_rounded,
+                        color: AppColors.primary500, size: 24),
                   ),
                   AppSpacing.w16,
                   Expanded(
@@ -290,23 +327,27 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         Row(
                           children: [
                             Text(
-                              'لَفّة (Laffah)',
+                              l10n.pass_ride_tier_laffah,
                               style: TextStyle(
                                 fontFamily: _fontFamily,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 14,
-                                color: isDark ? AppColors.white : AppColors.gray900,
+                                color: isDark
+                                    ? AppColors.white
+                                    : AppColors.gray900,
                               ),
                             ),
                             AppSpacing.w10,
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.primary500.withValues(alpha: 0.1),
+                                color:
+                                    AppColors.primary500.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                'أسرع وصول',
+                                l10n.pass_ride_fastest,
                                 style: TextStyle(
                                   fontFamily: _fontFamily,
                                   fontSize: 9.5,
@@ -319,11 +360,12 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         ),
                         AppSpacing.h4,
                         Text(
-                          'توصيل سريع واقتصادي داخل المدينة',
+                          l10n.pass_ride_desc_laffah,
                           style: TextStyle(
                             fontFamily: _fontFamily,
                             fontSize: 10.5,
-                            color: isDark ? AppColors.gray400 : AppColors.gray600,
+                            color:
+                                isDark ? AppColors.gray400 : AppColors.gray600,
                           ),
                         ),
                       ],
@@ -342,7 +384,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         ),
                       ),
                       Text(
-                        'ر.ي',
+                        l10n.pass_ride_currency,
                         style: TextStyle(
                           fontFamily: _fontFamily,
                           fontSize: 9,
@@ -364,35 +406,44 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
-                        _paymentMode = _paymentMode == 'cash' ? 'wallet' : 'cash';
+                        _paymentMode =
+                            _paymentMode == 'cash' ? 'wallet' : 'cash';
                       });
                     },
                     child: Container(
                       height: 48,
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s12),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+                        color: isDark
+                            ? AppColors.white.withValues(alpha: 0.02)
+                            : AppColors.gray50,
                         borderRadius: AppSpacing.borderSM,
                         border: Border.all(
-                          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
+                          color: isDark
+                              ? AppColors.white.withValues(alpha: 0.04)
+                              : AppColors.gray200,
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _paymentMode == 'cash' ? Icons.payments_outlined : Icons.account_balance_wallet_outlined,
+                            _paymentMode == 'cash'
+                                ? Icons.payments_outlined
+                                : Icons.account_balance_wallet_outlined,
                             color: AppColors.primary500,
                             size: 16,
                           ),
                           AppSpacing.w6,
                           Text(
-                            _paymentMode == 'cash' ? 'نقداً' : 'المحفظة',
+                            _paymentMode == 'cash' ? l10n.pass_ride_cash : l10n.pass_ride_wallet,
                             style: TextStyle(
                               fontFamily: _fontFamily,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.white : AppColors.gray800,
+                              color:
+                                  isDark ? AppColors.white : AppColors.gray800,
                             ),
                           ),
                         ],
@@ -407,35 +458,53 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                     onTap: _pickScheduleTime,
                     child: Container(
                       height: 48,
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s12),
                       decoration: BoxDecoration(
-                        color: _isScheduled ? AppColors.primary500.withValues(alpha: 0.1) : (isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50),
+                        color: _isScheduled
+                            ? AppColors.primary500.withValues(alpha: 0.1)
+                            : (isDark
+                                ? AppColors.white.withValues(alpha: 0.02)
+                                : AppColors.gray50),
                         borderRadius: AppSpacing.borderSM,
                         border: Border.all(
-                          color: _isScheduled ? AppColors.primary500 : (isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
+                          color: _isScheduled
+                              ? AppColors.primary500
+                              : (isDark
+                                  ? AppColors.white.withValues(alpha: 0.04)
+                                  : AppColors.gray200),
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _isScheduled ? Icons.event_available_rounded : Icons.schedule_rounded, 
-                            color: _isScheduled ? AppColors.primary500 : (isDark ? AppColors.gray400 : AppColors.gray600), 
-                            size: 16
-                          ),
+                              _isScheduled
+                                  ? Icons.event_available_rounded
+                                  : Icons.schedule_rounded,
+                              color: _isScheduled
+                                  ? AppColors.primary500
+                                  : (isDark
+                                      ? AppColors.gray400
+                                      : AppColors.gray600),
+                              size: 16),
                           AppSpacing.w8,
                           Expanded(
                             child: Text(
-                              _isScheduled && _scheduledTime != null 
-                                  ? 'جدولة: ${_scheduledTime!.hour}:${_scheduledTime!.minute.toString().padLeft(2, '0')}'
-                                  : 'رحلة الآن',
+                              _isScheduled && _scheduledTime != null
+                                  ? '${l10n.pass_ride_schedule}: ${_scheduledTime!.hour}:${_scheduledTime!.minute.toString().padLeft(2, '0')}'
+                                  : l10n.pass_ride_now,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontFamily: _fontFamily,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: _isScheduled ? AppColors.primary500 : (isDark ? AppColors.white : AppColors.gray800),
+                                color: _isScheduled
+                                    ? AppColors.primary500
+                                    : (isDark
+                                        ? AppColors.white
+                                        : AppColors.gray800),
                               ),
                             ),
                           ),
@@ -449,7 +518,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                               },
                               child: const Padding(
                                 padding: EdgeInsets.only(right: 8.0),
-                                child: Icon(Icons.close, size: 14, color: AppColors.danger),
+                                child: Icon(Icons.close,
+                                    size: 14, color: AppColors.danger),
                               ),
                             ),
                         ],
@@ -479,15 +549,23 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   context.read<RideBloc>().add(ConfirmUnifiedBooking(
                         pickup: widget.pickup,
                         dropoff: widget.dropoff,
+                        pickupLatitude: widget.pickupLatLng?.latitude ?? 15.3694,
+                        pickupLongitude: widget.pickupLatLng?.longitude ?? 44.1910,
+                        dropoffLatitude: widget.dropoffLatLng?.latitude ?? 15.3521,
+                        dropoffLongitude: widget.dropoffLatLng?.longitude ?? 44.2014,
                         additionalDropoffs: _additionalDropoffs,
+                        stops: _structuredStops.isNotEmpty ? _structuredStops : null,
                         fare: baseFare,
-                        distance: _distanceKm + (_additionalDropoffs.length * 2),
-                        duration: computedEta + (_additionalDropoffs.length * 10),
+                        distance:
+                            _distanceKm + (_additionalDropoffs.length * 2),
+                        duration:
+                            computedEta + (_additionalDropoffs.length * 10),
                         isScheduled: _isScheduled,
                         scheduledTime: _scheduledTime,
                       ));
                   Navigator.pop(context);
                 },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: AppColors.white,
@@ -500,7 +578,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _isScheduled ? 'تأكيد جدولة لَفّة' : 'تأكيد طلب لَفّة التوصيل',
+                      l10n.pass_ride_confirm,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -520,11 +598,12 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
-  Widget _buildLocationRow(IconData icon, Color iconColor, String text, bool isDark, {bool isBold = false}) {
+  Widget _buildLocationRow(
+      IconData icon, Color iconColor, String text, bool isDark,
+      {bool isBold = false}) {
     return Row(
       children: [
         Icon(icon, color: iconColor, size: 14),
@@ -538,7 +617,9 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
               fontFamily: _fontFamily,
               fontSize: 12,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: isDark ? (isBold ? AppColors.white : AppColors.gray300) : (isBold ? AppColors.gray900 : AppColors.gray800),
+              color: isDark
+                  ? (isBold ? AppColors.white : AppColors.gray300)
+                  : (isBold ? AppColors.gray900 : AppColors.gray800),
             ),
           ),
         ),
@@ -553,7 +634,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
         alignment: Alignment.centerRight,
         child: SizedBox(
           height: 10,
-          child: VerticalDivider(color: Colors.white24, width: 14, thickness: 1),
+          child:
+              VerticalDivider(color: Colors.white24, width: 14, thickness: 1),
         ),
       ),
     );

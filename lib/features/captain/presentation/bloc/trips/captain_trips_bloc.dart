@@ -8,19 +8,25 @@ class CaptainTripsBloc extends Bloc<CaptainTripsEvent, CaptainTripsState> {
   final GetCaptainTripsUseCase getCaptainTripsUseCase;
   int _currentPage = 1;
 
-  CaptainTripsBloc({required this.getCaptainTripsUseCase}) : super(CaptainTripsInitial()) {
+  CaptainTripsBloc({required this.getCaptainTripsUseCase})
+      : super(CaptainTripsInitial()) {
     on<FetchCaptainTrips>(_onFetchCaptainTrips);
   }
 
-  Future<void> _onFetchCaptainTrips(FetchCaptainTrips event, Emitter<CaptainTripsState> emit) async {
+  Future<void> _onFetchCaptainTrips(
+      FetchCaptainTrips event, Emitter<CaptainTripsState> emit) async {
     final currentState = state;
 
     List<CaptainTripEntity> oldTrips = [];
-    if (currentState is CaptainTripsLoaded && !event.isRefresh && currentState.statusFilter == event.statusFilter) {
+    if (currentState is CaptainTripsLoaded &&
+        !event.isRefresh &&
+        currentState.statusFilter == event.statusFilter) {
       oldTrips = currentState.trips;
     }
 
-    if (event.isRefresh || (currentState is CaptainTripsLoaded && currentState.statusFilter != event.statusFilter)) {
+    if (event.isRefresh ||
+        (currentState is CaptainTripsLoaded &&
+            currentState.statusFilter != event.statusFilter)) {
       _currentPage = 1;
       emit(const CaptainTripsLoading([], isFirstFetch: true));
     } else {
@@ -39,10 +45,12 @@ class CaptainTripsBloc extends Bloc<CaptainTripsEvent, CaptainTripsState> {
       (newTrips) {
         _currentPage++;
 
-        final trips = (event.isRefresh || (currentState is CaptainTripsLoaded && currentState.statusFilter != event.statusFilter)) 
-            ? newTrips 
+        final trips = (event.isRefresh ||
+                (currentState is CaptainTripsLoaded &&
+                    currentState.statusFilter != event.statusFilter))
+            ? newTrips
             : oldTrips + newTrips;
-            
+
         emit(CaptainTripsLoaded(
           trips: trips,
           hasReachedMax: newTrips.isEmpty,

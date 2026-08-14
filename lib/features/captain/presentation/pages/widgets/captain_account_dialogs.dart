@@ -39,7 +39,8 @@ Widget _buildGlassSheetWrapper({
               color: isDark
                   ? const Color(0xFF141822).withValues(alpha: 0.95)
                   : Colors.white.withValues(alpha: 0.96),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(32)),
               border: Border.all(
                 color: const Color(0xFFFF6B00).withValues(alpha: 0.25),
                 width: 1.2,
@@ -138,7 +139,8 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
           ),
           AppSpacing.h16,
           // Phone Number
-          _buildTextFieldLabel(AppLocalizations.of(context)!.capt_mobile_number),
+          _buildTextFieldLabel(
+              AppLocalizations.of(context)!.capt_mobile_number),
           _buildInputField(
             controller: _phoneController,
             hint: '77XXXXXXX',
@@ -158,11 +160,15 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               backgroundColor: const Color(0xFFFF6B00),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
             ),
             child: Text(
               AppLocalizations.of(context)!.capt_save_changes,
-              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900, fontSize: 14),
+              style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14),
             ),
           ),
           AppSpacing.h16,
@@ -197,21 +203,31 @@ class VehicleDetailsSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h16,
-          _buildInfoRow(AppLocalizations.of(context)!.capt_bike_type, vehicleInfo['type'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_model_year, vehicleInfo['model'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_plate_num, vehicleInfo['plate'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_license_type, vehicleInfo['license'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_periodic_inspection, AppLocalizations.of(context)!.capt_valid_documented, isDark, color: AppColors.success),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_bike_type,
+              vehicleInfo['type'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_model_year,
+              vehicleInfo['model'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_plate_num,
+              vehicleInfo['plate'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_license_type,
+              vehicleInfo['license'] ?? '', isDark),
+          _buildInfoRow(AppLocalizations.of(context)!.capt_periodic_inspection,
+              AppLocalizations.of(context)!.capt_valid_documented, isDark,
+              color: AppColors.success),
           AppSpacing.h24,
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Color(0xFFFF6B00)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
             child: const Text(
               'إغلاق',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  color: Color(0xFFFF6B00),
+                  fontWeight: FontWeight.bold),
             ),
           ),
           AppSpacing.h16,
@@ -244,19 +260,27 @@ class OfficialDocumentsSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h16,
-          _buildDocumentTile(context, AppLocalizations.of(context)!.capt_yemeni_id, 'id_card', isDark),
-          _buildDocumentTile(context, AppLocalizations.of(context)!.capt_bike_ownership_card, 'vehicle_registration', isDark),
+          _buildDocumentTile(context,
+              AppLocalizations.of(context)!.capt_yemeni_id, 'id_card', isDark),
+          _buildDocumentTile(
+              context,
+              AppLocalizations.of(context)!.capt_bike_ownership_card,
+              'vehicle_registration',
+              isDark),
           AppSpacing.h24,
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF6B00),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
             child: const Text(
               'حسناً',
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900),
+              style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900),
             ),
           ),
           AppSpacing.h16,
@@ -265,7 +289,8 @@ class OfficialDocumentsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDocumentTile(BuildContext context, String name, String type, bool isDark) {
+  Widget _buildDocumentTile(
+      BuildContext context, String name, String type, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -273,7 +298,8 @@ class OfficialDocumentsSheet extends StatelessWidget {
         color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color:
+              isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -289,25 +315,6 @@ class OfficialDocumentsSheet extends StatelessWidget {
                 color: isDark ? Colors.white : AppColors.gray900,
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Implement image picker and upload logic using type
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: AppColors.primary,
-                  content: Text(AppLocalizations.of(context)!.capt_opening_gallery, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
-                )
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              minimumSize: const Size(0, 32),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text(AppLocalizations.of(context)!.capt_upload, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 12)),
           ),
         ],
       ),
@@ -355,14 +362,31 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
             ),
           ),
           AppSpacing.h16,
-          _buildTextFieldLabel(AppLocalizations.of(context)!.capt_current_password),
-          _buildInputField(controller: _oldController, hint: AppLocalizations.of(context)!.capt_enter_current_pass, icon: Icons.lock_outline_rounded, isDark: isDark, obscureText: true),
+          _buildTextFieldLabel(
+              AppLocalizations.of(context)!.capt_current_password),
+          _buildInputField(
+              controller: _oldController,
+              hint: AppLocalizations.of(context)!.capt_enter_current_pass,
+              icon: Icons.lock_outline_rounded,
+              isDark: isDark,
+              obscureText: true),
           AppSpacing.h12,
           _buildTextFieldLabel('كلمة المرور الجديدة'),
-          _buildInputField(controller: _newController, hint: AppLocalizations.of(context)!.capt_enter_new_pass, icon: Icons.lock_open_rounded, isDark: isDark, obscureText: true),
+          _buildInputField(
+              controller: _newController,
+              hint: AppLocalizations.of(context)!.capt_enter_new_pass,
+              icon: Icons.lock_open_rounded,
+              isDark: isDark,
+              obscureText: true),
           AppSpacing.h12,
-          _buildTextFieldLabel(AppLocalizations.of(context)!.capt_confirm_new_pass),
-          _buildInputField(controller: _confirmController, hint: AppLocalizations.of(context)!.capt_reenter_new_pass, icon: Icons.verified_user_outlined, isDark: isDark, obscureText: true),
+          _buildTextFieldLabel(
+              AppLocalizations.of(context)!.capt_confirm_new_pass),
+          _buildInputField(
+              controller: _confirmController,
+              hint: AppLocalizations.of(context)!.capt_reenter_new_pass,
+              icon: Icons.verified_user_outlined,
+              isDark: isDark,
+              obscureText: true),
           AppSpacing.h24,
           ElevatedButton(
             onPressed: () {
@@ -373,7 +397,9 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                   backgroundColor: AppColors.success,
                   content: Text(
                     AppLocalizations.of(context)!.capt_pass_updated_success,
-                    style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               );
@@ -382,11 +408,14 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               backgroundColor: const Color(0xFFFF6B00),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
             ),
             child: Text(
               AppLocalizations.of(context)!.capt_confirm_change_now,
-              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900),
+              style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900),
             ),
           ),
           AppSpacing.h16,
@@ -419,17 +448,27 @@ class HelpCenterSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h16,
-          _buildHelpCard(AppLocalizations.of(context)!.capt_ways_increase_income, AppLocalizations.of(context)!.capt_increase_income_desc, isDark),
-          _buildHelpCard(AppLocalizations.of(context)!.capt_guide_parcels, AppLocalizations.of(context)!.capt_guide_parcels_desc, isDark),
-          _buildHelpCard(AppLocalizations.of(context)!.capt_safety_rules, AppLocalizations.of(context)!.capt_safety_rules_desc, isDark),
+          _buildHelpCard(
+              AppLocalizations.of(context)!.capt_ways_increase_income,
+              AppLocalizations.of(context)!.capt_increase_income_desc,
+              isDark),
+          _buildHelpCard(AppLocalizations.of(context)!.capt_guide_parcels,
+              AppLocalizations.of(context)!.capt_guide_parcels_desc, isDark),
+          _buildHelpCard(AppLocalizations.of(context)!.capt_safety_rules,
+              AppLocalizations.of(context)!.capt_safety_rules_desc, isDark),
           AppSpacing.h24,
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Color(0xFFFF6B00)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
-            child: Text(AppLocalizations.of(context)!.capt_understood, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context)!.capt_understood,
+                style: const TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    color: Color(0xFFFF6B00),
+                    fontWeight: FontWeight.bold)),
           ),
           AppSpacing.h16,
         ],
@@ -445,7 +484,8 @@ class HelpCenterSheet extends StatelessWidget {
         color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color:
+              isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Column(
@@ -488,19 +528,19 @@ class _FAQSheetState extends State<FAQSheet> {
   int _expandedIndex = -1;
 
   List<Map<String, String>> get _faqs => [
-    {
-      'q': AppLocalizations.of(context)!.capt_faq_q1,
-      'a': AppLocalizations.of(context)!.capt_faq_a1,
-    },
-    {
-      'q': AppLocalizations.of(context)!.capt_faq_q2,
-      'a': AppLocalizations.of(context)!.capt_faq_a2,
-    },
-    {
-      'q': AppLocalizations.of(context)!.capt_faq_q3,
-      'a': AppLocalizations.of(context)!.capt_faq_a3,
-    },
-  ];
+        {
+          'q': AppLocalizations.of(context)!.capt_faq_q1,
+          'a': AppLocalizations.of(context)!.capt_faq_a1,
+        },
+        {
+          'q': AppLocalizations.of(context)!.capt_faq_q2,
+          'a': AppLocalizations.of(context)!.capt_faq_a2,
+        },
+        {
+          'q': AppLocalizations.of(context)!.capt_faq_q3,
+          'a': AppLocalizations.of(context)!.capt_faq_a3,
+        },
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -537,12 +577,16 @@ class _FAQSheetState extends State<FAQSheet> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.03)
+                      : AppColors.gray50,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isExpanded
                         ? const Color(0xFFFF6B00)
-                        : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200),
+                        : (isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : AppColors.gray200),
                   ),
                 ),
                 child: Column(
@@ -558,12 +602,16 @@ class _FAQSheetState extends State<FAQSheet> {
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 12.5,
                               fontWeight: FontWeight.w900,
-                              color: isExpanded ? const Color(0xFFFF6B00) : (isDark ? Colors.white : AppColors.gray900),
+                              color: isExpanded
+                                  ? const Color(0xFFFF6B00)
+                                  : (isDark ? Colors.white : AppColors.gray900),
                             ),
                           ),
                         ),
                         Icon(
-                          isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                          isExpanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
                           color: const Color(0xFFFF6B00),
                           size: 20,
                         ),
@@ -591,9 +639,14 @@ class _FAQSheetState extends State<FAQSheet> {
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Color(0xFFFF6B00)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text('إغلاق', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
+            child: const Text('إغلاق',
+                style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    color: Color(0xFFFF6B00),
+                    fontWeight: FontWeight.bold)),
           ),
           AppSpacing.h16,
         ],
@@ -627,7 +680,11 @@ class DirectSupportSheet extends StatelessWidget {
           AppSpacing.h12,
           Text(
             AppLocalizations.of(context)!.capt_support_desc,
-            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 11.5, color: AppColors.gray500, height: 1.4),
+            style: const TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontSize: 11.5,
+                color: AppColors.gray500,
+                height: 1.4),
           ),
           AppSpacing.h16,
           // Phone Support
@@ -721,7 +778,9 @@ class TermsAndPrivacySheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            isPrivacy ? AppLocalizations.of(context)!.capt_privacy_policy : AppLocalizations.of(context)!.capt_terms_conditions,
+            isPrivacy
+                ? AppLocalizations.of(context)!.capt_privacy_policy
+                : AppLocalizations.of(context)!.capt_terms_conditions,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -747,9 +806,13 @@ class TermsAndPrivacySheet extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF6B00),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
-            child: Text(AppLocalizations.of(context)!.capt_agree, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.w900)),
+            child: Text(AppLocalizations.of(context)!.capt_agree,
+                style: const TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.w900)),
           ),
           AppSpacing.h16,
         ],
@@ -805,7 +868,8 @@ class LanguageSelectorSheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h20,
-          _buildLangOption(context, AppLocalizations.of(context)!.capt_arabic_ye, 'ar', isDark),
+          _buildLangOption(context,
+              AppLocalizations.of(context)!.capt_arabic_ye, 'ar', isDark),
           _buildLangOption(context, 'English (🇬🇧 English)', 'en', isDark),
           AppSpacing.h16,
         ],
@@ -813,7 +877,8 @@ class LanguageSelectorSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildLangOption(BuildContext context, String name, String code, bool isDark) {
+  Widget _buildLangOption(
+      BuildContext context, String name, String code, bool isDark) {
     final isSelected = currentLang == code;
 
     return GestureDetector(
@@ -828,10 +893,16 @@ class LanguageSelectorSheet extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFFFF6B00).withValues(alpha: 0.12)
-              : (isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50),
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.03)
+                  : AppColors.gray50),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFF6B00) : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200),
+            color: isSelected
+                ? const Color(0xFFFF6B00)
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : AppColors.gray200),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -844,11 +915,14 @@ class LanguageSelectorSheet extends StatelessWidget {
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                 fontSize: 13,
-                color: isSelected ? const Color(0xFFFF6B00) : (isDark ? Colors.white : AppColors.gray900),
+                color: isSelected
+                    ? const Color(0xFFFF6B00)
+                    : (isDark ? Colors.white : AppColors.gray900),
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded, color: Color(0xFFFF6B00), size: 20),
+              const Icon(Icons.check_circle_rounded,
+                  color: Color(0xFFFF6B00), size: 20),
           ],
         ),
       ),
@@ -886,7 +960,10 @@ Widget _buildInputField({
     decoration: BoxDecoration(
       color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.gray200),
+      border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : AppColors.gray200),
     ),
     child: TextField(
       controller: controller,
@@ -900,7 +977,10 @@ Widget _buildInputField({
       decoration: InputDecoration(
         border: InputBorder.none,
         hintText: hint,
-        hintStyle: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 12, color: AppColors.gray500),
+        hintStyle: const TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 12,
+            color: AppColors.gray500),
         icon: Icon(icon, color: const Color(0xFFFF6B00), size: 18),
       ),
     ),
@@ -915,14 +995,21 @@ Widget _buildInfoRow(String label, String value, bool isDark, {Color? color}) {
     decoration: BoxDecoration(
       color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200),
+      border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : AppColors.gray200),
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 12.5, color: AppColors.gray500, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 12.5,
+              color: AppColors.gray500,
+              fontWeight: FontWeight.bold),
         ),
         Text(
           value,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -60,7 +61,6 @@ class CaptainFoundCard extends StatelessWidget {
               ],
             ),
             AppSpacing.h16,
-
             Row(
               children: [
                 Container(
@@ -137,21 +137,18 @@ class CaptainFoundCard extends StatelessWidget {
               ],
             ),
             AppSpacing.h16,
-
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: AppColors.primary500,
-                          content: Text(
-                            'جاري فتح الشات مع الكابتن ${state.captainName}...',
-                            textDirection: TextDirection.rtl,
-                          ),
-                        ),
+                    onPressed: () async {
+                      final Uri smsUri = Uri(
+                        scheme: 'sms',
+                        path: '+967700000000', // Mock Captain Number
                       );
+                      if (await canLaunchUrl(smsUri)) {
+                        await launchUrl(smsUri);
+                      }
                     },
                     icon: const Icon(
                       Icons.chat_bubble_outline_rounded,
@@ -176,16 +173,14 @@ class CaptainFoundCard extends StatelessWidget {
                 AppSpacing.w12,
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: AppColors.success,
-                          content: Text(
-                            'جاري الاتصال بهاتف الكابتن ${state.captainName}...',
-                            textDirection: TextDirection.rtl,
-                          ),
-                        ),
+                    onPressed: () async {
+                      final Uri telUri = Uri(
+                        scheme: 'tel',
+                        path: '+967700000000', // Mock Captain Number
                       );
+                      if (await canLaunchUrl(telUri)) {
+                        await launchUrl(telUri);
+                      }
                     },
                     icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
                     label: const Text(
@@ -268,7 +263,6 @@ class RideInProgressCard extends StatelessWidget {
               ],
             ),
             AppSpacing.h16,
-
             Row(
               children: [
                 Expanded(
@@ -347,7 +341,6 @@ class RideInProgressCard extends StatelessWidget {
               ],
             ),
             AppSpacing.h16,
-
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
@@ -371,7 +364,7 @@ class RideInProgressCard extends StatelessWidget {
                 ),
               ),
               subtitle: Text(
-                'تويوتا كورولا • 4.9 ⭐',
+                'تويوتا كورولا • 4.9 ',
                 style: TextStyle(
                   fontSize: 10.5,
                   color: isDark ? AppColors.gray400 : AppColors.gray600,
@@ -386,7 +379,15 @@ class RideInProgressCard extends StatelessWidget {
                       color: AppColors.primary500,
                       size: 20,
                     ),
-                    onPressed: () {},
+                    onPressed: () async {
+                      final Uri smsUri = Uri(
+                        scheme: 'sms',
+                        path: '+967700000000', // Mock Captain Number
+                      );
+                      if (await canLaunchUrl(smsUri)) {
+                        await launchUrl(smsUri);
+                      }
+                    },
                   ),
                   IconButton(
                     icon: const Icon(
@@ -394,7 +395,15 @@ class RideInProgressCard extends StatelessWidget {
                       color: AppColors.success,
                       size: 20,
                     ),
-                    onPressed: () {},
+                    onPressed: () async {
+                      final Uri telUri = Uri(
+                        scheme: 'tel',
+                        path: '+967700000000', // Mock Captain Number
+                      );
+                      if (await canLaunchUrl(telUri)) {
+                        await launchUrl(telUri);
+                      }
+                    },
                   ),
                 ],
               ),
@@ -457,7 +466,6 @@ class _RideCompletedCardState extends State<RideCompletedCard> {
               ),
             ),
             AppSpacing.h16,
-
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
@@ -490,7 +498,6 @@ class _RideCompletedCardState extends State<RideCompletedCard> {
               ),
             ),
             AppSpacing.h16,
-
             Center(
               child: Text(
                 'كيف كانت رحلتك مع الكابتن ${widget.state.captainName}؟',
@@ -503,7 +510,6 @@ class _RideCompletedCardState extends State<RideCompletedCard> {
               ),
             ),
             AppSpacing.h8,
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
@@ -525,7 +531,6 @@ class _RideCompletedCardState extends State<RideCompletedCard> {
               }),
             ),
             AppSpacing.h16,
-
             Container(
               height: 48,
               decoration: const BoxDecoration(
@@ -614,7 +619,6 @@ class ParcelSubmittedCard extends StatelessWidget {
               ),
             ),
             AppSpacing.h16,
-
             Container(
               padding: const EdgeInsets.all(AppSpacing.s12),
               decoration: BoxDecoration(
@@ -675,7 +679,6 @@ class ParcelSubmittedCard extends StatelessWidget {
               ),
             ),
             AppSpacing.h16,
-
             ElevatedButton(
               onPressed: () {
                 context.read<RideBloc>().add(const CancelRideRequested());

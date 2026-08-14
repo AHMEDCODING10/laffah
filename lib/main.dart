@@ -40,7 +40,8 @@ Future<void> main() async {
   // 3. Global Security Listener for 401 Unauthorized
   NetworkEventBus.authEvents.listen((event) {
     if (event == 'UNAUTHENTICATED') {
-      debugPrint("🔒 [Laffah Security] 401 Unauthorized detected. Purging session and redirecting to Auth Landing.");
+      debugPrint(
+          "🔒 [Laffah Security] 401 Unauthorized detected. Purging session and redirecting to Auth Landing.");
       AppRouter.router.go(LaffahRoutes.authLanding);
     }
   });

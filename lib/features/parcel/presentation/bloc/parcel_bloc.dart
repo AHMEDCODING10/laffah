@@ -1,16 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/submit_parcel_order_usecase.dart';
+import '../../domain/usecases/track_parcel_usecase.dart';
 import 'parcel_event.dart';
 import 'parcel_state.dart';
 
 class ParcelBloc extends Bloc<ParcelEvent, ParcelState> {
   final SubmitParcelOrderUseCase submitParcelOrder;
+  final TrackParcelUseCase trackParcelUseCase;
 
-  ParcelBloc({required this.submitParcelOrder}) : super(ParcelInitial()) {
+  ParcelBloc({
+    required this.submitParcelOrder,
+    required this.trackParcelUseCase,
+  }) : super(ParcelInitial()) {
     on<SubmitParcelEvent>(_onSubmitParcel);
+    on<TrackParcelEvent>(_onTrackParcel);
   }
 
-  Future<void> _onSubmitParcel(SubmitParcelEvent event, Emitter<ParcelState> emit) async {
+  Future<void> _onSubmitParcel(
+      SubmitParcelEvent event, Emitter<ParcelState> emit) async {
     emit(ParcelLoading());
 
     final result = await submitParcelOrder(
@@ -18,9 +25,16 @@ class ParcelBloc extends Bloc<ParcelEvent, ParcelState> {
       senderPhone: event.senderPhone,
       receiverName: event.receiverName,
       receiverPhone: event.receiverPhone,
+      pickupAddress: event.pickupAddress,
+      pickupLatitude: event.pickupLatitude,
+      pickupLongitude: event.pickupLongitude,
+      dropoffAddress: event.dropoffAddress,
+      dropoffLatitude: event.dropoffLatitude,
+      dropoffLongitude: event.dropoffLongitude,
       parcelType: event.parcelType,
       size: event.size,
       notes: event.notes,
+      price: event.price,
     );
 
     result.fold(
@@ -28,4 +42,18 @@ class ParcelBloc extends Bloc<ParcelEvent, ParcelState> {
       (parcel) => emit(ParcelSubmittedSuccess(parcel)),
     );
   }
+
+  Future<void> _onTrackParcel(
+      TrackParcelEvent event, Emitter<ParcelState> emit) async {
+    emit(ParcelLoading());
+
+    final result = await trackParcelUseCase(event.identifier);
+
+    result.fold(
+      (failure) => emit(ParcelError(failure.message)),
+      (parcel) => emit(ParcelTrackingLoaded(parcel)),
+    );
+  }
 }
+
+

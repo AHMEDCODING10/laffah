@@ -27,7 +27,12 @@ class CalculateSingleTripFare extends RideEvent {
 class ConfirmUnifiedBooking extends RideEvent {
   final String pickup;
   final String dropoff;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? dropoffLatitude;
+  final double? dropoffLongitude;
   final List<String> additionalDropoffs; // For Multiple Drop-offs
+  final List<Map<String, dynamic>>? stops; // Structured stops with coords
   final double fare;
   final double distance;
   final int duration;
@@ -37,7 +42,12 @@ class ConfirmUnifiedBooking extends RideEvent {
   const ConfirmUnifiedBooking({
     required this.pickup,
     required this.dropoff,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.dropoffLatitude,
+    this.dropoffLongitude,
     this.additionalDropoffs = const [],
+    this.stops,
     required this.fare,
     required this.distance,
     required this.duration,
@@ -49,7 +59,12 @@ class ConfirmUnifiedBooking extends RideEvent {
   List<Object?> get props => [
         pickup,
         dropoff,
+        pickupLatitude,
+        pickupLongitude,
+        dropoffLatitude,
+        dropoffLongitude,
         additionalDropoffs,
+        stops,
         fare,
         distance,
         duration,
@@ -61,17 +76,34 @@ class ConfirmUnifiedBooking extends RideEvent {
 class ConfirmBooking extends RideEvent {
   final String pickup;
   final String dropoff;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? dropoffLatitude;
+  final double? dropoffLongitude;
   final String rideType;
 
   const ConfirmBooking({
     required this.pickup,
     required this.dropoff,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.dropoffLatitude,
+    this.dropoffLongitude,
     required this.rideType,
   });
 
   @override
-  List<Object?> get props => [pickup, dropoff, rideType];
+  List<Object?> get props => [
+        pickup,
+        dropoff,
+        pickupLatitude,
+        pickupLongitude,
+        dropoffLatitude,
+        dropoffLongitude,
+        rideType,
+      ];
 }
+
 
 class SubmitParcelOrder extends RideEvent {
   final ParcelData data;

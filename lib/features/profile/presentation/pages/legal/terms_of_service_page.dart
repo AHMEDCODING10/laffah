@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 class TermsOfServicePage extends StatelessWidget {
   const TermsOfServicePage({super.key});
@@ -8,10 +9,8 @@ class TermsOfServicePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+
+    return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -24,7 +23,7 @@ class TermsOfServicePage extends StatelessWidget {
           ),
           centerTitle: true,
           title: Text(
-            'الشروط والأحكام',
+            AppLocalizations.of(context)!.terms_of_service_title,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -38,40 +37,34 @@ class TermsOfServicePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('قبول الشروط', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.terms_accept_title, isDark),
               _buildSectionText(
-                'باستخدامك لتطبيق "لَفَّة"، فإنك توافق على الالتزام بجميع الشروط والأحكام الموضحة هنا. إذا كنت لا توافق على أي من هذه الشروط، يُرجى التوقف عن استخدام التطبيق فوراً.',
+                AppLocalizations.of(context)!.terms_accept_text,
                 isDark,
               ),
               AppSpacing.h24,
-              
-              _buildSectionTitle('التزامات المستخدم (الراكب/الكابتن)', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.terms_user_obligations_title, isDark),
               _buildSectionText(
-                '• يجب تقديم معلومات صحيحة ودقيقة أثناء التسجيل.\n'
-                '• يمنع استخدام التطبيق لأي أغراض غير قانونية أو نقل مواد محظورة.\n'
-                '• يلتزم الكابتن بمعايير السلامة والنظافة والأخلاق العامة أثناء الرحلة.',
+                AppLocalizations.of(context)!.terms_user_obligations_text,
                 isDark,
               ),
               AppSpacing.h24,
-
-              _buildSectionTitle('الأجور والدفع', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.terms_payment_title, isDark),
               _buildSectionText(
-                'تُحسب الأجرة بناءً على المسافة والوقت الفعلي للرحلة. الركاب ملزمون بدفع القيمة المحددة نقداً أو عبر المحفظة الإلكترونية المعتمدة فور انتهاء الرحلة.',
+                AppLocalizations.of(context)!.terms_payment_text,
                 isDark,
               ),
               AppSpacing.h24,
-
-              _buildSectionTitle('إخلاء المسؤولية', isDark),
+              _buildSectionTitle(AppLocalizations.of(context)!.terms_disclaimer_title, isDark),
               _buildSectionText(
-                'يعمل تطبيق لَفَّة كوسيط تقني بين الراكب والكابتن، ولا يتحمل مسؤولية مباشرة عن أي مفقودات شخصية داخل المركبة، مع التزامنا بالتعاون التام مع الجهات الأمنية إذا لزم الأمر.',
+                AppLocalizations.of(context)!.terms_disclaimer_text,
                 isDark,
               ),
               AppSpacing.h32,
-              
-              const Center(
+              Center(
                 child: Text(
-                  'آخر تحديث: 2026',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.privacy_policy_last_updated,
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     color: AppColors.gray500,
                     fontSize: 12,
@@ -82,7 +75,6 @@ class TermsOfServicePage extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 

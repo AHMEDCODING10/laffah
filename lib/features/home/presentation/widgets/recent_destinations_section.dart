@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
@@ -23,7 +24,7 @@ class RecentDestinationsSection extends StatelessWidget {
       children: [
         // Section Header
         Text(
-          'آخر الوجهات',
+          AppLocalizations.of(context)!.pass_recent_destinations,
           style: TextStyle(
             fontFamily: 'IBM Plex Sans Arabic',
             fontWeight: FontWeight.w900,

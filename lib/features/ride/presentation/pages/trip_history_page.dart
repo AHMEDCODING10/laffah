@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../presentation/bloc/ride_bloc.dart';
 import '../widgets/passenger/cards/trip_history_cards.dart';
@@ -47,14 +48,13 @@ class __TripHistoryViewState extends State<_TripHistoryView>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
-        appBar: const LaffahAppBar(title: 'رحلاتي وحجوزاتي'),
+        appBar: LaffahAppBar(title: l10n.pass_trips_title),
         bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 1),
         body: BlocBuilder<RideBloc, RideState>(
           builder: (context, state) {
@@ -85,9 +85,8 @@ class __TripHistoryViewState extends State<_TripHistoryView>
                           .read<RideBloc>()
                           .add(const LoadTripHistoryEvent()),
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('إعادة المحاولة',
-                          style:
-                              TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                      label: Text(l10n.pass_trips_retry,
+                          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary500),
                     ),
@@ -153,11 +152,11 @@ class __TripHistoryViewState extends State<_TripHistoryView>
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
-                    tabs: const [
-                      Tab(text: 'الحالية'),
-                      Tab(text: 'المجدولة'),
-                      Tab(text: 'السابقة'),
-                      Tab(text: 'الملغاة'),
+                    tabs: [
+                      Tab(text: l10n.pass_trips_tab_active),
+                      Tab(text: l10n.pass_trips_tab_scheduled),
+                      Tab(text: l10n.pass_trips_tab_past),
+                      Tab(text: l10n.pass_trips_tab_cancelled),
                     ],
                   ),
                 ),
@@ -165,10 +164,10 @@ class __TripHistoryViewState extends State<_TripHistoryView>
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildTripList(activeTrips, isDark, 'active'),
-                      _buildTripList(scheduledTrips, isDark, 'scheduled'),
-                      _buildTripList(pastTrips, isDark, 'past'),
-                      _buildTripList(cancelledTrips, isDark, 'cancelled'),
+                      _buildTripList(activeTrips, isDark, 'active', l10n),
+                      _buildTripList(scheduledTrips, isDark, 'scheduled', l10n),
+                      _buildTripList(pastTrips, isDark, 'past', l10n),
+                      _buildTripList(cancelledTrips, isDark, 'cancelled', l10n),
                     ],
                   ),
                 ),
@@ -176,14 +175,13 @@ class __TripHistoryViewState extends State<_TripHistoryView>
             );
           },
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildTripList(
-      List<Map<String, dynamic>> trips, bool isDark, String type) {
+      List<Map<String, dynamic>> trips, bool isDark, String type, AppLocalizations l10n) {
     if (trips.isEmpty) {
-      return _buildEmptyState(_emptyMessage(type));
+      return _buildEmptyState(_emptyMessage(type, l10n));
     }
 
     return ListView.builder(
@@ -191,7 +189,7 @@ class __TripHistoryViewState extends State<_TripHistoryView>
           AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
       itemCount: trips.length,
       itemBuilder: (context, index) {
-        final item = _mapApiTripToCard(trips[index]);
+        final item = _mapApiTripToCard(trips[index], l10n);
         switch (type) {
           case 'active':
             return ActiveTripCard(
@@ -225,12 +223,12 @@ class __TripHistoryViewState extends State<_TripHistoryView>
   }
 
   /// Maps API response fields to the format expected by TripHistoryCards
-  Map<String, dynamic> _mapApiTripToCard(Map<String, dynamic> trip) {
+  Map<String, dynamic> _mapApiTripToCard(Map<String, dynamic> trip, AppLocalizations l10n) {
     return {
       'id': trip['id']?.toString() ?? '',
-      'type': trip['type'] == 'parcel' ? 'إرسال طرد' : 'رحلة',
-      'statusAr': _statusToArabic(trip['status']),
-      'captainName': trip['captain']?['user']?['name'] ?? 'غير محدد',
+      'type': trip['type'] == 'parcel' ? l10n.pass_trips_type_parcel : l10n.pass_trips_type_ride,
+      'statusAr': _statusToArabic(trip['status'], l10n),
+      'captainName': trip['captain']?['user']?['name'] ?? l10n.pass_trips_captain_unknown,
       'vehicleModel': trip['captain']?['vehicle_model'] ?? '',
       'vehiclePlate': trip['captain']?['plate_number'] ?? '',
       'pickup': trip['pickup_address'] ?? '',
@@ -243,39 +241,39 @@ class __TripHistoryViewState extends State<_TripHistoryView>
     };
   }
 
-  String _statusToArabic(String? status) {
+  String _statusToArabic(String? status, AppLocalizations l10n) {
     switch (status) {
       case 'pending':
-        return 'بانتظار كابتن';
+        return l10n.pass_trips_status_pending;
       case 'accepted':
-        return 'تم القبول';
+        return l10n.pass_trips_status_accepted;
       case 'arrived':
-        return 'الكابتن في الطريق';
+        return l10n.pass_trips_status_arrived;
       case 'in_transit':
-        return 'في التنقل';
+        return l10n.pass_trips_status_in_transit;
       case 'completed':
-        return 'مكتملة';
+        return l10n.pass_trips_status_completed;
       case 'cancelled':
-        return 'ملغاة';
+        return l10n.pass_trips_status_cancelled;
       case 'scheduled':
-        return 'مجدولة';
+        return l10n.pass_trips_status_scheduled;
       default:
-        return 'غير معروفة';
+        return l10n.pass_trips_status_unknown;
     }
   }
 
-  String _emptyMessage(String type) {
+  String _emptyMessage(String type, AppLocalizations l10n) {
     switch (type) {
       case 'active':
-        return 'لا توجد طلبات أو رحلات نشطة حالياً';
+        return l10n.pass_trips_empty_active;
       case 'scheduled':
-        return 'لا توجد رحلات مجدولة';
+        return l10n.pass_trips_empty_scheduled;
       case 'past':
-        return 'لا توجد رحلات سابقة';
+        return l10n.pass_trips_empty_past;
       case 'cancelled':
-        return 'لا توجد رحلات ملغاة';
+        return l10n.pass_trips_empty_cancelled;
       default:
-        return 'لا توجد بيانات';
+        return l10n.pass_trips_empty_unknown;
     }
   }
 

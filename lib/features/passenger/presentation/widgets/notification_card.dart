@@ -41,7 +41,8 @@ class NotificationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.s10),
                   decoration: BoxDecoration(
-                    color: _getCategoryColor(item.category).withValues(alpha: 0.12),
+                    color: _getCategoryColor(item.category)
+                        .withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -61,9 +62,8 @@ class NotificationCard extends StatelessWidget {
                         color: AppColors.danger,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark
-                              ? AppColors.surfaceDark
-                              : AppColors.white,
+                          color:
+                              isDark ? AppColors.surfaceDark : AppColors.white,
                           width: 1.5,
                         ),
                       ),

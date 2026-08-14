@@ -21,10 +21,11 @@ class CaptainWalletEntity extends Equatable {
   });
 
   double get targetProgress => (todayEarnings / dailyTarget).clamp(0.0, 1.0);
-  
+
   double get weekOverWeekGrowth {
     if (previousWeekEarnings == 0) return 100.0;
-    return ((weeklyEarnings - previousWeekEarnings) / previousWeekEarnings) * 100;
+    return ((weeklyEarnings - previousWeekEarnings) / previousWeekEarnings) *
+        100;
   }
 
   @override

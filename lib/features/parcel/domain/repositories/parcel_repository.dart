@@ -8,8 +8,19 @@ abstract class ParcelRepository {
     required String senderPhone,
     required String receiverName,
     required String receiverPhone,
+    String? pickupAddress,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    String? dropoffAddress,
+    double? dropoffLatitude,
+    double? dropoffLongitude,
     required String parcelType,
     required String size,
     required String notes,
+    double? price,
   });
+
+  Future<Either<Failure, ParcelEntity>> trackParcel(String identifier);
 }
+
+

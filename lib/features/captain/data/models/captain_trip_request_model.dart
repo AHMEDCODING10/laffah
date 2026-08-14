@@ -37,7 +37,10 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
       grossFare: (json['grossFare'] as num?)?.toDouble() ?? 0.0,
       timeTag: json['timeTag'] as String? ?? 'الآن',
       isParcel: json['isParcel'] as bool? ?? false,
-      stops: (json['stops'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      stops: (json['stops'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 }

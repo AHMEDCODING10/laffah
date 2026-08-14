@@ -1,11 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum TransactionType {
-  tripEarnings,
-  payout,
-  bonus,
-  adjustment
-}
+enum TransactionType { tripEarnings, payout, bonus, adjustment }
 
 class CaptainTransactionEntity extends Equatable {
   final String id;

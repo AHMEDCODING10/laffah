@@ -26,13 +26,21 @@ abstract class CaptainRemoteDataSource {
     required bool accept,
   });
 
-  Future<BaseResponseModel<void>> requestPayout(double amount, String method, String accountNumber);
+  Future<BaseResponseModel<void>> updateTripStatus({
+    required String tripId,
+    required String status,
+  });
+
+  Future<BaseResponseModel<void>> requestPayout(
+      double amount, String method, String accountNumber);
   Future<BaseResponseModel<Map<String, dynamic>>> fetchBonusData();
   Future<BaseResponseModel<Map<String, dynamic>>> getWalletDetails();
   Future<BaseResponseModel<List<dynamic>>> getNotifications();
   Future<BaseResponseModel<List<dynamic>>> getNearbyRequests();
-  Future<BaseResponseModel<List<dynamic>>> getCaptainTrips(int page, String statusFilter);
-  Future<BaseResponseModel<Map<String, dynamic>>> uploadDocument(File file, String type);
+  Future<BaseResponseModel<List<dynamic>>> getCaptainTrips(
+      int page, String statusFilter);
+  Future<BaseResponseModel<Map<String, dynamic>>> uploadDocument(
+      File file, String type);
 }
 
 class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
@@ -42,7 +50,21 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
   CaptainRemoteDataSourceImpl(this.dioClient, this.wsClient);
 
   @override
+  Future<BaseResponseModel<void>> updateTripStatus({
+    required String tripId,
+    required String status,
+  }) async {
+    final response = await dioClient.dio.post(
+      '/trips/$tripId/status',
+      data: {'status': status},
+    );
+    return BaseResponseModel.fromJson(response.data, (_) {});
+  }
+
+
+  @override
   Future<BaseResponseModel<CaptainStatusModel>> toggleOnlineStatus({
+
     required bool isOnline,
     required double lat,
     required double lng,
@@ -55,7 +77,8 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
         'lng': lng,
       },
     );
-    return BaseResponseModel.fromJson(response.data, (data) => CaptainStatusModel.fromJson(data as Map<String, dynamic>));
+    return BaseResponseModel.fromJson(response.data,
+        (data) => CaptainStatusModel.fromJson(data as Map<String, dynamic>));
   }
 
   @override
@@ -73,7 +96,8 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
   }
 
   @override
-  Future<BaseResponseModel<void>> requestPayout(double amount, String method, String accountNumber) async {
+  Future<BaseResponseModel<void>> requestPayout(
+      double amount, String method, String accountNumber) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.requestPayout,
       data: {
@@ -88,30 +112,37 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
   @override
   Future<BaseResponseModel<Map<String, dynamic>>> fetchBonusData() async {
     final response = await dioClient.dio.get(ApiEndpoints.captainBonus);
-    return BaseResponseModel.fromJson(response.data, (data) => data as Map<String, dynamic>);
+    return BaseResponseModel.fromJson(
+        response.data, (data) => data as Map<String, dynamic>);
   }
 
   @override
   Future<BaseResponseModel<Map<String, dynamic>>> getWalletDetails() async {
     // Assuming backend returns wallet data within the standard BaseResponse structure
-    final response = await dioClient.dio.get('/wallet/balance'); // Or ApiEndpoints.walletBalance if added
-    return BaseResponseModel.fromJson(response.data, (data) => data as Map<String, dynamic>);
+    final response = await dioClient.dio
+        .get('/wallet/balance'); // Or ApiEndpoints.walletBalance if added
+    return BaseResponseModel.fromJson(
+        response.data, (data) => data as Map<String, dynamic>);
   }
 
   @override
   Future<BaseResponseModel<List<dynamic>>> getNotifications() async {
     final response = await dioClient.dio.get(ApiEndpoints.captainNotifications);
-    return BaseResponseModel.fromJson(response.data, (data) => data as List<dynamic>);
+    return BaseResponseModel.fromJson(
+        response.data, (data) => data as List<dynamic>);
   }
 
   @override
   Future<BaseResponseModel<List<dynamic>>> getNearbyRequests() async {
-    final response = await dioClient.dio.get(ApiEndpoints.captainNearbyRequests);
-    return BaseResponseModel.fromJson(response.data, (data) => data as List<dynamic>);
+    final response =
+        await dioClient.dio.get(ApiEndpoints.captainNearbyRequests);
+    return BaseResponseModel.fromJson(
+        response.data, (data) => data as List<dynamic>);
   }
 
   @override
-  Future<BaseResponseModel<List<dynamic>>> getCaptainTrips(int page, String statusFilter) async {
+  Future<BaseResponseModel<List<dynamic>>> getCaptainTrips(
+      int page, String statusFilter) async {
     final response = await dioClient.dio.get(
       ApiEndpoints.tripHistory,
       queryParameters: {
@@ -136,20 +167,26 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
     required double lng,
     required double heading,
   }) async {
-    // Send location directly via WebSockets to prevent server DDoS
-    wsClient.send({
-      'event': 'client-location-update',
-      'channel': 'presence-captain-location.$captainId',
-      'data': {
-        'lat': lat,
-        'lng': lng,
-        'heading': heading,
-      },
-    });
+    try {
+      await dioClient.dio.post(
+        ApiEndpoints.updateCaptainLocation,
+        data: {
+          'latitude': lat,
+          'longitude': lng,
+          'lat': lat,
+          'lng': lng,
+          'heading': heading,
+        },
+      );
+    } catch (e) {
+      // Non-blocking location update failure
+    }
   }
 
+
   @override
-  Future<BaseResponseModel<Map<String, dynamic>>> uploadDocument(File file, String type) async {
+  Future<BaseResponseModel<Map<String, dynamic>>> uploadDocument(
+      File file, String type) async {
     final formData = FormData.fromMap({
       'type': type,
       'file': await MultipartFile.fromFile(

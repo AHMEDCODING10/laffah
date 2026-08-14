@@ -46,7 +46,8 @@ class AppColors {
   static const Color gray600 = Color(0xFF757575);
   static const Color gray700 = Color(0xFF616161);
   static const Color gray800 = Color(0xFF424242);
-  static const Color gray850 = Color(0xFF2C2C2C); // Added for Dark Cards/Borders
+  static const Color gray850 =
+      Color(0xFF2C2C2C); // Added for Dark Cards/Borders
   static const Color gray900 = Color(0xFF212121);
   static const Color black = Color(0xFF121212);
 
@@ -56,7 +57,8 @@ class AppColors {
   static const Color success = Color(0xFF22C55E);
   static const Color warning = Color(0xFFFACC15);
   static const Color danger = Color(0xFFEF4444);
-  static const Color error = Color(0xFFDC2626); // Added (Alias for danger/error states)
+  static const Color error =
+      Color(0xFFDC2626); // Added (Alias for danger/error states)
   static const Color info = Color(0xFF3B82F6);
 
   // ==========================================

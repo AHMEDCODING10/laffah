@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -30,7 +31,7 @@ class QuickDestinationsSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'وجهات سريعة',
+              AppLocalizations.of(context)!.pass_quick_destinations,
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontWeight: FontWeight.w900,
@@ -45,7 +46,7 @@ class QuickDestinationsSection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
+                  Icons.arrow_forward_ios_rounded,
                   size: 15,
                   color: AppColors.primary500,
                 ),
@@ -89,8 +90,8 @@ class QuickDestinationsSection extends StatelessWidget {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color:
-                                    AppColors.primary500.withValues(alpha: 0.25),
+                                color: AppColors.primary500
+                                    .withValues(alpha: 0.25),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),

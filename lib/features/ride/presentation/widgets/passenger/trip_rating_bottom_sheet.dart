@@ -86,9 +86,7 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                   ),
                 ),
               ),
-              
               AppSpacing.h20,
-
               Text(
                 'لقد وصلت لوجهتك بسلامة الله!',
                 style: TextStyle(
@@ -107,37 +105,24 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                   color: isDark ? AppColors.gray400 : AppColors.gray600,
                 ),
               ),
-              
               AppSpacing.h20,
-
               _buildCaptainProfileCard(isDark),
-
               AppSpacing.h24,
-
               _buildInteractiveStars(isDark),
-
               AppSpacing.h24,
-
               _buildFeedbackTagsSection(isDark),
-
               AppSpacing.h20,
-
               _buildTippingSection(isDark),
-
               AppSpacing.h20,
-
               _buildCommentsInputField(isDark),
-
               AppSpacing.h20,
-
               _buildReceiptBreakdownBox(isDark, totalPayment),
-
               AppSpacing.h24,
-
               _isSubmitting
                   ? const Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(AppColors.primary500),
                       ),
                     )
                   : SizedBox(
@@ -175,10 +160,13 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+        color:
+            isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
         borderRadius: AppSpacing.borderLG,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.04)
+              : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -219,7 +207,8 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
             decoration: BoxDecoration(
               color: AppColors.success.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
@@ -266,7 +255,9 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
                 child: Icon(
                   Icons.star_rounded,
-                  color: isLit ? AppColors.warning : (isDark ? AppColors.gray800 : AppColors.gray300),
+                  color: isLit
+                      ? AppColors.warning
+                      : (isDark ? AppColors.gray800 : AppColors.gray300),
                   size: 44,
                 ),
               ),
@@ -294,15 +285,15 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
   String _getRatingDescription(int rating) {
     switch (rating) {
       case 1:
-        return 'تجربة سيئة جداً وغير مرضية 👎';
+        return 'تجربة سيئة جداً وغير مرضية ';
       case 2:
-        return 'هناك ملاحظات سلبية كثيرة ⚠️';
+        return 'هناك ملاحظات سلبية كثيرة ';
       case 3:
-        return 'جيدة، ولكن تتطلب التحسين والمطابقة 😐';
+        return 'جيدة، ولكن تتطلب التحسين والمطابقة ';
       case 4:
-        return 'رائعة ومريحة، شكراً للكابتن 👍';
+        return 'رائعة ومريحة، شكراً للكابتن ';
       case 5:
-        return 'ممتازة وخمس نجوم كاملة! 🌟';
+        return 'ممتازة وخمس نجوم كاملة! ';
       default:
         return '';
     }
@@ -338,19 +329,25 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: isSelected 
-                      ? AppColors.white 
+                  color: isSelected
+                      ? AppColors.white
                       : (isDark ? AppColors.white : AppColors.gray800),
                 ),
               ),
               selected: isSelected,
               selectedColor: AppColors.primary500,
               checkmarkColor: AppColors.white,
-              backgroundColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100,
+              backgroundColor: isDark
+                  ? AppColors.white.withValues(alpha: 0.02)
+                  : AppColors.gray100,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary500 : (isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
+                  color: isSelected
+                      ? AppColors.primary500
+                      : (isDark
+                          ? AppColors.white.withValues(alpha: 0.04)
+                          : AppColors.gray200),
                 ),
               ),
               onSelected: (_) => _toggleTag(tag),
@@ -391,16 +388,21 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
                 decoration: BoxDecoration(
                   color: _selectedTipAmount == 0
                       ? AppColors.primary500.withValues(alpha: 0.12)
-                      : (isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100),
+                      : (isDark
+                          ? AppColors.white.withValues(alpha: 0.02)
+                          : AppColors.gray100),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: _selectedTipAmount == 0
                         ? AppColors.primary500
-                        : (isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
+                        : (isDark
+                            ? AppColors.white.withValues(alpha: 0.05)
+                            : AppColors.gray200),
                     width: _selectedTipAmount == 0 ? 1.5 : 1.0,
                   ),
                 ),
@@ -410,7 +412,9 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.bold,
                     fontSize: 11,
-                    color: _selectedTipAmount == 0 ? AppColors.primary500 : (isDark ? AppColors.gray400 : AppColors.gray700),
+                    color: _selectedTipAmount == 0
+                        ? AppColors.primary500
+                        : (isDark ? AppColors.gray400 : AppColors.gray700),
                   ),
                 ),
               ),
@@ -428,16 +432,21 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.primary500.withValues(alpha: 0.12)
-                          : (isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray100),
+                          : (isDark
+                              ? AppColors.white.withValues(alpha: 0.02)
+                              : AppColors.gray100),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primary500
-                            : (isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
+                            : (isDark
+                                ? AppColors.white.withValues(alpha: 0.05)
+                                : AppColors.gray200),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
@@ -447,7 +456,9 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
                         fontFamily: 'monospace',
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
-                        color: isSelected ? AppColors.primary500 : (isDark ? AppColors.gray400 : AppColors.gray700),
+                        color: isSelected
+                            ? AppColors.primary500
+                            : (isDark ? AppColors.gray400 : AppColors.gray700),
                       ),
                     ),
                   ),
@@ -486,20 +497,26 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
             color: isDark ? AppColors.white : AppColors.gray900,
           ),
           decoration: InputDecoration(
-            hintText: 'اكتب هنا أي ملاحظة ترغب في مشاركتها معنا لتطوير جودة الخدمة...',
+            hintText:
+                'اكتب هنا أي ملاحظة ترغب في مشاركتها معنا لتطوير جودة الخدمة...',
             hintStyle: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 11.5,
               fontWeight: FontWeight.normal,
               color: isDark ? AppColors.gray600 : AppColors.gray400,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s16, vertical: 12),
             filled: true,
-            fillColor: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+            fillColor: isDark
+                ? AppColors.white.withValues(alpha: 0.02)
+                : AppColors.gray50,
             enabledBorder: OutlineInputBorder(
               borderRadius: AppSpacing.borderSM,
               borderSide: BorderSide(
-                color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray300,
+                color: isDark
+                    ? AppColors.white.withValues(alpha: 0.05)
+                    : AppColors.gray300,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -530,7 +547,8 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
         children: [
           const Row(
             children: [
-              Icon(Icons.receipt_long_rounded, color: AppColors.primary500, size: 16),
+              Icon(Icons.receipt_long_rounded,
+                  color: AppColors.primary500, size: 16),
               AppSpacing.w6,
               Text(
                 'تفاصيل الفاتورة النقدية ومجموع الأجرة:',
@@ -643,7 +661,8 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
               textDirection: TextDirection.rtl,
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_outline_rounded, color: AppColors.white, size: 20),
+                  Icon(Icons.check_circle_outline_rounded,
+                      color: AppColors.white, size: 20),
                   AppSpacing.w12,
                   Text(
                     'تم تسجيل تقييمك للكابتن وشكر الإكرامية بنجاح! رافقتكم السلامة.',
@@ -666,7 +685,7 @@ class _TripRatingBottomSheetState extends State<TripRatingBottomSheet> {
   String _formatCurrency(double amount) {
     final String str = amount.toInt().toString();
     if (str.length <= 3) return str;
-    
+
     final List<String> parts = [];
     int end = str.length;
     while (end > 0) {

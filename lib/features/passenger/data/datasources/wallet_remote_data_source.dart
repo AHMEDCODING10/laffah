@@ -5,7 +5,8 @@ import '../models/wallet_model.dart';
 
 abstract class WalletRemoteDataSource {
   Future<BaseResponseModel<WalletModel>> getWalletBalance();
-  Future<BaseResponseModel<void>> requestPayout(double amount, String accountNumber);
+  Future<BaseResponseModel<void>> requestPayout(
+      double amount, String accountNumber);
 }
 
 class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
@@ -16,14 +17,13 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
   @override
   Future<BaseResponseModel<WalletModel>> getWalletBalance() async {
     final response = await dioClient.dio.get(ApiEndpoints.walletBalance);
-    return BaseResponseModel.fromJson(
-      response.data, 
-      (data) => WalletModel.fromJson(data as Map<String, dynamic>)
-    );
+    return BaseResponseModel.fromJson(response.data,
+        (data) => WalletModel.fromJson(data as Map<String, dynamic>));
   }
 
   @override
-  Future<BaseResponseModel<void>> requestPayout(double amount, String accountNumber) async {
+  Future<BaseResponseModel<void>> requestPayout(
+      double amount, String accountNumber) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.requestPayout,
       data: {'amount': amount, 'account_number': accountNumber},

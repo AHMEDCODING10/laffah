@@ -27,9 +27,11 @@ class WalletRepositoryImpl implements WalletRepository {
   }
 
   @override
-  Future<Either<Failure, void>> requestPayout(double amount, String accountNumber) async {
+  Future<Either<Failure, void>> requestPayout(
+      double amount, String accountNumber) async {
     try {
-      final response = await remoteDataSource.requestPayout(amount, accountNumber);
+      final response =
+          await remoteDataSource.requestPayout(amount, accountNumber);
       if (response.success) {
         return const Right(null);
       } else {

@@ -88,7 +88,8 @@ class _LaffahMapViewState extends State<LaffahMapView>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
-    _pulseAnim = CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut);
+    _pulseAnim =
+        CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut);
 
     // Position smooth animation controller
     _positionController = AnimationController(

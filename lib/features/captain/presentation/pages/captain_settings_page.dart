@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../pages/widgets/captain_account_dialogs.dart';
+import 'captain_document_upload_page.dart';
 import '../../../../core/theme/theme_controller.dart';
 
 import '../../../../core/router/app_router.dart';
@@ -28,12 +31,13 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900, size: 20),
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -72,7 +76,6 @@ appBar: AppBar(
               onChanged: (val) => setState(() => _receiveParcels = val),
               isDark: isDark,
             ),
-
             AppSpacing.h16,
             _buildSectionHeader('مظهر التطبيق', isDark),
             _buildSwitchTile(
@@ -86,7 +89,6 @@ appBar: AppBar(
               },
               isDark: isDark,
             ),
-
             AppSpacing.h16,
             _buildSectionHeader('الملاحة والتوجيه', isDark),
             _buildSelectionTile(
@@ -106,33 +108,102 @@ appBar: AppBar(
               onChanged: (val) => setState(() => _soundNotifications = val),
               isDark: isDark,
             ),
-
             AppSpacing.h16,
             _buildSectionHeader('الحساب والأمان', isDark),
             _buildActionTile(
               title: 'المركبات المسجلة',
               icon: Icons.motorcycle_rounded,
               isDark: isDark,
-              onTap: () {},
+              onTap: () {
+                final l10n = AppLocalizations.of(context)!;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppColors.primary,
+                    content: Text(
+                      l10n.capt_multi_vehicle_coming_soon,
+                      style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                    ),
+                  ),
+                );
+              },
             ),
             _buildActionTile(
               title: 'تحديث المستندات (الرخصة/الهوية)',
               icon: Icons.assignment_ind_rounded,
               isDark: isDark,
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CaptainDocumentUploadPage(),
+                  ),
+                );
+              },
             ),
             _buildActionTile(
               title: 'تغيير كلمة المرور',
               icon: Icons.lock_rounded,
               isDark: isDark,
-              onTap: () {},
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (ctx) => const ChangePasswordSheet(),
+                );
+              },
             ),
-            
             AppSpacing.h32,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
               child: OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  final l10n = AppLocalizations.of(context)!;
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: Text(
+                        l10n.capt_delete_account_dialog_title,
+                        style: const TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.bold),
+                      ),
+                      content: Text(
+                        l10n.capt_delete_account_dialog_content,
+                        style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(l10n.cancel_btn,
+                              style: const TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic')),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: AppColors.danger,
+                                content: Text(
+                                    l10n.capt_delete_account_request_sent,
+                                    style: const TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic')),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            l10n.capt_delete_account_confirm_btn,
+                            style: const TextStyle(
+                                color: AppColors.danger,
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
                   side: const BorderSide(color: AppColors.danger),
@@ -141,13 +212,13 @@ appBar: AppBar(
                     borderRadius: AppSpacing.radiusMD,
                   ),
                 ),
-                icon: const Icon(Icons.logout_rounded),
-                label: const Text(
-                  'تسجيل الخروج',
-                  style: TextStyle(
+                icon: const Icon(Icons.delete_forever_rounded),
+                label: Text(
+                  AppLocalizations.of(context)!.capt_delete_account_forever,
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
                   ),
                 ),
               ),
@@ -203,7 +274,8 @@ appBar: AppBar(
           color: isDark ? AppColors.gray400 : AppColors.gray600,
         ),
       ),
-      secondary: Icon(icon, color: isDark ? AppColors.gray400 : AppColors.gray600),
+      secondary:
+          Icon(icon, color: isDark ? AppColors.gray400 : AppColors.gray600),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
     );
   }
@@ -235,8 +307,10 @@ appBar: AppBar(
           color: Color(0xFFFF6B00),
         ),
       ),
-      leading: Icon(icon, color: isDark ? AppColors.gray400 : AppColors.gray600),
-      trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: isDark ? AppColors.gray600 : AppColors.gray400),
+      leading:
+          Icon(icon, color: isDark ? AppColors.gray400 : AppColors.gray600),
+      trailing: Icon(Icons.arrow_forward_ios_rounded,
+          size: 16, color: isDark ? AppColors.gray600 : AppColors.gray400),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
     );
   }
@@ -258,10 +332,11 @@ appBar: AppBar(
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
       ),
-      leading: Icon(icon, color: isDark ? AppColors.gray400 : AppColors.gray600),
-      trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: isDark ? AppColors.gray600 : AppColors.gray400),
+      leading:
+          Icon(icon, color: isDark ? AppColors.gray400 : AppColors.gray600),
+      trailing: Icon(Icons.arrow_forward_ios_rounded,
+          size: 16, color: isDark ? AppColors.gray600 : AppColors.gray400),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
     );
   }
 }
-

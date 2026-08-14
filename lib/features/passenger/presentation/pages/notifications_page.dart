@@ -114,7 +114,8 @@ class _NotificationsPageState extends State<NotificationsPage>
               ),
               child: TabBar(
                 controller: _tabController,
-                onTap: (index) => setState(() => _selectedCategoryIndex = index),
+                onTap: (index) =>
+                    setState(() => _selectedCategoryIndex = index),
                 indicatorColor: AppColors.primary500,
                 indicatorWeight: 3,
                 indicatorSize: TabBarIndicatorSize.tab,
@@ -145,7 +146,8 @@ class _NotificationsPageState extends State<NotificationsPage>
                     text: AppLocalizations.of(context)!.pass_parcels,
                   ),
                   Tab(
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                    icon:
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 20),
                     text: AppLocalizations.of(context)!.pass_messages,
                   ),
                   Tab(

@@ -33,19 +33,20 @@ class CaptainRejectReasonDialog extends StatefulWidget {
   }
 
   @override
-  State<CaptainRejectReasonDialog> createState() => _CaptainRejectReasonDialogState();
+  State<CaptainRejectReasonDialog> createState() =>
+      _CaptainRejectReasonDialogState();
 }
 
 class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
   String? _selectedReason;
 
   List<String> get _reasons => [
-    AppLocalizations.of(context)!.capt_reject_reason_far_2,
-    AppLocalizations.of(context)!.capt_reject_reason_fare,
-    AppLocalizations.of(context)!.capt_reject_reason_breakdown,
-    AppLocalizations.of(context)!.capt_reject_reason_busy,
-    AppLocalizations.of(context)!.capt_reject_reason_other,
-  ];
+        AppLocalizations.of(context)!.capt_reject_reason_far_2,
+        AppLocalizations.of(context)!.capt_reject_reason_fare,
+        AppLocalizations.of(context)!.capt_reject_reason_breakdown,
+        AppLocalizations.of(context)!.capt_reject_reason_busy,
+        AppLocalizations.of(context)!.capt_reject_reason_other,
+      ];
 
   @override
   @override
@@ -117,7 +118,9 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 11.5,
-                                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                color: isDark
+                                    ? AppColors.gray400
+                                    : AppColors.gray600,
                               ),
                             ),
                           ],
@@ -152,11 +155,14 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.danger.withValues(alpha: 0.1)
-                              : (isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50),
+                              : (isDark
+                                  ? Colors.white.withValues(alpha: 0.03)
+                                  : AppColors.gray50),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isSelected
@@ -167,9 +173,13 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                         child: Row(
                           children: [
                             Icon(
-                              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                              isSelected
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_unchecked,
                               size: 18,
-                              color: isSelected ? AppColors.danger : AppColors.gray500,
+                              color: isSelected
+                                  ? AppColors.danger
+                                  : AppColors.gray500,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -178,10 +188,14 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                   color: isSelected
                                       ? AppColors.danger
-                                      : (isDark ? Colors.white : AppColors.gray900),
+                                      : (isDark
+                                          ? Colors.white
+                                          : AppColors.gray900),
                                 ),
                               ),
                             ),
@@ -200,8 +214,12 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: isDark ? Colors.white24 : AppColors.gray300),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            side: BorderSide(
+                                color: isDark
+                                    ? Colors.white24
+                                    : AppColors.gray300),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
                           ),
                           child: const Text(
                             'إلغاء',
@@ -224,10 +242,12 @@ class _CaptainRejectReasonDialogState extends State<CaptainRejectReasonDialog> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.danger,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
                           ),
                           child: Text(
-                            AppLocalizations.of(context)!.capt_confirm_reject_btn,
+                            AppLocalizations.of(context)!
+                                .capt_confirm_reject_btn,
                             style: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.w900,

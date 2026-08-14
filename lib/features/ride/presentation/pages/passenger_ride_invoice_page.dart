@@ -9,7 +9,7 @@ class PassengerRideInvoicePage extends StatelessWidget {
   final String tripId;
   final String captainName;
   final double discount;
-  
+
   const PassengerRideInvoicePage({
     super.key,
     this.fare = 1200.0,
@@ -45,7 +45,8 @@ class PassengerRideInvoicePage extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.close_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+            icon: Icon(Icons.close_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900),
             onPressed: () => context.go('/passenger/home'),
           ),
           centerTitle: true,
@@ -74,7 +75,8 @@ class PassengerRideInvoicePage extends StatelessWidget {
                         color: AppColors.success.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 64),
+                      child: const Icon(Icons.check_circle_rounded,
+                          color: AppColors.success, size: 64),
                     ),
                     AppSpacing.h16,
                     Text(
@@ -105,24 +107,35 @@ class PassengerRideInvoicePage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s20),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.white,
+                  color: isDark
+                      ? AppColors.white.withValues(alpha: 0.04)
+                      : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
-                  border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray200),
-                  boxShadow: isDark ? [] : [
-                    BoxShadow(
-                      color: AppColors.gray200.withValues(alpha: 0.5),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(
+                      color: isDark
+                          ? AppColors.white.withValues(alpha: 0.1)
+                          : AppColors.gray200),
+                  boxShadow: isDark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: AppColors.gray200.withValues(alpha: 0.5),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                 ),
                 child: Column(
                   children: [
-                    _buildInvoiceRow('تكلفة الرحلة الأساسية', '${fare.toStringAsFixed(0)} ريال', isDark),
+                    _buildInvoiceRow('تكلفة الرحلة الأساسية',
+                        '${fare.toStringAsFixed(0)} ريال', isDark),
                     AppSpacing.h12,
-                    _buildInvoiceRow('رسوم الخدمة', 'مجاناً', isDark, color: AppColors.success),
+                    _buildInvoiceRow('رسوم الخدمة', 'مجاناً', isDark,
+                        color: AppColors.success),
                     AppSpacing.h12,
-                    _buildInvoiceRow('خصم برومو كود', '- ${discount.toStringAsFixed(0)} ريال', isDark, color: AppColors.success),
+                    _buildInvoiceRow('خصم برومو كود',
+                        '- ${discount.toStringAsFixed(0)} ريال', isDark,
+                        color: AppColors.success),
                     const Divider(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -151,14 +164,15 @@ class PassengerRideInvoicePage extends StatelessWidget {
                 ),
               ),
               AppSpacing.h32,
-              
+
               // CTA: Rate Captain
               ElevatedButton(
                 onPressed: () => _showRatingSheet(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   minimumSize: const Size(double.infinity, 52),
-                  shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: AppSpacing.radiusMD),
                 ),
                 child: const Text(
                   'تقييم الكابتن وإضافة بقشيش',
@@ -177,7 +191,8 @@ class PassengerRideInvoicePage extends StatelessWidget {
     );
   }
 
-  Widget _buildInvoiceRow(String title, String value, bool isDark, {Color? color}) {
+  Widget _buildInvoiceRow(String title, String value, bool isDark,
+      {Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

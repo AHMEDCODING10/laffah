@@ -13,25 +13,21 @@ class SecureStorageService {
   Future<void> saveToken(String token) =>
       _storage.write(key: _tokenKey, value: token);
 
-  Future<String?> getToken() =>
-      _storage.read(key: _tokenKey);
+  Future<String?> getToken() => _storage.read(key: _tokenKey);
 
-  Future<void> clearToken() =>
-      _storage.delete(key: _tokenKey);
+  Future<void> clearToken() => _storage.delete(key: _tokenKey);
 
   // ─── Role ───
   Future<void> saveRole(String role) =>
       _storage.write(key: _roleKey, value: role);
 
-  Future<String?> getRole() =>
-      _storage.read(key: _roleKey);
+  Future<String?> getRole() => _storage.read(key: _roleKey);
 
   // ─── User ID ───
   Future<void> saveUserId(String id) =>
       _storage.write(key: _userIdKey, value: id);
 
-  Future<String?> getUserId() =>
-      _storage.read(key: _userIdKey);
+  Future<String?> getUserId() => _storage.read(key: _userIdKey);
 
   // ─── Session ───
   Future<bool> hasActiveSession() async =>

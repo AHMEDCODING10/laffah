@@ -9,9 +9,11 @@ import 'laravel_error_interceptor.dart';
 
 /// Global event bus to broadcast network-level auth failures (e.g. 401 Unauthorized)
 class NetworkEventBus {
-  static final StreamController<String> _authEventController = StreamController<String>.broadcast();
+  static final StreamController<String> _authEventController =
+      StreamController<String>.broadcast();
   static Stream<String> get authEvents => _authEventController.stream;
-  static void emitUnauthenticated() => _authEventController.add('UNAUTHENTICATED');
+  static void emitUnauthenticated() =>
+      _authEventController.add('UNAUTHENTICATED');
 }
 
 class DioClient {
@@ -59,7 +61,8 @@ class DioClient {
             return handler.next(e);
           }
 
-          final hasAuthHeader = e.requestOptions.headers.containsKey('Authorization');
+          final hasAuthHeader =
+              e.requestOptions.headers.containsKey('Authorization');
           if (hasAuthHeader) {
             _inMemoryToken = null;
             await _storage.delete(key: 'auth_token');
@@ -85,7 +88,8 @@ class DioClient {
       _dio.httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
           final client = HttpClient();
-          client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+          client.badCertificateCallback =
+              (X509Certificate cert, String host, int port) {
             // TODO: Enable certificate pinning before production release.
             // Real SHA-1/SHA-256 hash example:
             // 'A1:B2:C3:D4:E5:F6:77:88:99:00:AA:BB:CC:DD:EE:FF:11:22:33:44'
@@ -95,11 +99,12 @@ class DioClient {
           return client;
         },
       );
-      
+
       _uploadDio.httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
           final client = HttpClient();
-          client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+          client.badCertificateCallback =
+              (X509Certificate cert, String host, int port) => true;
           return client;
         },
       );
@@ -124,7 +129,8 @@ class DioClient {
           if (e.requestOptions.path.contains(ApiEndpoints.login)) {
             return handler.next(e);
           }
-          final hasAuthHeader = e.requestOptions.headers.containsKey('Authorization');
+          final hasAuthHeader =
+              e.requestOptions.headers.containsKey('Authorization');
           if (hasAuthHeader) {
             _inMemoryToken = null;
             await _storage.delete(key: 'auth_token');

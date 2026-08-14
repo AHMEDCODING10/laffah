@@ -11,8 +11,14 @@ class RequestRideUseCase {
   Future<Either<Failure, RideEntity>> call({
     required String pickupLocation,
     required String dropoffLocation,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    double? dropoffLatitude,
+    double? dropoffLongitude,
     required String rideType,
     required double expectedPrice,
+    List<Map<String, dynamic>>? stops,
+    int? promoCodeId,
   }) async {
     if (pickupLocation.isEmpty || dropoffLocation.isEmpty) {
       return const Left(ValidationFailure('يرجى تحديد نقطة الانطلاق والوصول'));
@@ -20,8 +26,15 @@ class RequestRideUseCase {
     return await repository.requestRide(
       pickupLocation: pickupLocation,
       dropoffLocation: dropoffLocation,
+      pickupLatitude: pickupLatitude,
+      pickupLongitude: pickupLongitude,
+      dropoffLatitude: dropoffLatitude,
+      dropoffLongitude: dropoffLongitude,
       rideType: rideType,
       expectedPrice: expectedPrice,
+      stops: stops,
+      promoCodeId: promoCodeId,
     );
   }
 }
+

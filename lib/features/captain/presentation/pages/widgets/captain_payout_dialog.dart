@@ -10,7 +10,8 @@ import '../../../../../core/theme/app_spacing.dart';
 /// entering account/phone numbers, and executing real balance deductions.
 class CaptainPayoutDialog extends StatefulWidget {
   final double availableBalance;
-  final Function(double amount, String method, String accountNumber) onConfirmPayout;
+  final Function(double amount, String method, String accountNumber)
+      onConfirmPayout;
 
   const CaptainPayoutDialog({
     super.key,
@@ -21,7 +22,8 @@ class CaptainPayoutDialog extends StatefulWidget {
   static void show({
     required BuildContext context,
     required double availableBalance,
-    required Function(double amount, String method, String accountNumber) onConfirmPayout,
+    required Function(double amount, String method, String accountNumber)
+        onConfirmPayout,
   }) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
@@ -41,42 +43,43 @@ class CaptainPayoutDialog extends StatefulWidget {
 
 class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _accountController = TextEditingController(text: '771234567');
+  final TextEditingController _accountController =
+      TextEditingController(text: '771234567');
   String? _selectedMethod;
   String? _errorMessage;
 
   List<Map<String, String>> get _payoutMethods => [
-    {
-      'id': AppLocalizations.of(context)!.capt_kuraimi,
-      'name': 'صرافة الكريمي Express (أم فلوس)',
-      'desc': AppLocalizations.of(context)!.capt_kuraimi_desc,
-      'icon': 'kuraimi',
-    },
-    {
-      'id': AppLocalizations.of(context)!.capt_jeeb,
-      'name': AppLocalizations.of(context)!.capt_jeeb_full,
-      'desc': AppLocalizations.of(context)!.capt_jeeb_desc,
-      'icon': 'jeeb',
-    },
-    {
-      'id': AppLocalizations.of(context)!.capt_floosak,
-      'name': AppLocalizations.of(context)!.capt_floosak_full,
-      'desc': AppLocalizations.of(context)!.capt_floosak_desc,
-      'icon': 'floosak',
-    },
-    {
-      'id': AppLocalizations.of(context)!.capt_jwali,
-      'name': AppLocalizations.of(context)!.capt_jwali_full,
-      'desc': AppLocalizations.of(context)!.capt_jwali_desc,
-      'icon': 'jwali',
-    },
-    {
-      'id': AppLocalizations.of(context)!.capt_onecash,
-      'name': AppLocalizations.of(context)!.capt_onecash_full,
-      'desc': AppLocalizations.of(context)!.capt_onecash_desc,
-      'icon': 'onecash',
-    },
-  ];
+        {
+          'id': AppLocalizations.of(context)!.capt_kuraimi,
+          'name': AppLocalizations.of(context)!.capt_kuraimi_full,
+          'desc': AppLocalizations.of(context)!.capt_kuraimi_desc,
+          'icon': 'kuraimi',
+        },
+        {
+          'id': AppLocalizations.of(context)!.capt_jeeb,
+          'name': AppLocalizations.of(context)!.capt_jeeb_full,
+          'desc': AppLocalizations.of(context)!.capt_jeeb_desc,
+          'icon': 'jeeb',
+        },
+        {
+          'id': AppLocalizations.of(context)!.capt_floosak,
+          'name': AppLocalizations.of(context)!.capt_floosak_full,
+          'desc': AppLocalizations.of(context)!.capt_floosak_desc,
+          'icon': 'floosak',
+        },
+        {
+          'id': AppLocalizations.of(context)!.capt_jwali,
+          'name': AppLocalizations.of(context)!.capt_jwali_full,
+          'desc': AppLocalizations.of(context)!.capt_jwali_desc,
+          'icon': 'jwali',
+        },
+        {
+          'id': AppLocalizations.of(context)!.capt_onecash,
+          'name': AppLocalizations.of(context)!.capt_onecash_full,
+          'desc': AppLocalizations.of(context)!.capt_onecash_desc,
+          'icon': 'onecash',
+        },
+      ];
 
   @override
   @override
@@ -104,7 +107,8 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
   }
 
   void _submitPayout() {
-    final double? requestedAmount = double.tryParse(_amountController.text.trim());
+    final double? requestedAmount =
+        double.tryParse(_amountController.text.trim());
     final String accountNum = _accountController.text.trim();
 
     if (requestedAmount == null || requestedAmount <= 0) {
@@ -116,7 +120,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
 
     if (requestedAmount > widget.availableBalance) {
       setState(() {
-        _errorMessage = 'المبلغ المطلوب أكثر من الرصيد المتاح (${widget.availableBalance.toStringAsFixed(0)} ر.ي)';
+        _errorMessage = AppLocalizations.of(context)!
+            .capt_amount_exceeds_balance(
+                widget.availableBalance.toStringAsFixed(0));
       });
       return;
     }
@@ -163,12 +169,14 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
                   color: isDark
                       ? const Color(0xFF141822).withValues(alpha: 0.95)
                       : Colors.white.withValues(alpha: 0.96),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(32)),
                   border: Border.all(
                     color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
                     width: 1.2,
@@ -203,7 +211,8 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                                  color: const Color(0xFFFF6B00)
+                                      .withValues(alpha: 0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -214,25 +223,31 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                               ),
                               AppSpacing.w10,
                               Text(
-                                'طلب تحويل الأرباح',
+                                AppLocalizations.of(context)!.capt_wallet_req_payout,
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.w900,
                                   fontSize: 18,
-                                  color: isDark ? Colors.white : AppColors.gray900,
+                                  color:
+                                      isDark ? Colors.white : AppColors.gray900,
                                 ),
                               ),
                             ],
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
                               color: AppColors.success.withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                              border: Border.all(
+                                  color:
+                                      AppColors.success.withValues(alpha: 0.3)),
                             ),
                             child: Text(
-                              'المتاح: ${widget.availableBalance.toStringAsFixed(0)} ر.ي',
+                              AppLocalizations.of(context)!
+                                  .capt_available_balance(
+                                      widget.availableBalance.toStringAsFixed(0)),
                               style: const TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontWeight: FontWeight.w900,
@@ -248,7 +263,8 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
 
                       // Method Picker Title
                       Text(
-                        AppLocalizations.of(context)!.capt_choose_transfer_method,
+                        AppLocalizations.of(context)!
+                            .capt_choose_transfer_method,
                         style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
@@ -274,13 +290,18 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFFFF6B00).withValues(alpha: 0.12)
-                                  : (isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50),
+                                  ? const Color(0xFFFF6B00)
+                                      .withValues(alpha: 0.12)
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.03)
+                                      : AppColors.gray50),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
                                     ? const Color(0xFFFF6B00)
-                                    : (isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.gray200),
+                                    : (isDark
+                                        ? Colors.white.withValues(alpha: 0.06)
+                                        : AppColors.gray200),
                                 width: isSelected ? 1.5 : 1.0,
                               ),
                             ),
@@ -291,7 +312,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? const Color(0xFFFF6B00)
-                                        : (isDark ? Colors.white12 : AppColors.gray200),
+                                        : (isDark
+                                            ? Colors.white12
+                                            : AppColors.gray200),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -299,13 +322,16 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                                         ? Icons.account_balance_rounded
                                         : Icons.wallet_rounded,
                                     size: 18,
-                                    color: isSelected ? Colors.white : AppColors.gray600,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppColors.gray600,
                                   ),
                                 ),
                                 AppSpacing.w12,
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         method['name']!,
@@ -313,7 +339,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                                           fontFamily: 'IBM Plex Sans Arabic',
                                           fontWeight: FontWeight.w900,
                                           fontSize: 13,
-                                          color: isDark ? Colors.white : AppColors.gray900,
+                                          color: isDark
+                                              ? Colors.white
+                                              : AppColors.gray900,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -359,9 +387,12 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                       AppSpacing.h8,
 
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray50,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : AppColors.gray50,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: _errorMessage != null
@@ -372,7 +403,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                         child: TextField(
                           controller: _amountController,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.w900,
@@ -380,7 +413,8 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             color: isDark ? Colors.white : AppColors.gray900,
                           ),
                           decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.capt_enter_amount_hint,
+                            hintText: AppLocalizations.of(context)!
+                                .capt_enter_amount_hint,
                             hintStyle: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 13,
@@ -403,11 +437,21 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          _buildQuickChip(AppLocalizations.of(context)!.capt_1000_yer, 1000.0, isDark),
+                          _buildQuickChip(
+                              AppLocalizations.of(context)!.capt_1000_yer,
+                              1000.0,
+                              isDark),
                           const SizedBox(width: 8),
-                          _buildQuickChip(AppLocalizations.of(context)!.capt_2000_yer, 2000.0, isDark),
+                          _buildQuickChip(
+                              AppLocalizations.of(context)!.capt_2000_yer,
+                              2000.0,
+                              isDark),
                           const SizedBox(width: 8),
-                          _buildQuickChip(AppLocalizations.of(context)!.capt_full_balance, widget.availableBalance, isDark, isFull: true),
+                          _buildQuickChip(
+                              AppLocalizations.of(context)!.capt_full_balance,
+                              widget.availableBalance,
+                              isDark,
+                              isFull: true),
                         ],
                       ),
 
@@ -427,9 +471,12 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                       AppSpacing.h8,
 
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray50,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : AppColors.gray50,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isDark ? Colors.white12 : AppColors.gray300,
@@ -447,7 +494,8 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                           decoration: const InputDecoration(
                             hintText: '77XXXXXXX',
                             border: InputBorder.none,
-                            icon: Icon(Icons.phone_android_rounded, size: 20, color: Color(0xFFFF6B00)),
+                            icon: Icon(Icons.phone_android_rounded,
+                                size: 20, color: Color(0xFFFF6B00)),
                           ),
                         ),
                       ),
@@ -478,14 +526,16 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             backgroundColor: const Color(0xFFFF6B00),
                             foregroundColor: Colors.white,
                             elevation: 4,
-                            shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                            shadowColor:
+                                const Color(0xFFFF6B00).withValues(alpha: 0.4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
                             ),
                           ),
                           icon: const Icon(Icons.send_rounded, size: 20),
                           label: Text(
-                            AppLocalizations.of(context)!.capt_confirm_transfer_now,
+                            AppLocalizations.of(context)!
+                                .capt_confirm_transfer_now,
                             style: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.w900,
@@ -507,7 +557,8 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
     );
   }
 
-  Widget _buildQuickChip(String label, double value, bool isDark, {bool isFull = false}) {
+  Widget _buildQuickChip(String label, double value, bool isDark,
+      {bool isFull = false}) {
     return Expanded(
       child: GestureDetector(
         onTap: () => _applyQuickAmount(value),
@@ -517,7 +568,9 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
           decoration: BoxDecoration(
             color: isFull
                 ? const Color(0xFFFF6B00).withValues(alpha: 0.15)
-                : (isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100),
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : AppColors.gray100),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isFull

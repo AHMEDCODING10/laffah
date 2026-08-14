@@ -70,7 +70,8 @@ class _PromoCodePageState extends State<PromoCodePage> {
       child: Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: LaffahAppBar(title: AppLocalizations.of(context)!.pass_promo_codes),
+        appBar:
+            LaffahAppBar(title: AppLocalizations.of(context)!.pass_promo_codes),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.s20,
@@ -108,11 +109,14 @@ class _PromoCodePageState extends State<PromoCodePage> {
                             color: isDark ? AppColors.white : AppColors.gray900,
                           ),
                           decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.pass_enter_promo_hint,
+                            hintText: AppLocalizations.of(context)!
+                                .pass_enter_promo_hint,
                             hintStyle: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 12,
-                              color: isDark ? AppColors.gray500 : AppColors.gray400,
+                              color: isDark
+                                  ? AppColors.gray500
+                                  : AppColors.gray400,
                             ),
                             filled: true,
                             fillColor: isDark

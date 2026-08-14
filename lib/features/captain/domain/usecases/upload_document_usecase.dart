@@ -8,7 +8,8 @@ class UploadDocumentUseCase {
 
   UploadDocumentUseCase(this.repository);
 
-  Future<Either<Failure, Map<String, dynamic>>> call(File file, String type) async {
+  Future<Either<Failure, Map<String, dynamic>>> call(
+      File file, String type) async {
     return await repository.uploadDocument(file, type);
   }
 }

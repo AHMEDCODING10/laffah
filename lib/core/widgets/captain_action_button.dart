@@ -87,7 +87,8 @@ class CaptainActionButton extends StatelessWidget {
             )
           : Container(
               decoration: BoxDecoration(
-                gradient: backgroundColor == null ? AppColors.primaryGradient : null,
+                gradient:
+                    backgroundColor == null ? AppColors.primaryGradient : null,
                 color: backgroundColor,
                 borderRadius: AppSpacing.borderMD,
                 boxShadow: onPressed != null
@@ -113,7 +114,8 @@ class CaptainActionButton extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: AppSpacing.borderMD,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                 ),
                 child: childContent,
               ),

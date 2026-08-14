@@ -16,7 +16,8 @@ class CaptainStatusEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, isOnline, currentLat, currentLng, statusMessage];
+  List<Object?> get props =>
+      [id, isOnline, currentLat, currentLng, statusMessage];
 
   /// Alias for use with PusherService channel subscription
   String? get captainId => id.isNotEmpty ? id : null;

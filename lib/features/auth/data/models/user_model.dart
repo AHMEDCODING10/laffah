@@ -22,7 +22,10 @@ class UserModel extends UserEntity {
       phone: userMap['phone'] ?? '',
       name: userMap['name'] ?? '',
       role: (userMap['roles'] as List?)?.isNotEmpty == true
-          ? ((userMap['roles'] as List).any((r) => r is Map && r['name'] == 'captain') ? 'captain' : (userMap['roles'][0]['name'] ?? 'passenger'))
+          ? ((userMap['roles'] as List)
+                  .any((r) => r is Map && r['name'] == 'captain')
+              ? 'captain'
+              : (userMap['roles'][0]['name'] ?? 'passenger'))
           : (userMap['role'] ?? 'passenger'),
       token: token,
     );

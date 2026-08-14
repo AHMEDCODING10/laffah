@@ -9,7 +9,8 @@ class PassengerScheduleRidePage extends StatefulWidget {
   const PassengerScheduleRidePage({super.key});
 
   @override
-  State<PassengerScheduleRidePage> createState() => _PassengerScheduleRidePageState();
+  State<PassengerScheduleRidePage> createState() =>
+      _PassengerScheduleRidePageState();
 }
 
 class _PassengerScheduleRidePageState extends State<PassengerScheduleRidePage> {
@@ -73,7 +74,8 @@ class _PassengerScheduleRidePageState extends State<PassengerScheduleRidePage> {
           if (state is RideScheduledSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('تم جدولة الرحلة بنجاح!', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                content: Text('تم جدولة الرحلة بنجاح!',
+                    style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -86,7 +88,8 @@ class _PassengerScheduleRidePageState extends State<PassengerScheduleRidePage> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+                icon: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: isDark ? AppColors.white : AppColors.gray900),
                 onPressed: () => context.pop(),
               ),
               centerTitle: true,
@@ -136,34 +139,40 @@ class _PassengerScheduleRidePageState extends State<PassengerScheduleRidePage> {
                   AppSpacing.h16,
                   _buildPickerCard(
                     title: 'وقت الرحلة',
-                    value: _selectedTime != null ? _selectedTime!.format(context) : 'اختر الوقت',
+                    value: _selectedTime != null
+                        ? _selectedTime!.format(context)
+                        : 'اختر الوقت',
                     icon: Icons.access_time_rounded,
                     isDark: isDark,
                     onTap: _pickTime,
                   ),
                   const Spacer(),
                   ElevatedButton(
-                    onPressed: (_selectedDate != null && _selectedTime != null && state is! RideLoading)
+                    onPressed: (_selectedDate != null &&
+                            _selectedTime != null &&
+                            state is! RideLoading)
                         ? () {
                             context.read<RideBloc>().add(
-                              ScheduleRide(
-                                date: _selectedDate!,
-                                time: _selectedTime!.format(context),
-                              ),
-                            );
+                                  ScheduleRide(
+                                    date: _selectedDate!,
+                                    time: _selectedTime!.format(context),
+                                  ),
+                                );
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary500,
                       disabledBackgroundColor: AppColors.gray300,
                       minimumSize: const Size(double.infinity, 52),
-                      shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: AppSpacing.radiusMD),
                     ),
                     child: state is RideLoading
                         ? const SizedBox(
                             height: 24,
                             width: 24,
-                            child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                                color: AppColors.white, strokeWidth: 2),
                           )
                         : const Text(
                             'تأكيد الجدولة',
@@ -197,16 +206,23 @@ class _PassengerScheduleRidePageState extends State<PassengerScheduleRidePage> {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.white,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.04)
+              : AppColors.white,
           borderRadius: AppSpacing.radiusMD,
-          border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray200),
-          boxShadow: isDark ? [] : [
-            BoxShadow(
-              color: AppColors.gray200.withValues(alpha: 0.5),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(
+              color: isDark
+                  ? AppColors.white.withValues(alpha: 0.1)
+                  : AppColors.gray200),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: AppColors.gray200.withValues(alpha: 0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
         child: Row(
           children: [
@@ -244,7 +260,9 @@ class _PassengerScheduleRidePageState extends State<PassengerScheduleRidePage> {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isDark ? AppColors.gray600 : AppColors.gray400),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: isDark ? AppColors.gray600 : AppColors.gray400),
           ],
         ),
       ),

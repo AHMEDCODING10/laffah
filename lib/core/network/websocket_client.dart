@@ -6,7 +6,7 @@ import '../storage/secure_storage_service.dart';
 
 /// WebSocket Client لتطبيق لَفَّة — ينشئ اتصالا حيا مع Laravel Reverb أو Pusher Channels
 /// متوافق كلياً مع المنصات متعددة الأجهزة وخالٍ تماماً من التبعيات المحصورة بالموبايل (Flutter Web Safe)
-/// 
+///
 /// 🚨 CATASTROPHIC WARNING FOR CAPTAIN LOCATION TRACKING 🚨
 /// --------------------------------------------------------
 /// NEVER build an HTTP POST API (DioClient) to send the Captain's live location.
@@ -20,7 +20,7 @@ class LaffahWebSocketClient {
   WebSocketChannel? _socket;
   StreamSubscription? _subscription;
   final _eventController = StreamController<Map<String, dynamic>>.broadcast();
-  
+
   int _reconnectAttempts = 0;
   bool _isConnecting = false;
   String? _currentChannel;
@@ -38,16 +38,17 @@ class LaffahWebSocketClient {
     if (_isConnecting) return;
     _isConnecting = true;
     _currentChannel = channel;
-    
+
     try {
       final token = await storage.getToken();
-      
+
       // Using query parameters for token to ensure Web compatibility without conditional imports
-      final uri = Uri.parse('$baseWsUrl/app/laffah?token=$token&channel=$channel');
+      final uri =
+          Uri.parse('$baseWsUrl/app/laffah?token=$token&channel=$channel');
       debugPrint('🌐 [Laffah WS] Connecting to $uri');
-      
+
       _socket = WebSocketChannel.connect(uri);
-      
+
       _reconnectAttempts = 0;
       _isConnecting = false;
 
@@ -83,15 +84,17 @@ class LaffahWebSocketClient {
   void _handleDisconnect() {
     _socket = null;
     _isConnecting = false;
-    
+
     if (_currentChannel == null) return; // تم قطع الاتصال يدوياً
 
     // مضاعفة الوقت (2, 4, 8, 16، وبحد أقصى 32 ثانية)
-    final int nextBackoffSeconds = (1 << (_reconnectAttempts > 5 ? 5 : _reconnectAttempts)); 
+    final int nextBackoffSeconds =
+        (1 << (_reconnectAttempts > 5 ? 5 : _reconnectAttempts));
     _reconnectAttempts++;
-    
-    debugPrint('⚠️ [Laffah WS] Connection lost. Attempting reconnect in $nextBackoffSeconds seconds... (Attempt $_reconnectAttempts)');
-    
+
+    debugPrint(
+        '⚠️ [Laffah WS] Connection lost. Attempting reconnect in $nextBackoffSeconds seconds... (Attempt $_reconnectAttempts)');
+
     Future.delayed(Duration(seconds: nextBackoffSeconds), () {
       if (_socket == null && _currentChannel != null) {
         connect(_currentChannel!);

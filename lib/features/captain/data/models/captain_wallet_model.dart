@@ -19,9 +19,11 @@ class CaptainWalletModel extends CaptainWalletEntity {
       weeklyEarnings: (json['weeklyEarnings'] as num?)?.toDouble() ?? 0.0,
       completedTripsToday: json['completedTripsToday'] as int? ?? 0,
       dailyTarget: (json['dailyTarget'] as num?)?.toDouble() ?? 5000.0,
-      previousWeekEarnings: (json['previousWeekEarnings'] as num?)?.toDouble() ?? 0.0,
+      previousWeekEarnings:
+          (json['previousWeekEarnings'] as num?)?.toDouble() ?? 0.0,
       recentTransactions: (json['recentTransactions'] as List<dynamic>?)
-              ?.map((e) => CaptainTransactionModel.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  CaptainTransactionModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );

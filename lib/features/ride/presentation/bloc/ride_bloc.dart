@@ -119,12 +119,17 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ),
   ];
 
-  static Map<String, dynamic> calculateDynamicMetrics(String pickup, String dropoff) {
+  static Map<String, dynamic> calculateDynamicMetrics(
+      String pickup, String dropoff) {
     final pClean = pickup.trim().toLowerCase();
     final dClean = dropoff.trim().toLowerCase();
-    
-    if (pClean.isEmpty || pClean.contains('حدة') || pClean.contains('hada') || 
-        dClean.contains('صنعاء') || dClean.contains('sana') || dClean.isEmpty) {
+
+    if (pClean.isEmpty ||
+        pClean.contains('حدة') ||
+        pClean.contains('hada') ||
+        dClean.contains('صنعاء') ||
+        dClean.contains('sana') ||
+        dClean.isEmpty) {
       return {
         'distance': 7.2,
         'duration': 18,
@@ -157,7 +162,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   ) async {
     emit(const RideLoading());
     final metrics = calculateDynamicMetrics(event.pickup, event.dropoff);
-    
+
     emit(RideOptionsLoaded(
       pickup: event.pickup,
       dropoff: event.dropoff,
@@ -197,20 +202,25 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
       dropoffLocation: event.dropoff,
-      rideType: 'laffah',
+      pickupLatitude: event.pickupLatitude,
+      pickupLongitude: event.pickupLongitude,
+      dropoffLatitude: event.dropoffLatitude,
+      dropoffLongitude: event.dropoffLongitude,
+      rideType: 'ride',
       expectedPrice: event.fare,
+      stops: event.stops,
     );
 
     result.fold(
       (failure) => emit(RideError(failure.message)),
       (rideEntity) {
         emit(RideBookingConfirmed(
-          pickup: rideEntity.pickupLocation,
-          dropoff: rideEntity.dropoffLocation,
+          pickup: rideEntity.pickupLocation.isNotEmpty ? rideEntity.pickupLocation : event.pickup,
+          dropoff: rideEntity.dropoffLocation.isNotEmpty ? rideEntity.dropoffLocation : event.dropoff,
           selectedOption: selectedOption,
           captainName: rideEntity.captainName ?? 'قيد البحث',
-          captainPhone: '',
-          vehicleModel: rideEntity.vehicleModel ?? '',
+          captainPhone: rideEntity.captainPhone ?? '',
+          vehicleModel: rideEntity.vehicleModel ?? 'دراجة نارية',
           vehiclePlate: rideEntity.vehiclePlate ?? '',
           rating: rideEntity.rating ?? 5.0,
           status: rideEntity.status,
@@ -243,6 +253,10 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
       dropoffLocation: event.dropoff,
+      pickupLatitude: event.pickupLatitude,
+      pickupLongitude: event.pickupLongitude,
+      dropoffLatitude: event.dropoffLatitude,
+      dropoffLongitude: event.dropoffLongitude,
       rideType: event.rideType,
       expectedPrice: calculatedPrice,
     );
@@ -251,12 +265,12 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       (failure) => emit(RideError(failure.message)),
       (rideEntity) {
         emit(RideBookingConfirmed(
-          pickup: rideEntity.pickupLocation,
-          dropoff: rideEntity.dropoffLocation,
+          pickup: rideEntity.pickupLocation.isNotEmpty ? rideEntity.pickupLocation : event.pickup,
+          dropoff: rideEntity.dropoffLocation.isNotEmpty ? rideEntity.dropoffLocation : event.dropoff,
           selectedOption: selectedOption,
           captainName: rideEntity.captainName ?? 'قيد البحث',
-          captainPhone: '',
-          vehicleModel: rideEntity.vehicleModel ?? '',
+          captainPhone: rideEntity.captainPhone ?? '',
+          vehicleModel: rideEntity.vehicleModel ?? 'دراجة نارية',
           vehiclePlate: rideEntity.vehiclePlate ?? '',
           rating: rideEntity.rating ?? 5.0,
           status: rideEntity.status,
@@ -265,6 +279,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       },
     );
   }
+
 
   FutureOr<void> _onSubmitParcelOrder(
     SubmitParcelOrder event,
@@ -292,7 +307,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     );
 
     result.fold(
-      (failure) => emit(RideError('فشل تقديم طلب إرسال الطرد: ${failure.message}')),
+      (failure) =>
+          emit(RideError('فشل تقديم طلب إرسال الطرد: ${failure.message}')),
       (parcelEntity) {
         emit(ParcelSubmitted(
           data: event.data,
@@ -366,4 +382,3 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     );
   }
 }
-

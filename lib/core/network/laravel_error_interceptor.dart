@@ -14,7 +14,8 @@ class LaravelErrorInterceptor extends Interceptor {
       return handler.reject(
         DioException(
           requestOptions: err.requestOptions,
-          error: const UnauthorizedException('جلسة العمل انتهت، يرجى إعادة تسجيل الدخول'),
+          error: const UnauthorizedException(
+              'جلسة العمل انتهت، يرجى إعادة تسجيل الدخول'),
           response: err.response,
           type: err.type,
         ),
@@ -31,14 +32,17 @@ class LaravelErrorInterceptor extends Interceptor {
           }
         });
       }
-      String errorMessage = data is Map && data['message'] != null ? data['message'].toString() : 'بيانات غير صالحة';
+      String errorMessage = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : 'بيانات غير صالحة';
 
       if (fieldErrors.isNotEmpty) {
         final firstError = fieldErrors.values.first.first;
-        if (firstError == 'validation.unique' || firstError.contains('unique')) {
+        if (firstError == 'validation.unique' ||
+            firstError.contains('unique')) {
           errorMessage = 'رقم الهاتف مسجل مسبقاً في النظام. يرجى تسجيل الدخول.';
         } else if (firstError.contains('validation.')) {
-           errorMessage = 'يرجى التحقق من البيانات المدخلة';
+          errorMessage = 'يرجى التحقق من البيانات المدخلة';
         } else {
           errorMessage = firstError;
         }

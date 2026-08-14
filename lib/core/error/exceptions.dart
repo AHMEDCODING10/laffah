@@ -10,7 +10,8 @@ class CacheException implements Exception {
 
 class UnauthorizedException implements Exception {
   final String message;
-  const UnauthorizedException([this.message = 'انتهت جلسة الاستخدام، يرجى إعادة تسجيل الدخول']);
+  const UnauthorizedException(
+      [this.message = 'انتهت جلسة الاستخدام، يرجى إعادة تسجيل الدخول']);
 }
 
 class LaravelValidationException implements Exception {

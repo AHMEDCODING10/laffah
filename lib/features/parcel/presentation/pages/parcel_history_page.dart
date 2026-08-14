@@ -14,12 +14,13 @@ class ParcelHistoryPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900, size: 20),
             onPressed: () => context.pop(),
           ),
           title: Text(
@@ -52,9 +53,7 @@ appBar: AppBar(
               status: 'قيد التوصيل',
               isDark: isDark,
             ),
-            
             AppSpacing.h32,
-            
             Text(
               'الطرود السابقة',
               style: TextStyle(
@@ -94,8 +93,8 @@ appBar: AppBar(
   }) {
     final bool isActive = status == 'قيد التوصيل';
     final bool isCanceled = status == 'ملغي';
-    final Color statusColor = isCanceled 
-        ? AppColors.danger 
+    final Color statusColor = isCanceled
+        ? AppColors.danger
         : (isActive ? const Color(0xFF3B82F6) : const Color(0xFF22C55E));
 
     return Container(
@@ -105,7 +104,9 @@ appBar: AppBar(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -116,7 +117,8 @@ appBar: AppBar(
               color: statusColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.inventory_2_rounded, color: statusColor, size: 24),
+            child:
+                Icon(Icons.inventory_2_rounded, color: statusColor, size: 24),
           ),
           AppSpacing.w16,
           Expanded(
@@ -136,7 +138,8 @@ appBar: AppBar(
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -180,4 +183,3 @@ appBar: AppBar(
     );
   }
 }
-

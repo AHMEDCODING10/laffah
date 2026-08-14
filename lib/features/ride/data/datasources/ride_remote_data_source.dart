@@ -7,8 +7,14 @@ abstract class RideRemoteDataSource {
   Future<BaseResponseModel<RideModel>> requestRide({
     required String pickupLocation,
     required String dropoffLocation,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    double? dropoffLatitude,
+    double? dropoffLongitude,
     required String rideType,
     required double expectedPrice,
+    List<Map<String, dynamic>>? stops,
+    int? promoCodeId,
   });
 
   Future<BaseResponseModel<void>> cancelRide(String rideId);
@@ -26,25 +32,54 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
   Future<BaseResponseModel<RideModel>> requestRide({
     required String pickupLocation,
     required String dropoffLocation,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    double? dropoffLatitude,
+    double? dropoffLongitude,
     required String rideType,
     required double expectedPrice,
+    List<Map<String, dynamic>>? stops,
+    int? promoCodeId,
   }) async {
+    final Map<String, dynamic> payload = {
+      'type': rideType == 'delivery' ? 'delivery' : 'ride',
+      'pickup_address': pickupLocation,
+      'pickup_location': pickupLocation,
+      'pickup_latitude': pickupLatitude ?? 15.3694,
+      'pickup_longitude': pickupLongitude ?? 44.1910,
+      'dropoff_address': dropoffLocation,
+      'dropoff_location': dropoffLocation,
+      'dropoff_latitude': dropoffLatitude ?? 15.3521,
+      'dropoff_longitude': dropoffLongitude ?? 44.2014,
+      'expected_price': expectedPrice,
+    };
+
+    if (stops != null && stops.isNotEmpty) {
+      payload['stops'] = stops;
+    }
+
+    if (promoCodeId != null) {
+      payload['promo_code_id'] = promoCodeId;
+    }
+
     final response = await dioClient.dio.post(
       ApiEndpoints.requestRide,
-      data: {
-        'pickup_location': pickupLocation,
-        'dropoff_location': dropoffLocation,
-        'ride_type': rideType,
-        'expected_price': expectedPrice,
-      },
+      data: payload,
     );
-    return BaseResponseModel.fromJson(response.data, (data) => RideModel.fromJson(data as Map<String, dynamic>));
+
+    return BaseResponseModel.fromJson(
+      response.data,
+      (data) => RideModel.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   @override
   Future<BaseResponseModel<void>> cancelRide(String rideId) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.cancelRide(rideId),
+      data: {
+        'reason': 'إلغاء من قبل الراكب',
+      },
     );
     return BaseResponseModel.fromJson(response.data, (data) {});
   }
@@ -60,3 +95,4 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
     return [];
   }
 }
+

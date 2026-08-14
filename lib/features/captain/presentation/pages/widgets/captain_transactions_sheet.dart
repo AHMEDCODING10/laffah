@@ -17,27 +17,30 @@ class CaptainTransactionsSheet extends StatefulWidget {
     required this.transactions,
   });
 
-  static void show(BuildContext context, List<CaptainTransactionEntity> transactions) {
+  static void show(
+      BuildContext context, List<CaptainTransactionEntity> transactions) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CaptainTransactionsSheet(transactions: transactions),
+      builder: (context) =>
+          CaptainTransactionsSheet(transactions: transactions),
     );
   }
 
   @override
-  State<CaptainTransactionsSheet> createState() => _CaptainTransactionsSheetState();
+  State<CaptainTransactionsSheet> createState() =>
+      _CaptainTransactionsSheetState();
 }
 
 class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
-  String _selectedFilter = 'الكل'; // 'الكل', AppLocalizations.of(context)!.capt_earnings, AppLocalizations.of(context)!.capt_withdrawals
+  String _selectedFilter = 'ALL';
 
   List<CaptainTransactionEntity> get _filteredTransactions {
-    if (_selectedFilter == AppLocalizations.of(context)!.capt_earnings) {
+    if (_selectedFilter == 'EARNINGS') {
       return widget.transactions.where((t) => !t.isNegative).toList();
-    } else if (_selectedFilter == AppLocalizations.of(context)!.capt_withdrawals) {
+    } else if (_selectedFilter == 'WITHDRAWALS') {
       return widget.transactions.where((t) => t.isNegative).toList();
     }
     return widget.transactions;
@@ -51,14 +54,17 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Row(
             children: [
               Icon(
                 item.isNegative
                     ? Icons.account_balance_rounded
                     : Icons.motorcycle_rounded,
-                color: item.isNegative ? AppColors.danger : const Color(0xFFFF6B00),
+                color: item.isNegative
+                    ? AppColors.danger
+                    : const Color(0xFFFF6B00),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -77,26 +83,32 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow(AppLocalizations.of(context)!.capt_amount, '${item.isNegative ? '-' : '+'} ${item.amount} ر.ي', isDark, isHighlight: true),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_amount,
+                  '${item.isNegative ? '-' : '+'} ${item.amount} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}', isDark,
+                  isHighlight: true),
               const SizedBox(height: 8),
-              _buildDetailRow(AppLocalizations.of(context)!.capt_status, item.status, isDark),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_status,
+                  item.status, isDark),
               const SizedBox(height: 8),
-              _buildDetailRow(AppLocalizations.of(context)!.capt_time_date, item.date, isDark),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_time_date,
+                  item.date, isDark),
               const SizedBox(height: 8),
-              _buildDetailRow(AppLocalizations.of(context)!.capt_ref_number, item.refId, isDark),
+              _buildDetailRow(AppLocalizations.of(context)!.capt_ref_number,
+                  item.refId, isDark),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'إغلاق',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.capt_close,
+                style: const TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.bold,
                   color: Color(0xFFFF6B00),
                 ),
               ),
+
             ),
           ],
         ),
@@ -104,7 +116,8 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, bool isDark, {bool isHighlight = false}) {
+  Widget _buildDetailRow(String label, String value, bool isDark,
+      {bool isHighlight = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -122,7 +135,9 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: isHighlight ? 15 : 12.5,
             fontWeight: FontWeight.w900,
-            color: isHighlight ? const Color(0xFFFF6B00) : (isDark ? Colors.white : AppColors.gray900),
+            color: isHighlight
+                ? const Color(0xFFFF6B00)
+                : (isDark ? Colors.white : AppColors.gray900),
           ),
         ),
       ],
@@ -160,9 +175,12 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                 color: isDark
                     ? const Color(0xFF141822).withValues(alpha: 0.95)
                     : Colors.white.withValues(alpha: 0.96),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(32)),
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.06),
                 ),
               ),
               child: Column(
@@ -197,7 +215,8 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.gray500),
+                        icon: const Icon(Icons.close_rounded,
+                            size: 20, color: AppColors.gray500),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -208,11 +227,19 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                   // Filter Tabs Bar (الكل, أرباح, سحوبات)
                   Row(
                     children: [
-                      _buildTabChip('الكل', _selectedFilter == 'الكل', isDark),
+                      _buildTabChip(AppLocalizations.of(context)!.capt_all, 'ALL', _selectedFilter == 'ALL', isDark),
                       const SizedBox(width: 8),
-                      _buildTabChip(AppLocalizations.of(context)!.capt_earnings, _selectedFilter == AppLocalizations.of(context)!.capt_earnings, isDark, color: AppColors.success),
+                      _buildTabChip(
+                          AppLocalizations.of(context)!.capt_earnings, 'EARNINGS',
+                          _selectedFilter == 'EARNINGS',
+                          isDark,
+                          color: AppColors.success),
                       const SizedBox(width: 8),
-                      _buildTabChip(AppLocalizations.of(context)!.capt_withdrawals, _selectedFilter == AppLocalizations.of(context)!.capt_withdrawals, isDark, color: AppColors.danger),
+                      _buildTabChip(
+                          AppLocalizations.of(context)!.capt_withdrawals, 'WITHDRAWALS',
+                          _selectedFilter == 'WITHDRAWALS',
+                          isDark,
+                          color: AppColors.danger),
                     ],
                   ),
 
@@ -227,7 +254,9 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 13,
-                                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                color: isDark
+                                    ? AppColors.gray400
+                                    : AppColors.gray600,
                               ),
                             ),
                           )
@@ -237,10 +266,13 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                             itemBuilder: (context, index) {
                               final item = list[index];
                               final bool isNegative = item.isNegative;
-                              final Color statusColor = isNegative ? AppColors.warning : AppColors.success;
+                              final Color statusColor = isNegative
+                                  ? AppColors.warning
+                                  : AppColors.success;
 
                               return GestureDetector(
-                                onTap: () => _showTransactionDetails(item, isDark),
+                                onTap: () =>
+                                    _showTransactionDetails(item, isDark),
                                 child: Container(
                                   margin: const EdgeInsets.only(bottom: 10),
                                   padding: const EdgeInsets.all(12),
@@ -250,11 +282,15 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                         : AppColors.gray50,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.04)
+                                          : Colors.black
+                                              .withValues(alpha: 0.03),
                                     ),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Row(
                                         children: [
@@ -262,29 +298,38 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
                                               color: isNegative
-                                                  ? AppColors.danger.withValues(alpha: 0.1)
-                                                  : const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                                                  ? AppColors.danger
+                                                      .withValues(alpha: 0.1)
+                                                  : const Color(0xFFFF6B00)
+                                                      .withValues(alpha: 0.1),
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
                                               isNegative
-                                                  ? Icons.account_balance_rounded
+                                                  ? Icons
+                                                      .account_balance_rounded
                                                   : Icons.motorcycle_rounded,
                                               size: 20,
-                                              color: isNegative ? AppColors.danger : const Color(0xFFFF6B00),
+                                              color: isNegative
+                                                  ? AppColors.danger
+                                                  : const Color(0xFFFF6B00),
                                             ),
                                           ),
                                           AppSpacing.w12,
                                           Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 item.title,
                                                 style: TextStyle(
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.bold,
-                                                  fontFamily: 'IBM Plex Sans Arabic',
-                                                  color: isDark ? Colors.white : AppColors.gray900,
+                                                  fontFamily:
+                                                      'IBM Plex Sans Arabic',
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : AppColors.gray900,
                                                 ),
                                               ),
                                               AppSpacing.h4,
@@ -293,7 +338,8 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                                 style: const TextStyle(
                                                   fontSize: 10.5,
                                                   color: AppColors.gray500,
-                                                  fontFamily: 'IBM Plex Sans Arabic',
+                                                  fontFamily:
+                                                      'IBM Plex Sans Arabic',
                                                 ),
                                               ),
                                             ],
@@ -301,23 +347,30 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                         ],
                                       ),
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
                                         children: [
                                           Text(
-                                            '${isNegative ? '-' : '+'} ${item.amount} ر.ي',
+                                            '${isNegative ? '-' : '+'} ${item.amount} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
                                             style: TextStyle(
                                               fontSize: 14.5,
                                               fontWeight: FontWeight.w900,
-                                              color: isNegative ? AppColors.danger : const Color(0xFFFF6B00),
-                                              fontFamily: 'IBM Plex Sans Arabic',
+                                              color: isNegative
+                                                  ? AppColors.danger
+                                                  : const Color(0xFFFF6B00),
+                                              fontFamily:
+                                                  'IBM Plex Sans Arabic',
                                             ),
                                           ),
                                           AppSpacing.h4,
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: statusColor.withValues(alpha: 0.12),
-                                              borderRadius: BorderRadius.circular(10),
+                                              color: statusColor.withValues(
+                                                  alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                             ),
                                             child: Text(
                                               item.status,
@@ -325,7 +378,8 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                                 fontSize: 9.5,
                                                 fontWeight: FontWeight.bold,
                                                 color: statusColor,
-                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                fontFamily:
+                                                    'IBM Plex Sans Arabic',
                                               ),
                                             ),
                                           ),
@@ -347,14 +401,15 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
     );
   }
 
-  Widget _buildTabChip(String label, bool isSelected, bool isDark, {Color? color}) {
+  Widget _buildTabChip(String label, String value, bool isSelected, bool isDark,
+      {Color? color}) {
     final chipColor = color ?? const Color(0xFFFF6B00);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         setState(() {
-          _selectedFilter = label;
+          _selectedFilter = value;
         });
       },
       child: AnimatedContainer(
@@ -363,7 +418,9 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
         decoration: BoxDecoration(
           color: isSelected
               ? chipColor.withValues(alpha: 0.15)
-              : (isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100),
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.04)
+                  : AppColors.gray100),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected

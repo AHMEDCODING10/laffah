@@ -49,7 +49,9 @@ class WalletModel extends WalletEntity {
   Map<String, dynamic> toJson() {
     return {
       'balance': balance,
-      'transactions': (transactions as List<TransactionModel>).map((e) => e.toJson()).toList(),
+      'transactions': (transactions as List<TransactionModel>)
+          .map((e) => e.toJson())
+          .toList(),
     };
   }
 }

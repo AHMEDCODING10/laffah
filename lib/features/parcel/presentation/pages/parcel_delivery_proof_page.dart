@@ -6,8 +6,9 @@ import '../../../../core/theme/app_spacing.dart';
 /// ParcelDeliveryProofPage — Captain captures or passenger views the photo proof
 /// of parcel delivery at the destination.
 class ParcelDeliveryProofPage extends StatelessWidget {
-  final bool isCaptainView; // If true, show camera button. If false, show image.
-  
+  final bool
+      isCaptainView; // If true, show camera button. If false, show image.
+
   const ParcelDeliveryProofPage({
     super.key,
     this.isCaptainView = true,
@@ -20,12 +21,13 @@ class ParcelDeliveryProofPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900, size: 20),
             onPressed: () => context.pop(),
           ),
           title: Text(
@@ -54,7 +56,7 @@ appBar: AppBar(
               ),
               AppSpacing.h8,
               Text(
-                isCaptainView 
+                isCaptainView
                     ? 'يرجى التقاط صورة للطرد في موقع التسليم لتأكيد العملية وتوثيقها.'
                     : 'صورة توثيق تسليم الطرد من قبل الكابتن.',
                 style: TextStyle(
@@ -64,9 +66,9 @@ appBar: AppBar(
                   height: 1.5,
                 ),
               ),
-              
+
               AppSpacing.h32,
-              
+
               // Image Container / Camera Trigger
               Container(
                 width: double.infinity,
@@ -75,7 +77,9 @@ appBar: AppBar(
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.1)
+                        : AppColors.gray300,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
@@ -87,10 +91,12 @@ appBar: AppBar(
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                              color: const Color(0xFFFF6B00)
+                                  .withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFFF6B00), size: 40),
+                            child: const Icon(Icons.camera_alt_rounded,
+                                color: Color(0xFFFF6B00), size: 40),
                           ),
                           AppSpacing.h16,
                           Text(
@@ -99,17 +105,22 @@ appBar: AppBar(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.gray300 : AppColors.gray700,
+                              color: isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray700,
                             ),
                           ),
                         ],
                       )
                     : Center(
-                        child: Icon(Icons.image_rounded, size: 80, color: isDark ? AppColors.gray700 : AppColors.gray300),
+                        child: Icon(Icons.image_rounded,
+                            size: 80,
+                            color:
+                                isDark ? AppColors.gray700 : AppColors.gray300),
                         // In real implementation, this would be NetworkImage or FileImage
                       ),
               ),
-              
+
               AppSpacing.h40,
 
               if (isCaptainView)
@@ -145,4 +156,3 @@ appBar: AppBar(
     );
   }
 }
-

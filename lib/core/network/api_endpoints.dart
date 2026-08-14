@@ -7,7 +7,8 @@ class ApiEndpoints {
     final envUrl = dotenv.env['API_BASE_URL'];
     if (envUrl != null && envUrl.isNotEmpty) {
       String cleaned = envUrl.replaceAll('/api/v1', '/api');
-      if (kIsWeb && (cleaned.contains('10.0.2.2') || cleaned.contains('172.20.10.13'))) {
+      if (kIsWeb &&
+          (cleaned.contains('10.0.2.2') || cleaned.contains('172.20.10.13'))) {
         return 'http://localhost:8000/api';
       }
       return cleaned;
@@ -17,17 +18,17 @@ class ApiEndpoints {
     }
     return 'http://10.0.2.2:8000/api';
   }
-  
+
   // Auth Endpoints
-  static const String login            = '/auth/login';
-  static const String sendOtp          = '/auth/send-otp';
-  static const String verifyOtp        = '/auth/verify-otp';
-  static const String logout           = '/auth/logout';
+  static const String login = '/auth/login';
+  static const String sendOtp = '/auth/send-otp';
+  static const String verifyOtp = '/auth/verify-otp';
+  static const String logout = '/auth/logout';
   static const String registerPassenger = '/auth/register-passenger';
-  static const String registerCaptain   = '/auth/register-captain';
-  static const String forgotPassword    = '/auth/forgot-password';
-  static const String verifyResetCode   = '/auth/verify-reset-code';
-  static const String resetPassword     = '/auth/reset-password';
+  static const String registerCaptain = '/auth/register-captain';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String verifyResetCode = '/auth/verify-reset-code';
+  static const String resetPassword = '/auth/reset-password';
 
   // Profile / User Endpoints
   static const String userProfile = '/user/profile';
@@ -35,21 +36,30 @@ class ApiEndpoints {
   static const String savedPlaces = '/user/saved-places';
 
   // Captain Endpoints
-  static const String toggleOnlineStatus = '/captain/toggle-online'; // Aligned with backend
-  static String respondToTrip(String tripId) => '/trips/$tripId/accept'; // Aligned with backend
-  static const String requestPayout = '/wallet/payout-request'; // Aligned with backend
+  static const String toggleOnlineStatus =
+      '/captain/toggle-online'; // Aligned with backend
+  static const String updateCaptainLocation =
+      '/captain/update-location'; // Aligned with backend
+  static String respondToTrip(String tripId) =>
+      '/trips/$tripId/accept'; // Aligned with backend
+  static const String requestPayout =
+      '/wallet/payout-request'; // Aligned with backend
   static const String captainBonus = '/captain/bonus';
   static const String captainNotifications = '/captain/notifications';
   static const String captainNearbyRequests = '/captain/requests/nearby';
   static const String captainDocuments = '/captain/documents';
 
+
   // Shared Endpoints
-  static const String tripHistory = '/trips/history'; // Works for both captain and passenger
+  static const String tripHistory =
+      '/trips/history'; // Works for both captain and passenger
 
   // Ride Endpoints
   static const String requestRide = '/trips/create'; // Aligned with backend
-  static String cancelRide(String tripId) => '/trips/$tripId/cancel'; // Aligned with backend
-  static const String estimateRide = '/trips/estimate'; // Aligned with backend (was /trip/estimate)
+  static String cancelRide(String tripId) =>
+      '/trips/$tripId/cancel'; // Aligned with backend
+  static const String estimateRide =
+      '/trips/estimate'; // Aligned with backend (was /trip/estimate)
 
   // Parcel Endpoints
   static const String submitParcel = '/parcel/request';

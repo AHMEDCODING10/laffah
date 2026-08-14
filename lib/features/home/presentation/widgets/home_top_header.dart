@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -37,7 +38,8 @@ class HomeTopHeader extends StatelessWidget {
               onTap: onSearchTap,
               child: GlassBox(
                 borderRadius: BorderRadius.circular(24),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     const Icon(
@@ -50,14 +52,16 @@ class HomeTopHeader extends StatelessWidget {
                       child: Text(
                         dropoffController.text.isNotEmpty
                             ? dropoffController.text
-                            : 'إلى أين؟',
+                            : AppLocalizations.of(context)!.pass_where_to,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: dropoffController.text.isNotEmpty
                               ? (isDark ? AppColors.white : AppColors.gray900)
-                              : (isDark ? AppColors.gray400 : AppColors.gray600),
+                              : (isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -68,7 +72,7 @@ class HomeTopHeader extends StatelessWidget {
               ),
             ),
           ),
-          
+
           AppSpacing.w12,
 
           // Left (RTL End): Notifications

@@ -33,51 +33,61 @@ class _WalletView extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.s24),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDark : AppColors.white,
-            borderRadius: AppSpacing.radiusBottomSheet,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(AppSpacing.s24),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.white,
+          borderRadius: AppSpacing.radiusBottomSheet,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              AppSpacing.h16,
-              Text(
-                AppLocalizations.of(context)!.pass_choose_recharge_method,
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  color: isDark ? AppColors.white : AppColors.gray900,
-                ),
+            ),
+            AppSpacing.h16,
+            Text(
+              AppLocalizations.of(context)!.pass_choose_recharge_method,
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                color: isDark ? AppColors.white : AppColors.gray900,
               ),
-              AppSpacing.h16,
-              _buildTopUpOption(ctx, AppLocalizations.of(context)!.pass_haseb_kuraimi, Icons.account_balance_rounded, isDark),
-              _buildTopUpOption(ctx, AppLocalizations.of(context)!.pass_floos_wallet, Icons.account_balance_wallet_rounded, isDark),
-              _buildTopUpOption(ctx, AppLocalizations.of(context)!.pass_jawali_wallet, Icons.phone_android_rounded, isDark),
-              AppSpacing.h16,
-            ],
-          ),
+            ),
+            AppSpacing.h16,
+            _buildTopUpOption(
+                ctx,
+                AppLocalizations.of(context)!.pass_haseb_kuraimi,
+                Icons.account_balance_rounded,
+                isDark),
+            _buildTopUpOption(
+                ctx,
+                AppLocalizations.of(context)!.pass_floos_wallet,
+                Icons.account_balance_wallet_rounded,
+                isDark),
+            _buildTopUpOption(
+                ctx,
+                AppLocalizations.of(context)!.pass_jawali_wallet,
+                Icons.phone_android_rounded,
+                isDark),
+            AppSpacing.h16,
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTopUpOption(BuildContext context, String title, IconData icon, bool isDark) {
+  Widget _buildTopUpOption(
+      BuildContext context, String title, IconData icon, bool isDark) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -117,94 +127,103 @@ class _WalletView extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        extendBody: true,
-        appBar: LaffahAppBar(title: AppLocalizations.of(context)!.pass_laffah_wallet),
-        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 2),
-        body: BlocBuilder<WalletBloc, WalletState>(
-          builder: (context, state) {
-            if (state is WalletLoading) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primary500));
-            }
+    return Scaffold(
+      backgroundColor:
+          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      extendBody: true,
+      appBar: LaffahAppBar(
+          title: AppLocalizations.of(context)!.pass_laffah_wallet),
+      bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 2),
+      body: BlocBuilder<WalletBloc, WalletState>(
+        builder: (context, state) {
+          if (state is WalletLoading) {
+            return const Center(
+                child:
+                    CircularProgressIndicator(color: AppColors.primary500));
+          }
 
-            if (state is WalletError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.gray400),
-                    AppSpacing.h12,
-                    Text(
-                      state.message,
-                      style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.gray600),
-                      textAlign: TextAlign.center,
-                    ),
-                    AppSpacing.h16,
-                    ElevatedButton.icon(
-                      onPressed: () => context.read<WalletBloc>().add(GetWalletBalanceEvent()),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(AppLocalizations.of(context)!.pass_retry, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary500),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            double balance = 0;
-            List<TransactionEntity> transactions = [];
-
-            if (state is WalletBalanceLoaded) {
-              balance = state.wallet.balance;
-              transactions = state.wallet.transactions;
-            }
-
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s20,
-                AppSpacing.s20,
-                AppSpacing.s20,
-                100,
-              ),
-              children: [
-                WalletBalanceCard(
-                  balance: balance,
-                  onTopUpPressed: () => _showTopUpBottomSheet(context, isDark),
-                ),
-                AppSpacing.h24,
-                Text(
-                  AppLocalizations.of(context)!.pass_recent_tx,
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                    color: isDark ? AppColors.white : AppColors.gray900,
+          if (state is WalletError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off_rounded,
+                      size: 48, color: AppColors.gray400),
+                  AppSpacing.h12,
+                  Text(
+                    state.message,
+                    style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        color: AppColors.gray600),
+                    textAlign: TextAlign.center,
                   ),
+                  AppSpacing.h16,
+                  ElevatedButton.icon(
+                    onPressed: () => context
+                        .read<WalletBloc>()
+                        .add(GetWalletBalanceEvent()),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(AppLocalizations.of(context)!.pass_retry,
+                        style: const TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic')),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary500),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          double balance = 0;
+          List<TransactionEntity> transactions = [];
+
+          if (state is WalletBalanceLoaded) {
+            balance = state.wallet.balance;
+            transactions = state.wallet.transactions;
+          }
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s20,
+              AppSpacing.s20,
+              AppSpacing.s20,
+              100,
+            ),
+            children: [
+              WalletBalanceCard(
+                balance: balance,
+                onTopUpPressed: () => _showTopUpBottomSheet(context, isDark),
+              ),
+              AppSpacing.h24,
+              Text(
+                AppLocalizations.of(context)!.pass_recent_tx,
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  color: isDark ? AppColors.white : AppColors.gray900,
                 ),
-                AppSpacing.h12,
-                if (transactions.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.s24),
-                      child: Text(
-                        AppLocalizations.of(context)!.pass_no_tx_yet,
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          color: isDark ? AppColors.gray500 : AppColors.gray600,
-                        ),
+              ),
+              AppSpacing.h12,
+              if (transactions.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.s24),
+                    child: Text(
+                      AppLocalizations.of(context)!.pass_no_tx_yet,
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        color: isDark ? AppColors.gray500 : AppColors.gray600,
                       ),
                     ),
-                  )
-                else
-                  for (final tx in transactions)
-                    TransactionListTile(isDark: isDark, transaction: tx),
-              ],
-            );
-          },
-        ),
+                  ),
+                )
+              else
+                for (final tx in transactions)
+                  TransactionListTile(isDark: isDark, transaction: tx),
+            ],
+          );
+        },
       ),
     );
   }

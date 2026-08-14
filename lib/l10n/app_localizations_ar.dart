@@ -56,7 +56,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_create_passenger => 'إنشاء حساب راكب';
 
   @override
-  String get auth_role_captain => 'انضم ككابتن (سائق)';
+  String get auth_role_captain => 'إنشاء حساب كابتن (سائق)';
 
   @override
   String get auth_role_captain_desc =>
@@ -167,8 +167,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_val_phone_req => 'يرجى إدخال رقم الهاتف الجوال لتسجيل الدخول';
 
   @override
-  String get auth_val_phone_yemen =>
-      'الرقم اليمني الصحيح يجب أن يتكون من 9 خانات';
+  String get auth_val_phone_yemen => 'الرقم الصحيح يجب أن يتكون من 9 خانات';
 
   @override
   String get auth_val_phone_start =>
@@ -204,7 +203,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_capt_personal_data => '1. البيانات الشخصية للكابتن:';
 
   @override
-  String get auth_full_name_4 => 'الاسم الرباعي الكامل:';
+  String get auth_full_name_4 => 'الاسم الكامل:';
 
   @override
   String get auth_new_password => 'كلمة المرور الجديدة:';
@@ -234,7 +233,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_val_capt_name_req => 'يرجى إدخال اسم الكابتن بالكامل';
 
   @override
-  String get auth_val_name_3_4 => 'يرجى إدخال الاسم الثلاثي أو الرباعي الكامل';
+  String get auth_val_name_3_4 => 'يرجى إدخال الاسم  الكامل';
 
   @override
   String get auth_val_phone_req_2 => 'يرجى إدخال رقم الجوال';
@@ -243,7 +242,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_val_phone_9_digits_2 => 'رقم الهاتف يجب أن يتكون من 9 خانات';
 
   @override
-  String get auth_val_phone_yemen_start => 'رقم الجوال اليمني يبدأ بـ 7';
+  String get auth_val_phone_yemen_start => 'رقم الجوال  يبدأ بـ 7';
 
   @override
   String get auth_val_min_6 => 'يجب ألا تقل عن 6 خانات';
@@ -290,13 +289,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'املأ بياناتك للبدء في طلب مشاوير آمنة وسهلة واقتصادية';
 
   @override
-  String get auth_full_name_last => 'الاسم الكامل والأخير:';
+  String get auth_full_name_last => 'الاسم الكامل :';
 
   @override
   String get auth_ref_code => 'رمز الإحالة / الدعوة (اختياري):';
 
   @override
-  String get auth_create_acc_confirm => 'إنشاء الحساب وتأكيد رقمي';
+  String get auth_create_acc_confirm => 'إنشاء الحساب';
 
   @override
   String get auth_already_have_laffah => 'لديك حساب بالفعل في لَفَّة؟';
@@ -308,7 +307,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_ex_name_2 => 'مثال: جلال أحمد الوادعي';
 
   @override
-  String get auth_val_name_2_3 => 'يرجى إدخال اسمك الثنائي أو الثلاثي بالكامل';
+  String get auth_val_name_2_3 => 'يرجى إدخال اسمك بالكامل';
 
   @override
   String get auth_val_name_surname =>
@@ -325,7 +324,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'يجب أن تحتوي كلمة المرور على 6 أحرف أو أرقام على الأقل';
 
   @override
-  String get auth_retype_pass => 'أعد كتابة كلمة المرور السابقة';
+  String get auth_retype_pass => 'أعد كتابة كلمة المرور';
 
   @override
   String get auth_val_pass_not_match =>
@@ -860,4 +859,783 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pass_recharge_wallet => 'شحن رصيد المحفظة';
+
+  @override
+  String get capt_notif_retry => 'إعادة المحاولة';
+
+  @override
+  String get capt_acc_app_name => 'لفة - Laffah';
+
+  @override
+  String get capt_acc_contact => 'تواصل معنا مباشرة';
+
+  @override
+  String get capt_notif_alerts => 'التنبيهات';
+
+  @override
+  String get capt_acc_profile => 'الملف الشخصي';
+
+  @override
+  String get capt_acc_dark_mode_desc =>
+      'التبديل التلقائي بين المظهر النهاري والمظهر الداكن';
+
+  @override
+  String get capt_notif_empty_requests => 'لا توجد طلبات قريبة حالياً.';
+
+  @override
+  String get capt_acc_support => 'الدعم والمساعدة';
+
+  @override
+  String get capt_acc_contact_desc =>
+      'رقم طوارئ الدعم المباشر ومحادثة الواتساب';
+
+  @override
+  String get capt_acc_dark_mode => 'الوضع الداكن (Dark Mode)';
+
+  @override
+  String get capt_acc_terms => 'الشروط والأحكام';
+
+  @override
+  String get capt_acc_faq => 'الأسئلة الشائعة';
+
+  @override
+  String get capt_notif_page_title => 'التنبيهات والطلبات';
+
+  @override
+  String get capt_notif_mark_all_read => 'تحديد الكل كمقروء';
+
+  @override
+  String get capt_notif_new_requests => 'الطلبات الجديدة';
+
+  @override
+  String get capt_acc_change_lang => 'تغيير لغة التطبيق';
+
+  @override
+  String get capt_acc_docs_desc => 'بطاقة الهوية، رخصة القيادة، الفيش والتشبيه';
+
+  @override
+  String get capt_acc_docs => 'الوثائق والأوراق الرسمية';
+
+  @override
+  String get capt_acc_unspecified => 'غير محدد';
+
+  @override
+  String get capt_notif_accept => 'قبول المشوار';
+
+  @override
+  String get capt_notif_reject => 'رفض';
+
+  @override
+  String get capt_acc_prefs => 'تفضيلات المظهر واللغة';
+
+  @override
+  String get capt_acc_terms_desc => 'اتفاقية الاستخدام وحقوق كابتن لفة';
+
+  @override
+  String get capt_acc_general_settings => 'الإعدادات العامة';
+
+  @override
+  String get capt_acc_help_center => 'مركز مساعدة كباتن لفة';
+
+  @override
+  String get capt_acc_faq_desc => 'دليل شامل لاستخدام التطبيق وعمولة المنصة';
+
+  @override
+  String get capt_acc_laffah => 'لفّة';
+
+  @override
+  String get capt_acc_profile_desc => 'إعدادات الحساب والبيانات الأساسية';
+
+  @override
+  String get capt_notif_system_updates => 'تحديثات النظام';
+
+  @override
+  String get capt_acc_bike_data => 'بيانات الدراجة / المركبة';
+
+  @override
+  String get capt_acc_change_pass_desc => 'تحديث تفاصيل الأمان للمستودع';
+
+  @override
+  String get capt_acc_privacy => 'سياسة الخصوصية وحماية البيانات';
+
+  @override
+  String get capt_notif_all_read_success =>
+      'تم تحديد جميع التنبيهات كمقروءة بنجاح ️';
+
+  @override
+  String get capt_acc_legal => 'القانونية';
+
+  @override
+  String get capt_acc_bike_desc => 'الموديل، لوحة الأرقام، نوع الرخصة';
+
+  @override
+  String get capt_notif_empty_alerts => 'لا توجد تنبيهات جديدة.';
+
+  @override
+  String get capt_acc_logout_desc =>
+      'قم بالخروج الآمن من النظام وإلغاء استقبال الرحلات';
+
+  @override
+  String get capt_acc_logout => 'تسجيل الخروج';
+
+  @override
+  String get capt_acc_version => 'إصدار تطبيق الكابتن 2.4.0 (2026)';
+
+  @override
+  String get capt_acc_help_center_desc =>
+      'أدلة زيادة الدخل ونقل الطرود وقواعد السلامة';
+
+  @override
+  String get capt_acc_change_pass => 'تغيير كلمة المرور';
+
+  @override
+  String get capt_acc_privacy_desc => 'كيف نتعامل مع سرية معلومات كباتننا';
+
+  @override
+  String get capt_notif_empty_updates => 'لا توجد تحديثات في النظام.';
+
+  @override
+  String get pass_profile_faq_soon => 'سيتم إضافة الأسئلة الشائعة قريباً';
+
+  @override
+  String get pass_profile_privacy_policy => 'سياسة الخصوصية';
+
+  @override
+  String get capt_notif_3_desc =>
+      'حصلت على تقييم 5 نجوم من الراكبة \"علي العامري\": كابتن سريع ومحترم.';
+
+  @override
+  String get capt_acc_loading => 'جاري التحميل...';
+
+  @override
+  String get pass_places_added => 'تم إضافة المكان بنجاح';
+
+  @override
+  String get capt_notif_2_days_ago => 'قبل يومين';
+
+  @override
+  String get pass_profile_logout => 'تسجيل الخروج';
+
+  @override
+  String get pass_places_deleted => 'تم حذف المكان بنجاح';
+
+  @override
+  String get pass_profile_support_legal => 'الدعم والقانونية';
+
+  @override
+  String get pass_edit_title => 'تعديل الملف الشخصي';
+
+  @override
+  String get capt_acc_updating_profile => 'جاري تحديث الملف الشخصي...';
+
+  @override
+  String get pass_places_work => 'العمل';
+
+  @override
+  String get pass_places_empty => 'لا توجد أماكن محفوظة بعد';
+
+  @override
+  String get pass_edit_enter_name => 'الرجاء إدخال الاسم';
+
+  @override
+  String get pass_places_add_new => 'إضافة مكان جديد';
+
+  @override
+  String get pass_profile_security_prefs => 'الأمان والتفضيلات';
+
+  @override
+  String get capt_notif_1_desc =>
+      'تم إضافة 500 ر.ي إلى محفظتك لتحقيق التارجت الأسبوعي بنجاح.';
+
+  @override
+  String get capt_acc_vehicle => 'مركبة';
+
+  @override
+  String get pass_places_shopping => 'تسوق';
+
+  @override
+  String get capt_acc_verified => 'حساب موثق';
+
+  @override
+  String get capt_notif_1_title => 'مكافأة الإنجاز الأسبوعية';
+
+  @override
+  String get pass_profile_title => 'الملف الشخصي';
+
+  @override
+  String get capt_acc_default_name => 'أحمد كابتن';
+
+  @override
+  String get pass_edit_saved_success => 'تم حفظ التعديلات بنجاح';
+
+  @override
+  String get pass_profile_english => 'English';
+
+  @override
+  String get pass_places_historic => 'تاريخي';
+
+  @override
+  String get pass_edit_save => 'حفظ التعديلات';
+
+  @override
+  String get pass_profile_dark_mode => 'الوضع الداكن';
+
+  @override
+  String get pass_profile_language => 'لغة التطبيق';
+
+  @override
+  String get capt_acc_title => 'حساب الكابتن';
+
+  @override
+  String get pass_profile_choose_lang => 'اختر اللغة / Select Language';
+
+  @override
+  String get pass_profile_change_pass => 'تغيير كلمة المرور';
+
+  @override
+  String get capt_acc_unverified => 'غير موثق - وثق الآن';
+
+  @override
+  String get pass_places_title => 'الأماكن المحفوظة';
+
+  @override
+  String get pass_profile_arabic => 'العربية';
+
+  @override
+  String get pass_profile_lang_ar_success =>
+      'تم تغيير لغة التطبيق إلى العربية بنجاح';
+
+  @override
+  String get pass_places_search => 'البحث بداخل الأماكن المحفوظة...';
+
+  @override
+  String get pass_places_home => 'المنزل';
+
+  @override
+  String get pass_profile_personal_info => 'المعلومات الشخصية';
+
+  @override
+  String get pass_profile_user => 'مستخدم لفة';
+
+  @override
+  String get pass_places_all => 'الكل';
+
+  @override
+  String get pass_profile_faq => 'الأسئلة الشائعة';
+
+  @override
+  String get capt_notif_3_title => 'تقييم راكب ممتاز';
+
+  @override
+  String get capt_notif_2_title => 'صيانة خوادم النظام الدورية';
+
+  @override
+  String get capt_notif_yesterday => 'أمس';
+
+  @override
+  String get capt_acc_profile_updated => 'تم تحديث الملف الشخصي بنجاح';
+
+  @override
+  String get pass_edit_full_name => 'الاسم الكامل';
+
+  @override
+  String get pass_profile_saved_places => 'الأماكن المحفوظة';
+
+  @override
+  String get pass_profile_member => 'عضو منذ 2026';
+
+  @override
+  String get pass_edit_phone => 'رقم الهاتف';
+
+  @override
+  String get pass_profile_edit_data => 'تعديل البيانات';
+
+  @override
+  String get capt_notif_2_desc =>
+      'تنبيه: ستجرى صيانة مجدولة لخوادم لَفَّة يوم الجمعة القادم بين 2:00 ص و 3:00 ص.';
+
+  @override
+  String get capt_acc_notif_center => 'مركز إشعارات الكابتن';
+
+  @override
+  String get pass_edit_email_opt => 'البريد الإلكتروني (اختياري)';
+
+  @override
+  String get pass_profile_tech_support => 'الدعم الفني والمساعدة';
+
+  @override
+  String get pass_places_uni => 'الجامعة';
+
+  @override
+  String get pass_profile_lang_en_success =>
+      'App language changed to English successfully!';
+
+  @override
+  String get pass_places_updated => 'تم تحديث المكان بنجاح';
+
+  @override
+  String get capt_notif_error_fetch => 'حدث خطأ أثناء جلب التنبيهات والطلبات.';
+
+  @override
+  String get capt_wallet_view_all => 'عرض الكل >';
+
+  @override
+  String get capt_wallet_weekly_earnings => 'أرباح الأسبوع الحالي';
+
+  @override
+  String get capt_wallet_err_payout => 'حدث خطأ أثناء طلب السحب';
+
+  @override
+  String get capt_wallet_title => 'محفظة الأرباح المالية';
+
+  @override
+  String get capt_wallet_req_payout => 'طلب تحويل الأرباح';
+
+  @override
+  String capt_wallet_growth(String growth) {
+    return 'أعلى بنسبة $growth% من الأسبوع الماضي';
+  }
+
+  @override
+  String capt_wallet_completed_trips(String count) {
+    return '$count رحلة مكتملة';
+  }
+
+  @override
+  String capt_wallet_payout_success(
+      String amount, String method, String accountNumber) {
+    return 'تم إرسال طلب تحويل $amount ر.ي عبر $method إلى الحساب ($accountNumber) بنجاح!';
+  }
+
+  @override
+  String get capt_wallet_daily_target => 'هدف الأرباح اليومي';
+
+  @override
+  String get capt_wallet_current_week => 'الأسبوع الحالي';
+
+  @override
+  String get capt_wallet_tx_history => 'سجل المعاملات والأرباح';
+
+  @override
+  String get capt_wallet_err_fetch => 'حدث خطأ أثناء جلب بيانات المحفظة';
+
+  @override
+  String get capt_wallet_payout_methods =>
+      'يتم معالجة الطلبات عبر (الكريمي / جيب / فلوسك / جوالي / ون كاش) بنجاح فوري في اليمن';
+
+  @override
+  String get capt_wallet_today_earnings => 'أرباح اليوم';
+
+  @override
+  String get capt_wallet_transferable_balance => 'الرصيد القابل للتحويل والسحب';
+
+  @override
+  String capt_amount_exceeds_balance(String amount) {
+    return 'المبلغ المطلوب أكثر من الرصيد المتاح ($amount ر.ي)';
+  }
+
+  @override
+  String get capt_kuraimi_full => 'صرافة الكريمي Express (أم فلوس)';
+
+  @override
+  String capt_available_balance(String amount) {
+    return 'المتاح: $amount ر.ي';
+  }
+
+  @override
+  String get capt_all => 'الكل';
+
+  @override
+  String get capt_close => 'إغلاق';
+
+  @override
+  String get capt_motorcycle => 'دراجة نارية';
+
+  @override
+  String get capt_trip_show_all => 'عرض كل الرحلات';
+
+  @override
+  String get capt_trip_history_title => 'سجل الرحلات والمشاوير';
+
+  @override
+  String get capt_trip_no_results_desc =>
+      'جرّب البحث باسم آخر أو اختر \"الكل\" لإعادة عرض كافة الرحلات.';
+
+  @override
+  String capt_trip_number_id(String id) {
+    return 'رقم الرحلة: $id';
+  }
+
+  @override
+  String get capt_12_min => '12 دقيقة';
+
+  @override
+  String capt_trip_err_msg(String message) {
+    return 'حدث خطأ: $message';
+  }
+
+  @override
+  String get capt_trip_search_hint =>
+      'ابحث برقم الرحلة، اسم الراكب، أو الشارع...';
+
+  @override
+  String capt_trip_details_id(String id) {
+    return 'تفاصيل الرحلة #$id';
+  }
+
+  @override
+  String get capt_trip_in_progress => 'قيد التنفيذ';
+
+  @override
+  String get capt_trip_cancelled => 'ملغاة';
+
+  @override
+  String get capt_trip_no_results_title => 'لا توجد رحلات مطابقة لبحثك';
+
+  @override
+  String get capt_searching_orders => 'جاري البحث عن طلبات...';
+
+  @override
+  String get capt_reject => 'رفض';
+
+  @override
+  String get capt_tap_button_above_to_receive =>
+      'اضغط على الزر بالأعلى لتصبح متاحاً لاستقبال الطلبات';
+
+  @override
+  String get capt_nav_earnings => 'الأرباح';
+
+  @override
+  String get capt_selected_location => 'الموقع المختار';
+
+  @override
+  String get capt_you_are_offline => 'أنت غير متصل الآن';
+
+  @override
+  String get capt_online_searching => 'أنت متصل - جاري البحث';
+
+  @override
+  String get capt_no_internet => 'لا يوجد اتصال بالإنترنت';
+
+  @override
+  String get capt_nav_trips => 'الرحلات';
+
+  @override
+  String get capt_tap_to_go_online => 'اضغط للاتصال وبدء العمل';
+
+  @override
+  String get capt_logout => 'تسجيل الخروج';
+
+  @override
+  String get capt_cancel => 'إلغاء';
+
+  @override
+  String get capt_logout_confirm_msg =>
+      'هل أنت متأكد من رغبتك في تسجيل الخروج من تطبيق كابتن لفة؟ سيتم إيقاف استقبال طلبات الركاب والطرود تلقائياً.';
+
+  @override
+  String get capt_confirm_logout => 'تأكيد الخروج';
+
+  @override
+  String get pass_where_to => 'إلى أين؟';
+
+  @override
+  String get pass_request_ride => 'طلب مشوار';
+
+  @override
+  String get pass_send_parcel => 'إرسال طرد';
+
+  @override
+  String get pass_quick_destinations => 'وجهات سريعة';
+
+  @override
+  String get pass_recent_destinations => 'آخر الوجهات';
+
+  @override
+  String get pass_places_saved_title => 'المحفوظة';
+
+  @override
+  String get pass_ride_details => 'تفاصيل حجز اللفة';
+
+  @override
+  String get pass_ride_add_stop => 'إضافة محطة توقف';
+
+  @override
+  String get pass_ride_category => 'فئة التوصيل:';
+
+  @override
+  String get pass_ride_tier_laffah => 'لَفّة';
+
+  @override
+  String get pass_ride_fastest => 'أسرع وصول';
+
+  @override
+  String get pass_ride_desc_laffah => 'توصيل سريع واقتصادي داخل المدينة';
+
+  @override
+  String get pass_ride_payment_method => 'طريقة الدفع:';
+
+  @override
+  String get pass_ride_cash => 'نقداً';
+
+  @override
+  String get pass_ride_wallet => 'المحفظة';
+
+  @override
+  String get pass_ride_time => 'وقت الرحلة';
+
+  @override
+  String get pass_ride_now => 'الآن';
+
+  @override
+  String get pass_ride_schedule => 'تحديد وقت';
+
+  @override
+  String get pass_ride_distance => 'المسافة';
+
+  @override
+  String get pass_ride_duration => 'الوقت';
+
+  @override
+  String get pass_ride_est_cost => 'التكلفة التقديرية';
+
+  @override
+  String get pass_ride_confirm => 'تأكيد اللفة';
+
+  @override
+  String get pass_ride_km => 'كم';
+
+  @override
+  String get pass_ride_min => 'دقيقة';
+
+  @override
+  String get pass_ride_currency => 'ريال';
+
+  @override
+  String get pass_loc_pickup => 'نقطة الانطلاق';
+
+  @override
+  String get pass_loc_dropoff => 'إلى أين؟';
+
+  @override
+  String get pass_loc_search_hint => 'ابحث عن منطقة، شارع، أو مَعْلَم...';
+
+  @override
+  String get pass_loc_selected => 'موقع مختار';
+
+  @override
+  String get pass_loc_map_pin => 'تحديد الموقع على الخريطة';
+
+  @override
+  String get pass_loc_results => 'النتائج';
+
+  @override
+  String get pass_loc_no_results => 'لا توجد نتائج';
+
+  @override
+  String get pass_loc_searching => 'جاري البحث...';
+
+  @override
+  String get pass_trips_title => 'رحلاتي وحجوزاتي';
+
+  @override
+  String get pass_trips_retry => 'إعادة المحاولة';
+
+  @override
+  String get pass_trips_tab_active => 'الحالية';
+
+  @override
+  String get pass_trips_tab_scheduled => 'المجدولة';
+
+  @override
+  String get pass_trips_tab_past => 'السابقة';
+
+  @override
+  String get pass_trips_tab_cancelled => 'الملغاة';
+
+  @override
+  String get pass_trips_status_pending => 'بانتظار كابتن';
+
+  @override
+  String get pass_trips_status_accepted => 'تم القبول';
+
+  @override
+  String get pass_trips_status_arrived => 'الكابتن في الطريق';
+
+  @override
+  String get pass_trips_status_in_transit => 'في التنقل';
+
+  @override
+  String get pass_trips_status_completed => 'مكتملة';
+
+  @override
+  String get pass_trips_status_cancelled => 'ملغاة';
+
+  @override
+  String get pass_trips_status_scheduled => 'مجدولة';
+
+  @override
+  String get pass_trips_status_unknown => 'غير معروفة';
+
+  @override
+  String get pass_trips_empty_active => 'لا توجد طلبات أو رحلات نشطة حالياً';
+
+  @override
+  String get pass_trips_empty_scheduled => 'لا توجد رحلات مجدولة';
+
+  @override
+  String get pass_trips_empty_past => 'لا توجد رحلات سابقة';
+
+  @override
+  String get pass_trips_empty_cancelled => 'لا توجد رحلات ملغاة';
+
+  @override
+  String get pass_trips_empty_unknown => 'لا توجد بيانات';
+
+  @override
+  String get pass_trips_type_parcel => 'إرسال طرد';
+
+  @override
+  String get pass_trips_type_ride => 'رحلة';
+
+  @override
+  String get pass_trips_captain_unknown => 'غير محدد';
+
+  @override
+  String get pass_nav_home => 'الرئيسية';
+
+  @override
+  String get pass_nav_trips => 'رحلاتي';
+
+  @override
+  String get pass_nav_wallet => 'المحفظة';
+
+  @override
+  String get pass_nav_account => 'الحساب';
+
+  @override
+  String get logout_confirm_title => 'تأكيد تسجيل الخروج';
+
+  @override
+  String get logout_confirm_message =>
+      'هل أنت أصلًا متأكد من رغبتك في تسجيل الخروج من حسابك في تطبيق لَفّة؟';
+
+  @override
+  String get cancel_btn => 'إلغاء';
+
+  @override
+  String get confirm_logout_btn => 'تأكيد الخروج';
+
+  @override
+  String get privacy_policy_title => 'سياسة الخصوصية';
+
+  @override
+  String get privacy_policy_intro_title => 'مقدمة';
+
+  @override
+  String get privacy_policy_intro_text =>
+      'نحن في تطبيق \"لَفَّة\" نقدر خصوصيتك بشكل كبير ونلتزم بحماية بياناتك الشخصية. توضح هذه السياسة كيف نقوم بجمع واستخدام وحماية معلوماتك عند استخدام تطبيقنا المخصص للنقل في اليمن وتحديداً صنعاء.';
+
+  @override
+  String get privacy_policy_data_title => 'المعلومات التي نجمعها';
+
+  @override
+  String get privacy_policy_data_text =>
+      '• بيانات التسجيل: الاسم، رقم الهاتف، والبريد الإلكتروني.\n• بيانات الموقع (GPS): نجمع بيانات موقعك الحالي لربطك بأقرب كابتن متاح.\n• بيانات المعاملات: تفاصيل الرحلات، المبالغ المدفوعة، وتقييمات الكباتن.';
+
+  @override
+  String get privacy_policy_usage_title => 'كيف نستخدم معلوماتك';
+
+  @override
+  String get privacy_policy_usage_text =>
+      'نستخدم هذه المعلومات لتقديم خدماتنا وتحسينها، لضمان سلامتك أثناء الرحلة، ولتوفير دعم فني سريع وفعال.';
+
+  @override
+  String get privacy_policy_protection_title => 'حماية البيانات';
+
+  @override
+  String get privacy_policy_protection_text =>
+      'يتم تشفير كافة بياناتك الحساسة وحفظها في خوادم آمنة. نحن لا نشارك بياناتك مع أي جهات خارجية لأغراض تسويقية.';
+
+  @override
+  String get privacy_policy_last_updated => 'آخر تحديث: 2026';
+
+  @override
+  String get terms_of_service_title => 'الشروط والأحكام';
+
+  @override
+  String get terms_accept_title => 'قبول الشروط';
+
+  @override
+  String get terms_accept_text =>
+      'باستخدامك لتطبيق \"لَفَّة\"، فإنك توافق على الالتزام بجميع الشروط والأحكام الموضحة هنا. إذا كنت لا توافق على أي من هذه الشروط، يُرجى التوقف عن استخدام التطبيق فوراً.';
+
+  @override
+  String get terms_user_obligations_title =>
+      'التزامات المستخدم (الراكب/الكابتن)';
+
+  @override
+  String get terms_user_obligations_text =>
+      '• يجب تقديم معلومات صحيحة ودقيقة أثناء التسجيل.\n• يمنع استخدام التطبيق لأي أغراض غير قانونية أو نقل مواد محظورة.\n• يلتزم الكابتن بمعايير السلامة والنظافة والأخلاق العامة أثناء الرحلة.';
+
+  @override
+  String get terms_payment_title => 'الأجور والدفع';
+
+  @override
+  String get terms_payment_text =>
+      'تُحسب الأجرة بناءً على المسافة والوقت الفعلي للرحلة. الركاب ملزمون بدفع القيمة المحددة نقداً أو عبر المحفظة الإلكترونية المعتمدة فور انتهاء الرحلة.';
+
+  @override
+  String get terms_disclaimer_title => 'إخلاء المسؤولية';
+
+  @override
+  String get terms_disclaimer_text =>
+      'يعمل تطبيق لَفَّة كوسيط تقني بين الراكب والكابتن، ولا يتحمل مسؤولية مباشرة عن أي مفقودات شخصية داخل المركبة، مع التزامنا بالتعاون التام مع الجهات الأمنية إذا لزم الأمر.';
+
+  @override
+  String get capt_multi_vehicle_coming_soon =>
+      'ميزة إدارة المركبات المتعددة ستتوفر قريباً!';
+
+  @override
+  String get capt_delete_account_dialog_title => 'حذف الحساب';
+
+  @override
+  String get capt_delete_account_dialog_content =>
+      'هل أنت متأكد من رغبتك في حذف الحساب؟ لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get capt_delete_account_confirm_btn => 'تأكيد الحذف';
+
+  @override
+  String get capt_delete_account_request_sent =>
+      'تم إرسال طلب حذف الحساب للإدارة.';
+
+  @override
+  String get capt_delete_account_forever => 'حذف الحساب نهائياً';
+
+  @override
+  String get ride_track_share_copied => 'تم نسخ رابط ومسار الرحلة للمشاركة!';
+
+  @override
+  String get common_whatsapp => 'واتساب';
+
+  @override
+  String get ride_track_share_message =>
+      'تتبع رحلتي على تطبيق لَفَّة الآن! رقم الرحلة: LF-8492\nhttps://laffah.com/track/LF-8492';
+
+  @override
+  String get parcel_tracking_code_copied => 'تم نسخ رقم التتبع بنجاح';
+
+  @override
+  String get capt_doc_upload_error => 'حدث خطأ أثناء رفع المستندات: ';
+
+  @override
+  String get capt_doc_under_review_title => 'تم تقديم الملف للمراجعة النهائية';
+
+  @override
+  String get capt_doc_under_review_desc =>
+      'تهانينا! لقد قمت بتقديم جميع وثائق توثيق حساب الكابتن بنجاح. سيقوم فريق لَفَّة بمراجعة الملف وتنشيط حسابك بالكامل خلال ساعات قليلة.\n\nيمكنك الآن استئناف استكشاف الواجهات ومحاكاة الرحلات في غضون ذلك.';
+
+  @override
+  String get capt_doc_go_home => 'حسناً، الانتقال للرئيسية';
 }
