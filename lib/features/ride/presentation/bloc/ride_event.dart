@@ -150,3 +150,14 @@ class ScheduleRide extends RideEvent {
   @override
   List<Object?> get props => [date, time];
 }
+
+/// Realtime trip status event from WebSocket (Pusher/Echo)
+class TripStatusUpdatedFromWebSocket extends RideEvent {
+  final Map<String, dynamic> data;
+
+  const TripStatusUpdatedFromWebSocket(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+

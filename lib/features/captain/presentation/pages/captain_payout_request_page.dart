@@ -112,30 +112,55 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
         feeDescription: 'رسوم التحويل: 1% (حد أدنى 100 ريال)',
       ),
       PayoutMethod(
-        id: 'floos',
-        name: 'خدمة فلوس موبايل (Floos)',
-        logoText: 'F',
+        id: 'tadhamon',
+        name: 'محفظتي (بنك التضامن)',
+        logoText: 'T',
         description:
-            'إرسال سريع ومباشر إلى محفظة فلوس الإلكترونية المرتبطة برقم هاتفك.',
-        icon: Icons.phone_android_rounded,
-        feeDescription: 'بدون رسوم تحويل إضافية',
-      ),
-      PayoutMethod(
-        id: 'al_najm',
-        name: 'النجم إكسبرس للشبكات',
-        logoText: 'N',
-        description:
-            'إرسال حوالة فورية بالاسم ورقم الهاتف قابلة للاستلام من أي فرع في صنعاء وبقية المحافظات.',
-        icon: Icons.alt_route_rounded,
-        feeDescription: 'رسوم الشبكة: 1.5%',
+            'تحويل فوري إلى رقم حسابك أو محفظتك في بنك التضامن الإسلامي.',
+        icon: Icons.account_balance_wallet_rounded,
+        feeDescription: 'بدون رسوم إضافية',
       ),
       PayoutMethod(
         id: 'jeeb',
         name: 'محفظة جيب الإلكترونية (Jeeb)',
         logoText: 'J',
-        description: 'سحب فوري ومجاني لمحفظتك الرقمية جيب التابعة لكاك بنك.',
+        description:
+            'سحب فوري ومجاني لمحفظتك الرقمية جيب (مصرف اليمن والبحرين الشامل).',
         icon: Icons.wallet_giftcard_rounded,
         feeDescription: 'بدون رسوم',
+      ),
+      PayoutMethod(
+        id: 'cac',
+        name: 'كاك بنك / السريع',
+        logoText: 'C',
+        description: 'إيداع مباشر في حساب كاك بنك أو عبر خدمة السريع للحوالات.',
+        icon: Icons.account_balance_rounded,
+        feeDescription: 'رسوم: 1%',
+      ),
+      PayoutMethod(
+        id: 'onecash',
+        name: 'ون كاش (OneCash)',
+        logoText: 'O',
+        description: 'تحويل سريع وفوري لمحفظة ون كاش الإلكترونية.',
+        icon: Icons.phone_android_rounded,
+        feeDescription: 'بدون رسوم إضافية',
+      ),
+      PayoutMethod(
+        id: 'jawali',
+        name: 'جوالي (WeCash)',
+        logoText: 'W',
+        description: 'إرسال مباشر إلى محفظة جوالي عبر رقم الهاتف.',
+        icon: Icons.phone_android_rounded,
+        feeDescription: 'بدون رسوم إضافية',
+      ),
+      PayoutMethod(
+        id: 'floosak',
+        name: 'فلوسك (Floosak)',
+        logoText: 'F',
+        description:
+            'إرسال سريع ومباشر إلى محفظة فلوسك الإلكترونية المرتبطة برقم هاتفك.',
+        icon: Icons.payments_rounded,
+        feeDescription: 'بدون رسوم تحويل إضافية',
       ),
     ];
   }

@@ -7,7 +7,9 @@ import '../network/network_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../bloc/locale/locale_bloc.dart';
 import '../services/pusher_service.dart';
+import '../services/echo_service.dart';
 import '../services/routing_service.dart';
+
 import '../storage/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
@@ -181,6 +183,7 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => RoutingService());
   sl.registerLazySingleton(() => PusherService());
+  sl.registerLazySingleton(() => EchoService());
   sl.registerLazySingleton(() => ToggleCaptainStatusUseCase(sl()));
   sl.registerLazySingleton(() => RespondToTripUseCase(sl()));
   sl.registerLazySingleton(() => UpdateTripStatusUseCase(sl()));

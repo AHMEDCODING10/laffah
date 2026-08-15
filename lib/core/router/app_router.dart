@@ -54,10 +54,7 @@ import '../../features/captain/presentation/pages/captain_navigation_page.dart';
 import '../../features/captain/presentation/pages/captain_payout_request_page.dart';
 import '../../features/captain/presentation/pages/captain_document_upload_page.dart';
 
-// Profile module
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../features/captain/presentation/bloc/core/captain_bloc.dart';
-import '../di/injection_container.dart' as di;
+import '../network/dio_client.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/profile/presentation/pages/saved_places_page.dart';
 import '../../features/profile/presentation/pages/passenger_profile_edit_page.dart';
@@ -162,10 +159,46 @@ class AppRouter {
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>(debugLabel: 'LaffahRootNavigator');
 
+  static bool _isPublicRoute(String path) {
+    if (path == LaffahRoutes.splash ||
+        path == LaffahRoutes.onboarding ||
+        path == LaffahRoutes.authLanding ||
+        path == LaffahRoutes.authPhone ||
+        path == LaffahRoutes.authRegisterPassenger ||
+        path == LaffahRoutes.authRegisterCaptain ||
+        path == LaffahRoutes.forgotPassword ||
+        path == LaffahRoutes.forgotPasswordOtp ||
+        path == LaffahRoutes.resetPassword ||
+        path == LaffahRoutes.privacyPolicy ||
+        path == LaffahRoutes.termsOfService ||
+        path.startsWith('/parcel/track')) {
+      return true;
+    }
+    return false;
+  }
+
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: LaffahRoutes.splash,
     debugLogDiagnostics: false,
+
+    redirect: (BuildContext context, GoRouterState state) {
+      final path = state.uri.path;
+      // Allow splash to run its own initialization logic
+      if (path == LaffahRoutes.splash) {
+        return null;
+      }
+
+      // If user is accessing a protected route without a valid token, redirect to auth
+      final token = DioClient.currentToken;
+      final isPublic = _isPublicRoute(path);
+
+      if (!isPublic && (token == null || token.isEmpty)) {
+        return LaffahRoutes.authLanding;
+      }
+
+      return null;
+    },
 
     // ─────────────────────────────────────────────────────────────
     // ROUTE DEFINITIONS
@@ -410,10 +443,7 @@ class AppRouter {
         path: LaffahRoutes.captainHome,
         name: 'captain-home',
         builder: (BuildContext context, GoRouterState state) =>
-            BlocProvider<CaptainBloc>(
-          create: (_) => di.sl<CaptainBloc>(),
-          child: const CaptainHomePage(),
-        ),
+            const CaptainHomePage(),
       ),
 
       // ══════════════════════════════════════════

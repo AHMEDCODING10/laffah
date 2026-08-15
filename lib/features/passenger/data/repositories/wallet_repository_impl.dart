@@ -19,8 +19,53 @@ class WalletRepositoryImpl implements WalletRepository {
       } else {
         return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء تحميل بيانات المحفظة'));
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'حدث خطأ أثناء تحميل بيانات المحفظة';
+      return Left(ServerFailure(msg.toString()));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Map<String, dynamic>>>> getCompanyAccounts() async {
+    try {
+      final response = await remoteDataSource.getCompanyAccounts();
+      if (response.success && response.data != null) {
+        return Right(response.data!);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'فشل جلب حسابات الدفع';
+      return Left(ServerFailure(msg.toString()));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> rechargeWallet({
+    required double amount,
+    required String paymentMethod,
+    required String referenceId,
+    String? senderAccount,
+  }) async {
+    try {
+      final response = await remoteDataSource.rechargeWallet(
+        amount: amount,
+        paymentMethod: paymentMethod,
+        referenceId: referenceId,
+        senderAccount: senderAccount,
+      );
+      if (response.success && response.data != null) {
+        return Right(response.data!);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'فشل تنفيذ عملية الشحن';
+      return Left(ServerFailure(msg.toString()));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -37,8 +82,9 @@ class WalletRepositoryImpl implements WalletRepository {
       } else {
         return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return const Left(ServerFailure('حدث خطأ أثناء طلب السحب'));
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'حدث خطأ أثناء طلب السحب';
+      return Left(ServerFailure(msg.toString()));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

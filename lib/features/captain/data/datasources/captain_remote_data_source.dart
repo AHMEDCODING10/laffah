@@ -102,7 +102,8 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
       ApiEndpoints.requestPayout,
       data: {
         'amount': amount,
-        'method': method,
+        'payout_method': method,   // field name expected by backend WalletController
+        'payment_method': method,  // fallback alias
         'account_number': accountNumber,
       },
     );

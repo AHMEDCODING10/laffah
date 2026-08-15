@@ -67,6 +67,8 @@ class ApiEndpoints {
   // Wallet Endpoints
   static const String walletBalance = '/wallet/balance';
   static const String walletRecharge = '/wallet/recharge';
+  static const String walletCompanyAccounts = '/wallet/company-accounts';
+
 
   // Geocoding Endpoints
   static const String geocodeSearch = '/geocode/search';

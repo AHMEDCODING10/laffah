@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/io.dart';
 import 'laravel_error_interceptor.dart';
+import 'retry_interceptor.dart';
 
 /// Global event bus to broadcast network-level auth failures (e.g. 401 Unauthorized)
 class NetworkEventBus {
@@ -41,6 +42,10 @@ class DioClient {
       },
     ));
 
+    // 1. Network Resilience Interceptor (Auto-Retry for unstable 3G/4G)
+    _dio.interceptors.add(RetryInterceptor(dio: _dio));
+
+    // 2. Auth Bearer Token Injection
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = _inMemoryToken ?? await _storage.read(key: 'auth_token');

@@ -9,11 +9,15 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/api_endpoints.dart';
 
+import '../../../../core/config/app_env.dart';
+
 class PinAdjustMapPage extends StatefulWidget {
-  final String locationType;
+  final LatLng initialPosition;
+  final String locationType; // 'pickup' or 'dropoff'
 
   const PinAdjustMapPage({
     super.key,
+    this.initialPosition = const LatLng(15.3421, 44.2081),
     required this.locationType,
   });
 
@@ -30,7 +34,7 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
   Timer? _debounce;
   final Dio _dio = Dio();
 
-  static const String _mapTilerKey = 'Ucu928ZnAuiAkBLP4pZE';
+  static String get _mapTilerKey => AppEnv.mapTilerKey;
 
   @override
   void initState() {

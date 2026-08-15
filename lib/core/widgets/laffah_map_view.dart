@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
+import '../config/app_env.dart';
 
 typedef MarkerTapCallback = void Function(
     String title, String snippet, LatLng position);
@@ -33,7 +34,7 @@ class LaffahMapView extends StatefulWidget {
   final MarkerTapCallback? onMarkerTap;
 
   static const LatLng _sanaaDefault = LatLng(15.3694, 44.1910);
-  static const String mapTilerKey = 'Ucu928ZnAuiAkBLP4pZE';
+  static String get mapTilerKey => AppEnv.mapTilerKey;
 
   const LaffahMapView({
     super.key,
