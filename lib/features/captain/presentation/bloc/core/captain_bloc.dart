@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -23,6 +24,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   final FetchBonusDataUseCase fetchBonusDataUseCase;
   final UpdateLocationUseCase updateLocationUseCase;
   StreamSubscription<Position>? _positionSubscription;
+  String _currentCaptainId = '';
 
   final RoutingService routingService;
   final PusherService pusherService;
@@ -118,16 +120,40 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     ));
   }
 
-  String _currentCaptainId = '';
-
   void _startLocationTracking(String captainId) {
     _currentCaptainId = captainId;
     _positionSubscription?.cancel();
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
+
+    late LocationSettings locationSettings;
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update every 10 meters
-      ),
+        distanceFilter: 10,
+        forceLocationManager: true,
+        intervalDuration: const Duration(seconds: 5),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationText: "كابتن لَفَّة متصل — جاري تتبع الموقع لاستقبال المشاوير",
+          notificationTitle: "لَفَّة — خدمة الكابتن النشطة",
+          enableWakeLock: true,
+        ),
+      );
+    } else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      locationSettings = AppleSettings(
+        accuracy: LocationAccuracy.high,
+        activityType: ActivityType.automotiveNavigation,
+        distanceFilter: 10,
+        pauseLocationUpdatesAutomatically: false,
+        showBackgroundLocationIndicator: true,
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      );
+    }
+
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
     ).listen((Position position) {
       add(UpdateCaptainLocation(
         captainId: _currentCaptainId,
@@ -276,9 +302,18 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     result.fold(
       (failure) => emit(CaptainFailureState(failure.message)),
       (data) => emit(CaptainBonusDataLoaded(
-        completedTrips: data['completed_trips'] ?? 0,
-        targetTrips: data['target_trips'] ?? 10,
-        bonusAmount: (data['bonus_amount'] ?? 0).toDouble(),
+        completedTrips: data['completed_trips'] as int? ??
+            data['completed_today'] as int? ??
+            data['completedToday'] as int? ??
+            data['completedTripsToday'] as int? ??
+            0,
+        targetTrips: data['target_trips'] as int? ??
+            data['daily_target'] as int? ??
+            data['dailyTarget'] as int? ??
+            10,
+        bonusAmount: (data['bonus_amount'] as num?)?.toDouble() ??
+            (data['bonusAmount'] as num?)?.toDouble() ??
+            2500.0,
       )),
     );
   }

@@ -10,6 +10,7 @@ class LaravelErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
+      await secureStorage.delete(key: 'auth_token');
       await secureStorage.delete(key: 'sanctum_token');
       return handler.reject(
         DioException(

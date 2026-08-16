@@ -61,10 +61,8 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
     return BaseResponseModel.fromJson(response.data, (_) {});
   }
 
-
   @override
   Future<BaseResponseModel<CaptainStatusModel>> toggleOnlineStatus({
-
     required bool isOnline,
     required double lat,
     required double lng,
@@ -75,6 +73,8 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
         'is_online': isOnline,
         'lat': lat,
         'lng': lng,
+        'latitude': lat,
+        'longitude': lng,
       },
     );
     return BaseResponseModel.fromJson(response.data,
@@ -86,8 +86,11 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
     required String tripId,
     required bool accept,
   }) async {
+    final endpoint = accept
+        ? ApiEndpoints.respondToTrip(tripId)
+        : '/trips/$tripId/reject';
     final response = await dioClient.dio.post(
-      ApiEndpoints.respondToTrip(tripId),
+      endpoint,
       data: {
         'accept': accept,
       },
@@ -102,8 +105,8 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
       ApiEndpoints.requestPayout,
       data: {
         'amount': amount,
-        'payout_method': method,   // field name expected by backend WalletController
-        'payment_method': method,  // fallback alias
+        'payout_method': method,
+        'payment_method': method,
         'account_number': accountNumber,
       },
     );
@@ -119,9 +122,7 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
 
   @override
   Future<BaseResponseModel<Map<String, dynamic>>> getWalletDetails() async {
-    // Assuming backend returns wallet data within the standard BaseResponse structure
-    final response = await dioClient.dio
-        .get('/wallet/balance'); // Or ApiEndpoints.walletBalance if added
+    final response = await dioClient.dio.get('/wallet/balance');
     return BaseResponseModel.fromJson(
         response.data, (data) => data as Map<String, dynamic>);
   }
@@ -129,16 +130,26 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
   @override
   Future<BaseResponseModel<List<dynamic>>> getNotifications() async {
     final response = await dioClient.dio.get(ApiEndpoints.captainNotifications);
-    return BaseResponseModel.fromJson(
-        response.data, (data) => data as List<dynamic>);
+    return BaseResponseModel.fromJson(response.data, (data) {
+      if (data is List) return data;
+      if (data is Map && data.containsKey('data')) {
+        return data['data'] as List<dynamic>;
+      }
+      return [];
+    });
   }
 
   @override
   Future<BaseResponseModel<List<dynamic>>> getNearbyRequests() async {
     final response =
         await dioClient.dio.get(ApiEndpoints.captainNearbyRequests);
-    return BaseResponseModel.fromJson(
-        response.data, (data) => data as List<dynamic>);
+    return BaseResponseModel.fromJson(response.data, (data) {
+      if (data is List) return data;
+      if (data is Map && data.containsKey('data')) {
+        return data['data'] as List<dynamic>;
+      }
+      return [];
+    });
   }
 
   @override
@@ -153,7 +164,6 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
     );
     return BaseResponseModel.fromJson(response.data, (data) {
       if (data is List) return data;
-      // Depending on pagination setup in backend, it might be data['data']
       if (data is Map && data.containsKey('data')) {
         return data['data'] as List<dynamic>;
       }
@@ -184,12 +194,12 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
     }
   }
 
-
   @override
   Future<BaseResponseModel<Map<String, dynamic>>> uploadDocument(
       File file, String type) async {
     final formData = FormData.fromMap({
       'type': type,
+      'document_type': type,
       'file': await MultipartFile.fromFile(
         file.path,
         filename: file.path.split('/').last,

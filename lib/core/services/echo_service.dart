@@ -73,15 +73,21 @@ class EchoService {
   /// 1. Listen for new available trip requests (For Online Captains)
   void listenToAvailableTrips(Function(Map<String, dynamic> data) onNewTrip) {
     if (_echo == null) {
-      init().then((_) => _subscribeAvailableTrips(onNewTrip));
+      init().then((_) {
+        if (_echo != null) {
+          _subscribeAvailableTrips(onNewTrip);
+        }
+      });
       return;
     }
     _subscribeAvailableTrips(onNewTrip);
   }
 
   void _subscribeAvailableTrips(Function(Map<String, dynamic> data) onNewTrip) {
+    final echo = _echo;
+    if (echo == null) return;
     try {
-      _echo!.channel('trips.available').listen('NewTripRequested', (dynamic event) {
+      echo.channel('trips.available').listen('NewTripRequested', (dynamic event) {
         debugPrint("🔔 [EchoService] NewTripRequested event received: $event");
         if (event != null) {
           final Map<String, dynamic> parsed = _parseEventData(event);
@@ -95,9 +101,10 @@ class EchoService {
   }
 
   void stopListeningToAvailableTrips() {
-    if (_echo == null) return;
+    final echo = _echo;
+    if (echo == null) return;
     try {
-      _echo!.leave('trips.available');
+      echo.leave('trips.available');
       debugPrint("🔌 [EchoService] Left channel: trips.available");
     } catch (e) {
       debugPrint("❌ [EchoService] Error leaving trips.available: $e");
@@ -107,15 +114,21 @@ class EchoService {
   /// 2. Listen for active trip status changes (For Passengers & Captains)
   void listenToTripStatus(String tripId, Function(Map<String, dynamic> data) onStatusUpdated) {
     if (_echo == null) {
-      init().then((_) => _subscribeTripStatus(tripId, onStatusUpdated));
+      init().then((_) {
+        if (_echo != null) {
+          _subscribeTripStatus(tripId, onStatusUpdated);
+        }
+      });
       return;
     }
     _subscribeTripStatus(tripId, onStatusUpdated);
   }
 
   void _subscribeTripStatus(String tripId, Function(Map<String, dynamic> data) onStatusUpdated) {
+    final echo = _echo;
+    if (echo == null) return;
     try {
-      _echo!.channel('trip.$tripId').listen('TripStatusUpdated', (dynamic event) {
+      echo.channel('trip.$tripId').listen('TripStatusUpdated', (dynamic event) {
         debugPrint("🔄 [EchoService] TripStatusUpdated received for trip #$tripId: $event");
         if (event != null) {
           final Map<String, dynamic> parsed = _parseEventData(event);
@@ -129,9 +142,10 @@ class EchoService {
   }
 
   void stopListeningToTripStatus(String tripId) {
-    if (_echo == null) return;
+    final echo = _echo;
+    if (echo == null) return;
     try {
-      _echo!.leave('trip.$tripId');
+      echo.leave('trip.$tripId');
       debugPrint("🔌 [EchoService] Left channel: trip.$tripId");
     } catch (e) {
       debugPrint("❌ [EchoService] Error leaving trip.$tripId: $e");
@@ -142,7 +156,11 @@ class EchoService {
   void listenToCaptainLocation(
       String captainId, Function(Map<String, dynamic> data) onLocationUpdate) {
     if (_echo == null) {
-      init().then((_) => _subscribeCaptainLocation(captainId, onLocationUpdate));
+      init().then((_) {
+        if (_echo != null) {
+          _subscribeCaptainLocation(captainId, onLocationUpdate);
+        }
+      });
       return;
     }
     _subscribeCaptainLocation(captainId, onLocationUpdate);
@@ -150,8 +168,10 @@ class EchoService {
 
   void _subscribeCaptainLocation(
       String captainId, Function(Map<String, dynamic> data) onLocationUpdate) {
+    final echo = _echo;
+    if (echo == null) return;
     try {
-      _echo!.channel('captain-location.$captainId').listen('CaptainLocationUpdated', (dynamic event) {
+      echo.channel('captain-location.$captainId').listen('CaptainLocationUpdated', (dynamic event) {
         if (event != null) {
           final Map<String, dynamic> parsed = _parseEventData(event);
           onLocationUpdate(parsed);
@@ -164,9 +184,10 @@ class EchoService {
   }
 
   void stopListeningToCaptainLocation(String captainId) {
-    if (_echo == null) return;
+    final echo = _echo;
+    if (echo == null) return;
     try {
-      _echo!.leave('captain-location.$captainId');
+      echo.leave('captain-location.$captainId');
       debugPrint("🔌 [EchoService] Left channel: captain-location.$captainId");
     } catch (e) {
       debugPrint("❌ [EchoService] Error leaving captain-location.$captainId: $e");
@@ -176,8 +197,9 @@ class EchoService {
   /// Disconnect all sockets
   Future<void> disconnect() async {
     try {
-      if (_echo != null) {
-        _echo!.disconnect();
+      final echo = _echo;
+      if (echo != null) {
+        echo.disconnect();
         _isConnected = false;
         debugPrint("🔌 [EchoService] Disconnected WebSocket.");
       }

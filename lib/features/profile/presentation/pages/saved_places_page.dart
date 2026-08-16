@@ -5,11 +5,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../presentation/bloc/profile_bloc.dart';
-import '../../presentation/bloc/profile_state.dart';
-import '../../presentation/bloc/profile_event.dart';
+import '../bloc/profile_bloc.dart';
+import '../bloc/profile_state.dart';
+import '../bloc/profile_event.dart';
 import '../../domain/entities/saved_place_entity.dart';
-import '../../data/models/saved_place_model.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/di/injection_container.dart' as di;
 import '../widgets/saved_places/add_edit_place_dialog.dart';
 import '../widgets/saved_places/saved_place_card.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -67,7 +69,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     AddEditPlaceDialog.show(
       context: context,
       isDark: isDark,
-      placeToEdit: placeToEdit as SavedPlaceModel?,
+      placeToEdit: placeToEdit,
       onSave: (savedModel) {
         context.read<ProfileBloc>().add(AddSavedPlaceEvent(savedModel));
         setState(() {
@@ -94,10 +96,19 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     );
   }
 
-  void _deletePlace(String id) {
+  Future<void> _deletePlace(String id) async {
     setState(() {
       _savedPlaces.removeWhere((p) => p.id == id);
     });
+
+    try {
+      final dioClient = di.sl<DioClient>();
+      await dioClient.dio.delete('${ApiEndpoints.savedPlaces}/$id');
+    } catch (e) {
+      debugPrint('⚠️ [SavedPlacesPage] Error deleting saved place: $e');
+    }
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -216,8 +227,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                       final place = _filteredPlaces[index];
                       return SavedPlaceCard(
                         isDark: isDark,
-                        place: place
-                            as SavedPlaceModel, // Casting to model since the card might expect it
+                        place: place,
                         onBookNow: () => _onBookToPlace(place),
                         onEdit: () => _showAddEditDialog(place),
                         onDelete: () => _deletePlace(place.id),

@@ -73,4 +73,16 @@ class ApiEndpoints {
   // Geocoding Endpoints
   static const String geocodeSearch = '/geocode/search';
   static const String geocodeReverse = '/geocode/reverse';
+
+  // Notifications Endpoints
+  static const String notifications = '/notifications';
+  static const String notificationsUnreadCount = '/notifications/unread-count';
+  static const String notificationsReadAll = '/notifications/read-all';
+  static const String markAllNotificationsAsRead = '/notifications/read-all';
+  static const String notificationsClearAll = '/notifications/clear-all';
+  static const String clearAllNotifications = '/notifications/clear-all';
+  static String notificationMarkRead(String id) => '/notifications/$id/read';
+  static String markNotificationAsRead(String id) => '/notifications/$id/read';
+  static String notificationDelete(String id) => '/notifications/$id';
+  static String deleteNotification(String id) => '/notifications/$id';
 }

@@ -11,11 +11,23 @@ class CaptainStatusModel extends CaptainStatusEntity {
 
   factory CaptainStatusModel.fromJson(Map<String, dynamic> json) {
     return CaptainStatusModel(
-      id: json['id'].toString(),
-      isOnline: json['is_online'] == true || json['is_online'] == 1,
-      currentLat: (json['lat'] ?? 0).toDouble(),
-      currentLng: (json['lng'] ?? 0).toDouble(),
-      statusMessage: json['status_message'] ?? '',
+      id: json['id']?.toString() ?? '',
+      isOnline: json['is_online'] == true ||
+          json['is_online'] == 1 ||
+          json['isOnline'] == true ||
+          json['isOnline'] == 1,
+      currentLat: (json['lat'] as num?)?.toDouble() ??
+          (json['latitude'] as num?)?.toDouble() ??
+          (json['currentLat'] as num?)?.toDouble() ??
+          0.0,
+      currentLng: (json['lng'] as num?)?.toDouble() ??
+          (json['longitude'] as num?)?.toDouble() ??
+          (json['currentLng'] as num?)?.toDouble() ??
+          0.0,
+      statusMessage: json['status_message'] as String? ??
+          json['statusMessage'] as String? ??
+          json['message'] as String? ??
+          '',
     );
   }
 

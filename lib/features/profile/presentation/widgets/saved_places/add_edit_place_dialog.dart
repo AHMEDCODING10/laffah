@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
+import '../../../domain/entities/saved_place_entity.dart';
 import '../../../data/models/saved_place_model.dart';
 
 /// AddEditPlaceDialog — Modal form dialog for creating or editing saved places.
 class AddEditPlaceDialog extends StatefulWidget {
   final bool isDark;
-  final SavedPlaceModel? placeToEdit;
+  final SavedPlaceEntity? placeToEdit;
   final ValueChanged<SavedPlaceModel> onSave;
 
   const AddEditPlaceDialog({
@@ -20,7 +21,7 @@ class AddEditPlaceDialog extends StatefulWidget {
   static Future<void> show({
     required BuildContext context,
     required bool isDark,
-    SavedPlaceModel? placeToEdit,
+    SavedPlaceEntity? placeToEdit,
     required ValueChanged<SavedPlaceModel> onSave,
   }) {
     return showDialog(

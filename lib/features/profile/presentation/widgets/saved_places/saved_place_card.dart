@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
-import '../../../data/models/saved_place_model.dart';
+import '../../../domain/entities/saved_place_entity.dart';
 
 /// SavedPlaceCard — Card widget displaying a saved place item with single-tap booking trigger.
 class SavedPlaceCard extends StatelessWidget {
   final bool isDark;
-  final SavedPlaceModel place;
+  final SavedPlaceEntity place;
   final VoidCallback onBookNow;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
