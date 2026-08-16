@@ -246,27 +246,14 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
   Future<void> _onUpdateCaptainLocation(
       UpdateCaptainLocation event, EmitFn emit) async {
-    final pos = LatLng(event.lat, event.lng);
-
-    if (state is CaptainOnline) {
-      emit(CaptainLocationUpdated(position: pos, heading: event.heading));
-      emit(const CaptainOnline());
-    } else if (state is TripAccepted) {
-      final s = state as TripAccepted;
-      emit(s.copyWith(
-        captainPosition: pos,
-        captainHeading: event.heading,
-      ));
-    } else if (state is TripInProgress) {
-      final s = state as TripInProgress;
-      emit(s.copyWith(
-        captainPosition: pos,
-        captainHeading: event.heading,
-      ));
-    }
+    emit(CaptainLocationUpdated(
+      position: LatLng(event.lat, event.lng),
+      heading: event.heading,
+    ));
 
     // Push coordinates to the backend server
     await updateLocationUseCase(
+      captainId: event.captainId,
       lat: event.lat,
       lng: event.lng,
       heading: event.heading,

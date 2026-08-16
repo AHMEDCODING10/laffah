@@ -9,6 +9,7 @@ import '../bloc/locale/locale_bloc.dart';
 import '../services/pusher_service.dart';
 import '../services/echo_service.dart';
 import '../services/routing_service.dart';
+import '../services/captain_trip_alert_sound_service.dart';
 
 import '../storage/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -192,6 +193,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdateLocationUseCase(sl()));
   sl.registerLazySingleton(() => GetCaptainTripsUseCase(sl()));
   sl.registerLazySingleton(() => GetCaptainWalletUseCase(sl()));
+  sl.registerLazySingleton(() => UploadDocumentUseCase(sl()));
   sl.registerLazySingleton(() => CaptainTripAlertSoundService());
   sl.registerFactory<CaptainBloc>(
     () => CaptainBloc(
