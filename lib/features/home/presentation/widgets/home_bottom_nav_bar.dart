@@ -7,7 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// HomeBottomNavBar — Ultra-modern, floating glassmorphic navigation dock
-/// designed specifically for Laffah Passenger screens, matching the Captain UI.
+/// designed specifically for Laffah Passenger screens, matching the Captain UI 100%.
 /// Features iOS-inspired glassmorphism, animated active indicator pills,
 /// haptic feedback, and responsive RTL layout.
 class HomeBottomNavBar extends StatelessWidget {
@@ -45,48 +45,49 @@ class HomeBottomNavBar extends StatelessWidget {
       },
     ];
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-        height: 64,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.5)
-                  : Colors.black.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+          height: 64,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
                 color: isDark
-                    ? const Color(0xFF141822).withValues(alpha: 0.9)
-                    : Colors.white.withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.black.withValues(alpha: 0.05),
-                ),
+                    ? Colors.black.withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(navItems.length, (index) {
-                  final isSelected = index == currentIndex;
-                  final item = navItems[index];
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF141822).withValues(alpha: 0.9)
+                      : Colors.white.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(navItems.length, (index) {
+                    final isSelected = index == currentIndex;
+                    final item = navItems[index];
 
-                  return Expanded(
-                    child: GestureDetector(
+                    return GestureDetector(
                       onTap: () {
                         if (!isSelected) {
                           HapticFeedback.selectionClick();
@@ -95,61 +96,48 @@ class HomeBottomNavBar extends StatelessWidget {
                       },
                       behavior: HitTestBehavior.opaque,
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 2,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeOutCirc,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSelected ? 16 : 12,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFFFF6B00)
-                                  .withValues(alpha: 0.14)
+                              ? const Color(0xFFFF6B00).withValues(alpha: 0.15)
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              (isSelected && item.containsKey('activeIcon')
-                                      ? item['activeIcon']
-                                      : item['icon']) as IconData,
-                              size: 22,
+                              item['icon'] as IconData,
+                              size: 24,
                               color: isSelected
                                   ? const Color(0xFFFF6B00)
                                   : (isDark
-                                      ? AppColors.gray400
-                                      : AppColors.gray600),
+                                      ? AppColors.gray500
+                                      : AppColors.gray400),
                             ),
-                            const SizedBox(height: 2),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
+                            if (isSelected) ...[
+                              const SizedBox(width: 8),
+                              Text(
                                 item['title'] as String,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 10.5,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w900
-                                      : FontWeight.w600,
-                                  color: isSelected
-                                      ? const Color(0xFFFF6B00)
-                                      : (isDark
-                                          ? AppColors.gray400
-                                          : AppColors.gray600),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFFFF6B00),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
           ),
