@@ -19,8 +19,8 @@ class FirebaseNotificationService {
   factory FirebaseNotificationService() => _instance;
   FirebaseNotificationService._internal();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  FirebaseMessaging? _messaging;
+  FlutterLocalNotificationsPlugin? _localNotifications;
 
   /// Default notification channel for general updates (offers, system, messages)
   static const AndroidNotificationChannel _defaultChannel = AndroidNotificationChannel(
@@ -47,8 +47,15 @@ class FirebaseNotificationService {
   /// Initialize Firebase Cloud Messaging and Local Notifications
   Future<void> initialize() async {
     if (_isInitialized) return;
+    if (Firebase.apps.isEmpty) {
+      debugPrint("ℹ️ [FCM] Firebase App is not initialized. Skipping notification setup.");
+      return;
+    }
 
     try {
+      final messaging = FirebaseMessaging.instance;
+      _messaging = messaging;
+      _localNotifications = FlutterLocalNotificationsPlugin();
       // 1. Set background messaging handler
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -59,7 +66,7 @@ class FirebaseNotificationService {
       await _setupLocalNotifications();
 
       // 4. Listen to token refresh
-      _messaging.onTokenRefresh.listen((newToken) {
+      messaging.onTokenRefresh.listen((newToken) {
         debugPrint("🔄 [FCM] Token refreshed: $newToken");
         syncTokenWithBackend(newToken);
       });
@@ -71,7 +78,7 @@ class FirebaseNotificationService {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationClick);
 
       // 7. Check if app was opened from a Terminated state by clicking notification
-      final initialMessage = await _messaging.getInitialMessage();
+      final initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) {
         _handleNotificationClick(initialMessage);
       }
@@ -85,7 +92,8 @@ class FirebaseNotificationService {
 
   /// Request iOS and Android 13+ Notification Permissions
   Future<void> _requestPermission() async {
-    final settings = await _messaging.requestPermission(
+    if (_messaging == null) return;
+    final settings = await _messaging!.requestPermission(
       alert: true,
       badge: true,
       sound: true,
@@ -96,7 +104,7 @@ class FirebaseNotificationService {
     debugPrint("🔔 [FCM] User authorization status: ${settings.authorizationStatus}");
 
     // Set foreground notification presentation options for Apple
-    await _messaging.setForegroundNotificationPresentationOptions(
+    await _messaging!.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
@@ -105,6 +113,7 @@ class FirebaseNotificationService {
 
   /// Setup local notifications for Android foreground heads-up notifications
   Future<void> _setupLocalNotifications() async {
+    if (_localNotifications == null) return;
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
@@ -118,15 +127,20 @@ class FirebaseNotificationService {
       macOS: darwinSettings,
     );
 
-    await _localNotifications.initialize(
+    await _localNotifications!.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (response) {
         debugPrint("🔔 [LocalNotification] Tapped notification payload: ${response.payload}");
       },
     );
 
+<<<<<<< Updated upstream
     // Create both notification channels on Android
     final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+=======
+    // Create the high importance channel on Android
+    final androidPlugin = _localNotifications!.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+>>>>>>> Stashed changes
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(_defaultChannel);
       await androidPlugin.createNotificationChannel(_tripAlertChannel);
@@ -142,10 +156,15 @@ class FirebaseNotificationService {
     final type = message.data['type'] ?? '';
     final isTripAlert = type == 'trip_new' || type == 'trip_accepted' || type == 'trip_arrived';
 
+<<<<<<< Updated upstream
     if (notification != null && !kIsWeb) {
       final selectedChannel = isTripAlert ? _tripAlertChannel : _defaultChannel;
 
       await _localNotifications.show(
+=======
+    if (notification != null && !kIsWeb && _localNotifications != null) {
+      await _localNotifications!.show(
+>>>>>>> Stashed changes
         notification.hashCode,
         notification.title ?? 'لَفَّة',
         notification.body ?? '',
@@ -185,8 +204,9 @@ class FirebaseNotificationService {
 
   /// Get current FCM Token
   Future<String?> getToken() async {
+    if (Firebase.apps.isEmpty || _messaging == null) return null;
     try {
-      return await _messaging.getToken();
+      return await _messaging!.getToken();
     } catch (e) {
       debugPrint("⚠️ [FCM] Failed to get token: $e");
       return null;
@@ -195,8 +215,9 @@ class FirebaseNotificationService {
 
   /// Subscribe to a specific topic (e.g. 'all_captains', 'all_passengers')
   Future<void> subscribeToTopic(String topic) async {
+    if (_messaging == null) return;
     try {
-      await _messaging.subscribeToTopic(topic);
+      await _messaging!.subscribeToTopic(topic);
       debugPrint("✅ [FCM] Subscribed to topic: $topic");
     } catch (e) {
       debugPrint("⚠️ [FCM] Failed to subscribe to topic $topic: $e");
@@ -205,8 +226,9 @@ class FirebaseNotificationService {
 
   /// Unsubscribe from a topic
   Future<void> unsubscribeFromTopic(String topic) async {
+    if (_messaging == null) return;
     try {
-      await _messaging.unsubscribeFromTopic(topic);
+      await _messaging!.unsubscribeFromTopic(topic);
       debugPrint("✅ [FCM] Unsubscribed from topic: $topic");
     } catch (e) {
       debugPrint("⚠️ [FCM] Failed to unsubscribe from topic $topic: $e");
@@ -215,6 +237,7 @@ class FirebaseNotificationService {
 
   /// Sync FCM token with Laravel backend
   Future<void> syncTokenWithBackend([String? token]) async {
+    if (Firebase.apps.isEmpty) return;
     try {
       final fcmToken = token ?? await getToken();
       if (fcmToken == null || fcmToken.isEmpty) return;

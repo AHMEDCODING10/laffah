@@ -12,7 +12,6 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../../core/widgets/primary_gradient_button.dart';
-import 'auth_landing_page.dart';
 import 'forgot_password_page.dart';
 
 /// PhoneNumberInputPage - Dedicated, high-contrast login screen for Laffah (راكب / كابتن)
@@ -331,13 +330,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                               const SizedBox(width: AppSpacing.s8),
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AuthLandingPage(),
-                                    ),
-                                  );
+                                  context.push(LaffahRoutes.authLanding);
                                 },
                                 child: Text(
                                   AppLocalizations.of(context)!

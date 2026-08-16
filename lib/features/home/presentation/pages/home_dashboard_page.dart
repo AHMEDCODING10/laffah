@@ -14,6 +14,7 @@ import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.d
 import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
 import '../../data/datasources/home_local_data_source.dart';
 import '../widgets/home_action_buttons_row.dart';
+import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_ride_status_cards.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/quick_destinations_section.dart';
@@ -145,13 +146,21 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     _quickDestinations = HomeLocalDataSource.getQuickDestinations(context);
 
-    return Scaffold(
-        key: _scaffoldKey,
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        resizeToAvoidBottomInset: false,
-        body: Stack(
-          children: [
+    return BlocBuilder<RideBloc, RideState>(
+      builder: (context, rideState) {
+        final bool hideBottomNav = rideState is RideSearching;
+
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor:
+              isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+          resizeToAvoidBottomInset: false,
+          extendBody: true,
+          bottomNavigationBar: hideBottomNav
+              ? null
+              : HomeBottomNavBar(isDark: isDark, currentIndex: 0),
+          body: Stack(
+            children: [
             // ==========================================
             // LAYER 1: Interactive Simulated Map Component (100% UNTOUCHED)
             // ==========================================
@@ -311,8 +320,10 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
             ),
           ],
         ),
-    );
-  }
+      );
+    },
+  );
+}
 
   // Draggable Home Panel Composition
   Widget _buildStitchHomePanel(BuildContext context, bool isDark) {
@@ -326,7 +337,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
             AppSpacing.s16,
             0,
             AppSpacing.s16,
-            16,
+            90,
           ),
           child: GlassBox(
             borderRadius: AppSpacing.radiusLG,
@@ -338,7 +349,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
             ),
             child: ListView(
               controller: scrollController,
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.only(bottom: 12),
               physics: const BouncingScrollPhysics(),
               children: [
                 // Drag Handle Indicator Pill
