@@ -55,13 +55,11 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
     });
 
     try {
-      // Using Laravel Backend Proxy — biased to Yemen/Sana'a via backend params
       final String url = '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeSearch}';
       final response = await _dio.get(
         url,
         queryParameters: {
           'q': query,
-          'lang': 'ar', // تفضيل الأسماء العربية
         },
       );
 
