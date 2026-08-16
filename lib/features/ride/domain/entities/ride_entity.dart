@@ -6,7 +6,13 @@ class RideEntity extends Equatable {
   final double price;
   final String pickupLocation;
   final String dropoffLocation;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? dropoffLatitude;
+  final double? dropoffLongitude;
+  final double? distanceKm;
   final String? captainName;
+  final String? captainPhone;
   final double? rating;
   final String? vehicleModel;
   final String? vehiclePlate;
@@ -17,7 +23,13 @@ class RideEntity extends Equatable {
     required this.price,
     required this.pickupLocation,
     required this.dropoffLocation,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.dropoffLatitude,
+    this.dropoffLongitude,
+    this.distanceKm,
     this.captainName,
+    this.captainPhone,
     this.rating,
     this.vehicleModel,
     this.vehiclePlate,
@@ -30,9 +42,16 @@ class RideEntity extends Equatable {
         price,
         pickupLocation,
         dropoffLocation,
+        pickupLatitude,
+        pickupLongitude,
+        dropoffLatitude,
+        dropoffLongitude,
+        distanceKm,
         captainName,
+        captainPhone,
         rating,
         vehicleModel,
         vehiclePlate,
       ];
 }
+

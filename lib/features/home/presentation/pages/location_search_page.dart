@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -23,7 +24,7 @@ class LocationSearchPage extends StatefulWidget {
 class _LocationSearchPageState extends State<LocationSearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final Dio _dio = Dio();
-  
+
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
   Timer? _debounce;
@@ -54,12 +55,13 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
     });
 
     try {
-      // Using Laravel Backend Proxy to Nominatim API to bypass CORS/User-Agent limits
+      // Using Laravel Backend Proxy — biased to Yemen/Sana'a via backend params
       final String url = '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeSearch}';
       final response = await _dio.get(
         url,
         queryParameters: {
           'q': query,
+          'lang': 'ar', // تفضيل الأسماء العربية
         },
       );
 
@@ -80,8 +82,8 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
     }
   }
 
-  void _selectPlace(Map<String, dynamic> place) {
-    final title = place['name'] ?? place['display_name'] ?? 'موقع مختار';
+  void _selectPlace(Map<String, dynamic> place, BuildContext context) {
+    final title = place['name'] ?? place['display_name'] ?? AppLocalizations.of(context)!.pass_loc_selected;
     final lat = double.tryParse(place['lat'].toString()) ?? 0.0;
     final lon = double.tryParse(place['lon'].toString()) ?? 0.0;
 
@@ -110,17 +112,19 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final String title = widget.locationType == 'pickup' ? 'نقطة الانطلاق' : 'إلى أين؟';
+    final l10n = AppLocalizations.of(context)!;
+    final String title =
+        widget.locationType == 'pickup' ? l10n.pass_loc_pickup : l10n.pass_loc_dropoff;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+    return Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar: AppBar(
           backgroundColor: isDark ? AppColors.surfaceDark : AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+            icon: Icon(Icons.arrow_back_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900),
             onPressed: () => context.pop(),
           ),
           title: Text(
@@ -156,12 +160,13 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'ابحث عن منطقة، شارع، أو مَعْلَم...',
+                  hintText: l10n.pass_loc_search_hint,
                   hintStyle: TextStyle(
                     color: isDark ? AppColors.gray500 : AppColors.gray400,
                     fontFamily: 'Cairo',
                   ),
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary500),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      color: AppColors.primary500),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear_rounded, size: 20),
@@ -173,7 +178,8 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                         )
                       : null,
                   filled: true,
-                  fillColor: isDark ? AppColors.backgroundDark : AppColors.gray50,
+                  fillColor:
+                      isDark ? AppColors.backgroundDark : AppColors.gray50,
                   border: OutlineInputBorder(
                     borderRadius: AppSpacing.borderMD,
                     borderSide: BorderSide.none,
@@ -181,7 +187,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                 ),
               ),
             ),
-            
+
             AppSpacing.h16,
 
             // Pin Adjust Option
@@ -193,15 +199,18 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                 child: Container(
                   padding: const EdgeInsets.all(AppSpacing.s12),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.primary500.withValues(alpha: 0.08),
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.05)
+                        : AppColors.primary500.withValues(alpha: 0.08),
                     borderRadius: AppSpacing.borderSM,
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.pin_drop_rounded, color: AppColors.primary500),
+                      const Icon(Icons.pin_drop_rounded,
+                          color: AppColors.primary500),
                       AppSpacing.w12,
                       Text(
-                        'حدد الموقع بدقة على الخريطة',
+                        l10n.pass_loc_map_pin,
                         style: TextStyle(
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.bold,
@@ -210,7 +219,8 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                         ),
                       ),
                       const Spacer(),
-                      const Icon(Icons.chevron_right_rounded, color: AppColors.primary500),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: AppColors.primary500),
                     ],
                   ),
                 ),
@@ -220,12 +230,16 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
             AppSpacing.h16,
 
             if (_isLoading)
-              const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.primary500)))
-            else if (_searchResults.isEmpty && _searchController.text.isNotEmpty)
+              const Expanded(
+                  child: Center(
+                      child: CircularProgressIndicator(
+                          color: AppColors.primary500)))
+            else if (_searchResults.isEmpty &&
+                _searchController.text.isNotEmpty)
               Expanded(
                 child: Center(
                   child: Text(
-                    'لا توجد نتائج مطابقة',
+                    l10n.pass_loc_no_results,
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       color: isDark ? AppColors.gray500 : AppColors.gray400,
@@ -243,11 +257,13 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                   ),
                   itemBuilder: (context, index) {
                     final place = _searchResults[index];
-                    final name = place['name'] ?? place['display_name'] ?? 'موقع مجهول';
+                    final name =
+                        place['name'] ?? place['display_name'] ?? l10n.pass_loc_selected;
                     final address = place['display_name'] ?? '';
-                    
+
                     return ListTile(
-                      leading: const Icon(Icons.location_on_outlined, color: AppColors.gray500),
+                      leading: const Icon(Icons.location_on_outlined,
+                          color: AppColors.gray500),
                       title: Text(
                         name,
                         maxLines: 1,
@@ -268,14 +284,13 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                           color: isDark ? AppColors.gray400 : AppColors.gray600,
                         ),
                       ),
-                      onTap: () => _selectPlace(place),
+                      onTap: () => _selectPlace(place, context),
                     );
                   },
                 ),
               ),
           ],
         ),
-      ),
     );
   }
 }

@@ -10,7 +10,8 @@ const String _defaultLanguageCode = 'ar';
 class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
   final SharedPreferences sharedPreferences;
 
-  LocaleBloc({required this.sharedPreferences}) : super(const LocaleState(Locale(_defaultLanguageCode))) {
+  LocaleBloc({required this.sharedPreferences})
+      : super(const LocaleState(Locale(_defaultLanguageCode))) {
     on<LoadSavedLocale>((event, emit) {
       final savedLanguageCode = sharedPreferences.getString(_prefLanguageCode);
       if (savedLanguageCode != null) {
@@ -21,7 +22,8 @@ class LocaleBloc extends Bloc<LocaleEvent, LocaleState> {
     });
 
     on<ChangeLocale>((event, emit) async {
-      await sharedPreferences.setString(_prefLanguageCode, event.locale.languageCode);
+      await sharedPreferences.setString(
+          _prefLanguageCode, event.locale.languageCode);
       emit(LocaleState(event.locale));
     });
   }

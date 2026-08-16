@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection_container.dart';
@@ -14,15 +15,26 @@ class CaptainNotificationsPage extends StatefulWidget {
   const CaptainNotificationsPage({super.key});
 
   @override
-  State<CaptainNotificationsPage> createState() => _CaptainNotificationsPageState();
+  State<CaptainNotificationsPage> createState() =>
+      _CaptainNotificationsPageState();
 }
 
 class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
   int _activeCategoryIndex = 0;
   bool _isAllRead = false;
 
-  final List<String> _categories = ['الطلبات الجديدة ⚡', 'تحديثات النظام 📢', 'التنبيهات 🔔'];
+  late List<String> _categories;
   late CaptainNotificationsBloc _bloc;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _categories = [
+      AppLocalizations.of(context)!.capt_notif_new_requests,
+      AppLocalizations.of(context)!.capt_notif_system_updates,
+      AppLocalizations.of(context)!.capt_notif_alerts,
+    ];
+  }
 
   @override
   void initState() {
@@ -43,11 +55,12 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
       _isAllRead = true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         backgroundColor: AppColors.success,
         content: Text(
-          'تم تحديد جميع التنبيهات كمقروءة بنجاح ✔️',
-          style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+          AppLocalizations.of(context)!.capt_notif_all_read_success,
+          style: const TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -60,14 +73,15 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
     return BlocProvider.value(
       value: _bloc,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF141822) : const Color(0xFFF7F9FC),
+        backgroundColor:
+            isDark ? const Color(0xFF141822) : const Color(0xFFF7F9FC),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           automaticallyImplyLeading: false,
           title: Text(
-            'التنبيهات والطلبات',
+            AppLocalizations.of(context)!.capt_notif_page_title,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -81,7 +95,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                 Icons.done_all_rounded,
                 color: _isAllRead ? AppColors.gray500 : const Color(0xFFFF6B00),
               ),
-              tooltip: 'تحديد الكل كمقروء',
+              tooltip: AppLocalizations.of(context)!.capt_notif_mark_all_read,
               onPressed: _markAllAsRead,
             ),
           ],
@@ -92,13 +106,12 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
             children: [
               // Segmented Filter Tabs
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
                 child: Container(
                   height: 46,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1E2433)
-                        : AppColors.gray100,
+                    color: isDark ? const Color(0xFF1E2433) : AppColors.gray100,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   padding: const EdgeInsets.all(4),
@@ -117,13 +130,16 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? (isDark ? const Color(0xFFFF6B00) : AppColors.white)
+                                  ? (isDark
+                                      ? const Color(0xFFFF6B00)
+                                      : AppColors.white)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: isSelected && !isDark
                                   ? [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.05),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.05),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       )
@@ -136,9 +152,13 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
                                 color: isSelected
-                                    ? (isDark ? Colors.white : const Color(0xFFFF6B00))
+                                    ? (isDark
+                                        ? Colors.white
+                                        : const Color(0xFFFF6B00))
                                     : AppColors.gray500,
                               ),
                             ),
@@ -149,29 +169,35 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: AppSpacing.s8),
 
               Expanded(
-                child: BlocBuilder<CaptainNotificationsBloc, CaptainNotificationsState>(
+                child: BlocBuilder<CaptainNotificationsBloc,
+                    CaptainNotificationsState>(
                   builder: (context, state) {
                     if (state is CaptainNotificationsLoading) {
-                      return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00)));
+                      return const Center(
+                          child: CircularProgressIndicator(
+                              color: Color(0xFFFF6B00)));
                     } else if (state is CaptainNotificationsError) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+                            const Icon(Icons.error_outline,
+                                size: 48, color: AppColors.danger),
                             const SizedBox(height: 16),
                             Text(
-                              state.message,
-                              style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                              AppLocalizations.of(context)!.capt_notif_error_fetch,
+                              style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black),
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
-                              onPressed: () => _bloc.add(FetchNotificationsAndRequests()),
-                              child: const Text('إعادة المحاولة'),
+                              onPressed: () =>
+                                  _bloc.add(FetchNotificationsAndRequests()),
+                              child: Text(AppLocalizations.of(context)!.capt_notif_retry),
                             )
                           ],
                         ),
@@ -196,10 +222,12 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
     );
   }
 
-  Widget _buildListBasedOnCategory(CaptainNotificationsLoaded state, bool isDark) {
+  Widget _buildListBasedOnCategory(
+      CaptainNotificationsLoaded state, bool isDark) {
     if (_activeCategoryIndex == 0) {
       if (state.nearbyRequests.isEmpty) {
-        return _buildEmptyState('لا توجد طلبات قريبة حالياً.', Icons.radar, isDark);
+        return _buildEmptyState(
+            AppLocalizations.of(context)!.capt_notif_empty_requests, Icons.radar, isDark);
       }
       return ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.s16),
@@ -210,9 +238,11 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
         },
       );
     } else if (_activeCategoryIndex == 1) {
-      final systemUpdates = state.notifications.where((n) => n.type == 'system').toList();
+      final systemUpdates =
+          state.notifications.where((n) => n.type == 'system').toList();
       if (systemUpdates.isEmpty) {
-        return _buildEmptyState('لا توجد تحديثات في النظام.', Icons.system_security_update_good, isDark);
+        return _buildEmptyState(AppLocalizations.of(context)!.capt_notif_empty_updates,
+            Icons.system_security_update_good, isDark);
       }
       return ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.s16),
@@ -223,9 +253,11 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
         },
       );
     } else {
-      final alerts = state.notifications.where((n) => n.type == 'alert').toList();
+      final alerts =
+          state.notifications.where((n) => n.type == 'alert').toList();
       if (alerts.isEmpty) {
-        return _buildEmptyState('لا توجد تنبيهات جديدة.', Icons.notifications_none, isDark);
+        return _buildEmptyState(
+            AppLocalizations.of(context)!.capt_notif_empty_alerts, Icons.notifications_none, isDark);
       }
       return ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.s16),
@@ -248,7 +280,8 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 80, color: AppColors.gray400.withValues(alpha: 0.5)),
+                Icon(icon,
+                    size: 80, color: AppColors.gray400.withValues(alpha: 0.5)),
                 const SizedBox(height: 16),
                 Text(
                   message,
@@ -283,7 +316,9 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                 )
               ],
         border: Border.all(
-          color: isParcel ? AppColors.info.withValues(alpha: 0.3) : const Color(0xFFFF6B00).withValues(alpha: 0.2),
+          color: isParcel
+              ? AppColors.info.withValues(alpha: 0.3)
+              : const Color(0xFFFF6B00).withValues(alpha: 0.2),
           width: 1.5,
         ),
       ),
@@ -298,11 +333,15 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isParcel ? AppColors.info.withValues(alpha: 0.1) : const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                    color: isParcel
+                        ? AppColors.info.withValues(alpha: 0.1)
+                        : const Color(0xFFFF6B00).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isParcel ? Icons.inventory_2_rounded : Icons.local_taxi_rounded,
+                    isParcel
+                        ? Icons.inventory_2_rounded
+                        : Icons.local_taxi_rounded,
                     color: isParcel ? AppColors.info : const Color(0xFFFF6B00),
                     size: 24,
                   ),
@@ -324,7 +363,8 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.person_rounded, size: 14, color: AppColors.gray500),
+                          const Icon(Icons.person_rounded,
+                              size: 14, color: AppColors.gray500),
                           const SizedBox(width: 4),
                           Text(
                             order.passengerName,
@@ -335,7 +375,8 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.star_rounded, size: 14, color: AppColors.warning),
+                          const Icon(Icons.star_rounded,
+                              size: 14, color: AppColors.warning),
                           const SizedBox(width: 2),
                           Text(
                             order.passengerRating.toString(),
@@ -352,7 +393,8 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF2A3143) : AppColors.gray100,
                     borderRadius: BorderRadius.circular(12),
@@ -370,19 +412,22 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
               ],
             ),
           ),
-          
-          Divider(height: 1, color: isDark ? Colors.white10 : AppColors.gray200),
-          
+
+          Divider(
+              height: 1, color: isDark ? Colors.white10 : AppColors.gray200),
+
           // Details
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildRouteItem(Icons.my_location_rounded, order.pickup, isDark, true),
+                _buildRouteItem(
+                    Icons.my_location_rounded, order.pickup, isDark, true),
                 _buildRouteLine(isDark),
-                _buildRouteItem(Icons.location_on_rounded, order.dropoff, isDark, false, color: AppColors.primary),
-                
+                _buildRouteItem(
+                    Icons.location_on_rounded, order.dropoff, isDark, false,
+                    color: AppColors.primary),
                 if (order.stops.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Container(
@@ -390,38 +435,52 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B00).withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFF6B00).withValues(alpha: 0.1)),
+                      border: Border.all(
+                          color:
+                              const Color(0xFFFF6B00).withValues(alpha: 0.1)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: order.stops.map<Widget>((s) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.add_location_alt_rounded, size: 16, color: Color(0xFFFF6B00)),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(s, style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : Colors.black87, fontFamily: 'IBM Plex Sans Arabic'))),
-                          ],
-                        ),
-                      )).toList(),
+                      children: order.stops
+                          .map<Widget>((s) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.add_location_alt_rounded,
+                                        size: 16, color: Color(0xFFFF6B00)),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                        child: Text(s,
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: isDark
+                                                    ? Colors.white70
+                                                    : Colors.black87,
+                                                fontFamily:
+                                                    'IBM Plex Sans Arabic'))),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
                     ),
                   ),
                 ],
-                
                 const SizedBox(height: 16),
-                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildQuickStat(Icons.route_rounded, order.distance, isDark),
-                    _buildQuickStat(Icons.schedule_rounded, order.duration, isDark),
-                    _buildQuickStat(Icons.payments_rounded, order.price, isDark, isHighlight: true),
+                    _buildQuickStat(
+                        Icons.route_rounded, order.distance, isDark),
+                    _buildQuickStat(
+                        Icons.schedule_rounded, order.duration, isDark),
+                    _buildQuickStat(Icons.payments_rounded, order.price, isDark,
+                        isHighlight: true),
                   ],
                 ),
               ],
             ),
           ),
-          
+
           // Actions
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -434,17 +493,22 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                         context: context,
                         orderTitle: order.title,
                         onConfirmReject: (reason) {
-                          _bloc.add(RefreshNotificationsAndRequests()); // Refresh after reject
+                          _bloc.add(
+                              RefreshNotificationsAndRequests()); // Refresh after reject
                         },
                       );
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.danger,
                       side: const BorderSide(color: AppColors.danger),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('رفض', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                    child: Text(AppLocalizations.of(context)!.capt_notif_reject,
+                        style: const TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -470,11 +534,17 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B00),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       elevation: 0,
                     ),
-                    child: const Text('قبول المشوار', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                    child: Text(AppLocalizations.of(context)!.capt_notif_accept,
+                        style: const TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.white)),
                   ),
                 ),
               ],
@@ -487,7 +557,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
 
   Widget _buildNotificationCard(dynamic notif, bool isDark) {
     bool isRead = notif.isRead || _isAllRead;
-    
+
     IconData iconData = Icons.notifications;
     if (notif.icon == 'shield') iconData = Icons.shield_rounded;
     if (notif.icon == 'bike') iconData = Icons.two_wheeler_rounded;
@@ -499,9 +569,13 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
       decoration: BoxDecoration(
         color: isRead
             ? (isDark ? const Color(0xFF1A1F2C) : Colors.white)
-            : (isDark ? const Color(0xFF242A38) : AppColors.primary.withValues(alpha: 0.05)),
+            : (isDark
+                ? const Color(0xFF242A38)
+                : AppColors.primary.withValues(alpha: 0.05)),
         borderRadius: BorderRadius.circular(16),
-        border: isRead ? null : Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        border: isRead
+            ? null
+            : Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,7 +586,9 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
               color: isDark ? const Color(0xFF2A3143) : AppColors.gray100,
               shape: BoxShape.circle,
             ),
-            child: Icon(iconData, color: isRead ? AppColors.gray500 : const Color(0xFFFF6B00), size: 22),
+            child: Icon(iconData,
+                color: isRead ? AppColors.gray500 : const Color(0xFFFF6B00),
+                size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -527,7 +603,8 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                         notif.title,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: isRead ? FontWeight.w600 : FontWeight.bold,
+                          fontWeight:
+                              isRead ? FontWeight.w600 : FontWeight.bold,
                           fontSize: 14,
                           color: isDark ? Colors.white : AppColors.gray900,
                         ),
@@ -561,10 +638,14 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
     );
   }
 
-  Widget _buildRouteItem(IconData icon, String title, bool isDark, bool isPickup, {Color? color}) {
+  Widget _buildRouteItem(
+      IconData icon, String title, bool isDark, bool isPickup,
+      {Color? color}) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: color ?? (isDark ? Colors.white70 : AppColors.gray500)),
+        Icon(icon,
+            size: 20,
+            color: color ?? (isDark ? Colors.white70 : AppColors.gray500)),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
@@ -590,10 +671,13 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
     );
   }
 
-  Widget _buildQuickStat(IconData icon, String value, bool isDark, {bool isHighlight = false}) {
+  Widget _buildQuickStat(IconData icon, String value, bool isDark,
+      {bool isHighlight = false}) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: isHighlight ? const Color(0xFFFF6B00) : AppColors.gray500),
+        Icon(icon,
+            size: 16,
+            color: isHighlight ? const Color(0xFFFF6B00) : AppColors.gray500),
         const SizedBox(width: 4),
         Text(
           value,
@@ -601,7 +685,9 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
             fontFamily: 'IBM Plex Sans Arabic',
             fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
             fontSize: 13,
-            color: isHighlight ? const Color(0xFFFF6B00) : (isDark ? Colors.white70 : AppColors.gray700),
+            color: isHighlight
+                ? const Color(0xFFFF6B00)
+                : (isDark ? Colors.white70 : AppColors.gray700),
           ),
         ),
       ],

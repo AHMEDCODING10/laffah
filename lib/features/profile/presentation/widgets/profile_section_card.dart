@@ -91,7 +91,8 @@ class ProfileSectionCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(right: AppSpacing.s4, bottom: AppSpacing.s8),
+          padding: const EdgeInsets.only(
+              right: AppSpacing.s4, bottom: AppSpacing.s8),
           child: Text(
             sectionTitle,
             style: TextStyle(

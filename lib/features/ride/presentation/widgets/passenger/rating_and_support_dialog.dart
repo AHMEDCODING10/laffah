@@ -49,16 +49,19 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
           _isSubmitting = false;
         });
         if (widget.onRatingSubmitted != null) {
-          widget.onRatingSubmitted!(_currentRating, _commentController.text.trim());
+          widget.onRatingSubmitted!(
+              _currentRating, _commentController.text.trim());
         }
         Navigator.of(context).pop();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
               'شكرًا لك! تم تسجيل تقييمك بنجاح',
               textAlign: TextAlign.right,
-              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold),
             ),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
@@ -75,7 +78,8 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24, vertical: AppSpacing.s32),
+      insetPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s24, vertical: AppSpacing.s32),
       child: GlassBox(
         borderRadius: AppSpacing.radiusXL,
         padding: const EdgeInsets.all(AppSpacing.s24),
@@ -88,12 +92,13 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 width: 48,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.white.withValues(alpha: 0.12) : AppColors.gray300,
+                  color: isDark
+                      ? AppColors.white.withValues(alpha: 0.12)
+                      : AppColors.gray300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               AppSpacing.h16,
-
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
@@ -111,7 +116,6 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                 ),
               ),
               AppSpacing.h16,
-
               const Text(
                 'تم الوصول بنجاح!',
                 textAlign: TextAlign.center,
@@ -133,19 +137,19 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                   color: isDark ? AppColors.gray400 : AppColors.gray600,
                 ),
               ),
-
               AppSpacing.h20,
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
-                  color: isDark 
-                      ? AppColors.backgroundDark.withValues(alpha: 0.4) 
+                  color: isDark
+                      ? AppColors.backgroundDark.withValues(alpha: 0.4)
                       : AppColors.surfaceLight.withValues(alpha: 0.6),
                   borderRadius: AppSpacing.borderLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.06) : AppColors.gray200,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.06)
+                        : AppColors.gray200,
                     width: 1.0,
                   ),
                 ),
@@ -169,7 +173,8 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'IBM Plex Sans Arabic',
-                            color: isDark ? AppColors.gray300 : AppColors.gray700,
+                            color:
+                                isDark ? AppColors.gray300 : AppColors.gray700,
                           ),
                         ),
                       ],
@@ -196,7 +201,8 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'IBM Plex Sans Arabic',
-                            color: isDark ? AppColors.gray500 : AppColors.gray500,
+                            color:
+                                isDark ? AppColors.gray500 : AppColors.gray500,
                           ),
                         ),
                       ],
@@ -204,9 +210,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                   ],
                 ),
               ),
-
               AppSpacing.h24,
-
               const Text(
                 'كيف كانت تجربتك؟',
                 textAlign: TextAlign.center,
@@ -229,7 +233,8 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                       });
                     },
                     iconSize: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
                     constraints: const BoxConstraints(),
                     icon: Icon(
                       isLit ? Icons.star_rounded : Icons.star_outline_rounded,
@@ -238,9 +243,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                   );
                 }),
               ),
-
               AppSpacing.h20,
-
               TextField(
                 controller: _commentController,
                 maxLines: 3,
@@ -260,13 +263,18 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                     color: isDark ? AppColors.gray500 : AppColors.gray400,
                   ),
                   filled: true,
-                  fillColor: isDark ? Colors.black.withValues(alpha: 0.2) : AppColors.white,
-                  counterStyle: const TextStyle(fontSize: 10, fontFamily: 'IBM Plex Sans Arabic'),
+                  fillColor: isDark
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : AppColors.white,
+                  counterStyle: const TextStyle(
+                      fontSize: 10, fontFamily: 'IBM Plex Sans Arabic'),
                   contentPadding: const EdgeInsets.all(AppSpacing.s12),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: AppSpacing.borderMD,
                     borderSide: BorderSide(
-                      color: isDark ? AppColors.white.withValues(alpha: 0.08) : AppColors.gray300,
+                      color: isDark
+                          ? AppColors.white.withValues(alpha: 0.08)
+                          : AppColors.gray300,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -278,9 +286,7 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                   ),
                 ),
               ),
-
               AppSpacing.h20,
-
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -327,13 +333,12 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                   ),
                 ),
               ),
-
               AppSpacing.h12,
-
               TextButton(
                 onPressed: () async {
                   Navigator.of(context).pop();
-                  final Uri url = Uri.parse('whatsapp://send?phone=+967770291452');
+                  final Uri url =
+                      Uri.parse('whatsapp://send?phone=+967770291452');
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url);
                   } else {
@@ -344,7 +349,8 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
                   }
                 },
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -374,5 +380,3 @@ class _RatingAndSupportDialogState extends State<RatingAndSupportDialog> {
     );
   }
 }
-
-

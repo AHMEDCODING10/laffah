@@ -99,9 +99,12 @@ class CaptainCommunicationSheet extends StatelessWidget {
                 color: isDark
                     ? const Color(0xFF141822).withValues(alpha: 0.95)
                     : Colors.white.withValues(alpha: 0.96),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(32)),
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.06),
                 ),
               ),
               child: SingleChildScrollView(
@@ -129,7 +132,8 @@ class CaptainCommunicationSheet extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 22,
-                          backgroundColor: const Color(0xFFFF6B00).withValues(alpha: 0.18),
+                          backgroundColor:
+                              const Color(0xFFFF6B00).withValues(alpha: 0.18),
                           child: Text(
                             passengerName.isNotEmpty ? passengerName[0] : 'ر',
                             style: const TextStyle(
@@ -151,7 +155,8 @@ class CaptainCommunicationSheet extends StatelessWidget {
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,
-                                  color: isDark ? Colors.white : AppColors.gray900,
+                                  color:
+                                      isDark ? Colors.white : AppColors.gray900,
                                 ),
                               ),
                               Text(
@@ -189,7 +194,8 @@ class CaptainCommunicationSheet extends StatelessWidget {
                         Expanded(
                           child: _buildChannelCard(
                             isDark: isDark,
-                            label: AppLocalizations.of(context)!.capt_whatsapp_chat,
+                            label: AppLocalizations.of(context)!
+                                .capt_whatsapp_chat,
                             icon: Icons.chat_rounded,
                             color: const Color(0xFF25D366),
                             onTap: () {
@@ -259,14 +265,17 @@ class CaptainCommunicationSheet extends StatelessWidget {
                         onTap: () => _sendQuickMessage(context, msg),
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
                             color: isDark
                                 ? Colors.white.withValues(alpha: 0.04)
                                 : AppColors.gray100,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : AppColors.gray200,
                             ),
                           ),
                           child: Row(
@@ -284,7 +293,9 @@ class CaptainCommunicationSheet extends StatelessWidget {
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : AppColors.gray900,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.gray900,
                                   ),
                                 ),
                               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
@@ -27,7 +28,8 @@ class CaptainHomePage extends StatefulWidget {
 }
 
 class _CaptainHomePageState extends State<CaptainHomePage> {
-  int _currentIndex = 0; // 0: Home, 1: Trips, 2: Earnings, 3: Notifications, 4: Account
+  int _currentIndex =
+      0; // 0: Home, 1: Trips, 2: Earnings, 3: Notifications, 4: Account
   bool _isOnline = false;
 
   @override
@@ -38,8 +40,10 @@ class _CaptainHomePageState extends State<CaptainHomePage> {
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-        systemNavigationBarColor: isDark ? const Color(0xFF0E1116) : Colors.white,
-        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor:
+            isDark ? const Color(0xFF0E1116) : Colors.white,
+        systemNavigationBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
       ),
     );
 
@@ -111,155 +115,163 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
     const bool hasInternet = true;
 
     return BlocListener<CaptainBloc, CaptainState>(
-          listener: (context, state) {
-            if (state is TripAccepted) {
-              // Push captain navigation screen once a trip is accepted
-              context.push(
-                '/captain/navigation',
-                extra: {
-                  'tripId': state.tripId,
-                  'passengerName': state.passengerName,
-                  'passengerPhone': state.passengerPhone,
-                  'passengerRating': state.passengerRating,
-                  'pickup': state.pickup,
-                  'dropoff': state.dropoff,
-                  'fare': state.fare,
-                  'distance': state.distance,
-                  'duration': state.duration,
-                },
-              ).then((_) {
-                // When returning from navigation, reset online toggle
-                if (context.mounted) {
-                  context.read<CaptainBloc>().add(const ToggleOnlineStatus(false));
-                  widget.onOnlineChanged(false);
-                }
-              });
+      listener: (context, state) {
+        if (state is TripAccepted) {
+          // Push captain navigation screen once a trip is accepted
+          context.push(
+            '/captain/navigation',
+            extra: {
+              'tripId': state.tripId,
+              'passengerName': state.passengerName,
+              'passengerPhone': state.passengerPhone,
+              'passengerRating': state.passengerRating,
+              'pickup': state.pickup,
+              'dropoff': state.dropoff,
+              'fare': state.fare,
+              'distance': state.distance,
+              'duration': state.duration,
+            },
+          ).then((_) {
+            // When returning from navigation, reset online toggle
+            if (context.mounted) {
+              context.read<CaptainBloc>().add(const ToggleOnlineStatus(false));
+              widget.onOnlineChanged(false);
             }
-          },
-          child: Stack(
-            children: [
-              // Interactive OpenStreetMap background with tap listener for markers
-              // This widget NO LONGER rebuilds on every bloc state change! (Huge performance gain)
-              Positioned.fill(
-                child: BlocBuilder<CaptainBloc, CaptainState>(
-                  builder: (context, state) {
-                    final captainPos = state is CaptainLocationUpdated ? state.position : null;
-                    final routePoints = (state is TripAccepted && state.routePoints.isNotEmpty)
+          });
+        }
+      },
+      child: Stack(
+        children: [
+          // Interactive OpenStreetMap background with tap listener for markers
+          // This widget NO LONGER rebuilds on every bloc state change! (Huge performance gain)
+          Positioned.fill(
+            child: BlocBuilder<CaptainBloc, CaptainState>(
+              builder: (context, state) {
+                final captainPos =
+                    state is CaptainLocationUpdated ? state.position : null;
+                final routePoints =
+                    (state is TripAccepted && state.routePoints.isNotEmpty)
                         ? state.routePoints
                         : null;
 
-                    return LaffahMapView(
-                      isDark: isDark,
-                      captainLocation: captainPos,
-                      routePoints: routePoints,
-                      followCaptain: true,
-                      showDefaultMockData: false,
-                      onMarkerTap: (title, snippet, pos) {
-                        setState(() {
-                          _selectedPinTitle = title;
-                          _selectedPinSnippet = snippet;
-                        });
-                      },
-                    );
+                return LaffahMapView(
+                  isDark: isDark,
+                  captainLocation: captainPos,
+                  routePoints: routePoints,
+                  followCaptain: true,
+                  showDefaultMockData: false,
+                  onMarkerTap: (title, snippet, pos) {
+                    setState(() {
+                      _selectedPinTitle = title;
+                      _selectedPinSnippet = snippet;
+                    });
                   },
-                ),
-              ),
+                );
+              },
+            ),
+          ),
 
-              // Top Status Panel (Glowing Status Indicator & Online Toggle Switch)
-              Positioned(
-                top: MediaQuery.of(context).padding.top + AppSpacing.s12,
-                left: AppSpacing.s16,
-                right: AppSpacing.s16,
-                child: BlocSelector<CaptainBloc, CaptainState, bool>(
-                  selector: (state) => widget.isOnline && state is! CaptainOffline,
-                  builder: (context, isOnlineState) {
-                    final bool currentOnlineState = isOnlineState && hasInternet;
+          // Top Status Panel (Glowing Status Indicator & Online Toggle Switch)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + AppSpacing.s12,
+            left: AppSpacing.s16,
+            right: AppSpacing.s16,
+            child: BlocSelector<CaptainBloc, CaptainState, bool>(
+              selector: (state) => widget.isOnline && state is! CaptainOffline,
+              builder: (context, isOnlineState) {
+                final bool currentOnlineState = isOnlineState && hasInternet;
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: _buildTopStatusGlassPanel(
+                      context, isDark, currentOnlineState, hasInternet),
+                );
+              },
+            ),
+          ),
+
+          // Interactive Pin Detail Info Card (shows when tapping any map marker)
+          if (_selectedPinTitle != null)
+            Positioned(
+              bottom: 92,
+              left: 16,
+              right: 16,
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: _buildMarkerDetailCard(isDark),
+              ),
+            ),
+
+          // Bottom Guidance Cards (Offline / Online Status Sync)
+          if (_selectedPinTitle == null)
+            Positioned(
+              bottom: 92,
+              left: 20,
+              right: 20,
+              child: BlocBuilder<CaptainBloc, CaptainState>(
+                builder: (context, state) {
+                  final bool currentOnlineState = widget.isOnline &&
+                      state is! CaptainOffline &&
+                      hasInternet;
+
+                  if (!currentOnlineState && state is! IncomingTripRequest) {
                     return Directionality(
                       textDirection: TextDirection.rtl,
-                      child: _buildTopStatusGlassPanel(context, isDark, currentOnlineState, hasInternet),
+                      child: _buildOfflineGuidanceCard(isDark),
                     );
-                  },
-                ),
+                  }
+
+                  if (currentOnlineState && state is CaptainOnline) {
+                    return Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: _buildSearchingOrdersCard(isDark),
+                    );
+                  }
+
+                  return const SizedBox.shrink();
+                },
               ),
+            ),
 
-              // Interactive Pin Detail Info Card (shows when tapping any map marker)
-              if (_selectedPinTitle != null)
-                Positioned(
-                  bottom: 92,
-                  left: 16,
-                  right: 16,
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: _buildMarkerDetailCard(isDark),
-                  ),
-                ),
-
-              // Bottom Guidance Cards (Offline / Online Status Sync)
-              if (_selectedPinTitle == null)
-                Positioned(
-                  bottom: 92,
-                  left: 20,
-                  right: 20,
-                  child: BlocBuilder<CaptainBloc, CaptainState>(
-                    builder: (context, state) {
-                      final bool currentOnlineState = widget.isOnline && state is! CaptainOffline && hasInternet;
-
-                      if (!currentOnlineState && state is! IncomingTripRequest) {
-                        return Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: _buildOfflineGuidanceCard(isDark),
-                        );
-                      }
-
-                      if (currentOnlineState && state is CaptainOnline) {
-                        return Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: _buildSearchingOrdersCard(isDark),
-                        );
-                      }
-
-                      return const SizedBox.shrink();
+          // Incoming Request Overlay Dialog
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: BlocBuilder<CaptainBloc, CaptainState>(
+              buildWhen: (previous, current) =>
+                  previous is IncomingTripRequest ||
+                  current is IncomingTripRequest,
+              builder: (context, state) {
+                if (state is IncomingTripRequest) {
+                  return TripRequestDialog(
+                    passengerName: state.passengerName,
+                    passengerRating: state.passengerRating,
+                    pickup: state.pickup,
+                    dropoff: state.dropoff,
+                    fare: state.fare,
+                    distance: state.distance,
+                    duration: state.duration,
+                    onAccept: () {
+                      HapticFeedback.heavyImpact();
+                      context.read<CaptainBloc>().add(const AcceptTrip());
                     },
-                  ),
-                ),
-
-              // Incoming Request Overlay Dialog
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: BlocBuilder<CaptainBloc, CaptainState>(
-                  buildWhen: (previous, current) => previous is IncomingTripRequest || current is IncomingTripRequest,
-                  builder: (context, state) {
-                    if (state is IncomingTripRequest) {
-                      return TripRequestDialog(
-                        passengerName: state.passengerName,
-                        passengerRating: state.passengerRating,
-                        pickup: state.pickup,
-                        dropoff: state.dropoff,
-                        fare: state.fare,
-                        distance: state.distance,
-                        duration: state.duration,
-                        onAccept: () {
-                          HapticFeedback.heavyImpact();
-                          context.read<CaptainBloc>().add(const AcceptTrip());
-                        },
-                        onReject: () {
-                          HapticFeedback.mediumImpact();
-                          context.read<CaptainBloc>().add(const RejectTrip());
-                        },
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-            ],
+                    onReject: () {
+                      HapticFeedback.mediumImpact();
+                      context.read<CaptainBloc>().add(const RejectTrip());
+                    },
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ),
-        );
+        ],
+      ),
+    );
   }
 
-  Widget _buildTopStatusGlassPanel(BuildContext context, bool isDark, bool isOnline, bool hasInternet) {
+  Widget _buildTopStatusGlassPanel(
+      BuildContext context, bool isDark, bool isOnline, bool hasInternet) {
     if (!hasInternet) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 40),
@@ -268,17 +280,18 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           color: Colors.redAccent.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(30),
           boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+            BoxShadow(
+                color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
-            SizedBox(width: 8),
+            const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
             Text(
-              'لا يوجد اتصال بالإنترنت',
-              style: TextStyle(
+              AppLocalizations.of(context)!.capt_no_internet,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -286,10 +299,11 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
               ),
             ),
           ],
+
         ),
       );
     }
-    
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.heavyImpact();
@@ -302,20 +316,25 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
         margin: const EdgeInsets.symmetric(horizontal: 30),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         decoration: BoxDecoration(
-          color: isOnline 
-              ? const Color(0xFF00C853).withValues(alpha: 0.95) // Vibrant Green when online
-              : (isDark ? const Color(0xFF1E2330).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.95)),
+          color: isOnline
+              ? const Color(0xFF00C853)
+                  .withValues(alpha: 0.95) // Vibrant Green when online
+              : (isDark
+                  ? const Color(0xFF1E2330).withValues(alpha: 0.9)
+                  : Colors.white.withValues(alpha: 0.95)),
           borderRadius: BorderRadius.circular(40),
           border: Border.all(
-            color: isOnline 
-                ? const Color(0xFF00E676).withValues(alpha: 0.5) 
-                : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05)),
+            color: isOnline
+                ? const Color(0xFF00E676).withValues(alpha: 0.5)
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.05)),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: isOnline 
-                  ? const Color(0xFF00C853).withValues(alpha: 0.4) 
+              color: isOnline
+                  ? const Color(0xFF00C853).withValues(alpha: 0.4)
                   : Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
               blurRadius: isOnline ? 20 : 12,
               spreadRadius: isOnline ? 4 : 0,
@@ -329,22 +348,30 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           children: [
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+              transitionBuilder: (child, anim) =>
+                  ScaleTransition(scale: anim, child: child),
               child: Icon(
                 isOnline ? Icons.power_rounded : Icons.power_off_rounded,
                 key: ValueKey(isOnline),
-                color: isOnline ? Colors.white : (isDark ? Colors.white : AppColors.gray900),
+                color: isOnline
+                    ? Colors.white
+                    : (isDark ? Colors.white : AppColors.gray900),
                 size: 20,
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              isOnline ? 'أنت متصل - جاري البحث' : 'اضغط للاتصال وبدء العمل',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'IBM Plex Sans Arabic',
-                color: isOnline ? Colors.white : (isDark ? Colors.white : AppColors.gray900),
+            Flexible(
+              child: Text(
+                isOnline ? AppLocalizations.of(context)!.capt_online_searching : AppLocalizations.of(context)!.capt_tap_to_go_online,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  color: isOnline
+                      ? Colors.white
+                      : (isDark ? Colors.white : AppColors.gray900),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -358,10 +385,14 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2330).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.98),
+        color: isDark
+            ? const Color(0xFF1E2330).withValues(alpha: 0.95)
+            : Colors.white.withValues(alpha: 0.98),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.05),
         ),
         boxShadow: const [
           BoxShadow(
@@ -395,7 +426,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'أنت غير متصل الآن',
+                      AppLocalizations.of(context)!.capt_you_are_offline,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -404,14 +435,15 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'اضغط على الزر بالأعلى لتصبح متاحاً لاستقبال الطلبات',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.capt_tap_button_above_to_receive,
+                      style: const TextStyle(
                         fontSize: 12.5,
                         color: AppColors.gray500,
                         fontFamily: 'IBM Plex Sans Arabic',
                       ),
                     ),
+
                   ],
                 ),
               ),
@@ -427,7 +459,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2330).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.98),
+        color: isDark
+            ? const Color(0xFF1E2330).withValues(alpha: 0.95)
+            : Colors.white.withValues(alpha: 0.98),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: const Color(0xFF00C853).withValues(alpha: 0.3),
@@ -454,7 +488,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           ),
           const SizedBox(width: 16),
           Text(
-            'جاري البحث عن طلبات...',
+            AppLocalizations.of(context)!.capt_searching_orders,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -507,7 +541,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _selectedPinTitle ?? 'الموقع المختار',
+                  _selectedPinTitle ?? AppLocalizations.of(context)!.capt_selected_location,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
@@ -515,7 +549,8 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                     color: isDark ? Colors.white : AppColors.gray900,
                   ),
                 ),
-                if (_selectedPinSnippet != null && _selectedPinSnippet!.isNotEmpty)
+                if (_selectedPinSnippet != null &&
+                    _selectedPinSnippet!.isNotEmpty)
                   Text(
                     _selectedPinSnippet!,
                     style: const TextStyle(
@@ -528,7 +563,8 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.gray500),
+            icon: const Icon(Icons.close_rounded,
+                size: 20, color: AppColors.gray500),
             onPressed: () {
               setState(() {
                 _selectedPinTitle = null;

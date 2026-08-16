@@ -52,21 +52,25 @@ class RejectTrip extends CaptainEvent {
 }
 
 /// Event to transition the current trip progress
-/// Progress levels: 'arrived' (وصلت), 'started' (ابدأ الرحلة), 'completed' (إنهاء الرحلة)
+/// Progress levels: 'arrived' (وصلت), 'started'/'in_transit' (ابدأ الرحلة), 'completed' (إنهاء الرحلة)
 class UpdateTripProgressState extends CaptainEvent {
   final String nextStatus; // 'arrived', 'started', 'completed'
-  const UpdateTripProgressState(this.nextStatus);
+  final String? tripId;
+
+  const UpdateTripProgressState(this.nextStatus, {this.tripId});
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is UpdateTripProgressState &&
           runtimeType == other.runtimeType &&
-          nextStatus == other.nextStatus;
+          nextStatus == other.nextStatus &&
+          tripId == other.tripId;
 
   @override
-  int get hashCode => nextStatus.hashCode;
+  int get hashCode => nextStatus.hashCode ^ tripId.hashCode;
 }
+
 
 /// Event to update the captain's location
 class UpdateCaptainLocation extends CaptainEvent {
@@ -91,4 +95,3 @@ class IncomingTripRequestReceived extends CaptainEvent {
 
   const IncomingTripRequestReceived(this.data);
 }
-

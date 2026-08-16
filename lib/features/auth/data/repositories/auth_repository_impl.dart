@@ -26,7 +26,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> login(String phone, String password) async {
+  Future<Either<Failure, UserEntity>> login(
+      String phone, String password) async {
     try {
       final response = await remoteDataSource.login(phone, password);
       if (response.success && response.data != null) {
@@ -37,15 +38,15 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } on DioException catch (e) {
       if (e.error is LaravelValidationException) {
-        return Left(ValidationFailure((e.error as LaravelValidationException).message));
+        return Left(
+            ValidationFailure((e.error as LaravelValidationException).message));
       }
-      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Invalid credentials'));
+      return Left(ServerFailure(
+          e.response?.data?['message']?.toString() ?? 'Invalid credentials'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
-
-
 
   @override
   Future<Either<Failure, UserEntity>> registerPassenger({
@@ -156,14 +157,16 @@ class AuthRepositoryImpl implements AuthRepository {
       if (e.response?.statusCode == 404) {
         return const Left(ServerFailure('Phone number not registered'));
       }
-      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Error sending code'));
+      return Left(ServerFailure(
+          e.response?.data?['message']?.toString() ?? 'Error sending code'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> verifyResetCode(String phone, String code) async {
+  Future<Either<Failure, void>> verifyResetCode(
+      String phone, String code) async {
     try {
       final response = await remoteDataSource.verifyResetCode(phone, code);
       if (response.success) {
@@ -175,16 +178,19 @@ class AuthRepositoryImpl implements AuthRepository {
       if (e.response?.statusCode == 400) {
         return const Left(ServerFailure('Invalid code'));
       }
-      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Error verifying code'));
+      return Left(ServerFailure(
+          e.response?.data?['message']?.toString() ?? 'Error verifying code'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword(String phone, String code, String newPassword) async {
+  Future<Either<Failure, void>> resetPassword(
+      String phone, String code, String newPassword) async {
     try {
-      final response = await remoteDataSource.resetPassword(phone, code, newPassword);
+      final response =
+          await remoteDataSource.resetPassword(phone, code, newPassword);
       if (response.success) {
         return const Right(null);
       } else {
@@ -194,7 +200,8 @@ class AuthRepositoryImpl implements AuthRepository {
       if (e.response?.statusCode == 400) {
         return const Left(ServerFailure('Invalid data'));
       }
-      return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'Error setting password'));
+      return Left(ServerFailure(e.response?.data?['message']?.toString() ??
+          'Error setting password'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

@@ -9,11 +9,15 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/api_endpoints.dart';
 
+import '../../../../core/config/app_env.dart';
+
 class PinAdjustMapPage extends StatefulWidget {
-  final String locationType;
+  final LatLng initialPosition;
+  final String locationType; // 'pickup' or 'dropoff'
 
   const PinAdjustMapPage({
     super.key,
+    this.initialPosition = const LatLng(15.3421, 44.2081),
     required this.locationType,
   });
 
@@ -30,7 +34,7 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
   Timer? _debounce;
   final Dio _dio = Dio();
 
-  static const String _mapTilerKey = 'Ucu928ZnAuiAkBLP4pZE';
+  static String get _mapTilerKey => AppEnv.mapTilerKey;
 
   @override
   void initState() {
@@ -73,13 +77,16 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
 
   Future<void> _fetchAddress(double lat, double lon) async {
     try {
-      final String url = '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeReverse}';
-      final response = await _dio.get(url, queryParameters: {'lat': lat, 'lon': lon});
+      final String url =
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeReverse}';
+      final response =
+          await _dio.get(url, queryParameters: {'lat': lat, 'lon': lon});
 
       if (response.statusCode == 200 && mounted) {
         final data = response.data;
         setState(() {
-          _currentStreetName = data['name'] ?? data['display_name'] ?? 'موقع محدد';
+          _currentStreetName =
+              data['name'] ?? data['display_name'] ?? 'موقع محدد';
           _isLoadingAddress = false;
         });
       }
@@ -105,7 +112,9 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final title = widget.locationType == 'pickup' ? 'حدد نقطة الانطلاق بدقة' : 'حدد وجهتك بدقة';
+    final title = widget.locationType == 'pickup'
+        ? 'حدد نقطة الانطلاق بدقة'
+        : 'حدد وجهتك بدقة';
     final tileUrl = isDark
         ? 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=$_mapTilerKey'
         : 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=$_mapTilerKey';
@@ -149,7 +158,8 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.gray900.withValues(alpha: 0.85),
                         borderRadius: AppSpacing.borderSM,

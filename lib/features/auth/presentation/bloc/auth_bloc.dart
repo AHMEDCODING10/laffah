@@ -122,7 +122,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-    final result = await authRepository.verifyResetCode(event.phone, event.code);
+    final result =
+        await authRepository.verifyResetCode(event.phone, event.code);
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
       (_) => emit(VerifyResetCodeSuccess(phone: event.phone, code: event.code)),
@@ -134,7 +135,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-    final result = await authRepository.resetPassword(event.phone, event.code, event.newPassword);
+    final result = await authRepository.resetPassword(
+        event.phone, event.code, event.newPassword);
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
       (_) => emit(const ResetPasswordSuccess()),

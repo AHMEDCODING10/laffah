@@ -18,6 +18,8 @@ import 'core/theme/theme_controller.dart';
 import 'core/di/injection_container.dart' as di;
 import 'core/network/dio_client.dart';
 import 'core/router/app_router.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'core/services/firebase_notification_service.dart';
 
 /// Laffah Application Entry Point
 /// ===============================
@@ -37,10 +39,21 @@ Future<void> main() async {
   await di.init();
   debugPrint("✅ [Laffah] Dependency Injection Ready!");
 
+  // 2.1 Initialize Firebase & Push Notifications
+  try {
+    debugPrint("🔥 [Laffah] Initializing Firebase...");
+    await Firebase.initializeApp();
+    await FirebaseNotificationService().initialize();
+    debugPrint("✅ [Laffah] Firebase & Notifications Ready!");
+  } catch (e) {
+    debugPrint("⚠️ [Laffah] Firebase initialization skipped or failed: $e");
+  }
+
   // 3. Global Security Listener for 401 Unauthorized
   NetworkEventBus.authEvents.listen((event) {
     if (event == 'UNAUTHENTICATED') {
-      debugPrint("🔒 [Laffah Security] 401 Unauthorized detected. Purging session and redirecting to Auth Landing.");
+      debugPrint(
+          "🔒 [Laffah Security] 401 Unauthorized detected. Purging session and redirecting to Auth Landing.");
       AppRouter.router.go(LaffahRoutes.authLanding);
     }
   });

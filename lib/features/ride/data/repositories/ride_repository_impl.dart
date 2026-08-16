@@ -16,20 +16,31 @@ class RideRepositoryImpl implements RideRepository {
     required this.webSocketClient,
   });
 
-
   @override
   Future<Either<Failure, RideEntity>> requestRide({
     required String pickupLocation,
     required String dropoffLocation,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    double? dropoffLatitude,
+    double? dropoffLongitude,
     required String rideType,
     required double expectedPrice,
+    List<Map<String, dynamic>>? stops,
+    int? promoCodeId,
   }) async {
     try {
       final response = await remoteDataSource.requestRide(
         pickupLocation: pickupLocation,
         dropoffLocation: dropoffLocation,
+        pickupLatitude: pickupLatitude,
+        pickupLongitude: pickupLongitude,
+        dropoffLatitude: dropoffLatitude,
+        dropoffLongitude: dropoffLongitude,
         rideType: rideType,
         expectedPrice: expectedPrice,
+        stops: stops,
+        promoCodeId: promoCodeId,
       );
 
       if (response.success && response.data != null) {
@@ -39,7 +50,10 @@ class RideRepositoryImpl implements RideRepository {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 422) {
-        return const Left(ValidationFailure('بيانات الرحلة غير صالحة'));
+        final errorMsg = e.response?.data is Map && e.response?.data['message'] != null
+            ? e.response?.data['message'].toString()
+            : 'بيانات الرحلة غير صالحة';
+        return Left(ValidationFailure(errorMsg!));
       }
       return const Left(ServerFailure('حدث خطأ أثناء الاتصال بخوادم لفة'));
     } catch (e) {
@@ -57,9 +71,10 @@ class RideRepositoryImpl implements RideRepository {
         return const Right(null);
       }
     } on DioException catch (_) {
-      return const Right(null);
-    } catch (_) {
-      return const Right(null);
+      return const Left(
+          ServerFailure('حدث خطأ أثناء الاتصال بالخادم لإلغاء الرحلة'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -69,7 +84,12 @@ class RideRepositoryImpl implements RideRepository {
       final trips = await remoteDataSource.getTripHistory();
       return Right(trips);
     } on DioException catch (e) {
-      return Left(ServerFailure('تعذر جلب سجل الرحلات: $e'));
+      if (e.response?.statusCode == 401) {
+        return const Left(
+            ServerFailure('انتهت جلسة الدخول، يرجى تسجيل الدخول مجدداً'));
+      }
+      return const Left(
+          ServerFailure('تعذّر تحميل سجل الرحلات. تحقق من اتصالك بالإنترنت'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

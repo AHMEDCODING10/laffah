@@ -86,7 +86,8 @@ class RideOptionsLoaded extends RideState {
   });
 
   @override
-  List<Object?> get props => [pickup, dropoff, options, distance, duration, fare];
+  List<Object?> get props =>
+      [pickup, dropoff, options, distance, duration, fare];
 }
 
 class RideBookingConfirmed extends RideState {

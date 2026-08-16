@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 import '../../../../core/router/app_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// CaptainParcelDetailsPage — Detailed view for Captains before accepting
 /// or during a parcel delivery. Shows pickup/drop-off points, parcel type,
@@ -18,12 +19,13 @@ class CaptainParcelDetailsPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900, size: 20),
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -54,7 +56,9 @@ appBar: AppBar(
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.05)
+                        : AppColors.gray200,
                   ),
                 ),
                 child: Row(
@@ -65,7 +69,8 @@ appBar: AppBar(
                         color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.inventory_2_rounded, color: Color(0xFF3B82F6), size: 32),
+                      child: const Icon(Icons.inventory_2_rounded,
+                          color: Color(0xFF3B82F6), size: 32),
                     ),
                     AppSpacing.w16,
                     Expanded(
@@ -78,7 +83,8 @@ appBar: AppBar(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? AppColors.white : AppColors.gray900,
+                              color:
+                                  isDark ? AppColors.white : AppColors.gray900,
                             ),
                           ),
                           AppSpacing.h4,
@@ -87,14 +93,17 @@ appBar: AppBar(
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 13,
-                              color: isDark ? AppColors.gray400 : AppColors.gray600,
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600,
                             ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                         borderRadius: AppSpacing.radiusMD,
@@ -114,7 +123,7 @@ appBar: AppBar(
               ),
 
               AppSpacing.h32,
-              
+
               Text(
                 'مسار التوصيل',
                 style: TextStyle(
@@ -125,7 +134,7 @@ appBar: AppBar(
                 ),
               ),
               AppSpacing.h16,
-              
+
               // Route Timeline
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s20),
@@ -133,7 +142,9 @@ appBar: AppBar(
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusMD,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.05)
+                        : AppColors.gray200,
                   ),
                 ),
                 child: Column(
@@ -150,9 +161,11 @@ appBar: AppBar(
                       decoration: BoxDecoration(
                         border: Border(
                           right: BorderSide(
-                            color: isDark ? AppColors.gray700 : AppColors.gray300,
+                            color:
+                                isDark ? AppColors.gray700 : AppColors.gray300,
                             width: 2,
-                            style: BorderStyle.solid, // Custom dashed could be drawn
+                            style: BorderStyle
+                                .solid, // Custom dashed could be drawn
                           ),
                         ),
                       ),
@@ -166,7 +179,7 @@ appBar: AppBar(
                   ],
                 ),
               ),
-              
+
               AppSpacing.h32,
 
               Text(
@@ -179,7 +192,7 @@ appBar: AppBar(
                 ),
               ),
               AppSpacing.h16,
-              
+
               // Contact Sender
               _buildContactCard(
                 title: 'المرسل',
@@ -195,7 +208,7 @@ appBar: AppBar(
                 phone: '+967 73X XXX XXX',
                 isDark: isDark,
               ),
-              
+
               AppSpacing.h40,
 
               // Action Buttons
@@ -269,7 +282,7 @@ appBar: AppBar(
     required bool isDark,
   }) {
     final color = isPickup ? const Color(0xFF3B82F6) : const Color(0xFF22C55E);
-    
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -333,7 +346,9 @@ appBar: AppBar(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -344,7 +359,8 @@ appBar: AppBar(
               color: isDark ? AppColors.gray800 : AppColors.gray100,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.person_rounded, color: isDark ? AppColors.gray400 : AppColors.gray600),
+            child: Icon(Icons.person_rounded,
+                color: isDark ? AppColors.gray400 : AppColors.gray600),
           ),
           AppSpacing.w16,
           Expanded(
@@ -372,7 +388,15 @@ appBar: AppBar(
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () async {
+              final Uri telUri = Uri(
+                scheme: 'tel',
+                path: '+967700000000', // Mock Customer Number
+              );
+              if (await canLaunchUrl(telUri)) {
+                await launchUrl(telUri);
+              }
+            },
             icon: const Icon(Icons.call_rounded, color: Color(0xFF22C55E)),
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.1),
@@ -383,4 +407,3 @@ appBar: AppBar(
     );
   }
 }
-

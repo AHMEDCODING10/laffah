@@ -6,13 +6,14 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../domain/usecases/upload_document_usecase.dart';
+import '../../domain/repositories/captain_repository.dart';
 
 /// Enum representing the verification status of a document
 enum DocumentStatus {
-  empty,        // Not uploaded yet
-  underReview,  // Uploaded, waiting for admin approval
-  approved,     // Verified and approved
-  rejected,     // Rejected with feedback
+  empty, // Not uploaded yet
+  underReview, // Uploaded, waiting for admin approval
+  approved, // Verified and approved
+  rejected, // Rejected with feedback
 }
 
 /// Model class representing a Captain Document
@@ -43,10 +44,12 @@ class CaptainDocumentUploadPage extends StatefulWidget {
   const CaptainDocumentUploadPage({super.key});
 
   @override
-  State<CaptainDocumentUploadPage> createState() => _CaptainDocumentUploadPageState();
+  State<CaptainDocumentUploadPage> createState() =>
+      _CaptainDocumentUploadPageState();
 }
 
-class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> with SingleTickerProviderStateMixin {
+class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage>
+    with SingleTickerProviderStateMixin {
   late List<CaptainDocument> _documents;
   bool _isSubmitting = false;
 
@@ -59,51 +62,40 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
   void _initializeDocuments() {
     _documents = [
       CaptainDocument(
-        id: 'national_id',
+        id: 'id_card',
         title: 'البطاقة الشخصية (الهوية الوطنية)',
-        description: 'صورة واضحة للوجهين الأمامي والخلفي للبطاقة الشخصية الذكية أو جواز السفر الساري.',
+        description:
+            'صورة واضحة للوجهين الأمامي والخلفي للبطاقة الشخصية الذكية أو جواز السفر الساري.',
         icon: Icons.badge_rounded,
         status: DocumentStatus.empty,
       ),
       CaptainDocument(
         id: 'drivers_license',
         title: 'رخصة القيادة الشخصية',
-        description: 'رخصة قيادة سارية المفعول صادرة من الإدارة العامة للمرور في الجمهورية اليمنية.',
+        description:
+            'رخصة قيادة سارية المفعول صادرة من الإدارة العامة للمرور في الجمهورية اليمنية.',
         icon: Icons.card_membership_rounded,
-        status: DocumentStatus.empty,
-      ),
-      CaptainDocument(
-        id: 'vehicle_ownership',
-        title: 'كرت ملكية المركبة (الاستمارة)',
-        description: 'صورة واضحة لكرت الملكية الخاص بالدراجة النارية أو ط§ظ„ط³ظٹط§رة المستخدمة في التوصيل.',
-        icon: Icons.assignment_rounded,
-        status: DocumentStatus.empty,
-      ),
-      CaptainDocument(
-        id: 'criminal_record',
-        title: 'صحيفة الحالة الجنائية (الفيش والتشبيه)',
-        description: 'شهادة حسن سيرة وسلوك حديثة صادرة من إدارة الأدلة الجنائية بوزارة الداخلية.',
-        icon: Icons.gavel_rounded,
         status: DocumentStatus.empty,
       ),
     ];
   }
 
-  // Calculate dynamic verification completion percentage
   double _calculateProgress() {
     int score = 0;
     for (var doc in _documents) {
       if (doc.status == DocumentStatus.approved) {
-        score += 25;
+        score += 50;
       } else if (doc.status == DocumentStatus.underReview) {
-        score += 15; // Partial progress for submitted documents
+        score += 30; // Partial progress for submitted documents
       }
     }
     return score / 100.0;
   }
 
   int _getApprovedCount() {
-    return _documents.where((doc) => doc.status == DocumentStatus.approved).length;
+    return _documents
+        .where((doc) => doc.status == DocumentStatus.approved)
+        .length;
   }
 
   int _getSubmittedCount() {
@@ -114,12 +106,14 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage> w
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = _calculateProgress();
-    final isAllSubmitted = _documents.every((doc) => doc.status == DocumentStatus.approved || doc.status == DocumentStatus.underReview);
+    final isAllSubmitted = _documents.every((doc) =>
+        doc.status == DocumentStatus.approved ||
+        doc.status == DocumentStatus.underReview);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
@@ -146,13 +140,14 @@ appBar: AppBar(
             children: [
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
                   children: [
                     // ==========================================
                     // Dynamic Header & Onboarding Progress Card
                     // ==========================================
                     _buildProgressHeaderCard(isDark, progress),
-                    
+
                     AppSpacing.h24,
 
                     // ==========================================
@@ -229,31 +224,34 @@ appBar: AppBar(
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
                 decoration: BoxDecoration(
-                  color: progress == 1.0 
+                  color: progress == 1.0
                       ? AppColors.success.withValues(alpha: 0.12)
                       : AppColors.primary500.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: progress == 1.0 
+                    color: progress == 1.0
                         ? AppColors.success.withValues(alpha: 0.3)
                         : AppColors.primary500.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
-                  progress == 1.0 ? 'حساب موثق ✓' : 'قيد الاكتمال',
+                  progress == 1.0 ? 'حساب موثق ' : 'قيد الاكتمال',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.w900,
                     fontSize: 10,
-                    color: progress == 1.0 ? AppColors.success : AppColors.primary500,
+                    color: progress == 1.0
+                        ? AppColors.success
+                        : AppColors.primary500,
                   ),
                 ),
               ),
             ],
           ),
-          
+
           AppSpacing.h16,
 
           // Linear Progress Bar
@@ -264,7 +262,9 @@ appBar: AppBar(
                 Container(
                   height: 8,
                   width: double.infinity,
-                  color: isDark ? AppColors.white.withValues(alpha: 0.06) : AppColors.gray200,
+                  color: isDark
+                      ? AppColors.white.withValues(alpha: 0.06)
+                      : AppColors.gray200,
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
@@ -391,12 +391,16 @@ appBar: AppBar(
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.white.withValues(alpha: 0.9),
+          color: isDark
+              ? AppColors.surfaceDark.withValues(alpha: 0.6)
+              : AppColors.white.withValues(alpha: 0.9),
           borderRadius: AppSpacing.borderLG,
           border: Border.all(
             color: doc.status == DocumentStatus.rejected
                 ? AppColors.danger.withValues(alpha: 0.3)
-                : (isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.gray200),
+                : (isDark
+                    ? AppColors.white.withValues(alpha: 0.04)
+                    : AppColors.gray200),
             width: doc.status == DocumentStatus.rejected ? 1.5 : 1.0,
           ),
         ),
@@ -456,7 +460,7 @@ appBar: AppBar(
                 ),
               ],
             ),
-            
+
             AppSpacing.h16,
             const Divider(height: 1, thickness: 0.8),
             AppSpacing.h12,
@@ -576,7 +580,8 @@ appBar: AppBar(
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         color: doc.status == DocumentStatus.underReview
             ? btnColor.withValues(alpha: 0.08)
@@ -631,7 +636,8 @@ appBar: AppBar(
               child: Padding(
                 padding: EdgeInsets.all(8.0),
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(AppColors.primary500),
                 ),
               ),
             )
@@ -643,8 +649,10 @@ appBar: AppBar(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   foregroundColor: AppColors.white,
-                  disabledBackgroundColor: isDark ? AppColors.gray800 : AppColors.gray200,
-                  disabledForegroundColor: isDark ? AppColors.gray600 : AppColors.gray400,
+                  disabledBackgroundColor:
+                      isDark ? AppColors.gray800 : AppColors.gray200,
+                  disabledForegroundColor:
+                      isDark ? AppColors.gray600 : AppColors.gray400,
                   elevation: isAllSubmitted ? 4 : 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: AppSpacing.borderMD,
@@ -654,7 +662,9 @@ appBar: AppBar(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      isAllSubmitted ? 'إرسال الملف الكامل للمراجعة والتفعيل' : 'يرجى استكمال جميع الوثائق أولًا',
+                      isAllSubmitted
+                          ? 'إرسال الملف الكامل للمراجعة والتفعيل'
+                          : 'يرجى استكمال جميع الوثائق أولًا',
                       style: const TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontWeight: FontWeight.w900,
@@ -827,7 +837,7 @@ appBar: AppBar(
               ),
               AppSpacing.h12,
               const Text(
-                'لقد استلمنا ملفك بنجاح. يقوم فريق التحقق والامتثال بمطاط¨ظ‚ط© البيانات مع المكاتب الحكومية ذات العلاقة في صنعاء. ط³نقوم بإرسال إشعار فوري فور تفعيلها.',
+                'لقد استلمنا ملفك بنجاح. يقوم فريق التحقق والامتثال بمطابقة البيانات مع المكاتب الحكومية ذات العلاقة في صنعاء. سنقوم بإرسال إشعار فوري فور تفعيلها.',
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 13,
@@ -884,7 +894,8 @@ appBar: AppBar(
                 top: AppSpacing.s24,
                 left: AppSpacing.s24,
                 right: AppSpacing.s24,
-                bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.s24,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.s24,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -901,7 +912,7 @@ appBar: AppBar(
                       ),
                     ),
                   ),
-                  
+
                   AppSpacing.h24,
 
                   Row(
@@ -925,7 +936,7 @@ appBar: AppBar(
                       ),
                     ],
                   ),
-                  
+
                   AppSpacing.h16,
 
                   Text(
@@ -996,7 +1007,8 @@ appBar: AppBar(
                           ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: AppColors.primary500, width: 1.5),
+                            side: const BorderSide(
+                                color: AppColors.primary500, width: 1.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: AppSpacing.borderMD,
                             ),
@@ -1006,7 +1018,8 @@ appBar: AppBar(
                       AppSpacing.w16,
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () => _handleDocumentUpload(doc, 'معرض الصور'),
+                          onPressed: () =>
+                              _handleDocumentUpload(doc, 'معرض الصور'),
                           icon: const Icon(
                             Icons.photo_library_rounded,
                             color: AppColors.white,
@@ -1031,7 +1044,7 @@ appBar: AppBar(
                       ),
                     ],
                   ),
-                  
+
                   AppSpacing.h16,
                 ],
               ),
@@ -1048,7 +1061,7 @@ appBar: AppBar(
 
     final picker = ImagePicker();
     final isCamera = source == 'كاميرا';
-    
+
     final XFile? image = await picker.pickImage(
       source: isCamera ? ImageSource.camera : ImageSource.gallery,
       imageQuality: 80,
@@ -1128,7 +1141,7 @@ appBar: AppBar(
           const SnackBar(
             backgroundColor: AppColors.success,
             content: Text(
-              'تم رفع المستند بنجاح! 🎉',
+              'تم رفع المستند بنجاح! ',
               style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
             ),
           ),
@@ -1137,76 +1150,112 @@ appBar: AppBar(
     );
   }
 
-
-  void _submitAllDocuments() {
+  Future<void> _submitAllDocuments() async {
     setState(() {
       _isSubmitting = true;
     });
 
-    // TODO: Submit to backend
-    setState(() {
-      _isSubmitting = false;
-    });
+    try {
+      final repository = sl<CaptainRepository>();
+      
+      for (var doc in _documents) {
+        if (doc.filePath != null && doc.status != DocumentStatus.underReview && doc.status != DocumentStatus.approved) {
+          final file = File(doc.filePath!);
+          final result = await repository.uploadDocument(file, doc.id);
+          
+          result.fold(
+            (failure) {
+              throw Exception('Failed to upload ${doc.title}');
+            },
+            (success) {
+              setState(() {
+                doc.status = DocumentStatus.underReview;
+              });
+            },
+          );
+        }
+      }
 
-    // Show Success dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.surfaceDark
-              : AppColors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppSpacing.borderLG,
-          ),
-          icon: const Icon(
-            Icons.mark_email_read_rounded,
-            color: AppColors.success,
-            size: 50,
-          ),
-          title: const Text(
-            'تم تقديم الملف للمراجعة النهائية',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      if (!mounted) return;
+
+      // Show Success dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.surfaceDark
+                : AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: AppSpacing.borderLG,
             ),
-          ),
-          content: const Text(
-            'تهانينا! لقد قمت بتقديم جميع وثائق توثيق حساب الكابتن بنجاح. ط³ظٹظ‚ظˆم فريق لَفَّة (لفّة) بمراجعة الملف وتنشيط حسابك بالكامل خلال ساعات قليلة.\n\nيمكنك الآن استئناف استكشاف الواجهات ومحاكاة الرحلات في غضون ذلك.',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 13,
-              height: 1.5,
-              color: AppColors.gray600,
+            icon: const Icon(
+              Icons.mark_email_read_rounded,
+              color: AppColors.success,
+              size: 50,
             ),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx); // Close dialog
-                Navigator.pop(context); // Go back to Home or previous screen
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary500,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppSpacing.borderXS,
-                ),
-              ),
-              child: const Text(
-                'حسناً، الانتقال للرئيسية',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                ),
+            title: const Text(
+              'تم تقديم الملف للمراجعة النهائية',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
               ),
             ),
-          ],
+            content: const Text(
+              'تهانينا! لقد قمت بتقديم جميع وثائق توثيق حساب الكابتن بنجاح. سيقوم فريق لَفَّة بمراجعة الملف وتنشيط حسابك بالكامل خلال ساعات قليلة.\n\nيمكنك الآن استئناف استكشاف الواجهات ومحاكاة الرحلات في غضون ذلك.',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontSize: 13,
+                height: 1.5,
+                color: AppColors.gray600,
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // Close dialog
+                  Navigator.pop(context); // Go back to Home or previous screen
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary500,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppSpacing.borderXS,
+                  ),
+                ),
+                child: const Text(
+                  'حسناً، الانتقال للرئيسية',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.danger,
+          content: Text(
+            'حدث خطأ أثناء رفع المستندات: $e',
+            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+          ),
+        ),
+      );
+    }
   }
 }

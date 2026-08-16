@@ -4,14 +4,16 @@ import '../../../../core/network/dio_client.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
-
-  Future<BaseResponseModel<UserModel>> registerPassenger(Map<String, dynamic> data);
-  Future<BaseResponseModel<UserModel>> registerCaptain(Map<String, dynamic> data);
+  Future<BaseResponseModel<UserModel>> registerPassenger(
+      Map<String, dynamic> data);
+  Future<BaseResponseModel<UserModel>> registerCaptain(
+      Map<String, dynamic> data);
   Future<BaseResponseModel<UserModel>> login(String phone, String password);
   Future<void> logoutFromServer();
   Future<BaseResponseModel<dynamic>> forgotPassword(String phone);
   Future<BaseResponseModel<dynamic>> verifyResetCode(String phone, String code);
-  Future<BaseResponseModel<dynamic>> resetPassword(String phone, String code, String newPassword);
+  Future<BaseResponseModel<dynamic>> resetPassword(
+      String phone, String code, String newPassword);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -19,33 +21,37 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   AuthRemoteDataSourceImpl(this.dioClient);
 
-
   @override
-  Future<BaseResponseModel<UserModel>> login(String phone, String password) async {
+  Future<BaseResponseModel<UserModel>> login(
+      String phone, String password) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.login,
       data: {'phone': phone, 'password': password},
     );
-    return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
+    return BaseResponseModel.fromJson(response.data,
+        (data) => UserModel.fromJson(data as Map<String, dynamic>));
   }
 
-
   @override
-  Future<BaseResponseModel<UserModel>> registerPassenger(Map<String, dynamic> data) async {
+  Future<BaseResponseModel<UserModel>> registerPassenger(
+      Map<String, dynamic> data) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.registerPassenger,
       data: data,
     );
-    return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
+    return BaseResponseModel.fromJson(response.data,
+        (data) => UserModel.fromJson(data as Map<String, dynamic>));
   }
 
   @override
-  Future<BaseResponseModel<UserModel>> registerCaptain(Map<String, dynamic> data) async {
+  Future<BaseResponseModel<UserModel>> registerCaptain(
+      Map<String, dynamic> data) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.registerCaptain,
       data: data,
     );
-    return BaseResponseModel.fromJson(response.data, (data) => UserModel.fromJson(data as Map<String, dynamic>));
+    return BaseResponseModel.fromJson(response.data,
+        (data) => UserModel.fromJson(data as Map<String, dynamic>));
   }
 
   @override
@@ -63,7 +69,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<BaseResponseModel<dynamic>> verifyResetCode(String phone, String code) async {
+  Future<BaseResponseModel<dynamic>> verifyResetCode(
+      String phone, String code) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.verifyResetCode,
       data: {'phone': phone, 'code': code},
@@ -72,7 +79,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<BaseResponseModel<dynamic>> resetPassword(String phone, String code, String newPassword) async {
+  Future<BaseResponseModel<dynamic>> resetPassword(
+      String phone, String code, String newPassword) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.resetPassword,
       data: {'phone': phone, 'code': code, 'password': newPassword},

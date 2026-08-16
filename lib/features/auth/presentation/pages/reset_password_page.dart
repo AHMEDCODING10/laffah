@@ -21,7 +21,8 @@ class ResetPasswordPage extends StatefulWidget {
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -29,7 +30,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     if (_passwordController.text.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.auth_val_pass_8, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+          content: Text(AppLocalizations.of(context)!.auth_val_pass_8,
+              style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -39,7 +43,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.auth_val_pass_mismatch_2, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+          content: Text(AppLocalizations.of(context)!.auth_val_pass_mismatch_2,
+              style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -47,25 +54,25 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
 
     context.read<AuthBloc>().add(ResetPasswordRequested(
-      phone: widget.phone,
-      code: widget.code,
-      newPassword: _passwordController.text,
-    ));
+          phone: widget.phone,
+          code: widget.code,
+          newPassword: _passwordController.text,
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
+    return Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900, size: 20),
             onPressed: () => context.pop(),
           ),
         ),
@@ -74,14 +81,21 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                  content: Text(state.message,
+                      style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold)),
                   backgroundColor: AppColors.danger,
                 ),
               );
             } else if (state is ResetPasswordSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(AppLocalizations.of(context)!.auth_pass_set_success, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                  content: Text(
+                      AppLocalizations.of(context)!.auth_pass_set_success,
+                      style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold)),
                   backgroundColor: AppColors.success,
                 ),
               );
@@ -132,11 +146,17 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         color: isDark ? AppColors.gray600 : AppColors.gray400,
                       ),
                       filled: true,
-                      fillColor: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray50,
-                      prefixIcon: Icon(Icons.lock_outline_rounded, color: isDark ? AppColors.gray500 : AppColors.gray400),
+                      fillColor: isDark
+                          ? AppColors.white.withValues(alpha: 0.05)
+                          : AppColors.gray50,
+                      prefixIcon: Icon(Icons.lock_outline_rounded,
+                          color:
+                              isDark ? AppColors.gray500 : AppColors.gray400),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
                           color: isDark ? AppColors.gray500 : AppColors.gray400,
                         ),
                         onPressed: () {
@@ -148,7 +168,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
+                          color: isDark
+                              ? AppColors.white.withValues(alpha: 0.1)
+                              : AppColors.gray300,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -160,7 +182,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                     ),
                   ),
-                  
+
                   AppSpacing.h16,
 
                   // Confirm Password Field
@@ -179,11 +201,17 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         color: isDark ? AppColors.gray600 : AppColors.gray400,
                       ),
                       filled: true,
-                      fillColor: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray50,
-                      prefixIcon: Icon(Icons.lock_outline_rounded, color: isDark ? AppColors.gray500 : AppColors.gray400),
+                      fillColor: isDark
+                          ? AppColors.white.withValues(alpha: 0.05)
+                          : AppColors.gray50,
+                      prefixIcon: Icon(Icons.lock_outline_rounded,
+                          color:
+                              isDark ? AppColors.gray500 : AppColors.gray400),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
                           color: isDark ? AppColors.gray500 : AppColors.gray400,
                         ),
                         onPressed: () {
@@ -195,7 +223,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
+                          color: isDark
+                              ? AppColors.white.withValues(alpha: 0.1)
+                              : AppColors.gray300,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -212,9 +242,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       return PrimaryGradientButton(
-                        text: AppLocalizations.of(context)!.auth_change_password,
+                        text:
+                            AppLocalizations.of(context)!.auth_change_password,
                         isLoading: state is AuthLoading,
-                        onPressed: state is AuthLoading ? () {} : _resetPassword,
+                        onPressed:
+                            state is AuthLoading ? () {} : _resetPassword,
                       );
                     },
                   ),
@@ -224,7 +256,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             ),
           ),
         ),
-      ),
     );
   }
 }

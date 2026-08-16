@@ -16,21 +16,26 @@ class CaptainWalletBloc extends Bloc<CaptainWalletEvent, CaptainWalletState> {
     on<RequestPayoutEvent>(_onRequestPayout);
   }
 
-  Future<void> _onFetchWalletDetails(FetchWalletDetails event, Emitter<CaptainWalletState> emit) async {
+  Future<void> _onFetchWalletDetails(
+      FetchWalletDetails event, Emitter<CaptainWalletState> emit) async {
     emit(CaptainWalletLoading());
     final failureOrWallet = await getCaptainWalletUseCase();
     failureOrWallet.fold(
-      (failure) => emit(const CaptainWalletError(message: 'حدث خطأ أثناء جلب بيانات المحفظة')),
+      (failure) => emit(const CaptainWalletError(
+          message: 'capt_wallet_err_fetch')),
       (wallet) => emit(CaptainWalletLoaded(wallet: wallet)),
     );
   }
 
-  Future<void> _onRequestPayout(RequestPayoutEvent event, Emitter<CaptainWalletState> emit) async {
+  Future<void> _onRequestPayout(
+      RequestPayoutEvent event, Emitter<CaptainWalletState> emit) async {
     // Optimistic UI update or just show loading, in a real app you might want a separate state
     // For now we just call the repository and then refetch
-    final failureOrSuccess = await repository.requestPayout(event.amount, event.method, event.accountNumber);
+    final failureOrSuccess = await repository.requestPayout(
+        event.amount, event.method, event.accountNumber);
     failureOrSuccess.fold(
-      (failure) => emit(const CaptainWalletError(message: 'حدث خطأ أثناء طلب السحب')),
+      (failure) =>
+          emit(const CaptainWalletError(message: 'capt_wallet_err_payout')),
       (_) {
         // After successful payout, fetch wallet details again
         add(FetchWalletDetails());

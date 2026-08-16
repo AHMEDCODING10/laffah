@@ -4,20 +4,30 @@ import 'package:go_router/go_router.dart';
 import '../bloc/ride_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/services/osrm_service.dart';
 import '../../../../core/services/echo_service.dart';
 
 class PassengerRideTrackingPage extends StatefulWidget {
-  const PassengerRideTrackingPage({super.key});
+  final String? captainId;
+
+  const PassengerRideTrackingPage({
+    super.key,
+    this.captainId,
+  });
 
   @override
-  State<PassengerRideTrackingPage> createState() => _PassengerRideTrackingPageState();
+  State<PassengerRideTrackingPage> createState() =>
+      _PassengerRideTrackingPageState();
 }
 
-class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> with SingleTickerProviderStateMixin {
+class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
+    with SingleTickerProviderStateMixin {
   final OsrmService _osrmService = OsrmService();
   final EchoService _echoService = EchoService();
   List<LatLng> _routePoints = [];
@@ -25,6 +35,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
   LatLng _captainLocation = const LatLng(15.3500, 44.2000);
   final LatLng _passengerLocation = const LatLng(15.3421, 44.2081);
   double _captainHeading = 0.0;
+  late String _activeCaptainId;
 
   late AnimationController _animController;
   late Animation<double> _latTween;
@@ -33,16 +44,21 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
   @override
   void initState() {
     super.initState();
+    _activeCaptainId = widget.captainId ?? '1';
     _fetchRoute();
-    
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
 
-    _latTween = Tween<double>(begin: _captainLocation.latitude, end: _captainLocation.latitude).animate(_animController);
-    _lngTween = Tween<double>(begin: _captainLocation.longitude, end: _captainLocation.longitude).animate(_animController);
-    
+    _latTween = Tween<double>(
+            begin: _captainLocation.latitude, end: _captainLocation.latitude)
+        .animate(_animController);
+    _lngTween = Tween<double>(
+            begin: _captainLocation.longitude, end: _captainLocation.longitude)
+        .animate(_animController);
+
     _animController.addListener(() {
       setState(() {
         _captainLocation = LatLng(_latTween.value, _lngTween.value);
@@ -54,20 +70,21 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
 
   void _listenToLiveTracking() {
     _echoService.init().then((_) {
-      _echoService.listenToCaptainLocation('1', (data) {
+      _echoService.listenToCaptainLocation(_activeCaptainId, (data) {
         if (!mounted) return;
-        
-        final double newLat = (data['lat'] as num).toDouble();
-        final double newLng = (data['lng'] as num).toDouble();
-        final double newHeading = (data['heading'] ?? 0.0) as double;
 
-        _latTween = Tween<double>(begin: _captainLocation.latitude, end: newLat).animate(
-          CurvedAnimation(parent: _animController, curve: Curves.easeInOut)
-        );
-        _lngTween = Tween<double>(begin: _captainLocation.longitude, end: newLng).animate(
-          CurvedAnimation(parent: _animController, curve: Curves.easeInOut)
-        );
-        
+        final double newLat = ((data['latitude'] ?? data['lat']) as num).toDouble();
+        final double newLng = ((data['longitude'] ?? data['lng']) as num).toDouble();
+        final double newHeading = ((data['heading'] ?? 0.0) as num).toDouble();
+
+        _latTween = Tween<double>(begin: _captainLocation.latitude, end: newLat)
+            .animate(CurvedAnimation(
+                parent: _animController, curve: Curves.easeInOut));
+        _lngTween =
+            Tween<double>(begin: _captainLocation.longitude, end: newLng)
+                .animate(CurvedAnimation(
+                    parent: _animController, curve: Curves.easeInOut));
+
         setState(() {
           _captainHeading = newHeading;
         });
@@ -81,12 +98,14 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
   @override
   void dispose() {
     _animController.dispose();
-    _echoService.stopListeningToCaptainLocation('1');
+    _echoService.stopListeningToCaptainLocation(_activeCaptainId);
     super.dispose();
   }
 
+
   Future<void> _fetchRoute() async {
-    final data = await _osrmService.getRoute(_passengerLocation, _captainLocation);
+    final data =
+        await _osrmService.getRoute(_passengerLocation, _captainLocation);
     if (data != null && mounted) {
       setState(() {
         _routePoints = data.points;
@@ -112,7 +131,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
                     showDefaultMockData: false,
                     followCaptain: true,
                     // Real-time animated data
-                    captainLocation: _captainLocation, 
+                    captainLocation: _captainLocation,
                     passengerLocation: _passengerLocation,
                     captainHeading: _captainHeading,
                     routePoints: _routePoints.isNotEmpty ? _routePoints : null,
@@ -120,7 +139,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
                 );
               },
             ),
-            
+
             // Top App Bar Area (Floating)
             Positioned(
               top: 50,
@@ -130,18 +149,22 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   CircleAvatar(
-                    backgroundColor: isDark ? AppColors.backgroundDark : AppColors.white,
+                    backgroundColor:
+                        isDark ? AppColors.backgroundDark : AppColors.white,
                     child: IconButton(
-                      icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+                      icon: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: isDark ? AppColors.white : AppColors.gray900),
                       onPressed: () => context.pop(),
                     ),
                   ),
                   GlassBox(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     borderRadius: BorderRadius.circular(20),
                     child: Row(
                       children: [
-                        const Icon(Icons.shield_rounded, color: AppColors.primary500, size: 16),
+                        const Icon(Icons.shield_rounded,
+                            color: AppColors.primary500, size: 16),
                         AppSpacing.w8,
                         Text(
                           'رحلة آمنة',
@@ -167,7 +190,8 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
               child: Container(
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.backgroundDark : AppColors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(30)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -178,154 +202,241 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> w
                 ),
                 padding: const EdgeInsets.all(AppSpacing.s24),
                 child: BlocBuilder<RideBloc, RideState>(
-                    builder: (context, state) {
-                      bool isCaptainArrived = state is RideInProgress;
-                      String captainName = 'جاري البحث...';
-                      String rating = '0.0';
-                      String plate = '---';
-                      
-                      if (state is RideAccepted) {
-                        captainName = state.captainName;
-                        rating = state.captainRating.toString();
-                        plate = state.vehiclePlate;
-                      } else if (state is RideBookingConfirmed) {
-                        captainName = state.captainName;
-                        rating = state.rating.toString();
-                        plate = state.vehiclePlate;
-                      }
+                  builder: (context, state) {
+                    bool isCaptainArrived = state is RideInProgress;
+                    String captainName = 'جاري البحث...';
+                    String rating = '0.0';
+                    String plate = '---';
 
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Status Indicator
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: isCaptainArrived ? AppColors.success.withValues(alpha: 0.1) : AppColors.primary500.withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isCaptainArrived ? Icons.directions_car_rounded : Icons.radar_rounded,
-                                  color: isCaptainArrived ? AppColors.success : AppColors.primary500,
-                                  size: 24,
-                                ),
+                    if (state is RideAccepted) {
+                      captainName = state.captainName;
+                      rating = state.captainRating.toString();
+                      plate = state.vehiclePlate;
+                    } else if (state is RideBookingConfirmed) {
+                      captainName = state.captainName;
+                      rating = state.rating.toString();
+                      plate = state.vehiclePlate;
+                    }
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Status Indicator
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isCaptainArrived
+                                    ? AppColors.success.withValues(alpha: 0.1)
+                                    : AppColors.primary500
+                                        .withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
                               ),
-                              AppSpacing.w12,
-                              Column(
+                              child: Icon(
+                                isCaptainArrived
+                                    ? Icons.directions_car_rounded
+                                    : Icons.radar_rounded,
+                                color: isCaptainArrived
+                                    ? AppColors.success
+                                    : AppColors.primary500,
+                                size: 24,
+                              ),
+                            ),
+                            AppSpacing.w12,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isCaptainArrived
+                                      ? 'الكابتن وصل إلى موقعك!'
+                                      : 'الكابتن في الطريق إليك...',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    color: isDark
+                                        ? AppColors.white
+                                        : AppColors.gray900,
+                                  ),
+                                ),
+                                Text(
+                                  isCaptainArrived
+                                      ? 'يرجى التوجه للمركبة'
+                                      : 'يصل خلال دقائق',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 13,
+                                    color: isDark
+                                        ? AppColors.gray400
+                                        : AppColors.gray600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const Padding(
+                          padding:
+                              EdgeInsets.symmetric(vertical: AppSpacing.s16),
+                          child: Divider(height: 1),
+                        ),
+                        // Captain Info
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 25,
+                              backgroundImage: NetworkImage(
+                                  'https://i.pravatar.cc/150?img=12'),
+                            ),
+                            AppSpacing.w12,
+                            Expanded(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    isCaptainArrived ? 'الكابتن وصل إلى موقعك!' : 'الكابتن في الطريق إليك...',
+                                    captainName,
                                     style: TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 16,
-                                      color: isDark ? AppColors.white : AppColors.gray900,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: isDark
+                                          ? AppColors.white
+                                          : AppColors.gray900,
                                     ),
                                   ),
-                                  Text(
-                                    isCaptainArrived ? 'يرجى التوجه للمركبة' : 'يصل خلال دقائق',
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 13,
-                                      color: isDark ? AppColors.gray400 : AppColors.gray600,
-                                    ),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.star_rounded,
+                                          color: AppColors.warning, size: 14),
+                                      Text(
+                                        ' $rating',
+                                        style: const TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      AppSpacing.w8,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.gray200,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          plate,
+                                          style: const TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontSize: 10,
+                                              color: AppColors.gray800),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: AppSpacing.s16),
-                            child: Divider(height: 1),
-                          ),
-                          // Captain Info
-                          Row(
-                            children: [
-                              const CircleAvatar(
-                                radius: 25,
-                                backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=12'),
+                            ),
+                            // Action Buttons
+                            Row(
+                              children: [
+                                _buildCircleButton(Icons.message_rounded,
+                                    AppColors.primary500, () async {
+                                  final Uri smsUri = Uri(
+                                    scheme: 'sms',
+                                    path: '+967700000000',
+                                  );
+                                  if (await canLaunchUrl(smsUri)) {
+                                    await launchUrl(smsUri);
+                                  }
+                                }),
+                                AppSpacing.w12,
+                                _buildCircleButton(Icons.call_rounded,
+                                    AppColors.success, () async {
+                                  final Uri telUri = Uri(
+                                    scheme: 'tel',
+                                    path: '+967700000000',
+                                  );
+                                  if (await canLaunchUrl(telUri)) {
+                                    await launchUrl(telUri);
+                                  }
+                                }),
+                              ],
+                            ),
+                          ],
+                        ),
+                        AppSpacing.h24,
+                        // Emergency & Cancel
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton.icon(
+                              onPressed: () {
+                                context.read<RideBloc>().add(
+                                    const CancelRideRequested(
+                                        reason: 'إلغاء من قبل الراكب'));
+                                context.pop();
+                              },
+                              icon: const Icon(Icons.cancel_outlined,
+                                  color: AppColors.danger),
+                              label: const Text(
+                                'إلغاء الرحلة',
+                                style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    color: AppColors.danger,
+                                    fontWeight: FontWeight.bold),
                               ),
-                              AppSpacing.w12,
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      captainName,
-                                      style: TextStyle(
-                                        fontFamily: 'IBM Plex Sans Arabic',
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: isDark ? AppColors.white : AppColors.gray900,
+                            ),
+                            TextButton.icon(
+                              onPressed: () async {
+                                final l10n = AppLocalizations.of(context)!;
+                                final String shareText =
+                                    l10n.ride_track_share_message;
+                                await Clipboard.setData(
+                                    ClipboardData(text: shareText));
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: AppColors.primary500,
+                                      content: Text(
+                                        l10n.ride_track_share_copied,
+                                        style: const TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic'),
+                                      ),
+                                      action: SnackBarAction(
+                                        label: l10n.common_whatsapp,
+                                        textColor: AppColors.white,
+                                        onPressed: () async {
+                                          final Uri waUri = Uri.parse(
+                                              'https://wa.me/?text=${Uri.encodeComponent(shareText)}');
+                                          if (await canLaunchUrl(waUri)) {
+                                            await launchUrl(waUri,
+                                                mode: LaunchMode
+                                                    .externalApplication);
+                                          }
+                                        },
                                       ),
                                     ),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.star_rounded, color: AppColors.warning, size: 14),
-                                        Text(
-                                          ' $rating',
-                                          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 12, fontWeight: FontWeight.bold),
-                                        ),
-                                        AppSpacing.w8,
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.gray200,
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            plate,
-                                            style: const TextStyle(fontFamily: 'monospace', fontSize: 10, color: AppColors.gray800),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.shield_outlined,
+                                  color: AppColors.primary500),
+                              label: const Text(
+                                'شارك مسار الرحلة',
+                                style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    color: AppColors.primary500,
+                                    fontWeight: FontWeight.bold),
                               ),
-                              // Action Buttons
-                              Row(
-                                children: [
-                                  _buildCircleButton(Icons.message_rounded, AppColors.primary500, () {}),
-                                  AppSpacing.w12,
-                                  _buildCircleButton(Icons.call_rounded, AppColors.success, () {}),
-                                ],
-                              ),
-                            ],
-                          ),
-                          AppSpacing.h24,
-                          // Emergency & Cancel
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () {
-                                  context.read<RideBloc>().add(const CancelRideRequested(reason: 'إلغاء من قبل الراكب'));
-                                  context.pop();
-                                },
-                                icon: const Icon(Icons.cancel_outlined, color: AppColors.danger),
-                                label: const Text(
-                                  'إلغاء الرحلة',
-                                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.danger, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              TextButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.shield_outlined, color: AppColors.primary500),
-                                label: const Text(
-                                  'شارك مسار الرحلة',
-                                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.primary500, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

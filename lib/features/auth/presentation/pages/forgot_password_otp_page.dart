@@ -26,28 +26,32 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
     if (_otpController.text.length != 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.auth_enter_4_digit_code, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+          content: Text(AppLocalizations.of(context)!.auth_enter_4_digit_code,
+              style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.danger,
         ),
       );
       return;
     }
-    context.read<AuthBloc>().add(VerifyResetCodeRequested(phone: widget.phone, code: _otpController.text));
+    context.read<AuthBloc>().add(VerifyResetCodeRequested(
+        phone: widget.phone, code: _otpController.text));
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
+    return Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900, size: 20),
             onPressed: () => context.pop(),
           ),
         ),
@@ -56,12 +60,16 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
             if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message, style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+                  content: Text(state.message,
+                      style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold)),
                   backgroundColor: AppColors.danger,
                 ),
               );
             } else if (state is VerifyResetCodeSuccess) {
-              context.push('/auth/reset-password', extra: {'phone': state.phone, 'code': state.code});
+              context.push('/auth/reset-password',
+                  extra: {'phone': state.phone, 'code': state.code});
             }
           },
           child: SafeArea(
@@ -82,7 +90,7 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                   ),
                   AppSpacing.h12,
                   Text(
-                    'أدخل الرمز المكون من 4 أرقام الذي تم إرساله إلى ${widget.phone}',
+                    '${AppLocalizations.of(context)!.auth_enter_code_sent_to} ${widget.phone}',
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 14,
@@ -91,7 +99,6 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                     ),
                   ),
                   AppSpacing.h40,
-                  
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
@@ -116,12 +123,17 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                           color: isDark ? AppColors.gray600 : AppColors.gray400,
                         ),
                         filled: true,
-                        fillColor: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray50,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                        fillColor: isDark
+                            ? AppColors.white.withValues(alpha: 0.05)
+                            : AppColors.gray50,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 20),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray300,
+                            color: isDark
+                                ? AppColors.white.withValues(alpha: 0.1)
+                                : AppColors.gray300,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -134,7 +146,6 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                       ),
                     ),
                   ),
-
                   const Spacer(),
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
@@ -151,7 +162,6 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
             ),
           ),
         ),
-      ),
     );
   }
 }

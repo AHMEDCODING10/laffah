@@ -5,7 +5,7 @@ abstract class WalletState extends Equatable {
   const WalletState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class WalletInitial extends WalletState {}
@@ -18,7 +18,26 @@ class WalletBalanceLoaded extends WalletState {
   const WalletBalanceLoaded(this.wallet);
 
   @override
-  List<Object> get props => [wallet];
+  List<Object?> get props => [wallet];
+}
+
+class CompanyAccountsLoaded extends WalletState {
+  final List<Map<String, dynamic>> accounts;
+
+  const CompanyAccountsLoaded(this.accounts);
+
+  @override
+  List<Object?> get props => [accounts];
+}
+
+class WalletRechargeSuccess extends WalletState {
+  final String message;
+  final double newBalance;
+
+  const WalletRechargeSuccess({required this.message, required this.newBalance});
+
+  @override
+  List<Object?> get props => [message, newBalance];
 }
 
 class WalletPayoutRequested extends WalletState {}
@@ -29,5 +48,5 @@ class WalletError extends WalletState {
   const WalletError(this.message);
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }

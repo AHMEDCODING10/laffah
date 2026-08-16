@@ -31,7 +31,8 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900),
             onPressed: () => Navigator.pop(context),
           ),
           centerTitle: true,
@@ -77,7 +78,8 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.emoji_events_rounded, color: AppColors.white, size: 64),
+                        const Icon(Icons.emoji_events_rounded,
+                            color: AppColors.white, size: 64),
                         AppSpacing.h16,
                         const Text(
                           'التارجت اليومي المستهدف',
@@ -142,7 +144,8 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
                               child: LinearProgressIndicator(
                                 value: progress,
                                 backgroundColor: Colors.white24,
-                                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.warning),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                    AppColors.warning),
                                 minHeight: 8,
                               ),
                             ),
@@ -198,27 +201,37 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.white,
+        color:
+            isDark ? AppColors.white.withValues(alpha: 0.04) : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
-        border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray200),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: AppColors.gray200.withValues(alpha: 0.5),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(
+            color: isDark
+                ? AppColors.white.withValues(alpha: 0.1)
+                : AppColors.gray200),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: AppColors.gray200.withValues(alpha: 0.5),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: progress == 1.0 ? AppColors.success.withValues(alpha: 0.1) : AppColors.primary500.withValues(alpha: 0.1),
+              color: progress == 1.0
+                  ? AppColors.success.withValues(alpha: 0.1)
+                  : AppColors.primary500.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              progress == 1.0 ? Icons.check_circle_rounded : Icons.monetization_on_rounded,
+              progress == 1.0
+                  ? Icons.check_circle_rounded
+                  : Icons.monetization_on_rounded,
               color: progress == 1.0 ? AppColors.success : AppColors.primary500,
             ),
           ),
@@ -250,9 +263,13 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: isDark ? AppColors.white.withValues(alpha: 0.1) : AppColors.gray200,
+                    backgroundColor: isDark
+                        ? AppColors.white.withValues(alpha: 0.1)
+                        : AppColors.gray200,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      progress == 1.0 ? AppColors.success : AppColors.primary500,
+                      progress == 1.0
+                          ? AppColors.success
+                          : AppColors.primary500,
                     ),
                     minHeight: 6,
                   ),

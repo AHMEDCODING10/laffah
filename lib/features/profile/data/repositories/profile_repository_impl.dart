@@ -29,9 +29,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, ProfileEntity>> updateProfile({required String name, String? email}) async {
+  Future<Either<Failure, ProfileEntity>> updateProfile(
+      {required String name, String? email}) async {
     try {
-      final response = await remoteDataSource.updateProfile(name: name, email: email);
+      final response =
+          await remoteDataSource.updateProfile(name: name, email: email);
       if (response.success && response.data != null) {
         return Right(response.data!);
       } else {
@@ -61,7 +63,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, SavedPlaceEntity>> addSavedPlace(SavedPlaceEntity place) async {
+  Future<Either<Failure, SavedPlaceEntity>> addSavedPlace(
+      SavedPlaceEntity place) async {
     try {
       final model = SavedPlaceModel(
         id: place.id,

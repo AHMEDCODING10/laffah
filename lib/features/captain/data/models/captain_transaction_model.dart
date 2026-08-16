@@ -13,15 +13,30 @@ class CaptainTransactionModel extends CaptainTransactionEntity {
   });
 
   factory CaptainTransactionModel.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type'] as String?;
+    final isNegative = json['isNegative'] as bool? ??
+        json['is_negative'] as bool? ??
+        (typeStr == 'withdrawal' ||
+            typeStr == 'payout' ||
+            typeStr == 'deduction' ||
+            typeStr == 'commission');
+
     return CaptainTransactionModel(
-      id: json['id'] as String? ?? '',
-      type: _parseTransactionType(json['type'] as String?),
-      title: json['title'] as String? ?? 'معاملة',
-      date: json['date'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
+      type: _parseTransactionType(typeStr),
+      title: json['title'] as String? ??
+          json['description'] as String? ??
+          'معاملة مالية',
+      date: json['date'] as String? ??
+          json['created_at'] as String? ??
+          '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String? ?? 'مكتمل',
-      isNegative: json['isNegative'] as bool? ?? false,
-      refId: json['refId'] as String? ?? '',
+      isNegative: isNegative,
+      refId: json['refId'] as String? ??
+          json['ref_id'] as String? ??
+          json['reference_id'] as String? ??
+          '',
     );
   }
 

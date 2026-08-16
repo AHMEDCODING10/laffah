@@ -99,9 +99,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl, // RTL layout
-      child: Scaffold(
+    return Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FA),
         body: SafeArea(
@@ -237,7 +235,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                   const SizedBox(height: 24),
 
                                   // Phone Label
-                                  Text(AppLocalizations.of(context)!.auth_phone_label,
+                                  Text(
+                                    AppLocalizations.of(context)!
+                                        .auth_phone_label,
                                     style: const TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12,
@@ -253,7 +253,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                   const SizedBox(height: 20),
 
                                   // Password Label
-                                  Text(AppLocalizations.of(context)!.auth_password_label,
+                                  Text(
+                                    AppLocalizations.of(context)!
+                                        .auth_password_label,
                                     style: const TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12,
@@ -281,7 +283,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                           ),
                                         );
                                       },
-                                      child: Text(AppLocalizations.of(context)!.auth_forgot_password,
+                                      child: Text(
+                                        AppLocalizations.of(context)!
+                                            .auth_forgot_password,
                                         style: const TextStyle(
                                           fontFamily: 'IBM Plex Sans Arabic',
                                           fontSize: 12,
@@ -296,7 +300,8 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
 
                                   // Submit/Login Button
                                   PrimaryGradientButton(
-                                    text: AppLocalizations.of(context)!.auth_enter,
+                                    text: AppLocalizations.of(context)!
+                                        .auth_enter,
                                     isLoading: isLoading,
                                     onPressed: _handleLogin,
                                   ),
@@ -308,11 +313,13 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                           const SizedBox(height: 36),
 
                           // Redirect to landing to register/create new account
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
-                                AppLocalizations.of(context)!.auth_dont_have_account,
+                                AppLocalizations.of(context)!
+                                    .auth_dont_have_account,
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13.5,
@@ -332,7 +339,9 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                     ),
                                   );
                                 },
-                                child: Text(AppLocalizations.of(context)!.auth_register_new_account,
+                                child: Text(
+                                  AppLocalizations.of(context)!
+                                      .auth_register_new_account,
                                   style: const TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 13.5,
@@ -353,7 +362,6 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
             },
           ),
         ),
-      ),
     );
   }
 
@@ -378,7 +386,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
             duration: const Duration(milliseconds: 350),
             curve: Curves.easeOutCubic,
             alignment:
-                !_isCaptain ? Alignment.centerRight : Alignment.centerLeft,
+                !_isCaptain ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd,
             child: FractionallySizedBox(
               widthFactor: 0.5,
               heightFactor: 1.0,
@@ -427,18 +435,17 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(AppLocalizations.of(context)!.auth_register_passenger),
                           AnimatedSize(
                             duration: const Duration(milliseconds: 350),
                             curve: Curves.easeOutBack,
                             child: !_isCaptain
-                                ? const Padding(
-                                    padding: EdgeInsets.only(right: 6.0),
-                                    child: Icon(Icons.person_rounded,
-                                        size: 18, color: AppColors.white),
-                                  )
+                                ? const Icon(Icons.person_rounded,
+                                    size: 18, color: AppColors.white)
                                 : const SizedBox.shrink(),
                           ),
+                          if (!_isCaptain) const SizedBox(width: 6),
+                          Text(AppLocalizations.of(context)!
+                              .auth_register_passenger),
                         ],
                       ),
                     ),
@@ -465,18 +472,17 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(AppLocalizations.of(context)!.auth_register_captain),
                           AnimatedSize(
                             duration: const Duration(milliseconds: 350),
                             curve: Curves.easeOutBack,
                             child: _isCaptain
-                                ? const Padding(
-                                    padding: EdgeInsets.only(right: 6.0),
-                                    child: Icon(Icons.two_wheeler_rounded,
-                                        size: 18, color: AppColors.white),
-                                  )
+                                ? const Icon(Icons.two_wheeler_rounded,
+                                    size: 18, color: AppColors.white)
                                 : const SizedBox.shrink(),
                           ),
+                          if (_isCaptain) const SizedBox(width: 6),
+                          Text(AppLocalizations.of(context)!
+                              .auth_register_captain),
                         ],
                       ),
                     ),

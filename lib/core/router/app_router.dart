@@ -41,10 +41,16 @@ import '../../features/passenger/presentation/pages/notifications_page.dart';
 import '../../features/passenger/presentation/pages/promo_code_page.dart';
 
 // Parcel Delivery features
+<<<<<<< HEAD
 import '../../features/parcel/presentation/pages/parcel_send_page.dart';
+=======
+import '../../features/parcel/domain/entities/parcel_entity.dart';
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
 import '../../features/parcel/presentation/pages/parcel_tracking_page.dart';
 import '../../features/parcel/presentation/pages/parcel_confirmation_page.dart';
+
 import '../../features/parcel/presentation/pages/parcel_history_page.dart';
+import '../../features/parcel/presentation/pages/passenger_parcel_send_page.dart';
 import '../../features/parcel/presentation/pages/parcel_delivery_proof_page.dart';
 
 // Captain module
@@ -53,10 +59,7 @@ import '../../features/captain/presentation/pages/captain_navigation_page.dart';
 import '../../features/captain/presentation/pages/captain_payout_request_page.dart';
 import '../../features/captain/presentation/pages/captain_document_upload_page.dart';
 
-// Profile module
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../features/captain/presentation/bloc/core/captain_bloc.dart';
-import '../di/injection_container.dart' as di;
+import '../network/dio_client.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/profile/presentation/pages/saved_places_page.dart';
 import '../../features/profile/presentation/pages/passenger_profile_edit_page.dart';
@@ -79,14 +82,14 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   // AUTH FLOW
   // ──────────────────────────────────────────
-  static const String authLanding             = '/auth';
-  static const String authPhone               = '/auth/phone';
-  static const String authRegisterPassenger   = '/auth/register/passenger';
-  static const String authRegisterCaptain     = '/auth/register/captain';
+  static const String authLanding = '/auth';
+  static const String authPhone = '/auth/phone';
+  static const String authRegisterPassenger = '/auth/register/passenger';
+  static const String authRegisterCaptain = '/auth/register/captain';
 
-  static const String forgotPassword          = '/auth/forgot-password';
-  static const String forgotPasswordOtp       = '/auth/forgot-password/otp';
-  static const String resetPassword           = '/auth/reset-password';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String forgotPasswordOtp = '/auth/forgot-password/otp';
+  static const String resetPassword = '/auth/reset-password';
 
   // ──────────────────────────────────────────
   // PASSENGER — CORE
@@ -100,7 +103,10 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   // PASSENGER — RIDE LIFECYCLE
   // ──────────────────────────────────────────
+<<<<<<< HEAD
   static const String passengerRideRequest = '/passenger/ride/request';
+=======
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
   static const String passengerRideTracking = '/passenger/ride/tracking';
   static const String passengerRideInvoice = '/passenger/ride/invoice';
   static const String passengerScheduleRide = '/passenger/ride/schedule';
@@ -110,9 +116,16 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   static const String passengerParcelSend     = '/passenger/parcel/send';
   static const String passengerParcelTracking = '/passenger/parcel/tracking';
+<<<<<<< HEAD
   static const String passengerParcelConfirm  = '/passenger/parcel/confirm';
   static const String passengerParcelHistory  = '/passenger/parcel/history';
   static const String parcelDeliveryProof     = '/parcel/proof';
+=======
+  static const String passengerParcelConfirm = '/passenger/parcel/confirm';
+  static const String passengerParcelHistory = '/passenger/parcel/history';
+  static const String passengerParcelSend = '/passenger/parcel/send';
+  static const String parcelDeliveryProof = '/parcel/proof';
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
 
   // ──────────────────────────────────────────
   // PASSENGER — PROFILE & SUPPORT
@@ -120,13 +133,15 @@ abstract class LaffahRoutes {
   static const String passengerProfile = '/passenger/profile';
   static const String passengerProfileEdit = '/passenger/profile/edit';
   static const String passengerSavedPlaces = '/passenger/profile/saved-places';
+<<<<<<< HEAD
   static const String passengerSupportTickets = '/passenger/support-tickets';
   static const String roleSelection = '/auth/role';
+=======
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
 
   // ──────────────────────────────────────────
   // PASSENGER — SUPPORT
   // ──────────────────────────────────────────
-
 
   // ──────────────────────────────────────────
   // CAPTAIN — CORE
@@ -146,6 +161,7 @@ abstract class LaffahRoutes {
   static const String captainPayout = '/captain/payout';
   static const String captainDocuments = '/captain/documents';
   static const String captainSupport = '/captain/support';
+<<<<<<< HEAD
 
   // ──────────────────────────────────────────
   // PASSENGER — SUPPORT & LEGAL
@@ -154,6 +170,8 @@ abstract class LaffahRoutes {
   static const String faq = '/passenger/support/faq';
   static const String contactUs = '/passenger/support/contact';
   static const String changePassword = '/passenger/profile/change-password';
+=======
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
 
   // ──────────────────────────────────────────
   // LEGAL
@@ -173,6 +191,7 @@ class AppRouter {
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>(debugLabel: 'LaffahRootNavigator');
 
+<<<<<<< HEAD
   static final GlobalKey<NavigatorState> _shellNavigatorKeyHome =
       GlobalKey<NavigatorState>(debugLabel: 'shellHome');
   static final GlobalKey<NavigatorState> _shellNavigatorKeyHistory =
@@ -181,11 +200,48 @@ class AppRouter {
       GlobalKey<NavigatorState>(debugLabel: 'shellWallet');
   static final GlobalKey<NavigatorState> _shellNavigatorKeyProfile =
       GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
+=======
+  static bool _isPublicRoute(String path) {
+    if (path == LaffahRoutes.splash ||
+        path == LaffahRoutes.onboarding ||
+        path == LaffahRoutes.authLanding ||
+        path == LaffahRoutes.authPhone ||
+        path == LaffahRoutes.authRegisterPassenger ||
+        path == LaffahRoutes.authRegisterCaptain ||
+        path == LaffahRoutes.forgotPassword ||
+        path == LaffahRoutes.forgotPasswordOtp ||
+        path == LaffahRoutes.resetPassword ||
+        path == LaffahRoutes.privacyPolicy ||
+        path == LaffahRoutes.termsOfService ||
+        path.startsWith('/parcel/track')) {
+      return true;
+    }
+    return false;
+  }
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: LaffahRoutes.authLanding,
     debugLogDiagnostics: false,
+
+    redirect: (BuildContext context, GoRouterState state) {
+      final path = state.uri.path;
+      // Allow splash to run its own initialization logic
+      if (path == LaffahRoutes.splash) {
+        return null;
+      }
+
+      // If user is accessing a protected route without a valid token, redirect to auth
+      final token = DioClient.currentToken;
+      final isPublic = _isPublicRoute(path);
+
+      if (!isPublic && (token == null || token.isEmpty)) {
+        return LaffahRoutes.authLanding;
+      }
+
+      return null;
+    },
 
     // ─────────────────────────────────────────────────────────────
     // ROUTE DEFINITIONS
@@ -227,7 +283,6 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) =>
             const PhoneNumberInputPage(),
       ),
-
 
       GoRoute(
         path: LaffahRoutes.authRegisterPassenger,
@@ -274,6 +329,7 @@ class AppRouter {
       // ══════════════════════════════════════════
       // PASSENGER — MAIN SHELL ROUTE (4 ROOT TABS)
       // ══════════════════════════════════════════
+<<<<<<< HEAD
       StatefulShellRoute.indexedStack(
         builder: (BuildContext context, GoRouterState state,
             StatefulNavigationShell navigationShell) {
@@ -332,6 +388,13 @@ class AppRouter {
             ],
           ),
         ],
+=======
+      GoRoute(
+        path: LaffahRoutes.passengerHome,
+        name: 'passenger-home',
+        builder: (BuildContext context, GoRouterState state) =>
+            const HomeDashboardPage(),
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
       ),
 
       // ══════════════════════════════════════════
@@ -341,6 +404,7 @@ class AppRouter {
         path: LaffahRoutes.passengerRideRequest,
         name: 'passenger-ride-request',
         builder: (BuildContext context, GoRouterState state) =>
+<<<<<<< HEAD
             const HomeDashboardPage(),
       ),
 
@@ -349,12 +413,24 @@ class AppRouter {
         name: 'passenger-parcel-send',
         builder: (BuildContext context, GoRouterState state) =>
             const ParcelSendPage(),
+=======
+            const TripHistoryPage(),
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
       ),
 
       // ══════════════════════════════════════════
       // PASSENGER — CORE FEATURES
       // ══════════════════════════════════════════
       GoRoute(
+<<<<<<< HEAD
+=======
+        path: LaffahRoutes.passengerWallet,
+        name: 'passenger-wallet',
+        builder: (BuildContext context, GoRouterState state) =>
+            const WalletPage(),
+      ),
+      GoRoute(
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
         path: LaffahRoutes.passengerNotifications,
         name: 'passenger-notifications',
         builder: (BuildContext context, GoRouterState state) =>
@@ -370,9 +446,13 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.passengerRideTracking,
         name: 'passenger-ride-tracking',
-        builder: (BuildContext context, GoRouterState state) =>
-        const PassengerRideTrackingPage(),
+        builder: (BuildContext context, GoRouterState state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final captainId = extra['captainId'] as String?;
+          return PassengerRideTrackingPage(captainId: captainId);
+        },
       ),
+
 
       GoRoute(
         path: LaffahRoutes.passengerRideInvoice,
@@ -392,7 +472,7 @@ class AppRouter {
         path: LaffahRoutes.passengerScheduleRide,
         name: 'passenger-schedule-ride',
         builder: (BuildContext context, GoRouterState state) =>
-        const PassengerScheduleRidePage(),
+            const PassengerScheduleRidePage(),
       ),
 
       // ══════════════════════════════════════════
@@ -401,16 +481,37 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.passengerParcelTracking,
         name: 'passenger-parcel-tracking',
+<<<<<<< HEAD
         builder: (BuildContext context, GoRouterState state) =>
             const ParcelTrackingPage(),
+=======
+        builder: (BuildContext context, GoRouterState state) {
+          final extra = state.extra;
+          if (extra is ParcelEntity) {
+            return ParcelTrackingPage(initialParcel: extra);
+          } else if (extra is String) {
+            return ParcelTrackingPage(trackingCode: extra);
+          }
+          return const ParcelTrackingPage();
+        },
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
       ),
 
       GoRoute(
         path: LaffahRoutes.passengerParcelConfirm,
         name: 'passenger-parcel-confirm',
+<<<<<<< HEAD
         builder: (BuildContext context, GoRouterState state) =>
             const ParcelConfirmationPage(),
+=======
+        builder: (BuildContext context, GoRouterState state) {
+          final extra = state.extra;
+          final parcel = extra is ParcelEntity ? extra : null;
+          return ParcelConfirmationPage(parcel: parcel);
+        },
+>>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
       ),
+
 
       GoRoute(
         path: LaffahRoutes.passengerParcelHistory,
@@ -424,6 +525,23 @@ class AppRouter {
         name: 'parcel-delivery-proof',
         builder: (BuildContext context, GoRouterState state) =>
             const ParcelDeliveryProofPage(),
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.passengerParcelSend,
+        name: 'passenger-parcel-send',
+        builder: (BuildContext context, GoRouterState state) =>
+            const PassengerParcelSendPage(),
+      ),
+
+      // ══════════════════════════════════════════
+      // PASSENGER — PROFILE
+      // ══════════════════════════════════════════
+      GoRoute(
+        path: LaffahRoutes.passengerProfile,
+        name: 'passenger-profile',
+        builder: (BuildContext context, GoRouterState state) =>
+            const UserProfilePage(),
       ),
 
       GoRoute(
@@ -446,9 +564,6 @@ class AppRouter {
       // PASSENGER — SUPPORT & INCIDENTS
       // ══════════════════════════════════════════
 
-
-
-
       // ══════════════════════════════════════════
       // CAPTAIN — HOME DASHBOARD
       // ══════════════════════════════════════════
@@ -456,10 +571,7 @@ class AppRouter {
         path: LaffahRoutes.captainHome,
         name: 'captain-home',
         builder: (BuildContext context, GoRouterState state) =>
-            BlocProvider<CaptainBloc>(
-          create: (_) => di.sl<CaptainBloc>(),
-          child: const CaptainHomePage(),
-        ),
+            const CaptainHomePage(),
       ),
 
       // ══════════════════════════════════════════
@@ -529,7 +641,7 @@ class AppRouter {
         path: LaffahRoutes.captainBonus,
         name: 'captain-bonus',
         builder: (BuildContext context, GoRouterState state) =>
-        const CaptainBonusPage(),
+            const CaptainBonusPage(),
       ),
 
       // ══════════════════════════════════════════
@@ -556,7 +668,7 @@ class AppRouter {
         path: LaffahRoutes.captainSupport,
         name: 'captain-support',
         builder: (BuildContext context, GoRouterState state) =>
-        const CaptainSupportPage(),
+            const CaptainSupportPage(),
       ),
 
       // ══════════════════════════════════════════
@@ -598,14 +710,14 @@ class AppRouter {
         path: LaffahRoutes.privacyPolicy,
         name: 'privacy-policy',
         builder: (BuildContext context, GoRouterState state) =>
-        const PrivacyPolicyPage(),
+            const PrivacyPolicyPage(),
       ),
 
       GoRoute(
         path: LaffahRoutes.termsOfService,
         name: 'terms-of-service',
         builder: (BuildContext context, GoRouterState state) =>
-        const TermsOfServicePage(),
+            const TermsOfServicePage(),
       ),
     ],
 

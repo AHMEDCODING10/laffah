@@ -7,7 +7,8 @@ class RequestPayoutUseCase {
 
   RequestPayoutUseCase(this.repository);
 
-  Future<Either<Failure, void>> call(double amount, String method, String accountNumber) async {
+  Future<Either<Failure, void>> call(
+      double amount, String method, String accountNumber) async {
     if (amount <= 0 || accountNumber.isEmpty) {
       return const Left(ValidationFailure('بيانات السحب غير صحيحة'));
     }

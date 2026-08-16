@@ -21,6 +21,15 @@ class ParcelSubmittedSuccess extends ParcelState {
   List<Object> get props => [parcel];
 }
 
+class ParcelTrackingLoaded extends ParcelState {
+  final ParcelEntity parcel;
+
+  const ParcelTrackingLoaded(this.parcel);
+
+  @override
+  List<Object> get props => [parcel];
+}
+
 class ParcelError extends ParcelState {
   final String message;
 
@@ -29,3 +38,4 @@ class ParcelError extends ParcelState {
   @override
   List<Object> get props => [message];
 }
+

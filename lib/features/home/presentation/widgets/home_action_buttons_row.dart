@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -44,32 +45,35 @@ class HomeActionButtonsRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Colors.white24,
-                        shape: BoxShape.circle,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white24,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.motorcycle_rounded,
+                          color: AppColors.white,
+                          size: 24,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.motorcycle_rounded,
-                        color: AppColors.white,
-                        size: 24,
+                      AppSpacing.w10,
+                      Text(
+                        AppLocalizations.of(context)!.pass_request_ride,
+                        style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14.5,
+                          color: AppColors.white,
+                        ),
                       ),
-                    ),
-                    AppSpacing.w10,
-                    const Text(
-                      'طلب مشوار',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14.5,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -83,15 +87,15 @@ class HomeActionButtonsRow extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: onSendParcelTap ?? () => context.push(LaffahRoutes.passengerParcelSend),
+              onTap: onSendParcelTap ??
+                  () => context.push(LaffahRoutes.passengerParcelSend),
               borderRadius: AppSpacing.radiusMD,
               child: Container(
                 height: 64,
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceElevatedDark
-                      : AppColors.white,
+                  color:
+                      isDark ? AppColors.surfaceElevatedDark : AppColors.white,
                   borderRadius: AppSpacing.radiusMD,
                   border: Border.all(
                     color: isDark
@@ -107,34 +111,37 @@ class HomeActionButtonsRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.s8),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.white.withValues(alpha: 0.08)
-                            : AppColors.gray100,
-                        shape: BoxShape.circle,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.s8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.white.withValues(alpha: 0.08)
+                              : AppColors.gray100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.inventory_2_outlined,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                          size: 22,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.inventory_2_outlined,
-                        color: isDark ? AppColors.white : AppColors.gray900,
-                        size: 22,
+                      AppSpacing.w10,
+                      Text(
+                        AppLocalizations.of(context)!.pass_send_parcel,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                        ),
                       ),
-                    ),
-                    AppSpacing.w10,
-                    Text(
-                      'إرسال طرد',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.5,
-                        color: isDark ? AppColors.white : AppColors.gray900,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

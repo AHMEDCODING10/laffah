@@ -82,12 +82,18 @@ class AppSpacing {
   // ==========================================
   // BorderRadius Objects
   // ==========================================
-  static const BorderRadius radiusXS = BorderRadius.all(Radius.circular(radiusXSValue));
-  static const BorderRadius radiusSM = BorderRadius.all(Radius.circular(radiusSMValue));
-  static const BorderRadius radiusMD = BorderRadius.all(Radius.circular(radiusMDValue));
-  static const BorderRadius radiusLG = BorderRadius.all(Radius.circular(radiusLGValue));
-  static const BorderRadius radiusXL = BorderRadius.all(Radius.circular(radiusXLValue));
-  static const BorderRadius radiusFull = BorderRadius.all(Radius.circular(radiusFullValue));
+  static const BorderRadius radiusXS =
+      BorderRadius.all(Radius.circular(radiusXSValue));
+  static const BorderRadius radiusSM =
+      BorderRadius.all(Radius.circular(radiusSMValue));
+  static const BorderRadius radiusMD =
+      BorderRadius.all(Radius.circular(radiusMDValue));
+  static const BorderRadius radiusLG =
+      BorderRadius.all(Radius.circular(radiusLGValue));
+  static const BorderRadius radiusXL =
+      BorderRadius.all(Radius.circular(radiusXLValue));
+  static const BorderRadius radiusFull =
+      BorderRadius.all(Radius.circular(radiusFullValue));
 
   static const BorderRadius radiusBottomSheet = BorderRadius.only(
     topLeft: Radius.circular(radiusBottomSheetValue),

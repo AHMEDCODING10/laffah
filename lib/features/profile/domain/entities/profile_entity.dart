@@ -9,7 +9,7 @@ class ProfileEntity extends Equatable {
   final String? email;
   final String? avatarUrl;
   final String role; // passenger, captain
-  
+
   // Captain specific properties
   final String? vehicleType;
   final String? vehicleModel;
@@ -32,5 +32,17 @@ class ProfileEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, phone, email, avatarUrl, role, vehicleType, vehicleModel, plateNumber, rating, isVerified];
+  List<Object?> get props => [
+        id,
+        name,
+        phone,
+        email,
+        avatarUrl,
+        role,
+        vehicleType,
+        vehicleModel,
+        plateNumber,
+        rating,
+        isVerified
+      ];
 }

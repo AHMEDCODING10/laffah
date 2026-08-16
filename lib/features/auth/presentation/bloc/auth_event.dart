@@ -39,11 +39,11 @@ class RegisterPassengerRequested extends AuthEvent {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is RegisterPassengerRequested &&
-              runtimeType == other.runtimeType &&
-              name == other.name &&
-              phone == other.phone &&
-              password == other.password;
+      other is RegisterPassengerRequested &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          phone == other.phone &&
+          password == other.password;
 
   @override
   int get hashCode => name.hashCode ^ phone.hashCode ^ password.hashCode;
@@ -72,15 +72,15 @@ class RegisterCaptainRequested extends AuthEvent {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is RegisterCaptainRequested &&
-              runtimeType == other.runtimeType &&
-              name == other.name &&
-              phone == other.phone &&
-              password == other.password &&
-              vehicleType == other.vehicleType &&
-              vehicleModel == other.vehicleModel &&
-              vehicleYear == other.vehicleYear &&
-              vehiclePlate == other.vehiclePlate;
+      other is RegisterCaptainRequested &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          phone == other.phone &&
+          password == other.password &&
+          vehicleType == other.vehicleType &&
+          vehicleModel == other.vehicleModel &&
+          vehicleYear == other.vehicleYear &&
+          vehiclePlate == other.vehiclePlate;
 
   @override
   int get hashCode =>
@@ -113,5 +113,6 @@ class ResetPasswordRequested extends AuthEvent {
   final String phone;
   final String code;
   final String newPassword;
-  const ResetPasswordRequested({required this.phone, required this.code, required this.newPassword});
+  const ResetPasswordRequested(
+      {required this.phone, required this.code, required this.newPassword});
 }

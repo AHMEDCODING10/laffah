@@ -6,12 +6,14 @@ import '../../domain/usecases/request_ride_usecase.dart';
 import '../../domain/usecases/cancel_ride_usecase.dart';
 import '../../domain/usecases/get_trip_history_usecase.dart';
 import '../../../parcel/domain/usecases/submit_parcel_order_usecase.dart';
+import '../../../../core/services/echo_service.dart';
 
 export 'ride_event.dart';
 export 'ride_state.dart';
 
 import 'ride_event.dart';
 import 'ride_state.dart';
+
 
 // ===========================================================================
 // DATA LAYER MODELS (IMMUTABLE DTOs)
@@ -85,11 +87,14 @@ class RideOption extends Equatable {
 // RIDE BLOC (Clean Architecture)
 // ===========================================================================
 
+
 class RideBloc extends Bloc<RideEvent, RideState> {
   final RequestRideUseCase requestRideUseCase;
   final CancelRideUseCase cancelRideUseCase;
   final SubmitParcelOrderUseCase submitParcelOrderUseCase;
   final GetTripHistoryUseCase getTripHistoryUseCase;
+  final EchoService _echoService = EchoService();
+  String? _currentActiveRideId;
 
   RideBloc({
     required this.requestRideUseCase,
@@ -105,7 +110,9 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     on<SimulateRideStep>(_onSimulateRideStep);
     on<ScheduleRide>(_onScheduleRide);
     on<LoadTripHistoryEvent>(_onLoadTripHistory);
+    on<TripStatusUpdatedFromWebSocket>(_onTripStatusUpdatedFromWebSocket);
   }
+
 
   static const List<RideOption> rideTiers = [
     RideOption(
@@ -119,12 +126,17 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ),
   ];
 
-  static Map<String, dynamic> calculateDynamicMetrics(String pickup, String dropoff) {
+  static Map<String, dynamic> calculateDynamicMetrics(
+      String pickup, String dropoff) {
     final pClean = pickup.trim().toLowerCase();
     final dClean = dropoff.trim().toLowerCase();
-    
-    if (pClean.isEmpty || pClean.contains('حدة') || pClean.contains('hada') || 
-        dClean.contains('صنعاء') || dClean.contains('sana') || dClean.isEmpty) {
+
+    if (pClean.isEmpty ||
+        pClean.contains('حدة') ||
+        pClean.contains('hada') ||
+        dClean.contains('صنعاء') ||
+        dClean.contains('sana') ||
+        dClean.isEmpty) {
       return {
         'distance': 7.2,
         'duration': 18,
@@ -157,7 +169,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   ) async {
     emit(const RideLoading());
     final metrics = calculateDynamicMetrics(event.pickup, event.dropoff);
-    
+
     emit(RideOptionsLoaded(
       pickup: event.pickup,
       dropoff: event.dropoff,
@@ -197,20 +209,31 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
       dropoffLocation: event.dropoff,
-      rideType: 'laffah',
+      pickupLatitude: event.pickupLatitude,
+      pickupLongitude: event.pickupLongitude,
+      dropoffLatitude: event.dropoffLatitude,
+      dropoffLongitude: event.dropoffLongitude,
+      rideType: 'ride',
       expectedPrice: event.fare,
+      stops: event.stops,
     );
 
     result.fold(
       (failure) => emit(RideError(failure.message)),
       (rideEntity) {
+        _currentActiveRideId = rideEntity.id;
+        _echoService.listenToTripStatus(
+          rideEntity.id,
+          (data) => add(TripStatusUpdatedFromWebSocket(data)),
+        );
+
         emit(RideBookingConfirmed(
-          pickup: rideEntity.pickupLocation,
-          dropoff: rideEntity.dropoffLocation,
+          pickup: rideEntity.pickupLocation.isNotEmpty ? rideEntity.pickupLocation : event.pickup,
+          dropoff: rideEntity.dropoffLocation.isNotEmpty ? rideEntity.dropoffLocation : event.dropoff,
           selectedOption: selectedOption,
           captainName: rideEntity.captainName ?? 'قيد البحث',
-          captainPhone: '',
-          vehicleModel: rideEntity.vehicleModel ?? '',
+          captainPhone: rideEntity.captainPhone ?? '',
+          vehicleModel: rideEntity.vehicleModel ?? 'دراجة نارية',
           vehiclePlate: rideEntity.vehiclePlate ?? '',
           rating: rideEntity.rating ?? 5.0,
           status: rideEntity.status,
@@ -243,6 +266,10 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
       dropoffLocation: event.dropoff,
+      pickupLatitude: event.pickupLatitude,
+      pickupLongitude: event.pickupLongitude,
+      dropoffLatitude: event.dropoffLatitude,
+      dropoffLongitude: event.dropoffLongitude,
       rideType: event.rideType,
       expectedPrice: calculatedPrice,
     );
@@ -250,13 +277,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     result.fold(
       (failure) => emit(RideError(failure.message)),
       (rideEntity) {
+        _currentActiveRideId = rideEntity.id;
+        _echoService.listenToTripStatus(
+          rideEntity.id,
+          (data) => add(TripStatusUpdatedFromWebSocket(data)),
+        );
+
         emit(RideBookingConfirmed(
-          pickup: rideEntity.pickupLocation,
-          dropoff: rideEntity.dropoffLocation,
+          pickup: rideEntity.pickupLocation.isNotEmpty ? rideEntity.pickupLocation : event.pickup,
+          dropoff: rideEntity.dropoffLocation.isNotEmpty ? rideEntity.dropoffLocation : event.dropoff,
           selectedOption: selectedOption,
           captainName: rideEntity.captainName ?? 'قيد البحث',
-          captainPhone: '',
-          vehicleModel: rideEntity.vehicleModel ?? '',
+          captainPhone: rideEntity.captainPhone ?? '',
+          vehicleModel: rideEntity.vehicleModel ?? 'دراجة نارية',
           vehiclePlate: rideEntity.vehiclePlate ?? '',
           rating: rideEntity.rating ?? 5.0,
           status: rideEntity.status,
@@ -292,7 +325,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     );
 
     result.fold(
-      (failure) => emit(RideError('فشل تقديم طلب إرسال الطرد: ${failure.message}')),
+      (failure) =>
+          emit(RideError('فشل تقديم طلب إرسال الطرد: ${failure.message}')),
       (parcelEntity) {
         emit(ParcelSubmitted(
           data: event.data,
@@ -307,6 +341,10 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     CancelRideRequested event,
     Emitter<RideState> emit,
   ) async {
+    if (_currentActiveRideId != null) {
+      _echoService.stopListeningToTripStatus(_currentActiveRideId!);
+      _currentActiveRideId = null;
+    }
     if (state is RideBookingConfirmed) {
       final rideId = (state as RideBookingConfirmed).rideId;
       if (rideId != null) {
@@ -364,6 +402,51 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       (failure) => emit(TripHistoryError(failure.message)),
       (trips) => emit(TripHistoryLoaded(trips)),
     );
+  }
+
+  /// Handles real-time WebSocket trip status updates (accepted, arrived, in_transit, completed, cancelled)
+  void _onTripStatusUpdatedFromWebSocket(
+    TripStatusUpdatedFromWebSocket event,
+    Emitter<RideState> emit,
+  ) {
+    final data = event.data;
+    final status = data['status']?.toString();
+
+    if (status == 'accepted') {
+      emit(RideAccepted(
+        captainName: data['captain_name']?.toString() ?? 'كابتن لَفَّة',
+        vehicleModel: data['vehicle_model']?.toString() ?? 'دراجة نارية',
+        vehiclePlate: data['plate_number']?.toString() ?? '---',
+        captainRating: (data['captain_rating'] is num)
+            ? (data['captain_rating'] as num).toDouble()
+            : 5.0,
+        eta: '3 دقائق',
+      ));
+    } else if (status == 'arrived') {
+      emit(const RideInProgress(etaToDestination: 'الكابتن وصل لموقعك'));
+    } else if (status == 'in_transit') {
+      emit(const RideInProgress(etaToDestination: 'في الطريق إلى الوجهة'));
+    } else if (status == 'completed') {
+      if (_currentActiveRideId != null) {
+        _echoService.stopListeningToTripStatus(_currentActiveRideId!);
+        _currentActiveRideId = null;
+      }
+      emit(const RideCompleted());
+    } else if (status == 'cancelled') {
+      if (_currentActiveRideId != null) {
+        _echoService.stopListeningToTripStatus(_currentActiveRideId!);
+        _currentActiveRideId = null;
+      }
+      emit(const RideInitial());
+    }
+  }
+
+  @override
+  Future<void> close() {
+    if (_currentActiveRideId != null) {
+      _echoService.stopListeningToTripStatus(_currentActiveRideId!);
+    }
+    return super.close();
   }
 }
 

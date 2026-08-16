@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -34,11 +35,13 @@ class HomeDashboardPage extends StatefulWidget {
 }
 
 class _HomeDashboardPageState extends State<HomeDashboardPage> {
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final TextEditingController _pickupController =
       TextEditingController(text: 'موقعك الحالي');
   final TextEditingController _dropoffController = TextEditingController();
+  LatLng _pickupLatLng = const LatLng(15.3694, 44.1910);
   LatLng? _dropoffLatLng;
 
   int _selectedQuickIndex = -1;
@@ -49,8 +52,27 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
   @override
   void initState() {
     super.initState();
-    _quickDestinations = HomeLocalDataSource.getQuickDestinations();
     _loadRecentDestinations();
+    _fetchCurrentLocation();
+  }
+
+  Future<void> _fetchCurrentLocation() async {
+    try {
+      final perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      if (mounted) {
+        setState(() {
+          _pickupLatLng = LatLng(pos.latitude, pos.longitude);
+        });
+      }
+    } catch (_) {
+      // Fallback remains Sanaa Center
+    }
   }
 
   Future<void> _loadRecentDestinations() async {
@@ -110,19 +132,20 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
           dropoff: _dropoffController.text.trim().isNotEmpty
               ? _dropoffController.text.trim()
               : 'وجهة مختارة',
+          pickupLatLng: _pickupLatLng,
           dropoffLatLng: _dropoffLatLng,
         ),
       ),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    _quickDestinations = HomeLocalDataSource.getQuickDestinations(context);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
         key: _scaffoldKey,
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -288,7 +311,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
             ),
           ],
         ),
-      ),
     );
   }
 

@@ -22,7 +22,7 @@ class HomeTopHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = AppLocalizations.of(context)?.capt_nav_home ?? 'الرئيسية';
+    final title = AppLocalizations.of(context)?.pass_nav_home ?? 'الرئيسية';
     final double topSafeArea = MediaQuery.of(context).padding.top;
 
     return Padding(
@@ -77,7 +77,7 @@ class HomeTopHeader extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   icon: const Icon(
                     Icons.notifications_none_rounded,
-                    color: AppColors.primary500, // Primary Orange Color
+                    color: AppColors.primary500,
                     size: 24,
                   ),
                   onPressed: () {
@@ -88,7 +88,7 @@ class HomeTopHeader extends StatelessWidget {
             ],
           ),
 
-          AppSpacing.h16, // Lower search bar down from title bar
+          AppSpacing.h16,
 
           // ─── SEARCH BAR: "إلى أين؟" ───
           GestureDetector(
@@ -108,7 +108,7 @@ class HomeTopHeader extends StatelessWidget {
                     child: Text(
                       dropoffController.text.isNotEmpty
                           ? dropoffController.text
-                          : 'إلى أين؟',
+                          : (AppLocalizations.of(context)?.pass_where_to ?? 'إلى أين؟'),
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 16,

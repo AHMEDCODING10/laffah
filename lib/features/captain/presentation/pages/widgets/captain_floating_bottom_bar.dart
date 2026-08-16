@@ -23,11 +23,21 @@ class CaptainFloatingBottomBar extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final List<_CaptainNavItem> items = [
-      _CaptainNavItem(icon: Icons.navigation_rounded, label: AppLocalizations.of(context)!.capt_nav_home),
-      const _CaptainNavItem(icon: Icons.receipt_long_rounded, label: 'الرحلات'),
-      const _CaptainNavItem(icon: Icons.account_balance_wallet_rounded, label: 'الأرباح'),
-      _CaptainNavItem(icon: Icons.notifications_rounded, label: AppLocalizations.of(context)!.capt_nav_alerts),
-      _CaptainNavItem(icon: Icons.person_rounded, label: AppLocalizations.of(context)!.capt_nav_account),
+      _CaptainNavItem(
+          icon: Icons.navigation_rounded,
+          label: AppLocalizations.of(context)!.capt_nav_home),
+      _CaptainNavItem(
+          icon: Icons.receipt_long_rounded,
+          label: AppLocalizations.of(context)!.capt_nav_trips),
+      _CaptainNavItem(
+          icon: Icons.account_balance_wallet_rounded,
+          label: AppLocalizations.of(context)!.capt_nav_earnings),
+      _CaptainNavItem(
+          icon: Icons.notifications_rounded,
+          label: AppLocalizations.of(context)!.capt_nav_alerts),
+      _CaptainNavItem(
+          icon: Icons.person_rounded,
+          label: AppLocalizations.of(context)!.capt_nav_account),
     ];
 
     return Directionality(
@@ -41,7 +51,9 @@ class CaptainFloatingBottomBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.1),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -52,12 +64,17 @@ class CaptainFloatingBottomBar extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF141822).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.95),
+                  color: isDark
+                      ? const Color(0xFF141822).withValues(alpha: 0.9)
+                      : Colors.white.withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.05),
                   ),
                 ),
                 child: Row(
@@ -80,7 +97,9 @@ class CaptainFloatingBottomBar extends StatelessWidget {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFFF6B00).withValues(alpha: 0.15) : Colors.transparent,
+                          color: isSelected
+                              ? const Color(0xFFFF6B00).withValues(alpha: 0.15)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
@@ -89,7 +108,11 @@ class CaptainFloatingBottomBar extends StatelessWidget {
                             Icon(
                               item.icon,
                               size: 24,
-                              color: isSelected ? const Color(0xFFFF6B00) : (isDark ? AppColors.gray500 : AppColors.gray400),
+                              color: isSelected
+                                  ? const Color(0xFFFF6B00)
+                                  : (isDark
+                                      ? AppColors.gray500
+                                      : AppColors.gray400),
                             ),
                             if (isSelected) ...[
                               const SizedBox(width: 8),

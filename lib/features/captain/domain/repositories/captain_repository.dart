@@ -20,14 +20,21 @@ abstract class CaptainRepository {
     required double lng,
     required double heading,
   });
-  
+
   Future<Either<Failure, void>> respondToTripRequest({
     required String tripId,
     required bool accept,
   });
 
-  Future<Either<Failure, void>> requestPayout(double amount, String method, String accountNumber);
-  
+  Future<Either<Failure, void>> updateTripStatus({
+    required String tripId,
+    required String status,
+  });
+
+  Future<Either<Failure, void>> requestPayout(
+
+      double amount, String method, String accountNumber);
+
   // Future<Either<Failure, BonusDataEntity>> fetchBonusData(); // Assuming we had an entity
   // For now returning dynamic or Map
   Future<Either<Failure, Map<String, dynamic>>> fetchBonusData();
@@ -41,5 +48,6 @@ abstract class CaptainRepository {
 
   Future<Either<Failure, List<CaptainNotificationEntity>>> getNotifications();
   Future<Either<Failure, List<CaptainTripRequestEntity>>> getNearbyRequests();
-  Future<Either<Failure, Map<String, dynamic>>> uploadDocument(File file, String type);
+  Future<Either<Failure, Map<String, dynamic>>> uploadDocument(
+      File file, String type);
 }

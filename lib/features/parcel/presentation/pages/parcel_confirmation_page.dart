@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/router/app_router.dart';
+
+import '../../domain/entities/parcel_entity.dart';
 
 /// ParcelConfirmationPage — Shown to passenger after successfully booking a parcel delivery.
 class ParcelConfirmationPage extends StatelessWidget {
-  const ParcelConfirmationPage({super.key});
+  final ParcelEntity? parcel;
+
+  const ParcelConfirmationPage({super.key, this.parcel});
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final String trackingCode = parcel?.trackingCode ?? parcel?.id ?? 'LF-8842';
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.close_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+            icon: Icon(Icons.close_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900),
             onPressed: () => context.go(LaffahRoutes.passengerHome),
           ),
         ),
@@ -42,7 +50,7 @@ appBar: AppBar(
                 ),
               ),
               AppSpacing.h24,
-              
+
               Text(
                 'تم تأكيد طلب التوصيل',
                 style: TextStyle(
@@ -52,7 +60,7 @@ appBar: AppBar(
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
               ),
-              
+
               AppSpacing.h8,
               Text(
                 'نحن نبحث الآن عن أقرب كابتن دراجة نارية لاستلام طردك.',
@@ -64,7 +72,7 @@ appBar: AppBar(
                   height: 1.5,
                 ),
               ),
-              
+
               AppSpacing.h40,
 
               // Tracking Card
@@ -75,7 +83,9 @@ appBar: AppBar(
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.05)
+                        : AppColors.gray200,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -96,22 +106,36 @@ appBar: AppBar(
                       ),
                     ),
                     AppSpacing.h12,
-                    const Text(
-                      'LF-9321',
-                      style: TextStyle(
+                    Text(
+                      trackingCode,
+                      style: const TextStyle(
                         fontFamily: 'monospace',
-                        fontSize: 32,
+                        fontSize: 30,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF3B82F6),
-                        letterSpacing: 4,
+                        letterSpacing: 3,
                       ),
                     ),
                     AppSpacing.h24,
                     ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: trackingCode));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: AppColors.primary500,
+                            content: Text(
+                              AppLocalizations.of(context)!
+                                  .parcel_tracking_code_copied,
+                              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                            ),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? AppColors.gray800 : AppColors.gray100,
-                        foregroundColor: isDark ? AppColors.white : AppColors.gray900,
+                        backgroundColor:
+                            isDark ? AppColors.gray800 : AppColors.gray100,
+                        foregroundColor:
+                            isDark ? AppColors.white : AppColors.gray900,
                         elevation: 0,
                         shape: const RoundedRectangleBorder(
                           borderRadius: AppSpacing.radiusMD,
@@ -129,7 +153,7 @@ appBar: AppBar(
                   ],
                 ),
               ),
-              
+
               AppSpacing.h40,
 
               SizedBox(
@@ -137,7 +161,10 @@ appBar: AppBar(
                 height: 54,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.go(LaffahRoutes.passengerParcelTracking);
+                    context.go(
+                      LaffahRoutes.passengerParcelTracking,
+                      extra: parcel ?? trackingCode,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF6B00),

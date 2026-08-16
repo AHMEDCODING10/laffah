@@ -24,7 +24,8 @@ class CaptainPerformancePage extends StatelessWidget {
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900, size: 20),
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -59,7 +60,12 @@ class CaptainPerformancePage extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSpacing.s24),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [const Color(0xFF1E293B), isDark ? const Color(0xFF0F172A) : const Color(0xFF334155)],
+                        colors: [
+                          const Color(0xFF1E293B),
+                          isDark
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF334155)
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -72,7 +78,8 @@ class CaptainPerformancePage extends StatelessWidget {
                           height: 80,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFFF6B00), width: 3),
+                            border: Border.all(
+                                color: const Color(0xFFFF6B00), width: 3),
                           ),
                           child: Center(
                             child: Text(
@@ -115,9 +122,9 @@ class CaptainPerformancePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   AppSpacing.h32,
-                  
+
                   Text(
                     'المؤشرات الرئيسية',
                     style: TextStyle(
@@ -128,71 +135,71 @@ class CaptainPerformancePage extends StatelessWidget {
                     ),
                   ),
                   AppSpacing.h16,
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'معدل القبول',
-                      value: '92%',
-                      subtitle: 'مرتفع',
-                      icon: Icons.thumb_up_rounded,
-                      color: const Color(0xFF22C55E),
-                      isDark: isDark,
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'معدل القبول',
+                          value: '92%',
+                          subtitle: 'مرتفع',
+                          icon: Icons.thumb_up_rounded,
+                          color: const Color(0xFF22C55E),
+                          isDark: isDark,
+                        ),
+                      ),
+                      AppSpacing.w16,
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'معدل الإلغاء',
+                          value: '4%',
+                          subtitle: 'جيد جداً',
+                          icon: Icons.cancel_rounded,
+                          color: const Color(0xFF3B82F6),
+                          isDark: isDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  AppSpacing.h16,
+
+                  // Feedback from passengers
+                  Text(
+                    'آراء الركاب الأخيرة',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? AppColors.white : AppColors.gray900,
                     ),
                   ),
-                  AppSpacing.w16,
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'معدل الإلغاء',
-                      value: '4%',
-                      subtitle: 'جيد جداً',
-                      icon: Icons.cancel_rounded,
-                      color: const Color(0xFF3B82F6),
-                      isDark: isDark,
-                    ),
+                  AppSpacing.h16,
+                  _buildReviewItem(
+                    rating: 5,
+                    comment: 'دراجة نظيفة وقيادة آمنة جداً. شكراً للكابتن.',
+                    date: 'منذ يومين',
+                    isDark: isDark,
+                  ),
+                  _buildReviewItem(
+                    rating: 4,
+                    comment: 'وصل في الوقت المحدد تماماً.',
+                    date: 'منذ 3 أيام',
+                    isDark: isDark,
+                  ),
+                  _buildReviewItem(
+                    rating: 5,
+                    comment: 'تعامل راقي ومحترم.',
+                    date: 'منذ أسبوع',
+                    isDark: isDark,
                   ),
                 ],
               ),
-              AppSpacing.h16,
-              
-              // Feedback from passengers
-              Text(
-                'آراء الركاب الأخيرة',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? AppColors.white : AppColors.gray900,
-                ),
-              ),
-              AppSpacing.h16,
-              _buildReviewItem(
-                rating: 5,
-                comment: 'دراجة نظيفة وقيادة آمنة جداً. شكراً للكابتن.',
-                date: 'منذ يومين',
-                isDark: isDark,
-              ),
-              _buildReviewItem(
-                rating: 4,
-                comment: 'وصل في الوقت المحدد تماماً.',
-                date: 'منذ 3 أيام',
-                isDark: isDark,
-              ),
-              _buildReviewItem(
-                rating: 5,
-                comment: 'تعامل راقي ومحترم.',
-                date: 'منذ أسبوع',
-                isDark: isDark,
-              ),
-            ],
-          ),
-        );
-      },
-    ),
-  ),
-);
-}
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   Widget _buildMetricCard({
     required String title,
@@ -208,7 +215,9 @@ class CaptainPerformancePage extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray200,
         ),
       ),
       child: Column(
@@ -266,7 +275,9 @@ class CaptainPerformancePage extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray200,
         ),
       ),
       child: Column(
@@ -278,7 +289,9 @@ class CaptainPerformancePage extends StatelessWidget {
               Row(
                 children: List.generate(5, (index) {
                   return Icon(
-                    index < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                    index < rating
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
                     color: const Color(0xFFFF6B00),
                     size: 16,
                   );
@@ -308,4 +321,3 @@ class CaptainPerformancePage extends StatelessWidget {
     );
   }
 }
-

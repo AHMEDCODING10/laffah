@@ -1,35 +1,37 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/router/app_router.dart';
 
 class HomeLocalDataSource {
   static const String _recentDestinationsKey = 'recent_destinations_key';
 
-  static List<Map<String, dynamic>> getQuickDestinations() {
+  static List<Map<String, dynamic>> getQuickDestinations(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return [
       {
         'id': 'saved',
-        'title': 'المحفوظة',
+        'title': localizations.pass_places_saved_title,
         'location': 'المواقع المحفوظة',
         'icon': Icons.bookmark_outline_rounded,
         'route': LaffahRoutes.passengerSavedPlaces,
       },
       {
         'id': 'university',
-        'title': 'الجامعة',
+        'title': localizations.pass_places_uni,
         'location': 'جامعة صنعاء - البوابة الرئيسية',
         'icon': Icons.school_outlined,
       },
       {
         'id': 'work',
-        'title': 'العمل',
+        'title': localizations.pass_places_work,
         'location': 'شارع الزبيري - برج الأمل التجاري',
         'icon': Icons.work_outline_rounded,
       },
       {
         'id': 'home',
-        'title': 'المنزل',
+        'title': localizations.pass_places_home,
         'location': 'حي حدة - خلف بريد حدة السكني',
         'icon': Icons.home_outlined,
       },
@@ -45,7 +47,7 @@ class HomeLocalDataSource {
         return decoded.map((e) {
           final map = e as Map<String, dynamic>;
           // Assign icon based on some logic if you want, for now default
-          map['icon'] = Icons.location_on_outlined; 
+          map['icon'] = Icons.location_on_outlined;
           return map;
         }).toList();
       }
@@ -70,10 +72,11 @@ class HomeLocalDataSource {
     ];
   }
 
-  static Future<void> saveRecentDestination(Map<String, dynamic> destination) async {
+  static Future<void> saveRecentDestination(
+      Map<String, dynamic> destination) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Clean icon before saving since IconData isn't json serializable easily
       final Map<String, dynamic> toSave = Map.from(destination);
       toSave.remove('icon');
@@ -87,12 +90,12 @@ class HomeLocalDataSource {
       }).toList();
 
       cleanCurrent.insert(0, toSave);
-      
+
       // Keep only top 5
       if (cleanCurrent.length > 5) {
         cleanCurrent.removeRange(5, cleanCurrent.length);
       }
-      
+
       await prefs.setString(_recentDestinationsKey, jsonEncode(cleanCurrent));
     } catch (e) {
       debugPrint('Error saving recent destination: $e');

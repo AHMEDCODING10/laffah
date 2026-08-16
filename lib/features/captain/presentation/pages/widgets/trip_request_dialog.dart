@@ -37,7 +37,8 @@ class TripRequestDialog extends StatefulWidget {
   State<TripRequestDialog> createState() => _TripRequestDialogState();
 }
 
-class _TripRequestDialogState extends State<TripRequestDialog> with SingleTickerProviderStateMixin {
+class _TripRequestDialogState extends State<TripRequestDialog>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<Offset> _slideAnimation;
   Timer? _countdownTimer;
@@ -92,7 +93,8 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 88), // Extra bottom padding for floating bar
+          margin: const EdgeInsets.fromLTRB(
+              16, 0, 16, 88), // Extra bottom padding for floating bar
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
@@ -133,7 +135,8 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                             Container(
                               padding: const EdgeInsets.all(AppSpacing.s8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                                color: const Color(0xFFFF6B00)
+                                    .withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -144,12 +147,15 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                             ),
                             AppSpacing.w10,
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 5),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                                color: const Color(0xFFFF6B00)
+                                    .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                                  color: const Color(0xFFFF6B00)
+                                      .withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Text(
@@ -175,9 +181,13 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                               child: CircularProgressIndicator(
                                 value: _secondsRemaining / 15.0,
                                 strokeWidth: 4.0,
-                                backgroundColor: isDark ? AppColors.gray800 : AppColors.gray200,
+                                backgroundColor: isDark
+                                    ? AppColors.gray800
+                                    : AppColors.gray200,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  _secondsRemaining <= 5 ? AppColors.danger : const Color(0xFFFF6B00),
+                                  _secondsRemaining <= 5
+                                      ? AppColors.danger
+                                      : const Color(0xFFFF6B00),
                                 ),
                               ),
                             ),
@@ -187,7 +197,11 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                 fontSize: 14,
                                 fontWeight: FontWeight.w900,
                                 fontFamily: 'monospace',
-                                color: _secondsRemaining <= 5 ? AppColors.danger : (isDark ? Colors.white : AppColors.gray900),
+                                color: _secondsRemaining <= 5
+                                    ? AppColors.danger
+                                    : (isDark
+                                        ? Colors.white
+                                        : AppColors.gray900),
                               ),
                             ),
                           ],
@@ -202,9 +216,12 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                       children: [
                         CircleAvatar(
                           radius: 24,
-                          backgroundColor: const Color(0xFFFF6B00).withValues(alpha: 0.2),
+                          backgroundColor:
+                              const Color(0xFFFF6B00).withValues(alpha: 0.2),
                           child: Text(
-                            widget.passengerName.isNotEmpty ? widget.passengerName[0] : 'ع',
+                            widget.passengerName.isNotEmpty
+                                ? widget.passengerName[0]
+                                : 'ع',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
@@ -224,19 +241,23 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
                                   fontFamily: 'IBM Plex Sans Arabic',
-                                  color: isDark ? Colors.white : AppColors.gray900,
+                                  color:
+                                      isDark ? Colors.white : AppColors.gray900,
                                 ),
                               ),
                               Row(
                                 children: [
-                                  const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
+                                  const Icon(Icons.star_rounded,
+                                      size: 16, color: Colors.amber),
                                   AppSpacing.w4,
                                   Text(
                                     '${widget.passengerRating} âک…',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                      color: isDark
+                                          ? AppColors.gray400
+                                          : AppColors.gray600,
                                     ),
                                   ),
                                 ],
@@ -245,19 +266,23 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                            color:
+                                const Color(0xFFFF6B00).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: const Color(0xFFFF6B00).withValues(alpha: 0.25),
+                              color: const Color(0xFFFF6B00)
+                                  .withValues(alpha: 0.25),
                             ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                AppLocalizations.of(context)!.capt_expected_fare,
+                                AppLocalizations.of(context)!
+                                    .capt_expected_fare,
                                 style: const TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
@@ -266,7 +291,7 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                 ),
                               ),
                               Text(
-                                '${widget.fare.toStringAsFixed(0)} ر.ي',
+                                '${widget.fare.toStringAsFixed(0)} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
@@ -291,7 +316,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                             : AppColors.gray50,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : AppColors.gray200,
                         ),
                       ),
                       child: Column(
@@ -315,7 +342,8 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      AppLocalizations.of(context)!.capt_point_a,
+                                      AppLocalizations.of(context)!
+                                          .capt_point_a,
                                       style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -329,7 +357,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'IBM Plex Sans Arabic',
-                                        color: isDark ? Colors.white : AppColors.gray900,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.gray900,
                                       ),
                                     ),
                                   ],
@@ -369,7 +399,8 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      AppLocalizations.of(context)!.capt_point_b,
+                                      AppLocalizations.of(context)!
+                                          .capt_point_b,
                                       style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -383,7 +414,9 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'IBM Plex Sans Arabic',
-                                        color: isDark ? Colors.white : AppColors.gray900,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.gray900,
                                       ),
                                     ),
                                   ],
@@ -437,14 +470,15 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                               },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.danger,
-                                side: const BorderSide(color: AppColors.danger, width: 1.2),
+                                side: const BorderSide(
+                                    color: AppColors.danger, width: 1.2),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Text(
-                                'رفض',
-                                style: TextStyle(
+                              child: Text(
+                                AppLocalizations.of(context)!.capt_reject,
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -470,14 +504,17 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
                                 backgroundColor: const Color(0xFFFF6B00),
                                 foregroundColor: Colors.white,
                                 elevation: 4,
-                                shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                                shadowColor: const Color(0xFFFF6B00)
+                                    .withValues(alpha: 0.4),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              icon: const Icon(Icons.flash_on_rounded, size: 20),
+                              icon:
+                                  const Icon(Icons.flash_on_rounded, size: 20),
                               label: Text(
-                                AppLocalizations.of(context)!.capt_accept_order_now,
+                                AppLocalizations.of(context)!
+                                    .capt_accept_order_now,
                                 style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.w900,
@@ -499,14 +536,17 @@ class _TripRequestDialogState extends State<TripRequestDialog> with SingleTicker
     );
   }
 
-  Widget _buildSpecCard(bool isDark, IconData icon, String label, String value) {
+  Widget _buildSpecCard(
+      bool isDark, IconData icon, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
+        color:
+            isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color:
+              isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
         ),
       ),
       child: Row(

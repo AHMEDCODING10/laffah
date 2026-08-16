@@ -16,11 +16,12 @@ class CaptainRideInvoicePage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-appBar: AppBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.close_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+            icon: Icon(Icons.close_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900),
             onPressed: () => context.go(LaffahRoutes.captainHome),
           ),
           centerTitle: true,
@@ -52,7 +53,7 @@ appBar: AppBar(
                 ),
               ),
               AppSpacing.h16,
-              
+
               Text(
                 'الرحلة اكتملت بنجاح!',
                 style: TextStyle(
@@ -62,7 +63,7 @@ appBar: AppBar(
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
               ),
-              
+
               AppSpacing.h8,
               const Text(
                 'الرجاء تحصيل المبلغ التالي من الراكب',
@@ -72,7 +73,7 @@ appBar: AppBar(
                   color: AppColors.gray500,
                 ),
               ),
-              
+
               AppSpacing.h32,
 
               // Collection Card
@@ -126,7 +127,8 @@ appBar: AppBar(
                     ),
                     AppSpacing.h16,
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                         borderRadius: AppSpacing.radiusMD,
@@ -143,29 +145,34 @@ appBar: AppBar(
                   ],
                 ),
               ),
-              
+
               AppSpacing.h32,
-              
+
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.gray50,
+                  color: isDark
+                      ? AppColors.white.withValues(alpha: 0.02)
+                      : AppColors.gray50,
                   borderRadius: AppSpacing.radiusMD,
                 ),
                 child: Column(
                   children: [
                     _buildInvoiceRow('أجرة الرحلة', '1,250 ريال', isDark),
                     AppSpacing.h12,
-                    _buildInvoiceRow('رسوم لَفَّة (مستقطعة)', '- 125 ريال', isDark, isNegative: true),
+                    _buildInvoiceRow(
+                        'رسوم لَفَّة (مستقطعة)', '- 125 ريال', isDark,
+                        isNegative: true),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Divider(color: AppColors.gray300),
                     ),
-                    _buildInvoiceRow('صافي الربح', '1,125 ريال', isDark, isBold: true, color: const Color(0xFF22C55E)),
+                    _buildInvoiceRow('صافي الربح', '1,125 ريال', isDark,
+                        isBold: true, color: const Color(0xFF22C55E)),
                   ],
                 ),
               ),
-              
+
               AppSpacing.h40,
 
               SizedBox(
@@ -199,7 +206,8 @@ appBar: AppBar(
     );
   }
 
-  Widget _buildInvoiceRow(String label, String value, bool isDark, {bool isBold = false, bool isNegative = false, Color? color}) {
+  Widget _buildInvoiceRow(String label, String value, bool isDark,
+      {bool isBold = false, bool isNegative = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -217,11 +225,13 @@ appBar: AppBar(
             fontFamily: isBold ? 'monospace' : 'IBM Plex Sans Arabic',
             fontSize: isBold ? 16 : 14,
             fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
-            color: color ?? (isNegative ? AppColors.danger : (isDark ? AppColors.white : AppColors.gray900)),
+            color: color ??
+                (isNegative
+                    ? AppColors.danger
+                    : (isDark ? AppColors.white : AppColors.gray900)),
           ),
         ),
       ],
     );
   }
 }
-

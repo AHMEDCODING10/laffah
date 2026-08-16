@@ -22,5 +22,6 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> logout();
   Future<Either<Failure, void>> forgotPassword(String phone);
   Future<Either<Failure, void>> verifyResetCode(String phone, String code);
-  Future<Either<Failure, void>> resetPassword(String phone, String code, String newPassword);
+  Future<Either<Failure, void>> resetPassword(
+      String phone, String code, String newPassword);
 }

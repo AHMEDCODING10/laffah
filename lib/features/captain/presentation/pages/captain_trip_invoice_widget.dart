@@ -34,7 +34,8 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1116) : const Color(0xFFFAFAFA),
+      backgroundColor:
+          isDark ? const Color(0xFF0F1116) : const Color(0xFFFAFAFA),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -57,7 +58,7 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              
+
               // Success circular badge
               Center(
                 child: Container(
@@ -110,7 +111,8 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
               // Invoice Details Glass Box Card
               GlassBox(
                 borderRadius: AppSpacing.radiusLG,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s24),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s20, vertical: AppSpacing.s24),
                 child: Column(
                   children: [
                     const Text(
@@ -132,7 +134,7 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
                         fontFamily: 'IBM Plex Sans Arabic',
                       ),
                     ),
-                    
+
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: AppSpacing.s16),
                       child: Divider(height: 1),
@@ -145,7 +147,8 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
                     AppSpacing.h12,
                     _buildInvoiceRow('وقت الرحلة', duration),
                     AppSpacing.h12,
-                    _buildInvoiceRow('المسار', 'من ${pickup.split('،').first} إلى ${dropoff.split('،').first}'),
+                    _buildInvoiceRow('المسار',
+                        'من ${pickup.split('،').first} إلى ${dropoff.split('،').first}'),
                   ],
                 ),
               ),
@@ -180,11 +183,18 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.gray500, fontWeight: FontWeight.bold, fontFamily: 'IBM Plex Sans Arabic'),
+          style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.gray500,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'IBM Plex Sans Arabic'),
         ),
         Text(
           value,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, fontFamily: 'IBM Plex Sans Arabic'),
+          style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'IBM Plex Sans Arabic'),
         ),
       ],
     );

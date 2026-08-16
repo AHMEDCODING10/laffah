@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// LogoutConfirmationDialog — Displays a side-by-side confirmation modal when logging out.
 class LogoutConfirmationDialog extends StatelessWidget {
@@ -14,7 +15,8 @@ class LogoutConfirmationDialog extends StatelessWidget {
     required this.onConfirm,
   });
 
-  static Future<void> show(BuildContext context, bool isDark, VoidCallback onConfirm) {
+  static Future<void> show(
+      BuildContext context, bool isDark, VoidCallback onConfirm) {
     return showDialog(
       context: context,
       builder: (ctx) => LogoutConfirmationDialog(
@@ -26,14 +28,12 @@ class LogoutConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        child: GlassBox(
-          borderRadius: AppSpacing.radiusLG,
-          padding: const EdgeInsets.all(AppSpacing.s20),
-          child: Column(
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: GlassBox(
+        borderRadius: AppSpacing.radiusLG,
+        padding: const EdgeInsets.all(AppSpacing.s20),
+        child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
@@ -50,7 +50,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
               ),
               AppSpacing.h16,
               Text(
-                'تأكيد تسجيل الخروج',
+                AppLocalizations.of(context)!.logout_confirm_title,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.w900,
@@ -60,7 +60,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
               ),
               AppSpacing.h8,
               Text(
-                'هل أنت أصلًا متأكد من رغبتك في تسجيل الخروج من حسابك في تطبيق لَفّة؟',
+                AppLocalizations.of(context)!.logout_confirm_message,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
@@ -85,7 +85,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'إلغاء',
+                        AppLocalizations.of(context)!.cancel_btn,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
@@ -110,9 +110,9 @@ class LogoutConfirmationDialog extends StatelessWidget {
                           borderRadius: AppSpacing.borderMD,
                         ),
                       ),
-                      child: const Text(
-                        'تأكيد الخروج',
-                        style: TextStyle(
+                      child: Text(
+                        AppLocalizations.of(context)!.confirm_logout_btn,
+                        style: const TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -126,7 +126,6 @@ class LogoutConfirmationDialog extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

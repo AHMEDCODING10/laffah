@@ -1,13 +1,16 @@
-import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/injection_container.dart' as di;
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/models/notification_item_model.dart';
 import '../widgets/notification_card.dart';
 
-/// NotificationsPage — Central hub for passenger notifications matching Laffah design.
-/// Refactored to Clean Architecture composition.
+/// NotificationsPage — Central hub for notifications with swipe-to-delete and live API integration.
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
@@ -18,21 +21,228 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late List<NotificationItemModel> _notifications;
+  List<NotificationItemModel> _notifications = [];
+  bool _isLoading = true;
+  String? _errorMessage;
   int _selectedCategoryIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
-    // Notifications will be loaded from the real backend push notifications system
-    _notifications = [];
+    _fetchNotifications();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchNotifications() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final dioClient = di.sl<DioClient>();
+      final response = await dioClient.dio.get(ApiEndpoints.notifications);
+      if (response.statusCode == 200 && response.data != null) {
+        final dynamic rawData = response.data['data'] ?? response.data;
+        final List<dynamic> list = rawData is List
+            ? rawData
+            : (rawData is Map && rawData['data'] is List
+                ? rawData['data'] as List<dynamic>
+                : []);
+        setState(() {
+          _notifications = list.map((item) => NotificationItemModel.fromJson(item as Map<String, dynamic>)).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("⚠️ [NotificationsPage] Error fetching notifications: $e");
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'تعذر تحميل الإشعارات';
+      });
+    }
+  }
+
+  Future<void> _markAsRead(String id) async {
+    try {
+      final dioClient = di.sl<DioClient>();
+      await dioClient.dio.post(ApiEndpoints.markNotificationAsRead(id));
+      // Update local state directly for instant feedback
+      setState(() {
+        final index = _notifications.indexWhere((n) => n.id == id);
+        if (index != -1) {
+          final old = _notifications[index];
+          _notifications[index] = NotificationItemModel(
+            id: old.id,
+            title: old.title,
+            message: old.message,
+            time: old.time,
+            category: old.category,
+            isUnread: false,
+            captainName: old.captainName,
+            tripId: old.tripId,
+          );
+        }
+      });
+    } catch (e) {
+      debugPrint("⚠️ [NotificationsPage] Error marking notification as read: $e");
+    }
+  }
+
+  Future<void> _markAllAsRead() async {
+    try {
+      HapticFeedback.lightImpact();
+      final dioClient = di.sl<DioClient>();
+      await dioClient.dio.post(ApiEndpoints.markAllNotificationsAsRead);
+      setState(() {
+        _notifications = _notifications.map((n) => NotificationItemModel(
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          time: n.time,
+          category: n.category,
+          isUnread: false,
+          captainName: n.captainName,
+          tripId: n.tripId,
+        )).toList();
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.success,
+            content: Text(
+              'تم تحديد جميع الإشعارات كمقروءة ✔️',
+              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("⚠️ [NotificationsPage] Error marking all as read: $e");
+    }
+  }
+
+  Future<void> _deleteNotification(NotificationItemModel item, int index) async {
+    HapticFeedback.mediumImpact();
+    // Optimistic delete
+    setState(() {
+      _notifications.removeWhere((n) => n.id == item.id);
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.gray800,
+          duration: const Duration(seconds: 3),
+          content: Text(
+            'تم حذف الإشعار "${item.title}"',
+            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      );
+    }
+
+    try {
+      final dioClient = di.sl<DioClient>();
+      await dioClient.dio.delete(ApiEndpoints.deleteNotification(item.id));
+    } catch (e) {
+      debugPrint("⚠️ [NotificationsPage] Error deleting notification: $e");
+    }
+  }
+
+  Future<void> _clearAllNotifications() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: isDark ? AppColors.surfaceElevatedDark : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              'مسح جميع الإشعارات',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDark ? Colors.white : AppColors.gray900,
+              ),
+            ),
+            content: Text(
+              'هل أنت متأكد من حذف جميع الإشعارات؟ لن يمكنك استرجاعها بعد ذلك.',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontSize: 14,
+                color: isDark ? AppColors.gray300 : AppColors.gray700,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(
+                  'إلغاء',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.danger,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text(
+                  'حذف الكل',
+                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      HapticFeedback.heavyImpact();
+      setState(() {
+        _notifications.clear();
+      });
+
+      try {
+        final dioClient = di.sl<DioClient>();
+        await dioClient.dio.delete(ApiEndpoints.clearAllNotifications);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: AppColors.success,
+              content: Text(
+                'تم مسح جميع الإشعارات بنجاح ✔️',
+                style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint("⚠️ [NotificationsPage] Error clearing all notifications: $e");
+      }
+    }
   }
 
   List<NotificationItemModel> get _filteredNotifications {
@@ -89,7 +299,7 @@ class _NotificationsPageState extends State<NotificationsPage>
             ),
           ),
           title: Text(
-            AppLocalizations.of(context)!.pass_notifications,
+            AppLocalizations.of(context)?.pass_notifications ?? 'الإشعارات والتنبيهات',
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 18,
@@ -98,6 +308,18 @@ class _NotificationsPageState extends State<NotificationsPage>
             ),
           ),
           centerTitle: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.done_all_rounded, color: AppColors.primary500),
+              tooltip: 'تحديد الكل كمقروء',
+              onPressed: _notifications.isNotEmpty ? _markAllAsRead : null,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_rounded, color: AppColors.danger),
+              tooltip: 'مسح جميع الإشعارات',
+              onPressed: _notifications.isNotEmpty ? _clearAllNotifications : null,
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -114,7 +336,8 @@ class _NotificationsPageState extends State<NotificationsPage>
               ),
               child: TabBar(
                 controller: _tabController,
-                onTap: (index) => setState(() => _selectedCategoryIndex = index),
+                onTap: (index) =>
+                    setState(() => _selectedCategoryIndex = index),
                 indicatorColor: AppColors.primary500,
                 indicatorWeight: 3,
                 indicatorSize: TabBarIndicatorSize.tab,
@@ -134,50 +357,93 @@ class _NotificationsPageState extends State<NotificationsPage>
                 tabs: [
                   Tab(
                     icon: const Icon(Icons.apps_rounded, size: 20),
-                    text: AppLocalizations.of(context)!.pass_all,
+                    text: AppLocalizations.of(context)?.pass_all ?? 'الكل',
                   ),
                   Tab(
                     icon: const Icon(Icons.directions_car_rounded, size: 20),
-                    text: AppLocalizations.of(context)!.pass_rides,
+                    text: AppLocalizations.of(context)?.pass_rides ?? 'مشاوير',
                   ),
                   Tab(
                     icon: const Icon(Icons.inventory_2_rounded, size: 20),
-                    text: AppLocalizations.of(context)!.pass_parcels,
+                    text: AppLocalizations.of(context)?.pass_parcels ?? 'طرود',
                   ),
                   Tab(
                     icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
-                    text: AppLocalizations.of(context)!.pass_messages,
+                    text: AppLocalizations.of(context)?.pass_messages ?? 'رسائل',
                   ),
                   Tab(
                     icon: const Icon(Icons.local_offer_rounded, size: 20),
-                    text: AppLocalizations.of(context)!.pass_offers,
+                    text: AppLocalizations.of(context)?.pass_offers ?? 'عروض',
                   ),
                 ],
               ),
             ),
 
-            // Notification List
+            // Notification List with Swipe-to-Delete and Pull to Refresh
             Expanded(
-              child: _filteredNotifications.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.s16,
-                        0,
-                        AppSpacing.s16,
-                        96,
-                      ),
-                      itemCount: _filteredNotifications.length,
-                      itemBuilder: (context, index) {
-                        final item = _filteredNotifications[index];
-                        return NotificationCard(
-                          isDark: isDark,
-                          item: item,
-                          onTap: () {
-                            // Tap handler
-                          },
-                        );
-                      },
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary500))
+                  : RefreshIndicator(
+                      color: AppColors.primary500,
+                      onRefresh: _fetchNotifications,
+                      child: _filteredNotifications.isEmpty
+                          ? _buildEmptyState(isDark)
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.s16,
+                                0,
+                                AppSpacing.s16,
+                                96,
+                              ),
+                              itemCount: _filteredNotifications.length,
+                              itemBuilder: (context, index) {
+                                final item = _filteredNotifications[index];
+                                return Dismissible(
+                                  key: Key('notif_${item.id}'),
+                                  direction: DismissDirection.endToStart,
+                                  background: Container(
+                                    margin: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+                                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.danger,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    alignment: Alignment.centerLeft,
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          'حذف',
+                                          style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
+                                      ],
+                                    ),
+                                  ),
+                                  onDismissed: (_) {
+                                    _deleteNotification(item, index);
+                                  },
+                                  child: NotificationCard(
+                                    isDark: isDark,
+                                    item: item,
+                                    onTap: () {
+                                      if (item.isUnread) {
+                                        _markAsRead(item.id);
+                                      }
+                                      if (item.tripId != null) {
+                                        debugPrint("🚕 [Notification] Navigating to trip ID: ${item.tripId}");
+                                      }
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                     ),
             ),
           ],
@@ -188,25 +454,28 @@ class _NotificationsPageState extends State<NotificationsPage>
 
   Widget _buildEmptyState(bool isDark) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_none_rounded,
-            size: 48,
-            color: isDark ? AppColors.gray600 : AppColors.gray400,
-          ),
-          AppSpacing.h16,
-          Text(
-            AppLocalizations.of(context)!.pass_no_notifications,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: isDark ? AppColors.gray400 : AppColors.gray600,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.notifications_none_rounded,
+              size: 48,
+              color: isDark ? AppColors.gray600 : AppColors.gray400,
             ),
-          ),
-        ],
+            AppSpacing.h16,
+            Text(
+              _errorMessage ?? (AppLocalizations.of(context)?.pass_no_notifications ?? 'لا توجد إشعارات حالياً'),
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isDark ? AppColors.gray400 : AppColors.gray600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

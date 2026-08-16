@@ -20,7 +20,8 @@ class CaptainNotificationEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, title, description, timeTag, icon, isRead, type];
+  List<Object?> get props =>
+      [id, title, description, timeTag, icon, isRead, type];
 
   CaptainNotificationEntity copyWith({
     String? id,

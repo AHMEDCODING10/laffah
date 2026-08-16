@@ -22,7 +22,8 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
   @override
   void initState() {
     super.initState();
-    _tripsBloc = sl<CaptainTripsBloc>()..add(const FetchCaptainTrips(isRefresh: true));
+    _tripsBloc = sl<CaptainTripsBloc>()
+      ..add(const FetchCaptainTrips(isRefresh: true));
   }
 
   @override
@@ -40,13 +41,16 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
       child: BlocProvider.value(
         value: _tripsBloc,
         child: Scaffold(
-          backgroundColor: isDark ? const Color(0xFF141822) : const Color(0xFFF7F9FC),
+          backgroundColor:
+              isDark ? const Color(0xFF141822) : const Color(0xFFF7F9FC),
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             centerTitle: true,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900, size: 20),
+              icon: Icon(Icons.arrow_back_ios_new_rounded,
+                  color: isDark ? AppColors.white : AppColors.gray900,
+                  size: 20),
               onPressed: () {
                 if (context.canPop()) {
                   context.pop();
@@ -67,20 +71,29 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
           ),
           body: BlocBuilder<CaptainTripsBloc, CaptainTripsState>(
             builder: (context, state) {
-              if (state is CaptainTripsInitial || (state is CaptainTripsLoading && state.isFirstFetch)) {
-                return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00)));
+              if (state is CaptainTripsInitial ||
+                  (state is CaptainTripsLoading && state.isFirstFetch)) {
+                return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFF6B00)));
               } else if (state is CaptainTripsError) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: AppColors.danger),
                       const SizedBox(height: 16),
-                      Text(state.message, style: TextStyle(color: isDark ? Colors.white : Colors.black, fontFamily: 'IBM Plex Sans Arabic')),
+                      Text(state.message,
+                          style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black,
+                              fontFamily: 'IBM Plex Sans Arabic')),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () => _tripsBloc.add(const FetchCaptainTrips(isRefresh: true)),
-                        child: const Text('إعادة المحاولة', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                        onPressed: () => _tripsBloc
+                            .add(const FetchCaptainTrips(isRefresh: true)),
+                        child: const Text('إعادة المحاولة',
+                            style:
+                                TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
                       )
                     ],
                   ),
@@ -110,13 +123,20 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                         const Center(
                           child: Padding(
                             padding: EdgeInsets.only(top: 40),
-                            child: Text('لا يوجد سجل رحلات حتى الآن.', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.gray500)),
+                            child: Text('لا يوجد سجل رحلات حتى الآن.',
+                                style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    color: AppColors.gray500)),
                           ),
                         )
                       else
                         ...state.trips.map((trip) => _buildTripItem(
-                              type: trip.distance.contains('طرد') ? 'parcel' : 'ride', // Simplistic heuristic if no dedicated type field
-                              destination: trip.dropoff.isNotEmpty ? trip.dropoff : 'وجهة غير معروفة',
+                              type: trip.distance.contains('طرد')
+                                  ? 'parcel'
+                                  : 'ride', // Simplistic heuristic if no dedicated type field
+                              destination: trip.dropoff.isNotEmpty
+                                  ? trip.dropoff
+                                  : 'وجهة غير معروفة',
                               time: trip.date,
                               earnings: trip.price,
                               status: trip.status,
@@ -137,9 +157,12 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
 
   Widget _buildStatSummary(CaptainTripsLoaded state, bool isDark) {
     int totalTrips = state.trips.length;
-    double totalEarnings = state.trips.fold(0.0, (sum, trip) => sum + trip.grossFare);
+    double totalEarnings =
+        state.trips.fold(0.0, (sum, trip) => sum + trip.grossFare);
     // Simple heuristic for parcels based on status or type if available
-    int totalParcels = state.trips.where((t) => t.pickup.contains('طرد') || t.distance.contains('طرد')).length;
+    int totalParcels = state.trips
+        .where((t) => t.pickup.contains('طرد') || t.distance.contains('طرد'))
+        .length;
     int rides = totalTrips - totalParcels;
 
     return Container(
@@ -155,10 +178,20 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _StatItem(title: 'الرحلات', value: rides.toString(), isDark: isDark),
-          Container(width: 1, height: 40, color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
-          _StatItem(title: 'الطرود', value: totalParcels.toString(), isDark: isDark),
-          Container(width: 1, height: 40, color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
-          _StatItem(title: 'الأرباح', value: '${totalEarnings.toInt()}', isDark: isDark),
+          Container(
+              width: 1,
+              height: 40,
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+          _StatItem(
+              title: 'الطرود', value: totalParcels.toString(), isDark: isDark),
+          Container(
+              width: 1,
+              height: 40,
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+          _StatItem(
+              title: 'الأرباح',
+              value: '${totalEarnings.toInt()}',
+              isDark: isDark),
         ],
       ),
     );
@@ -174,8 +207,10 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
     required bool isDark,
   }) {
     final bool isCanceled = status == 'ملغاة' || status == 'cancelled';
-    final IconData icon = type == 'ride' ? Icons.motorcycle_rounded : Icons.inventory_2_rounded;
-    final Color iconColor = type == 'ride' ? const Color(0xFFFF6B00) : const Color(0xFF3B82F6);
+    final IconData icon =
+        type == 'ride' ? Icons.motorcycle_rounded : Icons.inventory_2_rounded;
+    final Color iconColor =
+        type == 'ride' ? const Color(0xFFFF6B00) : const Color(0xFF3B82F6);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s16),
@@ -184,7 +219,9 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
         color: isDark ? const Color(0xFF1E2433) : AppColors.white,
         borderRadius: AppSpacing.radiusMD,
         border: Border.all(
-          color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color: isDark
+              ? AppColors.white.withValues(alpha: 0.05)
+              : AppColors.gray200,
         ),
       ),
       child: Row(
@@ -192,10 +229,13 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isCanceled ? AppColors.gray500.withValues(alpha: 0.1) : iconColor.withValues(alpha: 0.1),
+              color: isCanceled
+                  ? AppColors.gray500.withValues(alpha: 0.1)
+                  : iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: isCanceled ? AppColors.gray500 : iconColor, size: 24),
+            child: Icon(icon,
+                color: isCanceled ? AppColors.gray500 : iconColor, size: 24),
           ),
           AppSpacing.w16,
           Expanded(
@@ -234,7 +274,9 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: isCanceled ? (isDark ? AppColors.gray400 : AppColors.gray500) : const Color(0xFFFF6B00),
+                  color: isCanceled
+                      ? (isDark ? AppColors.gray400 : AppColors.gray500)
+                      : const Color(0xFFFF6B00),
                 ),
               ),
               AppSpacing.h4,

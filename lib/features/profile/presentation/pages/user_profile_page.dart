@@ -15,6 +15,10 @@ import '../bloc/profile_state.dart';
 import '../widgets/logout_confirmation_dialog.dart';
 import '../widgets/profile_section_card.dart';
 import '../widgets/profile_user_header.dart';
+import '../../../../core/bloc/locale/locale_bloc.dart';
+import '../../../../core/bloc/locale/locale_event.dart';
+import '../../../../core/bloc/locale/locale_state.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// UserProfilePage — Passenger Profile Page connected to real backend via ProfileBloc
 class UserProfilePage extends StatelessWidget {
@@ -42,17 +46,16 @@ class _ProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
-        appBar: const LaffahAppBar(
-          title: 'الملف الشخصي',
+        appBar: LaffahAppBar(
+          title: AppLocalizations.of(context)!.pass_profile_title,
           showMenuButton: false,
           showBackButton: false,
         ),
+        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 3),
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             // Show skeleton/loading while fetching
@@ -83,9 +86,8 @@ class _ProfileView extends StatelessWidget {
                       onPressed: () =>
                           context.read<ProfileBloc>().add(GetProfileEvent()),
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('إعادة المحاولة',
-                          style:
-                              TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                      label: Text(AppLocalizations.of(context)!.pass_retry,
+                          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary500),
                     ),
@@ -109,12 +111,12 @@ class _ProfileView extends StatelessWidget {
                 // User Header Card
                 ProfileUserHeader(
                   isDark: isDark,
-                  userName: profile?.name ?? 'المستخدم',
+                  userName: profile?.name ?? AppLocalizations.of(context)!.pass_profile_user,
                   userPhone: profile?.phone ?? '',
                   rating: 5.0, // Backend might not have this yet
-                  membershipTier: 'عضو لَفَّة',
-                  onEditPressed: () =>
-                      context.push(LaffahRoutes.passengerProfileEdit, extra: profile),
+                  membershipTier: AppLocalizations.of(context)!.pass_profile_member,
+                  onEditPressed: () => context
+                      .push(LaffahRoutes.passengerProfileEdit, extra: profile),
                 ),
 
                 AppSpacing.h24,
@@ -122,18 +124,19 @@ class _ProfileView extends StatelessWidget {
                 // Section 1: Personal Info
                 ProfileSectionCard(
                   isDark: isDark,
-                  sectionTitle: 'المعلومات الشخصية',
+                  sectionTitle: AppLocalizations.of(context)!.pass_profile_personal_info,
                   tiles: [
                     ProfileListTile(
                       icon: Icons.edit_outlined,
-                      label: 'تعديل البيانات',
+                      label: AppLocalizations.of(context)!.pass_profile_edit_data,
                       isDark: isDark,
-                      onTap: () =>
-                          context.push(LaffahRoutes.passengerProfileEdit, extra: profile),
+                      onTap: () => context.push(
+                          LaffahRoutes.passengerProfileEdit,
+                          extra: profile),
                     ),
                     ProfileListTile(
                       icon: Icons.place_outlined,
-                      label: 'الأماكن المحفوظة',
+                      label: AppLocalizations.of(context)!.pass_profile_saved_places,
                       isDark: isDark,
                       onTap: () =>
                           context.push(LaffahRoutes.passengerSavedPlaces),
@@ -146,32 +149,125 @@ class _ProfileView extends StatelessWidget {
                 // Section 2: Security & Preferences
                 ProfileSectionCard(
                   isDark: isDark,
-                  sectionTitle: 'الأمان والتفضيلات',
+                  sectionTitle: AppLocalizations.of(context)!.pass_profile_security_prefs,
                   tiles: [
                     ProfileListTile(
                       icon: Icons.lock_outline_rounded,
-                      label: 'تغيير كلمة المرور',
+                      label: AppLocalizations.of(context)!.pass_profile_change_pass,
                       isDark: isDark,
                       onTap: () => context.push(LaffahRoutes.forgotPassword),
                     ),
                     ProfileListTile(
                       icon: Icons.language_rounded,
-                      label: 'اللغة',
+                      label: AppLocalizations.of(context)!.pass_profile_language,
                       isDark: isDark,
-                      trailing: Text(
-                        'العربية',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 12,
-                          color: isDark ? AppColors.gray400 : AppColors.gray500,
-                        ),
+                      trailing: BlocBuilder<LocaleBloc, LocaleState>(
+                        builder: (context, localeState) {
+                          return Text(
+                            localeState.locale.languageCode == 'ar'
+                                ? AppLocalizations.of(context)!.pass_profile_arabic
+                                : AppLocalizations.of(context)!.pass_profile_english,
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray500,
+                            ),
+                          );
+                        },
                       ),
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('اللغة العربية هي اللغة المدعومة حالياً', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
-                            backgroundColor: AppColors.primary500,
+                        final localeState = context.read<LocaleBloc>().state;
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor:
+                              isDark ? const Color(0xFF141822) : Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(20)),
                           ),
+                          builder: (BuildContext bottomSheetContext) {
+                            return SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.pass_profile_choose_lang,
+                                      style: TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                  ListTile(
+                                    title: Text(AppLocalizations.of(context)!.pass_profile_arabic,
+                                        style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black)),
+                                    trailing:
+                                        localeState.locale.languageCode == 'ar'
+                                            ? const Icon(Icons.check,
+                                                color: AppColors.primary500)
+                                            : null,
+                                    onTap: () {
+                                      context.read<LocaleBloc>().add(
+                                          const ChangeLocale(Locale('ar')));
+                                      Navigator.pop(bottomSheetContext);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          backgroundColor: const Color(0xFFFF6B00),
+                                          content: Text(
+                                            AppLocalizations.of(context)!.pass_profile_lang_ar_success,
+                                            style: const TextStyle(
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  ListTile(
+                                    title: Text(AppLocalizations.of(context)!.pass_profile_english,
+                                        style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black)),
+                                    trailing:
+                                        localeState.locale.languageCode == 'en'
+                                            ? const Icon(Icons.check,
+                                                color: AppColors.primary500)
+                                            : null,
+                                    onTap: () {
+                                      context.read<LocaleBloc>().add(
+                                          const ChangeLocale(Locale('en')));
+                                      Navigator.pop(bottomSheetContext);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          backgroundColor: const Color(0xFFFF6B00),
+                                          content: Text(
+                                            AppLocalizations.of(context)!.pass_profile_lang_en_success,
+                                            style: const TextStyle(
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -179,7 +275,7 @@ class _ProfileView extends StatelessWidget {
                       icon: isDark
                           ? Icons.dark_mode_rounded
                           : Icons.light_mode_rounded,
-                      label: 'الوضع الليلي',
+                      label: AppLocalizations.of(context)!.pass_profile_dark_mode,
                       isDark: isDark,
                       trailing: Switch(
                         value: isDark,
@@ -200,15 +296,15 @@ class _ProfileView extends StatelessWidget {
                 // Section 3: Support & Legal
                 ProfileSectionCard(
                   isDark: isDark,
-                  sectionTitle: 'الدعم والقانون',
+                  sectionTitle: AppLocalizations.of(context)!.pass_profile_support_legal,
                   tiles: [
                     ProfileListTile(
                       icon: Icons.headset_mic_outlined,
-                      label: 'الدعم الفني والخدمات',
+                      label: AppLocalizations.of(context)!.pass_profile_tech_support,
                       isDark: isDark,
                       onTap: () async {
-                        final Uri url = Uri.parse(
-                            'whatsapp://send?phone=+967770291452');
+                        final Uri url =
+                            Uri.parse('whatsapp://send?phone=+967770291452');
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url);
                         } else {
@@ -221,12 +317,14 @@ class _ProfileView extends StatelessWidget {
                     ),
                     ProfileListTile(
                       icon: Icons.help_outline_rounded,
-                      label: 'الأسئلة الشائعة',
+                      label: AppLocalizations.of(context)!.pass_profile_faq,
                       isDark: isDark,
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('الأسئلة الشائعة قريباً!', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                          SnackBar(
+                            content: Text(AppLocalizations.of(context)!.pass_profile_faq_soon,
+                                style: const TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic')),
                             backgroundColor: AppColors.primary500,
                           ),
                         );
@@ -234,7 +332,7 @@ class _ProfileView extends StatelessWidget {
                     ),
                     ProfileListTile(
                       icon: Icons.privacy_tip_outlined,
-                      label: 'سياسة الخصوصية',
+                      label: AppLocalizations.of(context)!.pass_profile_privacy_policy,
                       isDark: isDark,
                       onTap: () => context.push(LaffahRoutes.privacyPolicy),
                     ),
@@ -254,9 +352,9 @@ class _ProfileView extends StatelessWidget {
                       color: AppColors.danger,
                       size: 20,
                     ),
-                    label: const Text(
-                      'تسجيل الخروج',
-                      style: TextStyle(
+                    label: Text(
+                      AppLocalizations.of(context)!.pass_profile_logout,
+                      style: const TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -277,7 +375,6 @@ class _ProfileView extends StatelessWidget {
             );
           },
         ),
-      ),
     );
   }
 }

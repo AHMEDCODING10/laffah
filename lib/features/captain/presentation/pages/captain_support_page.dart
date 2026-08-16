@@ -24,7 +24,8 @@ class CaptainSupportPage extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? AppColors.white : AppColors.gray900),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? AppColors.white : AppColors.gray900),
             onPressed: () => Navigator.pop(context),
           ),
           centerTitle: true,
@@ -47,11 +48,13 @@ class CaptainSupportPage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary500.withValues(alpha: 0.1),
                 borderRadius: AppSpacing.radiusLG,
-                border: Border.all(color: AppColors.primary500.withValues(alpha: 0.2)),
+                border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.2)),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.headset_mic_rounded, color: AppColors.primary500, size: 48),
+                  const Icon(Icons.headset_mic_rounded,
+                      color: AppColors.primary500, size: 48),
                   AppSpacing.h16,
                   Text(
                     'كيف يمكننا مساعدتك يا كابتن؟',
@@ -74,8 +77,10 @@ class CaptainSupportPage extends StatelessWidget {
                   ),
                   AppSpacing.h20,
                   ElevatedButton.icon(
-                    onPressed: () => _launchUrl('https://wa.me/967777123456'), // WhatsApp mock link
-                    icon: const Icon(Icons.chat_rounded, color: AppColors.white),
+                    onPressed: () => _launchUrl(
+                        'https://wa.me/967777123456'), // WhatsApp mock link
+                    icon:
+                        const Icon(Icons.chat_rounded, color: AppColors.white),
                     label: const Text(
                       'ابدأ محادثة مع الدعم',
                       style: TextStyle(
@@ -87,13 +92,15 @@ class CaptainSupportPage extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary500,
                       minimumSize: const Size(double.infinity, 48),
-                      shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: AppSpacing.radiusMD),
                     ),
                   ),
                   AppSpacing.h12,
                   OutlinedButton.icon(
                     onPressed: () => _launchUrl('tel:+967777123456'),
-                    icon: const Icon(Icons.call_rounded, color: AppColors.primary500),
+                    icon: const Icon(Icons.call_rounded,
+                        color: AppColors.primary500),
                     label: const Text(
                       'اتصل هاتفياً (للحالات الطارئة)',
                       style: TextStyle(
@@ -105,7 +112,8 @@ class CaptainSupportPage extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.primary500),
                       minimumSize: const Size(double.infinity, 48),
-                      shape: const RoundedRectangleBorder(borderRadius: AppSpacing.radiusMD),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: AppSpacing.radiusMD),
                     ),
                   ),
                 ],
@@ -125,17 +133,20 @@ class CaptainSupportPage extends StatelessWidget {
             AppSpacing.h16,
             _buildFaqItem(
               title: 'كيف يتم احتساب نسبة المنصة؟',
-              content: 'نسبة المنصة هي 15% من إجمالي قيمة الرحلة وتُخصم تلقائياً من محفظتك بعد انتهاء الرحلة.',
+              content:
+                  'نسبة المنصة هي 15% من إجمالي قيمة الرحلة وتُخصم تلقائياً من محفظتك بعد انتهاء الرحلة.',
               isDark: isDark,
             ),
             _buildFaqItem(
               title: 'الراكب لم يدفع الأجرة، ماذا أفعل؟',
-              content: 'يمكنك رفع بلاغ (رحلة غير مدفوعة) من شاشة تفاصيل الرحلة، وسيقوم فريق الدعم بالتحقق وتعويضك.',
+              content:
+                  'يمكنك رفع بلاغ (رحلة غير مدفوعة) من شاشة تفاصيل الرحلة، وسيقوم فريق الدعم بالتحقق وتعويضك.',
               isDark: isDark,
             ),
             _buildFaqItem(
               title: 'كيف أستلم أرباحي؟',
-              content: 'يمكنك سحب أرباحك أسبوعياً من شاشة السحب المالي لحسابك البنكي أو لمحفظة فلوس/جيب.',
+              content:
+                  'يمكنك سحب أرباحك أسبوعياً من شاشة السحب المالي لحسابك البنكي أو لمحفظة فلوس/جيب.',
               isDark: isDark,
             ),
           ],
@@ -144,13 +155,18 @@ class CaptainSupportPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem({required String title, required String content, required bool isDark}) {
+  Widget _buildFaqItem(
+      {required String title, required String content, required bool isDark}) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.white,
+        color:
+            isDark ? AppColors.white.withValues(alpha: 0.02) : AppColors.white,
         borderRadius: AppSpacing.radiusSM,
-        border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.gray200),
+        border: Border.all(
+            color: isDark
+                ? AppColors.white.withValues(alpha: 0.05)
+                : AppColors.gray200),
       ),
       child: ExpansionTile(
         title: Text(
@@ -166,7 +182,8 @@ class CaptainSupportPage extends StatelessWidget {
         collapsedIconColor: isDark ? AppColors.gray500 : AppColors.gray400,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s16),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s16),
             child: Text(
               content,
               style: TextStyle(

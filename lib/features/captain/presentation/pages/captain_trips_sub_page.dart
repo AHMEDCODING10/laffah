@@ -42,11 +42,13 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       if (_tripsBloc.state is CaptainTripsLoaded) {
         final state = _tripsBloc.state as CaptainTripsLoaded;
         if (!state.hasReachedMax) {
-          _tripsBloc.add(FetchCaptainTrips(statusFilter: _selectedStatusFilter));
+          _tripsBloc
+              .add(FetchCaptainTrips(statusFilter: _selectedStatusFilter));
         }
       }
     }
@@ -88,7 +90,7 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: Text(
-          'سجل الرحلات والمشاوير',
+          AppLocalizations.of(context)!.capt_trip_history_title,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w900,
@@ -112,7 +114,8 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s16),
                         decoration: BoxDecoration(
                           color: isDark
                               ? const Color(0xFF141822).withValues(alpha: 0.6)
@@ -125,7 +128,8 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                              color: Colors.black
+                                  .withValues(alpha: isDark ? 0.2 : 0.03),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
@@ -145,17 +149,20 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                             });
                           },
                           decoration: InputDecoration(
-                            hintText: 'ابحث برقم الرحلة، اسم الراكب، أو الشارع...',
+                            hintText:
+                                AppLocalizations.of(context)!.capt_trip_search_hint,
                             hintStyle: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 12.5,
                               color: AppColors.gray500,
                             ),
                             border: InputBorder.none,
-                            prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFFF6B00)),
+                            prefixIcon: const Icon(Icons.search_rounded,
+                                color: Color(0xFFFF6B00)),
                             suffixIcon: _searchQuery.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded, size: 18, color: AppColors.gray500),
+                                    icon: const Icon(Icons.clear_rounded,
+                                        size: 18, color: AppColors.gray500),
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() {
@@ -177,13 +184,23 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                     physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
-                        _buildFilterChip('الكل', _selectedStatusFilter == 'الكل', isDark),
+                        _buildFilterChip(
+                            AppLocalizations.of(context)!.capt_all, _selectedStatusFilter == 'الكل', isDark),
                         const SizedBox(width: 8),
-                        _buildFilterChip('قيد التنفيذ', _selectedStatusFilter == 'قيد التنفيذ', isDark, color: AppColors.warning),
+                        _buildFilterChip(AppLocalizations.of(context)!.capt_trip_in_progress,
+                            _selectedStatusFilter == 'قيد التنفيذ', isDark,
+                            color: AppColors.warning),
                         const SizedBox(width: 8),
-                        _buildFilterChip(AppLocalizations.of(context)!.capt_trip_done, _selectedStatusFilter == AppLocalizations.of(context)!.capt_trip_done, isDark, color: AppColors.success),
+                        _buildFilterChip(
+                            AppLocalizations.of(context)!.capt_trip_done,
+                            _selectedStatusFilter ==
+                                AppLocalizations.of(context)!.capt_trip_done,
+                            isDark,
+                            color: AppColors.success),
                         const SizedBox(width: 8),
-                        _buildFilterChip('ملغاة', _selectedStatusFilter == 'ملغاة', isDark, color: AppColors.danger),
+                        _buildFilterChip(
+                            AppLocalizations.of(context)!.capt_trip_cancelled, _selectedStatusFilter == 'ملغاة', isDark,
+                            color: AppColors.danger),
                       ],
                     ),
                   ),
@@ -198,15 +215,18 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
               child: BlocBuilder<CaptainTripsBloc, CaptainTripsState>(
                 bloc: _tripsBloc,
                 builder: (context, state) {
-                  if (state is CaptainTripsInitial || (state is CaptainTripsLoading && state.isFirstFetch)) {
+                  if (state is CaptainTripsInitial ||
+                      (state is CaptainTripsLoading && state.isFirstFetch)) {
                     return _buildShimmerLoading(isDark);
                   }
 
                   if (state is CaptainTripsError) {
                     return Center(
                       child: Text(
-                        'حدث خطأ: ${state.message}',
-                        style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.danger),
+                        AppLocalizations.of(context)!.capt_trip_err_msg(state.message),
+                        style: const TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            color: AppColors.danger),
                       ),
                     );
                   }
@@ -232,7 +252,8 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                           _searchQuery = '';
                           _selectedStatusFilter = 'الكل';
                         });
-                        _tripsBloc.add(const FetchCaptainTrips(statusFilter: 'الكل', isRefresh: true));
+                        _tripsBloc.add(const FetchCaptainTrips(
+                            statusFilter: 'الكل', isRefresh: true));
                       },
                     );
                   }
@@ -240,23 +261,30 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                   return RefreshIndicator(
                     color: const Color(0xFFFF6B00),
                     onRefresh: () async {
-                      _tripsBloc.add(FetchCaptainTrips(isRefresh: true, statusFilter: _selectedStatusFilter));
-                      await _tripsBloc.stream.firstWhere((s) => s is! CaptainTripsLoading);
+                      _tripsBloc.add(FetchCaptainTrips(
+                          isRefresh: true,
+                          statusFilter: _selectedStatusFilter));
+                      await _tripsBloc.stream
+                          .firstWhere((s) => s is! CaptainTripsLoading);
                     },
                     child: ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                       itemCount: filtered.length + (isLoadingMore ? 1 : 0),
-                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics()),
                       itemBuilder: (context, index) {
                         if (index == filtered.length) {
                           return const Padding(
                             padding: EdgeInsets.all(16.0),
-                            child: Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00))),
+                            child: Center(
+                                child: CircularProgressIndicator(
+                                    color: Color(0xFFFF6B00))),
                           );
                         }
                         final trip = filtered[index];
-                        return _AnimatedTripCard(tripEntity: trip, isDark: isDark);
+                        return _AnimatedTripCard(
+                            tripEntity: trip, isDark: isDark);
                       },
                     ),
                   );
@@ -293,7 +321,8 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   }
 
   // ── Micro-animated Filter Chip ──
-  Widget _buildFilterChip(String label, bool isSelected, bool isDark, {Color? color}) {
+  Widget _buildFilterChip(String label, bool isSelected, bool isDark,
+      {Color? color}) {
     final chipColor = color ?? const Color(0xFFFF6B00);
 
     return _ScaleButton(
@@ -301,7 +330,8 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
         HapticFeedback.selectionClick();
         if (_selectedStatusFilter != label) {
           setState(() => _selectedStatusFilter = label);
-          _tripsBloc.add(FetchCaptainTrips(statusFilter: label, isRefresh: true));
+          _tripsBloc
+              .add(FetchCaptainTrips(statusFilter: label, isRefresh: true));
         }
       },
       child: AnimatedContainer(
@@ -311,12 +341,16 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
         decoration: BoxDecoration(
           color: isSelected
               ? chipColor.withValues(alpha: 0.12)
-              : (isDark ? const Color(0xFF1A1F2B) : AppColors.gray100.withValues(alpha: 0.5)),
+              : (isDark
+                  ? const Color(0xFF1A1F2B)
+                  : AppColors.gray100.withValues(alpha: 0.5)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? chipColor.withValues(alpha: 0.5)
-                : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200),
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : AppColors.gray200),
             width: isSelected ? 1.5 : 1.0,
           ),
           boxShadow: isSelected
@@ -384,11 +418,12 @@ class _AnimatedTripCard extends StatelessWidget {
                         color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.receipt_long_rounded, size: 14, color: Color(0xFFFF6B00)),
+                      child: const Icon(Icons.receipt_long_rounded,
+                          size: 14, color: Color(0xFFFF6B00)),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'رقم الرحلة: ${trip['id']}',
+                      AppLocalizations.of(context)!.capt_trip_number_id(trip['id']),
                       style: TextStyle(
                         fontSize: 12.5,
                         color: isDark ? AppColors.gray300 : AppColors.gray800,
@@ -399,11 +434,13 @@ class _AnimatedTripCard extends StatelessWidget {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.25)),
+                    border:
+                        Border.all(color: statusColor.withValues(alpha: 0.25)),
                   ),
                   child: Text(
                     status,
@@ -427,12 +464,15 @@ class _AnimatedTripCard extends StatelessWidget {
                 // Right side: Icons and Dashed Line (RTL)
                 Column(
                   children: [
-                    const Icon(Icons.trip_origin_rounded, size: 14, color: Color(0xFF4CAF50)),
+                    const Icon(Icons.trip_origin_rounded,
+                        size: 14, color: Color(0xFF4CAF50)),
                     CustomPaint(
                       size: const Size(2, 22),
-                      painter: _DashedLinePainter(color: isDark ? Colors.white30 : AppColors.gray300),
+                      painter: _DashedLinePainter(
+                          color: isDark ? Colors.white30 : AppColors.gray300),
                     ),
-                    const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFFF44336)),
+                    const Icon(Icons.location_on_rounded,
+                        size: 14, color: Color(0xFFF44336)),
                   ],
                 ),
                 const SizedBox(width: 10),
@@ -483,8 +523,10 @@ class _AnimatedTripCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundColor: isDark ? Colors.white12 : AppColors.gray200,
-                      child: const Icon(Icons.person_rounded, size: 14, color: AppColors.gray500),
+                      backgroundColor:
+                          isDark ? Colors.white12 : AppColors.gray200,
+                      child: const Icon(Icons.person_rounded,
+                          size: 14, color: AppColors.gray500),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -542,14 +584,17 @@ class _AnimatedEmptyState extends StatefulWidget {
   State<_AnimatedEmptyState> createState() => _AnimatedEmptyStateState();
 }
 
-class _AnimatedEmptyStateState extends State<_AnimatedEmptyState> with SingleTickerProviderStateMixin {
+class _AnimatedEmptyStateState extends State<_AnimatedEmptyState>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2))
+          ..repeat(reverse: true);
     _scaleAnimation = Tween<double>(begin: 0.95, end: 1.08).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
@@ -581,20 +626,22 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState> with SingleTic
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF6B00).withValues(alpha: 0.15 * (_scaleAnimation.value - 0.95)),
+                          color: const Color(0xFFFF6B00).withValues(
+                              alpha: 0.15 * (_scaleAnimation.value - 0.95)),
                           blurRadius: 20,
                           spreadRadius: 5,
                         )
                       ],
                     ),
-                    child: const Icon(Icons.search_off_rounded, size: 54, color: Color(0xFFFF6B00)),
+                    child: const Icon(Icons.search_off_rounded,
+                        size: 54, color: Color(0xFFFF6B00)),
                   ),
                 );
               },
             ),
             AppSpacing.h20,
             Text(
-              'لا توجد رحلات مطابقة لبحثك',
+              AppLocalizations.of(context)!.capt_trip_no_results_title,
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontSize: 16.5,
@@ -603,10 +650,10 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState> with SingleTic
               ),
             ),
             AppSpacing.h8,
-            const Text(
-              'جرّب البحث باسم آخر أو اختر "الكل" لإعادة عرض كافة الرحلات.',
+            Text(
+              AppLocalizations.of(context)!.capt_trip_no_results_desc,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontSize: 12.5,
                 color: AppColors.gray500,
@@ -616,9 +663,11 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState> with SingleTic
             _ScaleButton(
               onTap: widget.onClear,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)]),
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)]),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -628,9 +677,9 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState> with SingleTic
                     )
                   ],
                 ),
-                child: const Text(
-                  'عرض كل الرحلات',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.capt_trip_show_all,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.bold,
@@ -639,6 +688,7 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState> with SingleTic
                 ),
               ),
             ),
+
           ],
         ),
       ),
@@ -694,14 +744,15 @@ class _DashedLinePainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    
+
     var max = size.height;
     var dashWidth = 4.0;
     var dashSpace = 3.0;
     double startY = 0;
-    
+
     while (startY < max) {
-      canvas.drawLine(Offset(size.width / 2, startY), Offset(size.width / 2, startY + dashWidth), paint);
+      canvas.drawLine(Offset(size.width / 2, startY),
+          Offset(size.width / 2, startY + dashWidth), paint);
       startY += dashWidth + dashSpace;
     }
   }

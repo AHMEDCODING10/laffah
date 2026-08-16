@@ -5,13 +5,16 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../presentation/bloc/profile_bloc.dart';
-import '../../presentation/bloc/profile_state.dart';
-import '../../presentation/bloc/profile_event.dart';
+import '../bloc/profile_bloc.dart';
+import '../bloc/profile_state.dart';
+import '../bloc/profile_event.dart';
 import '../../domain/entities/saved_place_entity.dart';
-import '../../data/models/saved_place_model.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/di/injection_container.dart' as di;
 import '../widgets/saved_places/add_edit_place_dialog.dart';
 import '../widgets/saved_places/saved_place_card.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// SavedPlacesPage — Refactored Saved Destinations & Quick Booking Interface for Laffah Passengers.
 /// Reduced from 1,357 monolithic lines to modular Clean Code composition.
@@ -66,7 +69,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     AddEditPlaceDialog.show(
       context: context,
       isDark: isDark,
-      placeToEdit: placeToEdit as SavedPlaceModel?,
+      placeToEdit: placeToEdit,
       onSave: (savedModel) {
         context.read<ProfileBloc>().add(AddSavedPlaceEvent(savedModel));
         setState(() {
@@ -81,8 +84,8 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           SnackBar(
             content: Text(
               placeToEdit != null
-                  ? 'تم تحديث المكان المحفوظ بنجاح'
-                  : 'تمت إضافة المكان إلى المحفوظات بنجاح',
+                  ? AppLocalizations.of(context)!.pass_places_updated
+                  : AppLocalizations.of(context)!.pass_places_added,
               textAlign: TextAlign.right,
               style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
             ),
@@ -93,16 +96,25 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     );
   }
 
-  void _deletePlace(String id) {
+  Future<void> _deletePlace(String id) async {
     setState(() {
       _savedPlaces.removeWhere((p) => p.id == id);
     });
+
+    try {
+      final dioClient = di.sl<DioClient>();
+      await dioClient.dio.delete('${ApiEndpoints.savedPlaces}/$id');
+    } catch (e) {
+      debugPrint('⚠️ [SavedPlacesPage] Error deleting saved place: $e');
+    }
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'تم حذف المكان من المحفوظات',
+          AppLocalizations.of(context)!.pass_places_deleted,
           textAlign: TextAlign.right,
-          style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
         ),
         backgroundColor: AppColors.danger,
       ),
@@ -113,9 +125,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar: AppBar(
@@ -124,7 +134,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           elevation: 0,
           scrolledUnderElevation: 0,
           title: Text(
-            'الأماكن المحفوظة',
+            AppLocalizations.of(context)!.pass_places_title,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 18,
@@ -136,10 +146,11 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _showAddEditDialog(),
           backgroundColor: AppColors.primary500,
-          icon: const Icon(Icons.add_location_alt_rounded, color: AppColors.white),
-          label: const Text(
-            'إضافة مكان جديد',
-            style: TextStyle(
+          icon: const Icon(Icons.add_location_alt_rounded,
+              color: AppColors.white),
+          label: Text(
+            AppLocalizations.of(context)!.pass_places_add_new,
+            style: const TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.bold,
               color: AppColors.white,
@@ -155,14 +166,15 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 children: [
                   TextField(
                     controller: _searchController,
-                    onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                    onChanged: (val) =>
+                        setState(() => _searchQuery = val.trim()),
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 13,
                       color: isDark ? AppColors.white : AppColors.gray900,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'البحث بداخل الأماكن المحفوظة...',
+                      hintText: AppLocalizations.of(context)!.pass_places_search,
                       prefixIcon: const Icon(Icons.search_rounded,
                           color: AppColors.primary500),
                       filled: true,
@@ -177,7 +189,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                     ),
                   ),
                   AppSpacing.h12,
-                  _buildCategoryFilterPills(isDark),
+                  _buildCategoryFilterPills(isDark, context),
                 ],
               ),
             ),
@@ -198,11 +210,11 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                   if (state is ProfileLoading) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  
+
                   if (_filteredPlaces.isEmpty) {
-                    return _buildEmptyState(isDark);
+                    return _buildEmptyState(isDark, context);
                   }
-                  
+
                   return ListView.builder(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.s16,
@@ -215,7 +227,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                       final place = _filteredPlaces[index];
                       return SavedPlaceCard(
                         isDark: isDark,
-                        place: place as SavedPlaceModel, // Casting to model since the card might expect it
+                        place: place,
                         onBookNow: () => _onBookToPlace(place),
                         onEdit: () => _showAddEditDialog(place),
                         onDelete: () => _deletePlace(place.id),
@@ -227,18 +239,17 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
-  Widget _buildCategoryFilterPills(bool isDark) {
+  Widget _buildCategoryFilterPills(bool isDark, BuildContext context) {
     final categories = [
-      {'label': 'الكل', 'type': null},
-      {'label': 'المنزل', 'type': 'home'},
-      {'label': 'العمل', 'type': 'work'},
-      {'label': 'الجامعة', 'type': 'university'},
-      {'label': 'تسوق', 'type': 'shopping'},
-      {'label': 'تاريخي', 'type': 'historic'},
+      {'label': AppLocalizations.of(context)!.pass_places_all, 'type': null},
+      {'label': AppLocalizations.of(context)!.pass_places_home, 'type': 'home'},
+      {'label': AppLocalizations.of(context)!.pass_places_work, 'type': 'work'},
+      {'label': AppLocalizations.of(context)!.pass_places_uni, 'type': 'university'},
+      {'label': AppLocalizations.of(context)!.pass_places_shopping, 'type': 'shopping'},
+      {'label': AppLocalizations.of(context)!.pass_places_historic, 'type': 'historic'},
     ];
 
     return SingleChildScrollView(
@@ -277,7 +288,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
+  Widget _buildEmptyState(bool isDark, BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -293,7 +304,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           ),
           AppSpacing.h16,
           Text(
-            'لا توجد أماكن محفوظة تطابق البحث',
+            AppLocalizations.of(context)!.pass_places_empty,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 14,

@@ -20,25 +20,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
   int _currentPage = 0;
 
   List<Map<String, String>> get _onboardingData => [
-    {
-      'title': AppLocalizations.of(context)!.auth_welcome,
-      'description':
-          AppLocalizations.of(context)!.auth_onboard_1_desc,
-      'icon': 'motorcycle',
-    },
-    {
-      'title': AppLocalizations.of(context)!.auth_onboard_2_title,
-      'description':
-          AppLocalizations.of(context)!.auth_onboard_2_desc,
-      'icon': 'speed',
-    },
-    {
-      'title': AppLocalizations.of(context)!.auth_onboard_3_title,
-      'description':
-          AppLocalizations.of(context)!.auth_onboard_3_desc,
-      'icon': 'delivery',
-    },
-  ];
+        {
+          'title': AppLocalizations.of(context)!.auth_welcome,
+          'description': AppLocalizations.of(context)!.auth_onboard_1_desc,
+          'icon': 'motorcycle',
+        },
+        {
+          'title': AppLocalizations.of(context)!.auth_onboard_2_title,
+          'description': AppLocalizations.of(context)!.auth_onboard_2_desc,
+          'icon': 'speed',
+        },
+        {
+          'title': AppLocalizations.of(context)!.auth_onboard_3_title,
+          'description': AppLocalizations.of(context)!.auth_onboard_3_desc,
+          'icon': 'delivery',
+        },
+      ];
 
   @override
   void dispose() {
@@ -63,9 +60,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
         body: SafeArea(
           child: Column(
             children: [
@@ -236,7 +231,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ],
           ),
         ),
-      ),
     );
   }
 }

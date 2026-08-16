@@ -7,7 +7,7 @@ import '../../../../../core/widgets/glass_box.dart';
 import '../../bloc/ride_bloc.dart';
 
 /// SearchingCaptainOverlay — Modernized Searching & Active Ride Overlay according to Stitch design specs.
-/// 
+///
 /// Contains 3 consecutive UI states:
 /// 1. Initial State: Top centered AppBar "البحث عن كابتن" with back arrow button.
 /// 2. Active Searching State: Pulse radar animation + Bottom sheet card with searching status, 2 info columns, price & payment, cancel button, and confirm location main button.
@@ -43,7 +43,8 @@ class SearchingCaptainOverlay extends StatefulWidget {
   });
 
   @override
-  State<SearchingCaptainOverlay> createState() => _SearchingCaptainOverlayState();
+  State<SearchingCaptainOverlay> createState() =>
+      _SearchingCaptainOverlayState();
 }
 
 class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
@@ -75,17 +76,19 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
 
   Future<void> _callCaptain(String phoneNumber) async {
     final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    final Uri launchUri = Uri(scheme: 'tel', path: cleanPhone.isEmpty ? '+967777123456' : cleanPhone);
+    final Uri launchUri = Uri(
+        scheme: 'tel', path: cleanPhone.isEmpty ? '+967777123456' : cleanPhone);
     try {
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri);
-      } 
+      }
     } catch (e) {
       debugPrint('Could not launch phone dialer: $e');
     }
   }
 
-  void _showTripDetailsModal(BuildContext context, bool isDark, String priceStr) {
+  void _showTripDetailsModal(
+      BuildContext context, bool isDark, String priceStr) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -223,8 +226,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
       child: BlocBuilder<RideBloc, RideState>(
         builder: (context, blocState) {
           final bool isAcceptedFromBloc = blocState is RideAccepted ||
-              (blocState is RideBookingConfirmed && blocState.status == 'found');
-          
+              (blocState is RideBookingConfirmed &&
+                  blocState.status == 'found');
+
           final bool isCaptainFound = widget.forceCaptainFound == true ||
               _simulatedFound ||
               isAcceptedFromBloc;
@@ -233,9 +237,13 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
           final String displayCaptainName = widget.captainName ??
               (blocState is RideAccepted ? blocState.captainName : 'أحمد محمد');
           final String displayMotorcycle = widget.motorcycleModel ??
-              (blocState is RideAccepted ? blocState.vehicleModel : 'دراجة هوندا - أحمر');
+              (blocState is RideAccepted
+                  ? blocState.vehicleModel
+                  : 'دراجة هوندا - أحمر');
           final String displayPlate = widget.licensePlate ??
-              (blocState is RideAccepted ? blocState.vehiclePlate : '10293 صنعاء');
+              (blocState is RideAccepted
+                  ? blocState.vehiclePlate
+                  : '10293 صنعاء');
           final double displayRating = widget.captainRating ??
               (blocState is RideAccepted ? blocState.captainRating : 4.9);
           final String displayEta = widget.eta ??
@@ -243,7 +251,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
           final String displayPhone = widget.captainPhone ?? '+967777123456';
 
           final double displayPriceValue = widget.price ?? 2500.0;
-          final String priceStr = '${displayPriceValue.toStringAsFixed(0)} ريال';
+          final String priceStr =
+              '${displayPriceValue.toStringAsFixed(0)} ريال';
 
           return Stack(
             children: [
@@ -296,8 +305,10 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                     // Centered Header Title
                     Expanded(
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s12),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 16),
                         decoration: BoxDecoration(
                           color: isDark
                               ? const Color(0xFF1F2937).withValues(alpha: 0.9)
@@ -312,7 +323,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                           ],
                         ),
                         child: Text(
-                          isCaptainFound ? 'تم العثور على كابتن' : 'البحث عن كابتن',
+                          isCaptainFound
+                              ? 'تم العثور على كابتن'
+                              : 'البحث عن كابتن',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'IBM Plex Sans Arabic',
@@ -347,7 +360,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                             height: 170 * _pulseAnimation.value,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.primary500.withValues(alpha: 0.12),
+                              color:
+                                  AppColors.primary500.withValues(alpha: 0.12),
                             ),
                           ),
                           Container(
@@ -355,7 +369,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                             height: 115 * _pulseAnimation.value,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.primary500.withValues(alpha: 0.22),
+                              color:
+                                  AppColors.primary500.withValues(alpha: 0.22),
                             ),
                           ),
                           Container(
@@ -366,7 +381,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                               color: AppColors.primary500,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary500.withValues(alpha: 0.45),
+                                  color: AppColors.primary500
+                                      .withValues(alpha: 0.45),
                                   blurRadius: 24,
                                   spreadRadius: 4,
                                 ),
@@ -401,7 +417,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                     top: AppSpacing.s16,
                     left: AppSpacing.s20,
                     right: AppSpacing.s20,
-                    bottom: MediaQuery.of(context).padding.bottom + AppSpacing.s16,
+                    bottom:
+                        MediaQuery.of(context).padding.bottom + AppSpacing.s16,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -437,7 +454,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900,
-                                      color: isDark ? AppColors.white : AppColors.gray900,
+                                      color: isDark
+                                          ? AppColors.white
+                                          : AppColors.gray900,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -446,7 +465,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                     style: TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12.5,
-                                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                      color: isDark
+                                          ? AppColors.gray400
+                                          : AppColors.gray600,
                                     ),
                                   ),
                                 ],
@@ -459,16 +480,22 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.gray100,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.06)
+                                      : AppColors.gray100,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.gray300,
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.1)
+                                        : AppColors.gray300,
                                   ),
                                 ),
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 20,
-                                  color: isDark ? AppColors.white : AppColors.gray800,
+                                  color: isDark
+                                      ? AppColors.white
+                                      : AppColors.gray800,
                                 ),
                               ),
                             ),
@@ -483,7 +510,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                             // Column 1: Captains Nearby
                             Expanded(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? AppColors.white.withValues(alpha: 0.03)
@@ -491,7 +519,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                   borderRadius: AppSpacing.radiusMD,
                                   border: Border.all(
                                     color: isDark
-                                        ? AppColors.white.withValues(alpha: 0.05)
+                                        ? AppColors.white
+                                            .withValues(alpha: 0.05)
                                         : AppColors.gray200,
                                   ),
                                 ),
@@ -500,7 +529,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                     Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary500.withValues(alpha: 0.12),
+                                        color: AppColors.primary500
+                                            .withValues(alpha: 0.12),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -512,20 +542,25 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                     AppSpacing.w10,
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'كابتن بالقرب منك',
                                             style: TextStyle(
-                                              fontFamily: 'IBM Plex Sans Arabic',
+                                              fontFamily:
+                                                  'IBM Plex Sans Arabic',
                                               fontSize: 10.5,
-                                              color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                              color: isDark
+                                                  ? AppColors.gray400
+                                                  : AppColors.gray600,
                                             ),
                                           ),
                                           const Text(
                                             '8 كباتن',
                                             style: TextStyle(
-                                              fontFamily: 'IBM Plex Sans Arabic',
+                                              fontFamily:
+                                                  'IBM Plex Sans Arabic',
                                               fontSize: 13,
                                               fontWeight: FontWeight.w900,
                                               color: AppColors.primary500,
@@ -544,7 +579,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                             // Column 2: Estimated Arrival Time
                             Expanded(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? AppColors.white.withValues(alpha: 0.03)
@@ -552,7 +588,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                   borderRadius: AppSpacing.radiusMD,
                                   border: Border.all(
                                     color: isDark
-                                        ? AppColors.white.withValues(alpha: 0.05)
+                                        ? AppColors.white
+                                            .withValues(alpha: 0.05)
                                         : AppColors.gray200,
                                   ),
                                 ),
@@ -561,7 +598,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                     Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary500.withValues(alpha: 0.12),
+                                        color: AppColors.primary500
+                                            .withValues(alpha: 0.12),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -573,20 +611,25 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                     AppSpacing.w10,
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'الوصول المتوقع',
                                             style: TextStyle(
-                                              fontFamily: 'IBM Plex Sans Arabic',
+                                              fontFamily:
+                                                  'IBM Plex Sans Arabic',
                                               fontSize: 10.5,
-                                              color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                              color: isDark
+                                                  ? AppColors.gray400
+                                                  : AppColors.gray600,
                                             ),
                                           ),
                                           const Text(
                                             '5 دقائق',
                                             style: TextStyle(
-                                              fontFamily: 'IBM Plex Sans Arabic',
+                                              fontFamily:
+                                                  'IBM Plex Sans Arabic',
                                               fontSize: 13,
                                               fontWeight: FontWeight.w900,
                                               color: AppColors.primary500,
@@ -606,7 +649,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
 
                         // Price & Payment Row
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             color: isDark
                                 ? AppColors.white.withValues(alpha: 0.02)
@@ -630,7 +674,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: isDark ? AppColors.gray300 : AppColors.gray800,
+                                      color: isDark
+                                          ? AppColors.gray300
+                                          : AppColors.gray800,
                                     ),
                                   ),
                                 ],
@@ -666,7 +712,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                               backgroundColor: AppColors.primary500,
                               foregroundColor: AppColors.white,
                               elevation: 4,
-                              shadowColor: AppColors.primary500.withValues(alpha: 0.4),
+                              shadowColor:
+                                  AppColors.primary500.withValues(alpha: 0.4),
                               shape: const RoundedRectangleBorder(
                                 borderRadius: AppSpacing.radiusMD,
                               ),
@@ -712,7 +759,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900,
-                                      color: isDark ? AppColors.white : AppColors.gray900,
+                                      color: isDark
+                                          ? AppColors.white
+                                          : AppColors.gray900,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -755,14 +804,17 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: isDark
-                                            ? Colors.white.withValues(alpha: 0.1)
+                                            ? Colors.white
+                                                .withValues(alpha: 0.1)
                                             : AppColors.gray300,
                                       ),
                                     ),
                                     child: Icon(
                                       Icons.close_rounded,
                                       size: 20,
-                                      color: isDark ? AppColors.white : AppColors.gray800,
+                                      color: isDark
+                                          ? AppColors.white
+                                          : AppColors.gray800,
                                     ),
                                   ),
                                 ),
@@ -780,7 +832,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+                                          color: const Color(0xFF22C55E)
+                                              .withValues(alpha: 0.35),
                                           blurRadius: 10,
                                           offset: const Offset(0, 3),
                                         ),
@@ -826,7 +879,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                     color: AppColors.primary500,
                                     width: 2,
                                   ),
-                                  color: AppColors.primary500.withValues(alpha: 0.15),
+                                  color: AppColors.primary500
+                                      .withValues(alpha: 0.15),
                                 ),
                                 child: const CircleAvatar(
                                   backgroundColor: Colors.transparent,
@@ -853,7 +907,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                             fontFamily: 'IBM Plex Sans Arabic',
                                             fontSize: 15.5,
                                             fontWeight: FontWeight.w900,
-                                            color: isDark ? AppColors.white : AppColors.gray900,
+                                            color: isDark
+                                                ? AppColors.white
+                                                : AppColors.gray900,
                                           ),
                                         ),
                                         AppSpacing.w8,
@@ -863,8 +919,10 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                             vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.primary500.withValues(alpha: 0.12),
-                                            borderRadius: BorderRadius.circular(6),
+                                            color: AppColors.primary500
+                                                .withValues(alpha: 0.12),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -876,7 +934,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                               ),
                                               const SizedBox(width: 2),
                                               Text(
-                                                displayRating.toStringAsFixed(1),
+                                                displayRating
+                                                    .toStringAsFixed(1),
                                                 style: const TextStyle(
                                                   fontFamily: 'monospace',
                                                   fontSize: 11,
@@ -898,7 +957,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       style: TextStyle(
                                         fontFamily: 'IBM Plex Sans Arabic',
                                         fontSize: 12,
-                                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                        color: isDark
+                                            ? AppColors.gray400
+                                            : AppColors.gray600,
                                       ),
                                     ),
 
@@ -912,11 +973,14 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       ),
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? Colors.white.withValues(alpha: 0.1)
+                                            ? Colors.white
+                                                .withValues(alpha: 0.1)
                                             : Colors.white,
                                         borderRadius: BorderRadius.circular(4),
                                         border: Border.all(
-                                          color: isDark ? Colors.white24 : Colors.black26,
+                                          color: isDark
+                                              ? Colors.white24
+                                              : Colors.black26,
                                         ),
                                       ),
                                       child: Text(
@@ -925,7 +989,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                           fontFamily: 'IBM Plex Sans Arabic',
                                           fontSize: 11,
                                           fontWeight: FontWeight.w900,
-                                          color: isDark ? AppColors.white : Colors.black87,
+                                          color: isDark
+                                              ? AppColors.white
+                                              : Colors.black87,
                                         ),
                                       ),
                                     ),
@@ -959,7 +1025,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 11,
-                                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                    color: isDark
+                                        ? AppColors.gray400
+                                        : AppColors.gray600,
                                   ),
                                 ),
                               ],
@@ -967,10 +1035,12 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
 
                             // "التفاصيل" Link / Button
                             TextButton.icon(
-                              onPressed: () => _showTripDetailsModal(context, isDark, priceStr),
+                              onPressed: () => _showTripDetailsModal(
+                                  context, isDark, priceStr),
                               style: TextButton.styleFrom(
                                 foregroundColor: AppColors.primary500,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
                               ),
                               icon: const Icon(
                                 Icons.info_outline_rounded,
@@ -999,4 +1069,3 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
     );
   }
 }
-

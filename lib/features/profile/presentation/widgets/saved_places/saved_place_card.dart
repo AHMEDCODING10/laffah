@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/glass_box.dart';
-import '../../../data/models/saved_place_model.dart';
+import '../../../domain/entities/saved_place_entity.dart';
 
 /// SavedPlaceCard — Card widget displaying a saved place item with single-tap booking trigger.
 class SavedPlaceCard extends StatelessWidget {
   final bool isDark;
-  final SavedPlaceModel place;
+  final SavedPlaceEntity place;
   final VoidCallback onBookNow;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -78,9 +78,7 @@ class SavedPlaceCard extends StatelessWidget {
                   color: isDark ? AppColors.gray400 : AppColors.gray600,
                   size: 20,
                 ),
-                color: isDark
-                    ? AppColors.surfaceElevatedDark
-                    : AppColors.white,
+                color: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: AppSpacing.borderSM,
                 ),
@@ -93,7 +91,8 @@ class SavedPlaceCard extends StatelessWidget {
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit_outlined, size: 16, color: AppColors.primary500),
+                        Icon(Icons.edit_outlined,
+                            size: 16, color: AppColors.primary500),
                         SizedBox(width: 8),
                         Text(
                           'تعديل المكان',
@@ -109,7 +108,8 @@ class SavedPlaceCard extends StatelessWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.danger),
+                        Icon(Icons.delete_outline_rounded,
+                            size: 16, color: AppColors.danger),
                         SizedBox(width: 8),
                         Text(
                           'حذف المكان',

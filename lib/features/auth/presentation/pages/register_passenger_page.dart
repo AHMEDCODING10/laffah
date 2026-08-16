@@ -116,8 +116,8 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
             behavior: SnackBarBehavior.floating,
             content: Text(
               AppLocalizations.of(context)!.auth_val_terms_req,
-              style:
-                  const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
+              style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
             ),
           ),
         );
@@ -143,9 +143,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl, // RTL layout
-      child: GestureDetector(
+    return GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
           backgroundColor:
@@ -210,7 +208,8 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                               ),
                             ),
                             Text(
-                              AppLocalizations.of(context)!.auth_join_passenger_desc,
+                              AppLocalizations.of(context)!
+                                  .auth_join_passenger_desc,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
@@ -233,32 +232,35 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // Full Name Field
-                                    _buildLabel(AppLocalizations.of(context)!.auth_full_name_last),
+                                    _buildLabel(AppLocalizations.of(context)!
+                                        .auth_full_name_last),
                                     _buildNameField(isDark),
 
                                     const SizedBox(height: 16),
 
                                     // Phone Number Field
-                                    _buildLabel('رقم الهاتف الجوال:'),
+                                    _buildLabel(AppLocalizations.of(context)!.capt_mobile_number),
                                     _buildPhoneField(isDark),
 
                                     const SizedBox(height: 16),
 
                                     // Password Field
-                                    _buildLabel(AppLocalizations.of(context)!.auth_new_password),
+                                    _buildLabel(AppLocalizations.of(context)!
+                                        .auth_new_password),
                                     _buildPasswordField(isDark),
 
                                     const SizedBox(height: 16),
 
                                     // Confirm Password Field
-                                    _buildLabel(AppLocalizations.of(context)!.auth_confirm_password),
+                                    _buildLabel(AppLocalizations.of(context)!
+                                        .auth_confirm_password),
                                     _buildConfirmPasswordField(isDark),
 
                                     const SizedBox(height: 16),
 
                                     // Referral Code Field (Optional)
-                                    _buildLabel(
-                                        AppLocalizations.of(context)!.auth_ref_code),
+                                    _buildLabel(AppLocalizations.of(context)!
+                                        .auth_ref_code),
                                     _buildReferralField(isDark),
 
                                     const SizedBox(height: 20),
@@ -270,7 +272,8 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
 
                                     // Register Button
                                     PrimaryGradientButton(
-                                      text: AppLocalizations.of(context)!.auth_create_acc_confirm,
+                                      text: AppLocalizations.of(context)!
+                                          .auth_create_acc_confirm,
                                       isLoading: isLoading,
                                       onPressed:
                                           _isFormValid ? _handleRegister : null,
@@ -287,7 +290,8 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  AppLocalizations.of(context)!.auth_already_have_laffah,
+                                  AppLocalizations.of(context)!
+                                      .auth_already_have_laffah,
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 13.5,
@@ -301,7 +305,9 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                                   onTap: () {
                                     context.pushReplacement('/auth/phone');
                                   },
-                                  child: Text(AppLocalizations.of(context)!.auth_login_direct,
+                                  child: Text(
+                                    AppLocalizations.of(context)!
+                                        .auth_login_direct,
                                     style: const TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 13.5,
@@ -324,8 +330,8 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
             ),
           ),
         ),
-      ),
-    );
+      );
+
   }
 
   Widget _buildLabel(String text) {
@@ -530,7 +536,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'يرجى إدخال رقم الهاتف الجوال';
+            return AppLocalizations.of(context)!.auth_val_phone_req;
           }
           if (value.trim().length != 9) {
             return AppLocalizations.of(context)!.auth_val_phone_yemen;

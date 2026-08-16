@@ -69,7 +69,8 @@ class TransactionListTile extends StatelessWidget {
             ),
           ),
           Text(
-            AppLocalizations.of(context)!.pass_tx_amount(isDeposit ? '+' : '-', transaction.amount.toStringAsFixed(0)),
+            AppLocalizations.of(context)!.pass_tx_amount(
+                isDeposit ? '+' : '-', transaction.amount.toStringAsFixed(0)),
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
