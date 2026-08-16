@@ -5,12 +5,14 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:laffah/core/services/pusher_service.dart';
 import 'package:laffah/core/services/routing_service.dart';
+import 'package:laffah/core/services/captain_trip_alert_sound_service.dart';
 import '../../../domain/usecases/toggle_captain_status_usecase.dart';
 import '../../../domain/usecases/respond_to_trip_usecase.dart';
 import '../../../domain/usecases/update_trip_status_usecase.dart';
 import '../../../domain/usecases/request_payout_usecase.dart';
 import '../../../domain/usecases/fetch_bonus_data_usecase.dart';
 import '../../../domain/usecases/update_location_usecase.dart';
+import '../../../domain/usecases/get_captain_nearby_requests_usecase.dart';
 import 'captain_event.dart';
 import 'captain_state.dart';
 
@@ -23,8 +25,13 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   final RequestPayoutUseCase requestPayoutUseCase;
   final FetchBonusDataUseCase fetchBonusDataUseCase;
   final UpdateLocationUseCase updateLocationUseCase;
+  final GetCaptainNearbyRequestsUseCase getNearbyRequestsUseCase;
+  final CaptainTripAlertSoundService alertSoundService;
+
   StreamSubscription<Position>? _positionSubscription;
+  Timer? _smartPollingTimer;
   String _currentCaptainId = '';
+  final Set<String> _dismissedTripIds = {};
 
   final RoutingService routingService;
   final PusherService pusherService;
@@ -36,11 +43,11 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     required this.requestPayoutUseCase,
     required this.fetchBonusDataUseCase,
     required this.updateLocationUseCase,
+    required this.getNearbyRequestsUseCase,
     required this.routingService,
     required this.pusherService,
+    required this.alertSoundService,
   }) : super(const CaptainOffline()) {
-
-
     on<ToggleOnlineStatus>(_onToggleOnlineStatus);
     on<UpdateCaptainLocation>(_onUpdateCaptainLocation);
     on<AcceptTrip>(_onAcceptTrip);
@@ -79,22 +86,71 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     result.fold(
       (failure) {
         emit(const CaptainOffline());
+        _stopSmartPolling();
       },
       (status) {
         if (status.isOnline) {
           final cid = status.captainId ?? 'captain';
           emit(const CaptainOnline());
           _startLocationTracking(cid);
+          _startSmartPolling();
+
           // Connect to real Pusher WebSocket to receive live trip requests
           pusherService.connect(
             captainId: cid,
             onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
           );
         } else {
-
           emit(const CaptainOffline());
           _stopLocationTracking();
+          _stopSmartPolling();
           pusherService.disconnect();
+        }
+      },
+    );
+  }
+
+  /// Periodic Smart Polling for nearby pending trip requests while online
+  void _startSmartPolling() {
+    _stopSmartPolling();
+    // Poll immediately and then every 3.5 seconds
+    _pollNearbyRequests();
+    _smartPollingTimer = Timer.periodic(const Duration(milliseconds: 3500), (_) {
+      _pollNearbyRequests();
+    });
+  }
+
+  void _stopSmartPolling() {
+    _smartPollingTimer?.cancel();
+    _smartPollingTimer = null;
+  }
+
+  Future<void> _pollNearbyRequests() async {
+    // Only poll when captain is actively online and not in an active trip
+    if (state is! CaptainOnline) return;
+
+    final result = await getNearbyRequestsUseCase();
+    result.fold(
+      (failure) => null,
+      (requests) {
+        if (state is! CaptainOnline) return;
+
+        // Find the first pending request that hasn't been dismissed by captain
+        final validRequests = requests.where((r) => !_dismissedTripIds.contains(r.id)).toList();
+        if (validRequests.isNotEmpty) {
+          final req = validRequests.first;
+          add(IncomingTripRequestReceived({
+            'trip_id': req.id,
+            'passenger_name': req.passengerName,
+            'passenger_phone': req.passengerPhone,
+            'passenger_rating': req.passengerRating,
+            'pickup_address': req.pickup,
+            'dropoff_address': req.dropoff,
+            'fare': req.grossFare > 0 ? req.grossFare : (double.tryParse(req.price) ?? 870.0),
+            'distance': req.distance,
+            'duration': req.duration,
+            'timeTag': req.timeTag,
+          }));
         }
       },
     );
@@ -102,21 +158,32 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
   void _onIncomingTripRequestReceived(
       IncomingTripRequestReceived event, EmitFn emit) {
+    if (state is! CaptainOnline && state is! IncomingTripRequest) return;
+
     final d = event.data;
+    final tripId = (d['trip_id'] ?? d['id'] ?? 'TRIP-789').toString();
+
+    // Check if dismissed
+    if (_dismissedTripIds.contains(tripId)) return;
+
+    // Play subtle chime / alert sound once
+    alertSoundService.playSimpleTripAlert();
+
     emit(IncomingTripRequest(
-      tripId: (d['trip_id'] ?? d['id'] ?? 'TRIP-789').toString(),
-      passengerName: (d['passenger_name'] ?? 'راكب لَفَّة').toString(),
+      tripId: tripId,
+      passengerName: (d['passenger_name'] ?? 'محمد').toString(),
       passengerPhone: (d['passenger_phone'] ?? '770000000').toString(),
       passengerRating: (d['passenger_rating'] is num)
           ? (d['passenger_rating'] as num).toDouble()
-          : 4.8,
+          : 5.0,
       pickup:
-          (d['pickup_address'] ?? d['pickup'] ?? 'شارع حدة، صنعاء').toString(),
-      dropoff: (d['dropoff_address'] ?? d['dropoff'] ?? 'جامعة صنعاء، صنعاء')
+          (d['pickup_address'] ?? d['pickup'] ?? 'موقعك الحالي').toString(),
+      dropoff: (d['dropoff_address'] ?? d['dropoff'] ?? 'ميدان التحرير، صنعاء')
           .toString(),
-      fare: (d['fare'] is num) ? (d['fare'] as num).toDouble() : 2500.0,
-      distance: (d['distance'] ?? '3.5 كم').toString(),
-      duration: (d['duration'] ?? '12 دقيقة').toString(),
+      fare: (d['fare'] is num) ? (d['fare'] as num).toDouble() : 870.44,
+      distance: (d['distance'] ?? '2.5 كم').toString(),
+      duration: (d['duration'] ?? '6 د').toString(),
+      timeTag: (d['timeTag'] ?? 'منذ ثواني').toString(),
     ));
   }
 
@@ -169,9 +236,9 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     _positionSubscription = null;
   }
 
-
   @override
   Future<void> close() {
+    _stopSmartPolling();
     _positionSubscription?.cancel();
     pusherService.disconnect();
     return super.close();
@@ -179,12 +246,27 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
   Future<void> _onUpdateCaptainLocation(
       UpdateCaptainLocation event, EmitFn emit) async {
-    emit(CaptainLocationUpdated(
-      position: LatLng(event.lat, event.lng),
-      heading: event.heading,
-    ));
+    final pos = LatLng(event.lat, event.lng);
+
+    if (state is CaptainOnline) {
+      emit(CaptainLocationUpdated(position: pos, heading: event.heading));
+      emit(const CaptainOnline());
+    } else if (state is TripAccepted) {
+      final s = state as TripAccepted;
+      emit(s.copyWith(
+        captainPosition: pos,
+        captainHeading: event.heading,
+      ));
+    } else if (state is TripInProgress) {
+      final s = state as TripInProgress;
+      emit(s.copyWith(
+        captainPosition: pos,
+        captainHeading: event.heading,
+      ));
+    }
+
+    // Push coordinates to the backend server
     await updateLocationUseCase(
-      captainId: event.captainId,
       lat: event.lat,
       lng: event.lng,
       heading: event.heading,
@@ -192,21 +274,24 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   }
 
   Future<void> _onAcceptTrip(AcceptTrip event, EmitFn emit) async {
-    final currentState = state;
-    if (currentState is IncomingTripRequest) {
-      final tripId = currentState.tripId;
+    if (state is IncomingTripRequest) {
+      final currentState = state as IncomingTripRequest;
+      emit(const CaptainLoading());
+
       final result = await respondToTripUseCase(
-        tripId: tripId,
+        tripId: currentState.tripId,
         accept: true,
       );
 
       await result.fold(
         (failure) async {
           // If rejected by server (e.g. 409 Conflict - trip already accepted by another captain)
+          _dismissedTripIds.add(currentState.tripId);
           emit(const CaptainOnline());
         },
         (_) async {
           // Success: proceed to active accepted trip
+          _stopSmartPolling();
           double currentLat = 15.3605; // Fallback to Sanaa center
           double currentLng = 44.1852;
           try {
@@ -244,11 +329,11 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   Future<void> _onRejectTrip(RejectTrip event, EmitFn emit) async {
     if (state is IncomingTripRequest) {
       final tripId = (state as IncomingTripRequest).tripId;
+      _dismissedTripIds.add(tripId);
       respondToTripUseCase(tripId: tripId, accept: false);
       emit(const CaptainOnline());
     }
   }
-
 
   Future<void> _onUpdateTripProgressState(
       UpdateTripProgressState event, EmitFn emit) async {
@@ -294,7 +379,6 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       ));
     }
   }
-
 
   Future<void> _onFetchBonusData(FetchBonusData event, EmitFn emit) async {
     emit(const CaptainLoading());

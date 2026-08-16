@@ -53,6 +53,7 @@ class IncomingTripRequest extends CaptainState {
   final double fare;
   final String distance;
   final String duration;
+  final String timeTag;
 
   const IncomingTripRequest({
     required this.tripId,
@@ -64,6 +65,7 @@ class IncomingTripRequest extends CaptainState {
     required this.fare,
     required this.distance,
     required this.duration,
+    this.timeTag = 'منذ ثواني',
   });
 
   @override
@@ -79,7 +81,8 @@ class IncomingTripRequest extends CaptainState {
           dropoff == other.dropoff &&
           fare == other.fare &&
           distance == other.distance &&
-          duration == other.duration;
+          duration == other.duration &&
+          timeTag == other.timeTag;
 
   @override
   int get hashCode =>
@@ -91,7 +94,8 @@ class IncomingTripRequest extends CaptainState {
       dropoff.hashCode ^
       fare.hashCode ^
       distance.hashCode ^
-      duration.hashCode;
+      duration.hashCode ^
+      timeTag.hashCode;
 }
 
 /// State when captain accepts the trip but has not arrived or started it yet

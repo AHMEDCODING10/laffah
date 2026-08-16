@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../network/dio_client.dart';
 import '../network/api_endpoints.dart';
 import '../di/injection_container.dart' as di;
+import 'captain_trip_alert_sound_service.dart';
 
 /// Top-level background message handler for FCM
 @pragma('vm:entry-point')
@@ -150,6 +151,11 @@ class FirebaseNotificationService {
     final android = message.notification?.android;
     final type = message.data['type'] ?? '';
     final isTripAlert = type == 'trip_new' || type == 'trip_accepted' || type == 'trip_arrived';
+
+    // Play discrete, simple chime for trip alerts
+    if (isTripAlert) {
+      CaptainTripAlertSoundService().playSimpleTripAlert();
+    }
 
     if (notification != null && !kIsWeb && _localNotifications != null) {
       final selectedChannel = isTripAlert ? _tripAlertChannel : _defaultChannel;

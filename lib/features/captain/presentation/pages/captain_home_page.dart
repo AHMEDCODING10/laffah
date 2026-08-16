@@ -9,7 +9,7 @@ import '../../../../core/widgets/laffah_map_view.dart';
 import '../bloc/core/captain_bloc.dart';
 import '../bloc/core/captain_event.dart';
 import '../bloc/core/captain_state.dart';
-import 'widgets/trip_request_dialog.dart';
+import 'widgets/floating_captain_trip_request_card.dart';
 import 'widgets/captain_floating_bottom_bar.dart';
 import 'captain_earnings_page.dart';
 import 'captain_account_page.dart';
@@ -232,7 +232,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
               ),
             ),
 
-          // Incoming Request Overlay Dialog
+          // Incoming Request Floating Card above Bottom Dock
           Positioned(
             bottom: 0,
             left: 0,
@@ -243,7 +243,8 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                   current is IncomingTripRequest,
               builder: (context, state) {
                 if (state is IncomingTripRequest) {
-                  return TripRequestDialog(
+                  return FloatingCaptainTripRequestCard(
+                    tripId: state.tripId,
                     passengerName: state.passengerName,
                     passengerRating: state.passengerRating,
                     pickup: state.pickup,
@@ -251,6 +252,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                     fare: state.fare,
                     distance: state.distance,
                     duration: state.duration,
+                    timeTag: state.timeTag,
                     onAccept: () {
                       HapticFeedback.heavyImpact();
                       context.read<CaptainBloc>().add(const AcceptTrip());

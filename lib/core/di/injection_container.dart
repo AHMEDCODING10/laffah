@@ -192,7 +192,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdateLocationUseCase(sl()));
   sl.registerLazySingleton(() => GetCaptainTripsUseCase(sl()));
   sl.registerLazySingleton(() => GetCaptainWalletUseCase(sl()));
-  sl.registerLazySingleton(() => UploadDocumentUseCase(sl()));
+  sl.registerLazySingleton(() => CaptainTripAlertSoundService());
   sl.registerFactory<CaptainBloc>(
     () => CaptainBloc(
       toggleCaptainStatusUseCase: sl(),
@@ -201,8 +201,10 @@ Future<void> init() async {
       requestPayoutUseCase: sl(),
       fetchBonusDataUseCase: sl(),
       updateLocationUseCase: sl(),
+      getNearbyRequestsUseCase: sl(),
       routingService: sl(),
       pusherService: sl(),
+      alertSoundService: sl(),
     ),
   );
 
