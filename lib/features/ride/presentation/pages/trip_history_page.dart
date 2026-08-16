@@ -4,11 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
 import '../../../../core/di/injection_container.dart';
-<<<<<<< HEAD
-=======
 import '../../../../l10n/app_localizations.dart';
 import '../../../home/presentation/widgets/home_bottom_nav_bar.dart';
->>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
 import '../../presentation/bloc/ride_bloc.dart';
 import '../widgets/passenger/cards/trip_history_cards.dart';
 
@@ -57,11 +54,7 @@ class __TripHistoryViewState extends State<_TripHistoryView>
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         extendBody: true,
-        appBar: LaffahAppBar(
-          title: l10n.pass_trips_title,
-          showMenuButton: false,
-          showBackButton: false,
-        ),
+        appBar: LaffahAppBar(title: l10n.pass_trips_title),
         bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 1),
         body: BlocBuilder<RideBloc, RideState>(
           builder: (context, state) {
@@ -230,33 +223,6 @@ class __TripHistoryViewState extends State<_TripHistoryView>
   }
 
   /// Maps API response fields to the format expected by TripHistoryCards
-<<<<<<< HEAD
-  Map<String, dynamic> _mapApiTripToCard(Map<String, dynamic> trip) {
-    final double priceVal =
-        ((trip['final_price'] ?? trip['estimated_price'] ?? trip['fare'] ?? trip['price'] ?? 0) as num).toDouble();
-
-    return {
-      'id': trip['id']?.toString() ?? '',
-      'type': trip['type'] == 'parcel' ? 'إرسال طرد' : (trip['type'] ?? 'رحلة'),
-      'statusAr': _statusToArabic(trip['status']),
-      'captainName': trip['captain']?['user']?['name'] ?? trip['captainName'] ?? 'غير محدد',
-      'vehicleModel': trip['captain']?['vehicle_model'] ?? trip['vehicleModel'] ?? '',
-      'vehiclePlate': trip['captain']?['plate_number'] ?? trip['vehiclePlate'] ?? '',
-      'pickup': trip['pickup_address'] ?? trip['pickup'] ?? '',
-      'dropoff': trip['dropoff_address'] ?? trip['dropoff'] ?? '',
-      'price': priceVal,
-      'fare': priceVal,
-      'estimatedFare': priceVal,
-      'distance': trip['distance_km']?.toString() ?? trip['distance']?.toString() ?? '',
-      'rating': ((trip['rating_by_user'] ?? trip['rating'] ?? 0) as num).toDouble(),
-      'isRide': trip['type'] != 'parcel' && trip['isRide'] != false,
-      'scheduledAt': trip['scheduled_at'] ?? trip['scheduledAt'] ?? trip['time'] ?? 'غير محدد',
-      'time': trip['time'] ?? trip['scheduled_at'] ?? trip['scheduledAt'] ?? 'غداً، 08:00 ص',
-      'date': trip['date'] ?? trip['created_at'] ?? 'اليوم',
-      'reason': trip['reason'] ?? trip['cancellation_reason'] ?? 'تم الإلغاء بواسطة الراكب',
-      'orderNumber': trip['orderNumber'] ?? 'رقم الطلب #LFX-782',
-      'parcelContent': trip['parcelContent'] ?? 'مستندات وأوراق رسمية',
-=======
   Map<String, dynamic> _mapApiTripToCard(Map<String, dynamic> trip, AppLocalizations l10n) {
     return {
       'id': trip['id']?.toString() ?? '',
@@ -272,7 +238,6 @@ class __TripHistoryViewState extends State<_TripHistoryView>
       'rating': (trip['rating_by_user'] ?? 0).toDouble(),
       'isRide': trip['type'] != 'parcel',
       'scheduledAt': trip['scheduled_at'],
->>>>>>> 0bb688759c3435a3c4acbc6ab2fa5f0e05e65b8d
     };
   }
 

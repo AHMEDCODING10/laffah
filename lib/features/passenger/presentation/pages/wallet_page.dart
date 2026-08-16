@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../domain/entities/wallet_entity.dart';
 import '../bloc/wallet_bloc.dart';
 import '../bloc/wallet_event.dart';

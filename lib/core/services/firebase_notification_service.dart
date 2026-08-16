@@ -134,13 +134,8 @@ class FirebaseNotificationService {
       },
     );
 
-<<<<<<< Updated upstream
     // Create both notification channels on Android
-    final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-=======
-    // Create the high importance channel on Android
     final androidPlugin = _localNotifications!.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
->>>>>>> Stashed changes
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(_defaultChannel);
       await androidPlugin.createNotificationChannel(_tripAlertChannel);
@@ -156,15 +151,10 @@ class FirebaseNotificationService {
     final type = message.data['type'] ?? '';
     final isTripAlert = type == 'trip_new' || type == 'trip_accepted' || type == 'trip_arrived';
 
-<<<<<<< Updated upstream
-    if (notification != null && !kIsWeb) {
+    if (notification != null && !kIsWeb && _localNotifications != null) {
       final selectedChannel = isTripAlert ? _tripAlertChannel : _defaultChannel;
 
-      await _localNotifications.show(
-=======
-    if (notification != null && !kIsWeb && _localNotifications != null) {
       await _localNotifications!.show(
->>>>>>> Stashed changes
         notification.hashCode,
         notification.title ?? 'لَفَّة',
         notification.body ?? '',

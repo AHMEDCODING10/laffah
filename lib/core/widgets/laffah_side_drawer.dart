@@ -107,7 +107,7 @@ class LaffahSideDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.support_agent_rounded,
                     title: 'الدعم الفني والشكاوى',
-                    route: LaffahRoutes.passengerSupportTickets,
+                    route: LaffahRoutes.captainSupport,
                     isDark: isDark,
                   ),
                   _buildDrawerTile(
@@ -121,7 +121,7 @@ class LaffahSideDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.published_with_changes_rounded,
                     title: 'التبديل إلى وضع الكابتن',
-                    route: LaffahRoutes.roleSelection,
+                    route: LaffahRoutes.authLanding,
                     isDark: isDark,
                   ),
                 ],
