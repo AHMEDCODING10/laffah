@@ -236,11 +236,23 @@ class _LaffahMapViewState extends State<LaffahMapView>
   }
 
   // ── Tile URL — HiDPI @2x tiles for sharper quality ───────────────────────
-  String get _tileUrl {
-    if (widget.isDark) {
-      return 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}@2x.png?key=${LaffahMapView.mapTilerKey}';
+  String get _tileUrl => getTileUrl(isDark: widget.isDark);
+
+  static String getTileUrl({required bool isDark}) {
+    final key = LaffahMapView.mapTilerKey;
+    if (key.isNotEmpty &&
+        key != 'YOUR_MAPTILER_API_KEY' &&
+        key != 'get_your_key_from_maptiler.com') {
+      if (isDark) {
+        return 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}@2x.png?key=$key';
+      }
+      return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=$key';
     }
-    return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=${LaffahMapView.mapTilerKey}';
+    // High-performance, crystal-clear, keyless vector-raster tiles
+    if (isDark) {
+      return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
+    }
+    return 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
   }
 
   LatLng get _initialCenter =>

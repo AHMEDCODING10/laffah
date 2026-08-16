@@ -6,7 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// HomeTopHeader — Header widget containing screen title ("الرئيسية"),
+/// HomeTopHeader — Modern Floating Header widget containing screen title ("الرئيسية"),
 /// notifications button on side, and interactive destination search bar ("إلى أين؟").
 class HomeTopHeader extends StatelessWidget {
   final bool isDark;
@@ -23,14 +23,13 @@ class HomeTopHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = AppLocalizations.of(context)?.pass_nav_home ?? 'الرئيسية';
-    final double topSafeArea = MediaQuery.of(context).padding.top;
 
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.s16,
         right: AppSpacing.s16,
-        top: topSafeArea > 0 ? topSafeArea + 8 : AppSpacing.s24,
-        bottom: AppSpacing.s8,
+        top: AppSpacing.s12,
+        bottom: AppSpacing.s4,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,20 +87,20 @@ class HomeTopHeader extends StatelessWidget {
             ],
           ),
 
-          AppSpacing.h16,
+          AppSpacing.h12,
 
           // ─── SEARCH BAR: "إلى أين؟" ───
           GestureDetector(
             onTap: onSearchTap,
             child: GlassBox(
               borderRadius: BorderRadius.circular(24),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   const Icon(
                     Icons.search_rounded,
                     color: AppColors.primary500,
-                    size: 24,
+                    size: 22,
                   ),
                   AppSpacing.w12,
                   Expanded(
@@ -111,7 +110,7 @@ class HomeTopHeader extends StatelessWidget {
                           : (AppLocalizations.of(context)?.pass_where_to ?? 'إلى أين؟'),
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: dropoffController.text.isNotEmpty
                             ? (isDark ? AppColors.white : AppColors.gray900)

@@ -115,9 +115,14 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
     final title = widget.locationType == 'pickup'
         ? 'حدد نقطة الانطلاق بدقة'
         : 'حدد وجهتك بدقة';
-    final tileUrl = isDark
-        ? 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=$_mapTilerKey'
-        : 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=$_mapTilerKey';
+    final tileUrl = (_mapTilerKey.isNotEmpty &&
+            _mapTilerKey != 'YOUR_MAPTILER_API_KEY')
+        ? (isDark
+            ? 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=$_mapTilerKey'
+            : 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=$_mapTilerKey')
+        : (isDark
+            ? 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
+            : 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png');
 
     return Scaffold(
       body: Stack(

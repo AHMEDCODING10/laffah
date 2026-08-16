@@ -48,7 +48,7 @@ class HomeBottomNavBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
         height: 64,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
@@ -58,7 +58,7 @@ class HomeBottomNavBar extends StatelessWidget {
                   ? Colors.black.withValues(alpha: 0.5)
                   : Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
-              offset: const Offset(0, 10),
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -67,7 +67,7 @@ class HomeBottomNavBar extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: isDark
                     ? const Color(0xFF141822).withValues(alpha: 0.9)
@@ -80,7 +80,7 @@ class HomeBottomNavBar extends StatelessWidget {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(navItems.length, (index) {
                   final isSelected = index == currentIndex;
                   final item = navItems[index];
@@ -98,8 +98,8 @@ class HomeBottomNavBar extends StatelessWidget {
                         duration: const Duration(milliseconds: 250),
                         curve: Curves.easeOutCubic,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 4,
+                          vertical: 4,
+                          horizontal: 2,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
@@ -112,37 +112,36 @@ class HomeBottomNavBar extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            AnimatedScale(
-                              scale: isSelected ? 1.15 : 1.0,
-                              duration: const Duration(milliseconds: 200),
-                              child: Icon(
-                                (isSelected && item.containsKey('activeIcon')
-                                        ? item['activeIcon']
-                                        : item['icon']) as IconData,
-                                size: 22,
-                                color: isSelected
-                                    ? const Color(0xFFFF6B00)
-                                    : (isDark
-                                        ? AppColors.gray400
-                                        : AppColors.gray600),
-                              ),
+                            Icon(
+                              (isSelected && item.containsKey('activeIcon')
+                                      ? item['activeIcon']
+                                      : item['icon']) as IconData,
+                              size: 22,
+                              color: isSelected
+                                  ? const Color(0xFFFF6B00)
+                                  : (isDark
+                                      ? AppColors.gray400
+                                      : AppColors.gray600),
                             ),
-                            const SizedBox(height: 3),
-                            Text(
-                              item['title'] as String,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'IBM Plex Sans Arabic',
-                                fontSize: 10,
-                                fontWeight: isSelected
-                                    ? FontWeight.w900
-                                    : FontWeight.w600,
-                                color: isSelected
-                                    ? const Color(0xFFFF6B00)
-                                    : (isDark
-                                        ? AppColors.gray400
-                                        : AppColors.gray600),
+                            const SizedBox(height: 2),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                item['title'] as String,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 10.5,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w900
+                                      : FontWeight.w600,
+                                  color: isSelected
+                                      ? const Color(0xFFFF6B00)
+                                      : (isDark
+                                          ? AppColors.gray400
+                                          : AppColors.gray600),
+                                ),
                               ),
                             ),
                           ],
