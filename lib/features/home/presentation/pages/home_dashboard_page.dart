@@ -16,6 +16,7 @@ import '../../data/datasources/home_local_data_source.dart';
 import '../widgets/home_action_buttons_row.dart';
 import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_ride_status_cards.dart';
+import '../widgets/captain_on_the_way_card.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/quick_destinations_section.dart';
 import '../widgets/recent_destinations_section.dart';
@@ -211,20 +212,21 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
             ),
 
             // ==========================================
-            // LAYER 3: Dynamic Bottom Panel (Draggable & Collapsible)
+            // ==========================================
+            // LAYER 3: Dynamic Bottom Panel / Captain on the Way Card
             // ==========================================
             BlocBuilder<RideBloc, RideState>(
               builder: (context, state) {
                 if (state is RideBookingConfirmed) {
-                  if (state.status == 'found') {
-                    return Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: CaptainFoundCard(state: state),
-                      ),
+                  final s = state.status.toLowerCase();
+                  if (s == 'accepted' || s == 'arrived' || s == 'found' || (state.captainName.isNotEmpty && state.captainName != 'قيد البحث')) {
+                    return Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: CaptainOnTheWayCard(state: state),
                     );
-                  } else if (state.status == 'in_progress') {
+                  } else if (s == 'in_transit' || s == 'started' || s == 'in_progress') {
                     return Align(
                       alignment: Alignment.bottomCenter,
                       child: Padding(
@@ -232,7 +234,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                         child: RideInProgressCard(state: state),
                       ),
                     );
-                  } else if (state.status == 'completed') {
+                  } else if (s == 'completed') {
                     return Align(
                       alignment: Alignment.bottomCenter,
                       child: Padding(
@@ -240,7 +242,36 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                         child: RideCompletedCard(state: state),
                       ),
                     );
+                  } else if (s == 'pending' || state.captainName == 'قيد البحث') {
+                    return const SizedBox.shrink();
                   }
+                } else if (state is RideAccepted) {
+                  return Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: CaptainOnTheWayCard(
+                      state: RideBookingConfirmed(
+                        pickup: _pickupController.text.trim(),
+                        dropoff: _dropoffController.text.trim(),
+                        selectedOption: const RideOption(
+                          id: 'laffah',
+                          titleAr: 'لَفّة',
+                          titleEn: 'Laffah',
+                          basePrice: 1250.0,
+                          etaMinutes: 5,
+                          iconKey: 'car',
+                          descriptionAr: 'لَفّة',
+                        ),
+                        captainName: state.captainName,
+                        captainPhone: '',
+                        vehicleModel: state.vehicleModel,
+                        vehiclePlate: state.vehiclePlate,
+                        rating: state.captainRating,
+                        status: 'accepted',
+                      ),
+                    ),
+                  );
                 } else if (state is ParcelSubmitted) {
                   return Align(
                     alignment: Alignment.bottomCenter,
@@ -257,17 +288,32 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
             ),
 
             // ==========================================
-            // LAYER 4: Interactive Top Header & Search Bar
+            // LAYER 4: Interactive Top Header & Search Bar / Captain On The Way
             // ==========================================
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: SafeArea(
-                child: HomeTopHeader(
-                  isDark: isDark,
-                  dropoffController: _dropoffController,
-                  onSearchTap: _openSearchAndSelectRide,
+                child: BlocBuilder<RideBloc, RideState>(
+                  builder: (context, state) {
+                    final bool isCaptainOnTheWay = (state is RideBookingConfirmed &&
+                            (state.status == 'accepted' ||
+                                state.status == 'arrived' ||
+                                state.status == 'found' ||
+                                (state.captainName.isNotEmpty && state.captainName != 'قيد البحث'))) ||
+                        state is RideAccepted;
+
+                    if (isCaptainOnTheWay) {
+                      return _buildCaptainOnTheWayTopHeader(context, isDark);
+                    }
+
+                    return HomeTopHeader(
+                      isDark: isDark,
+                      dropoffController: _dropoffController,
+                      onSearchTap: _openSearchAndSelectRide,
+                    );
+                  },
                 ),
               ),
             ),
@@ -296,7 +342,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                   );
                 }
                 if (state is RideBookingConfirmed &&
-                    state.captainName == 'قيد البحث') {
+                    (state.status == 'pending' || state.captainName == 'قيد البحث')) {
                   return Positioned.fill(
                     child: SearchingCaptainOverlay(
                       pickup: state.pickup.isNotEmpty
@@ -450,6 +496,113 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
           ),
         );
       },
+    );
+  }
+
+  // Ultra-modern illuminated Top Header when Captain is on the way
+  Widget _buildCaptainOnTheWayTopHeader(BuildContext context, bool isDark) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF1B2232).withValues(alpha: 0.95)
+              : Colors.white.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFFF6B00).withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Glowing pulsing icon
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFFF6B00),
+                  width: 1.5,
+                ),
+              ),
+              child: const Icon(
+                Icons.two_wheeler_rounded,
+                color: Color(0xFFFF6B00),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Title & Status
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'الكابتن في الطريق إليك',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFFF6B00),
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      Text('🛵', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 8,
+                        color: Color(0xFF00C853),
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'يرجى التواجد في نقطة الانطلاق المحددة',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF00C853),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Notifications Shortcut
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF263044) : AppColors.gray100,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.notifications_none_rounded, size: 20),
+                color: isDark ? AppColors.white : AppColors.gray700,
+                onPressed: () => context.push(LaffahRoutes.passengerNotifications),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

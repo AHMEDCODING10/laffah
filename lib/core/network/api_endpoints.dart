@@ -56,6 +56,8 @@ class ApiEndpoints {
 
   // Ride Endpoints
   static const String requestRide = '/trips/create'; // Aligned with backend
+  static String trackRide(String tripId) =>
+      '/trips/$tripId'; // Aligned with backend
   static String cancelRide(String tripId) =>
       '/trips/$tripId/cancel'; // Aligned with backend
   static const String estimateRide =

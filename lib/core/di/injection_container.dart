@@ -168,8 +168,10 @@ Future<void> init() async {
     () => RideBloc(
       requestRideUseCase: sl(),
       cancelRideUseCase: sl(),
+      trackRideUseCase: sl(),
       submitParcelOrderUseCase: sl(),
       getTripHistoryUseCase: sl(),
+      alertSoundService: sl(),
     ),
   );
 

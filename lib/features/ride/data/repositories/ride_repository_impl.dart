@@ -62,6 +62,20 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
+  Future<Either<Failure, RideEntity>> trackRide(String rideId) async {
+    try {
+      final response = await remoteDataSource.trackRide(rideId);
+      if (response.success && response.data != null) {
+        return Right(response.data!);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> cancelRide(String rideId) async {
     try {
       final response = await remoteDataSource.cancelRide(rideId);

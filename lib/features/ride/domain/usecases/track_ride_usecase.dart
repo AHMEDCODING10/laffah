@@ -11,4 +11,8 @@ class TrackRideUseCase {
   Stream<Either<Failure, RideEntity>> call(String rideId) {
     return repository.trackRideStatus(rideId);
   }
+
+  Future<Either<Failure, RideEntity>> fetchRide(String rideId) {
+    return repository.trackRide(rideId);
+  }
 }

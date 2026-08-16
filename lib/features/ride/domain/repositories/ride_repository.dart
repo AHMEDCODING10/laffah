@@ -16,6 +16,7 @@ abstract class RideRepository {
     int? promoCodeId,
   });
 
+  Future<Either<Failure, RideEntity>> trackRide(String rideId);
   Future<Either<Failure, void>> cancelRide(String rideId);
 
   /// Fetches all trips for the current authenticated user (passenger or captain)

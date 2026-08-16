@@ -161,3 +161,44 @@ class TripStatusUpdatedFromWebSocket extends RideEvent {
   List<Object?> get props => [data];
 }
 
+/// Periodic smart polling trip status update event
+class ActiveRidePolledStatusUpdated extends RideEvent {
+  final String status;
+  final String? captainName;
+  final String? captainPhone;
+  final String? vehicleModel;
+  final String? vehiclePlate;
+  final double rating;
+  final String rideId;
+  final RideOption option;
+  final String pickup;
+  final String dropoff;
+
+  const ActiveRidePolledStatusUpdated({
+    required this.status,
+    this.captainName,
+    this.captainPhone,
+    this.vehicleModel,
+    this.vehiclePlate,
+    this.rating = 5.0,
+    required this.rideId,
+    required this.option,
+    required this.pickup,
+    required this.dropoff,
+  });
+
+  @override
+  List<Object?> get props => [
+        status,
+        captainName,
+        captainPhone,
+        vehicleModel,
+        vehiclePlate,
+        rating,
+        rideId,
+        option,
+        pickup,
+        dropoff,
+      ];
+}
+
