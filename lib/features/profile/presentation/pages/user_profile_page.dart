@@ -109,13 +109,14 @@ class _ProfileView extends StatelessWidget {
                 100,
               ),
               children: [
-                // User Header Card
                 ProfileUserHeader(
                   isDark: isDark,
                   userName: profile?.name ?? AppLocalizations.of(context)!.pass_profile_user,
                   userPhone: profile?.phone ?? '',
-                  rating: 5.0, // Backend might not have this yet
+                  avatarUrl: profile?.avatarUrl,
+                  rating: profile?.rating ?? 5.0,
                   membershipTier: AppLocalizations.of(context)!.pass_profile_member,
+                  isVerified: profile?.isVerified ?? true,
                   onEditPressed: () => context
                       .push(LaffahRoutes.passengerProfileEdit, extra: profile),
                 ),

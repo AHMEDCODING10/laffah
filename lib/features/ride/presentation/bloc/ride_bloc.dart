@@ -204,8 +204,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ConfirmUnifiedBooking event,
     Emitter<RideState> emit,
   ) async {
-    emit(const RideLoading());
-
     final selectedOption = RideOption(
       id: 'laffah',
       titleAr: 'لَفّة',
@@ -215,6 +213,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       iconKey: 'car',
       descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
     );
+
+    // 1. Instantly transition to Searching State on the map
+    emit(RideBookingConfirmed(
+      pickup: event.pickup,
+      dropoff: event.dropoff,
+      selectedOption: selectedOption,
+      captainName: 'قيد البحث',
+      captainPhone: '',
+      vehicleModel: 'دراجة نارية',
+      vehiclePlate: '',
+      rating: 5.0,
+      status: 'pending',
+    ));
 
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
@@ -260,8 +271,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ConfirmBooking event,
     Emitter<RideState> emit,
   ) async {
-    emit(const RideLoading());
-
     final metrics = calculateDynamicMetrics(event.pickup, event.dropoff);
     final double calculatedPrice = metrics['fare'];
     final int duration = metrics['duration'];
@@ -275,6 +284,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       iconKey: 'car',
       descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
     );
+
+    // 1. Instantly transition to Searching State on the map
+    emit(RideBookingConfirmed(
+      pickup: event.pickup,
+      dropoff: event.dropoff,
+      selectedOption: selectedOption,
+      captainName: 'قيد البحث',
+      captainPhone: '',
+      vehicleModel: 'دراجة نارية',
+      vehiclePlate: '',
+      rating: 5.0,
+      status: 'pending',
+    ));
 
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,

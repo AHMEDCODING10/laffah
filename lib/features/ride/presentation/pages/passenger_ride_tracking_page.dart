@@ -285,10 +285,15 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                         // Captain Info
                         Row(
                           children: [
-                            const CircleAvatar(
+                            CircleAvatar(
                               radius: 25,
-                              backgroundImage: NetworkImage(
-                                  'https://i.pravatar.cc/150?img=12'),
+                              backgroundColor:
+                                  AppColors.primary500.withValues(alpha: 0.12),
+                              child: const Icon(
+                                Icons.person_rounded,
+                                color: AppColors.primary500,
+                                size: 28,
+                              ),
                             ),
                             AppSpacing.w12,
                             Expanded(

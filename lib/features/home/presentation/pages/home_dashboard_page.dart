@@ -157,9 +157,33 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     _quickDestinations = HomeLocalDataSource.getQuickDestinations(context);
 
-    return BlocBuilder<RideBloc, RideState>(
+    return BlocConsumer<RideBloc, RideState>(
+      listener: (context, state) {
+        if (state is RideError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                state.message,
+                style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              backgroundColor: AppColors.danger,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+      },
       builder: (context, rideState) {
-        final bool hideBottomNav = rideState is RideSearching;
+        final bool hideBottomNav = rideState is RideSearching ||
+            rideState is RideBookingConfirmed ||
+            rideState is RideAccepted ||
+            rideState is RideInProgress;
 
         return Scaffold(
           key: _scaffoldKey,
