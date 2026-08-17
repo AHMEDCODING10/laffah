@@ -7,8 +7,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
 
-/// CaptainOnTheWayCard — Ultra-modern floating glassmorphic card displayed on the Passenger Home Map
-/// when a captain accepts the ride. Provides instant captain details, quick call/chat, and ETA.
+/// CaptainOnTheWayCard — Ultra-modern floating glassmorphic card displayed on the Passenger Home Map.
+/// Dynamically adapts between:
+/// 1. 'accepted' -> Orange theme: "الكابتن في الطريق إليك 🛵" + ETA badge
+/// 2. 'arrived'  -> Emerald Green theme: "وصل الكابتن إلى موقعك! 📍" + Pulsing beacon + Direct Call
 class CaptainOnTheWayCard extends StatefulWidget {
   final RideBookingConfirmed state;
 
@@ -58,7 +60,7 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
   }
 
   Future<void> _makePhoneCall(String phone) async {
-    HapticFeedback.lightImpact();
+    HapticFeedback.heavyImpact();
     final cleanPhone = phone.isNotEmpty ? phone : '770000000';
     final Uri url = Uri.parse('tel:$cleanPhone');
     if (await canLaunchUrl(url)) {
@@ -94,11 +96,14 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
               fontSize: 16,
             ),
           ),
-          content: const Text(
-            'هل أنت متأكد من إلغاء المشوار؟ الكابتن في طريقه إليك الآن.',
-            style: TextStyle(
+          content: Text(
+            widget.state.status == 'arrived'
+                ? 'الكابتن وصل بالفعل وينتظرك عند نقطة الانطلاق. هل أنت متأكد من رغبتك في الإلغاء؟'
+                : 'هل أنت متأكد من إلغاء المشوار؟ الكابتن في طريقه إليك الآن.',
+            style: const TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 13.5,
+              height: 1.5,
             ),
           ),
           actions: [
@@ -143,6 +148,9 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = widget.state;
+    final isArrived = state.status.toLowerCase() == 'arrived';
+
+    final Color primaryColor = isArrived ? const Color(0xFF00C853) : const Color(0xFFFF6B00);
     final captainName = state.captainName.isNotEmpty && state.captainName != 'قيد البحث'
         ? state.captainName
         : 'كابتن لَفَّة';
@@ -161,10 +169,12 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.16),
+                  color: isArrived
+                      ? const Color(0xFF00C853).withValues(alpha: isDark ? 0.35 : 0.22)
+                      : Colors.black.withValues(alpha: isDark ? 0.5 : 0.16),
                   blurRadius: 28,
-                  offset: const Offset(0, 12),
-                  spreadRadius: 2,
+                  offset: const Offset(0, 10),
+                  spreadRadius: isArrived ? 3 : 2,
                 ),
               ],
             ),
@@ -176,78 +186,89 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF1B2232).withValues(alpha: 0.95)
+                        ? const Color(0xFF1B2232).withValues(alpha: 0.96)
                         : Colors.white.withValues(alpha: 0.98),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : const Color(0xFFFF6B00).withValues(alpha: 0.3),
-                      width: 1.5,
+                      color: isArrived
+                          ? const Color(0xFF00C853).withValues(alpha: 0.7)
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+                      width: isArrived ? 2.0 : 1.5,
                     ),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // ─── Top Status Badge: "الكابتن في الطريق إليك 🛵" + ETA ───
+                      // ─── Top Status Badge: Dynamic Arrived vs On The Way ───
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00C853).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
+                              color: primaryColor.withValues(alpha: isArrived ? 0.16 : 0.12),
+                              borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: const Color(0xFF00C853).withValues(alpha: 0.35),
+                                color: primaryColor.withValues(alpha: isArrived ? 0.6 : 0.35),
+                                width: 1.2,
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.check_circle_rounded,
-                                  color: Color(0xFF00C853),
-                                  size: 15,
+                                  isArrived
+                                      ? Icons.where_to_vote_rounded
+                                      : Icons.check_circle_rounded,
+                                  color: primaryColor,
+                                  size: 16,
                                 ),
-                                SizedBox(width: 5),
+                                const SizedBox(width: 6),
                                 Text(
-                                  'تم قبول المشوار',
+                                  isArrived
+                                      ? 'وصل الكابتن إلى موقعك! 📍'
+                                      : 'تم قبول المشوار 🛵',
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF00C853),
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: primaryColor,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          // ETA Badge
+                          // Secondary ETA or Arrival Guidance Badge
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                                horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                              color: isArrived
+                                  ? const Color(0xFF00C853).withValues(alpha: 0.1)
+                                  : const Color(0xFFFF6B00).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.access_time_filled_rounded,
-                                  color: Color(0xFFFF6B00),
+                                  isArrived
+                                      ? Icons.timer_outlined
+                                      : Icons.access_time_filled_rounded,
+                                  color: primaryColor,
                                   size: 14,
                                 ),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                                 Text(
-                                  'الوصول المتوقع: ~3 د',
+                                  isArrived ? 'بانتظارك الآن' : 'الوصول: ~3 د',
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFFFF6B00),
+                                    color: primaryColor,
                                   ),
                                 ),
                               ],
@@ -255,6 +276,39 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                           ),
                         ],
                       ),
+
+                      // Arrival Notice Banner when Captain is at pickup
+                      if (isArrived) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00C853).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF00C853).withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.info_outline_rounded, color: Color(0xFF00C853), size: 16),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'الكابتن وصل لنقطة الانطلاق وينتظرك، يرجى التوجه للدراجة النارية.',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF00C853),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
 
                       const SizedBox(height: 14),
 
@@ -268,16 +322,16 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                 width: 54,
                                 height: 54,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                                  color: primaryColor.withValues(alpha: 0.12),
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFFFF6B00),
+                                    color: primaryColor,
                                     width: 2,
                                   ),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.person_rounded,
-                                  color: Color(0xFFFF6B00),
+                                  color: primaryColor,
                                   size: 32,
                                 ),
                               ),
@@ -286,8 +340,8 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                 right: 0,
                                 child: Container(
                                   padding: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFF6B00),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -362,18 +416,20 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                   : AppColors.gray100,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : AppColors.gray300,
+                                color: isArrived
+                                    ? const Color(0xFF00C853).withValues(alpha: 0.5)
+                                    : (isDark
+                                        ? Colors.white.withValues(alpha: 0.1)
+                                        : AppColors.gray300),
                               ),
                             ),
                             child: Text(
                               vehiclePlate,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFFF6B00),
+                                color: primaryColor,
                               ),
                             ),
                           ),
@@ -396,9 +452,9 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                           Expanded(
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.location_on_rounded,
-                                  color: Color(0xFFFF6B00),
+                                  color: primaryColor,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 6),
@@ -424,11 +480,11 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                           ),
                           Text(
                             '${state.selectedOption.basePrice.toStringAsFixed(0)} ر.ي',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFFFF6B00),
+                              color: primaryColor,
                             ),
                           ),
                         ],
@@ -445,16 +501,16 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                             child: ElevatedButton.icon(
                               onPressed: () => _makePhoneCall(state.captainPhone),
                               icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
-                              label: const Text(
-                                'اتصال بالكابتن',
-                                style: TextStyle(
+                              label: Text(
+                                isArrived ? 'اتصال فوري بالكابتن' : 'اتصال بالكابتن',
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6B00),
+                                backgroundColor: primaryColor,
                                 foregroundColor: Colors.white,
                                 elevation: 3,
                                 padding:
@@ -475,9 +531,9 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.chat_bubble_outline_rounded,
-                                color: Color(0xFFFF6B00),
+                                color: primaryColor,
                                 size: 20,
                               ),
                               tooltip: 'مراسلة الكابتن',

@@ -9,6 +9,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/services/routing_service.dart';
 import '../bloc/core/captain_bloc.dart';
 import '../bloc/core/captain_event.dart';
 import 'captain_trip_invoice_widget.dart';
@@ -50,6 +51,27 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   // Navigation states: 0: driving to pickup ('accepted'), 1: arrived at pickup ('arrived'), 2: on trip ('started'), 3: finished ('completed')
   int _currentStep = 0;
   double _sliderValue = 0.0;
+
+  final RoutingService _routingService = RoutingService();
+  List<LatLng> _routePoints = [];
+  final LatLng _pickupCoords = const LatLng(15.3694, 44.1910);
+  final LatLng _dropoffCoords = const LatLng(15.3521, 44.2014);
+  final LatLng _captainCoords = const LatLng(15.3660, 44.1890);
+
+  @override
+  void initState() {
+    super.initState();
+    _initLiveNavigationRoute();
+  }
+
+  Future<void> _initLiveNavigationRoute() async {
+    final route = await _routingService.getRoute(_pickupCoords, _dropoffCoords);
+    if (route != null && mounted) {
+      setState(() {
+        _routePoints = route.points;
+      });
+    }
+  }
 
   void _safePop(BuildContext context) {
     if (context.canPop()) {
@@ -720,9 +742,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         ),
       );
     } else if (_currentStep == 1) {
-      // Transition from 'arrived' -> 'started' / 'in_transit'
+      // Transition from 'arrived' -> 'in_transit'
       context.read<CaptainBloc>().add(
-            UpdateTripProgressState('started', tripId: widget.tripId),
+            UpdateTripProgressState('in_transit', tripId: widget.tripId),
           );
       setState(() {
         _currentStep = 2;
@@ -732,7 +754,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         const SnackBar(
           backgroundColor: AppColors.success,
           content: Text(
-            'بدأت الرحلة الآن نحو وجهة الراكب.',
+            'بدأت الرحلة الآن! جاري الملاحة نحو وجهة الراكب.',
             style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
           ),
         ),
@@ -825,15 +847,23 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   }
 
   Widget _buildNavigationMap(bool isDark) {
+    final destination = _currentStep < 2 ? _pickupCoords : _dropoffCoords;
+    final currentCaptainPos = _currentStep == 0
+        ? _captainCoords
+        : (_currentStep == 1
+            ? _pickupCoords
+            : LatLng(
+                (_pickupCoords.latitude + _dropoffCoords.latitude) / 2,
+                (_pickupCoords.longitude + _dropoffCoords.longitude) / 2,
+              ));
+
     return LaffahMapView(
       isDark: isDark,
-      passengerLocation: const LatLng(15.3694, 44.1910),
-      dropoffLocation: const LatLng(15.3521, 44.2014),
-      captainLocation: _currentStep == 0
-          ? const LatLng(15.3660, 44.1890)
-          : (_currentStep == 1
-              ? const LatLng(15.3694, 44.1910)
-              : const LatLng(15.3580, 44.1980)),
+      initialCenter: destination,
+      passengerLocation: _pickupCoords,
+      dropoffLocation: _dropoffCoords,
+      captainLocation: currentCaptainPos,
+      routePoints: _routePoints.isNotEmpty ? _routePoints : null,
       followCaptain: true,
       showDefaultMockData: false,
     );

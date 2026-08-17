@@ -110,6 +110,31 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
+  Future<Either<Failure, void>> rateTrip({
+    required String tripId,
+    required double rating,
+    String? review,
+  }) async {
+    try {
+      final response = await remoteDataSource.rateTrip(
+        tripId: tripId,
+        rating: rating,
+        review: review,
+      );
+      if (response.success) {
+        return const Right(null);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['message'] ?? 'فشل إرسال التقييم للرحلة';
+      return Left(ServerFailure(errorMsg.toString()));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId) {
     webSocketClient.connect('trip.$rideId');
 

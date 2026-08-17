@@ -26,6 +26,7 @@ import '../../features/ride/domain/usecases/request_ride_usecase.dart';
 import '../../features/ride/domain/usecases/cancel_ride_usecase.dart';
 import '../../features/ride/domain/usecases/track_ride_usecase.dart';
 import '../../features/ride/domain/usecases/get_trip_history_usecase.dart';
+import '../../features/ride/domain/usecases/rate_trip_use_case.dart';
 import '../../features/ride/data/datasources/ride_remote_data_source.dart';
 import '../../features/ride/data/repositories/ride_repository_impl.dart';
 import '../../features/ride/presentation/bloc/ride_bloc.dart';
@@ -163,6 +164,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CancelRideUseCase(sl()));
   sl.registerLazySingleton(() => TrackRideUseCase(sl()));
   sl.registerLazySingleton(() => GetTripHistoryUseCase(sl()));
+  sl.registerLazySingleton(() => RateTripUseCase(sl()));
 
   sl.registerFactory<RideBloc>(
     () => RideBloc(
@@ -171,6 +173,7 @@ Future<void> init() async {
       trackRideUseCase: sl(),
       submitParcelOrderUseCase: sl(),
       getTripHistoryUseCase: sl(),
+      rateTripUseCase: sl(),
       alertSoundService: sl(),
     ),
   );

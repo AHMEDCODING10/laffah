@@ -22,6 +22,13 @@ abstract class RideRepository {
   /// Fetches all trips for the current authenticated user (passenger or captain)
   Future<Either<Failure, List<Map<String, dynamic>>>> getTripHistory();
 
+  /// Rates a completed trip
+  Future<Either<Failure, void>> rateTrip({
+    required String tripId,
+    required double rating,
+    String? review,
+  });
+
   // For web-sockets / polling
   Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId);
 }

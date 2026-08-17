@@ -60,6 +60,8 @@ class ApiEndpoints {
       '/trips/$tripId'; // Aligned with backend
   static String cancelRide(String tripId) =>
       '/trips/$tripId/cancel'; // Aligned with backend
+  static String rateTrip(String tripId) =>
+      '/trips/$tripId/rate'; // Aligned with backend
   static const String estimateRide =
       '/trips/estimate'; // Aligned with backend (was /trip/estimate)
 

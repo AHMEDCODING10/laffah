@@ -129,6 +129,21 @@ class LoadTripHistoryEvent extends RideEvent {
   const LoadTripHistoryEvent();
 }
 
+class SubmitTripRating extends RideEvent {
+  final String tripId;
+  final double rating;
+  final String? review;
+
+  const SubmitTripRating({
+    required this.tripId,
+    required this.rating,
+    this.review,
+  });
+
+  @override
+  List<Object?> get props => [tripId, rating, review];
+}
+
 class SimulateRideStep extends RideEvent {
   final dynamic step;
 

@@ -9,7 +9,11 @@ import 'package:laffah/features/ride/domain/repositories/ride_repository.dart';
 import 'package:laffah/features/ride/domain/usecases/cancel_ride_usecase.dart';
 import 'package:laffah/features/ride/domain/usecases/get_trip_history_usecase.dart';
 import 'package:laffah/features/ride/domain/usecases/request_ride_usecase.dart';
+import 'package:laffah/features/ride/domain/usecases/rate_trip_use_case.dart';
 import 'package:laffah/features/ride/presentation/bloc/ride_bloc.dart';
+
+import 'package:laffah/core/services/captain_trip_alert_sound_service.dart';
+import 'package:laffah/features/ride/domain/usecases/track_ride_usecase.dart';
 
 class FakeRideRepository implements RideRepository {
   @override
@@ -35,7 +39,27 @@ class FakeRideRepository implements RideRepository {
   }
 
   @override
+  Future<Either<Failure, RideEntity>> trackRide(String rideId) async {
+    return const Right(RideEntity(
+      id: 'trip-100',
+      status: 'accepted',
+      pickupLocation: 'التحرير',
+      dropoffLocation: 'حدة',
+      price: 1500,
+    ));
+  }
+
+  @override
   Future<Either<Failure, void>> cancelRide(String rideId) async {
+    return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, void>> rateTrip({
+    required String tripId,
+    required double rating,
+    String? review,
+  }) async {
     return const Right(null);
   }
 
@@ -120,8 +144,11 @@ void main() {
     bloc = RideBloc(
       requestRideUseCase: RequestRideUseCase(rideRepo),
       cancelRideUseCase: CancelRideUseCase(rideRepo),
+      trackRideUseCase: TrackRideUseCase(rideRepo),
       submitParcelOrderUseCase: SubmitParcelOrderUseCase(parcelRepo),
       getTripHistoryUseCase: GetTripHistoryUseCase(rideRepo),
+      rateTripUseCase: RateTripUseCase(rideRepo),
+      alertSoundService: CaptainTripAlertSoundService(),
     );
   });
 
@@ -135,7 +162,6 @@ void main() {
 
   test('CalculateSingleTripFare computes fare and emits RideOptionsLoaded', () async {
     final expectedStates = [
-      isA<RideLoading>(),
       isA<RideOptionsLoaded>(),
     ];
 

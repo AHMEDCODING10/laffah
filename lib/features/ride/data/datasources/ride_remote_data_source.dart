@@ -22,6 +22,13 @@ abstract class RideRemoteDataSource {
 
   /// Returns the raw list of trip maps from the backend
   Future<List<Map<String, dynamic>>> getTripHistory();
+
+  /// Rates a completed trip on the backend
+  Future<BaseResponseModel<void>> rateTrip({
+    required String tripId,
+    required double rating,
+    String? review,
+  });
 }
 
 class RideRemoteDataSourceImpl implements RideRemoteDataSource {
@@ -103,6 +110,22 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
       return list.map((e) => e as Map<String, dynamic>).toList();
     }
     return [];
+  }
+
+  @override
+  Future<BaseResponseModel<void>> rateTrip({
+    required String tripId,
+    required double rating,
+    String? review,
+  }) async {
+    final response = await dioClient.dio.post(
+      ApiEndpoints.rateTrip(tripId),
+      data: {
+        'rating': rating,
+        'review': review ?? 'تجربة ممتازة مع لَفَّة',
+      },
+    );
+    return BaseResponseModel.fromJson(response.data, (data) {});
   }
 }
 

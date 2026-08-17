@@ -217,205 +217,211 @@ class RideInProgressCard extends StatelessWidget {
     required this.state,
   });
 
+  Future<void> _makeCall(String phone) async {
+    final clean = phone.isNotEmpty ? phone : '770000000';
+    final uri = Uri.parse('tel:$clean');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _sendSms(String phone) async {
+    final clean = phone.isNotEmpty ? phone : '770000000';
+    final uri = Uri.parse('sms:$clean');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final vehicleModel = state.vehicleModel.isNotEmpty ? state.vehicleModel : 'دراجة نارية';
+    final vehiclePlate = state.vehiclePlate.isNotEmpty ? state.vehiclePlate : 'صنعاء';
+    final destination = state.dropoff.isNotEmpty ? state.dropoff : 'وجهة الوصول';
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: GlassBox(
-        borderRadius: AppSpacing.radiusLG,
-        padding: const EdgeInsets.all(AppSpacing.s20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'رحلتك الحالية مستمرة...',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                    color: isDark ? AppColors.white : AppColors.gray900,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary500.withValues(alpha: 0.15),
-                    borderRadius: AppSpacing.radiusXS,
-                  ),
-                  child: const Text(
-                    'في الطريق للوجهة',
-                    style: TextStyle(
-                      color: AppColors.primary500,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            AppSpacing.h16,
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceElevatedDark.withValues(alpha: 0.5)
-                          : AppColors.gray100,
-                      borderRadius: AppSpacing.radiusSM,
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'الوقت المتبقي للوصول',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 10,
-                            color: AppColors.primary500,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          '12 دقيقة',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                AppSpacing.w12,
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceElevatedDark.withValues(alpha: 0.5)
-                          : AppColors.gray100,
-                      borderRadius: AppSpacing.radiusSM,
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'المسافة المتبقية',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 10,
-                            color: AppColors.primary500,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          '4.5 كم',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            AppSpacing.h16,
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primary500.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.motorcycle_rounded,
-                  color: AppColors.primary500,
-                  size: 22,
-                ),
-              ),
-              title: Text(
-                state.captainName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13.5,
-                ),
-              ),
-              subtitle: Text(
-                'تويوتا كورولا • 4.9 ',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  color: isDark ? AppColors.gray400 : AppColors.gray600,
-                ),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+        child: GlassBox(
+          borderRadius: AppSpacing.radiusLG,
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.navigation_rounded,
+                          color: Color(0xFFFF6B00),
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'رحلتك الحالية مستمرة 🚀',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary500.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Text(
+                      'في الطريق للوجهة',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        color: AppColors.primary500,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              AppSpacing.h12,
+              // Destination Banner
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF161B26)
+                      : AppColors.gray100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_rounded,
+                      color: Color(0xFFFF6B00),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        destination,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.gray200 : AppColors.gray800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacing.h12,
+              // Captain Profile Row
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary500, width: 1.5),
+                    ),
+                    child: const Icon(
+                      Icons.two_wheeler_rounded,
+                      color: AppColors.primary500,
+                      size: 24,
+                    ),
+                  ),
+                  AppSpacing.w12,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          state.captainName,
+                          style: const TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: AppColors.warning,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${state.rating.toStringAsFixed(1)} • $vehicleModel ($vehiclePlate)',
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 11,
+                                color: isDark
+                                    ? AppColors.gray400
+                                    : AppColors.gray600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                   IconButton(
                     icon: const Icon(
                       Icons.chat_bubble_outline_rounded,
                       color: AppColors.primary500,
-                      size: 20,
+                      size: 22,
                     ),
-                    onPressed: () async {
-                      final Uri smsUri = Uri(
-                        scheme: 'sms',
-                        path: '+967700000000', // Mock Captain Number
-                      );
-                      if (await canLaunchUrl(smsUri)) {
-                        await launchUrl(smsUri);
-                      }
-                    },
+                    tooltip: 'مراسلة',
+                    onPressed: () => _sendSms(state.captainPhone),
                   ),
                   IconButton(
                     icon: const Icon(
                       Icons.phone_in_talk_rounded,
                       color: AppColors.success,
-                      size: 20,
+                      size: 22,
                     ),
-                    onPressed: () async {
-                      final Uri telUri = Uri(
-                        scheme: 'tel',
-                        path: '+967700000000', // Mock Captain Number
-                      );
-                      if (await canLaunchUrl(telUri)) {
-                        await launchUrl(telUri);
-                      }
-                    },
+                    tooltip: 'اتصال',
+                    onPressed: () => _makeCall(state.captainPhone),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// RideCompletedCard — Overlay card displayed upon ride completion for rating.
+/// RideCompletedCard — Ultra-modern invoice card displayed upon ride completion with interactive 5-star rating.
 class RideCompletedCard extends StatefulWidget {
   final RideBookingConfirmed state;
 
@@ -430,145 +436,231 @@ class RideCompletedCard extends StatefulWidget {
 
 class _RideCompletedCardState extends State<RideCompletedCard> {
   double _ratingSelected = 5.0;
+  final TextEditingController _reviewController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final state = widget.state;
+    final captainName = state.captainName.isNotEmpty ? state.captainName : 'كابتن لَفَّة';
+    final fare = state.selectedOption.basePrice;
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: GlassBox(
-        borderRadius: AppSpacing.radiusLG,
-        padding: const EdgeInsets.all(AppSpacing.s20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Center(
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.check_circle_rounded,
-                    color: AppColors.success,
-                    size: 48,
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'وصلت بحمد الله وتوفيقه!',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.success,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+        child: GlassBox(
+          borderRadius: AppSpacing.radiusLG,
+          padding: const EdgeInsets.all(AppSpacing.s20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.success,
+                        size: 42,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            AppSpacing.h16,
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              decoration: BoxDecoration(
-                color: AppColors.primary500.withValues(alpha: 0.04),
-                borderRadius: AppSpacing.radiusSM,
-                border: Border.all(
-                  color: AppColors.primary500.withValues(alpha: 0.1),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'وصلت بحمد الله وتوفيقه! 🎉',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                children: [
-                  Text(
-                    'إجمالي تكلفة لَفّتك النهائية:',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 11,
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
-                    ),
+              const SizedBox(height: 14),
+              // Fare Breakdown Box
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.2),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${widget.state.selectedOption.basePrice.toStringAsFixed(0)} ريال يمني',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary500,
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'إجمالي أجرة المشوار:',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      '${fare.toStringAsFixed(0)} ريال يمني',
+                      style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFFF6B00),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            AppSpacing.h16,
-            Center(
-              child: Text(
-                'كيف كانت رحلتك مع الكابتن ${widget.state.captainName}؟',
+              const SizedBox(height: 14),
+              Center(
+                child: Text(
+                  'كيف كانت تجربتك مع $captainName؟',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.white : AppColors.gray900,
+                  ),
+                ),
+              ),
+              AppSpacing.h8,
+              // Interactive 5-Star Rating
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  final starVal = index + 1.0;
+                  return IconButton(
+                    icon: Icon(
+                      _ratingSelected >= starVal
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      color: const Color(0xFFFFB800),
+                      size: 36,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _ratingSelected = starVal;
+                      });
+                    },
+                  );
+                }),
+              ),
+              AppSpacing.h12,
+              // Optional Review Note Field
+              TextField(
+                controller: _reviewController,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 12.5,
-                  fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
-              ),
-            ),
-            AppSpacing.h8,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                final starVal = index + 1.0;
-                return IconButton(
-                  icon: Icon(
-                    _ratingSelected >= starVal
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    color: AppColors.warning,
-                    size: 34,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _ratingSelected = starVal;
-                    });
-                  },
-                );
-              }),
-            ),
-            AppSpacing.h16,
-            Container(
-              height: 48,
-              decoration: const BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: AppSpacing.radiusSM,
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'شكرًا لتقييمك! تم إرسال التقييم بنجاح.',
-                        textDirection: TextDirection.rtl,
-                      ),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                  context.read<RideBloc>().add(const CancelRideRequested());
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.white,
-                  shadowColor: Colors.transparent,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: AppSpacing.radiusSM,
-                  ),
-                ),
-                child: const Text(
-                  'إرسال التقييم وإنهاء الرحلة',
-                  style: TextStyle(
+                decoration: InputDecoration(
+                  hintText: 'أضف كلمة شكر أو ملاحظة للكابتن (اختياري)...',
+                  hintStyle: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13.5,
+                    fontSize: 11.5,
+                    color: AppColors.gray400,
+                  ),
+                  filled: true,
+                  fillColor: isDark
+                      ? const Color(0xFF161B26)
+                      : AppColors.gray100,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
-            ),
-          ],
+              AppSpacing.h16,
+              // Submit Rating Button
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _isSubmitting
+                      ? null
+                      : () {
+                          setState(() {
+                            _isSubmitting = true;
+                          });
+                          final tripId = widget.state.rideId ?? '1';
+                          context.read<RideBloc>().add(SubmitTripRating(
+                                tripId: tripId,
+                                rating: _ratingSelected,
+                                review: _reviewController.text.trim().isNotEmpty
+                                    ? _reviewController.text.trim()
+                                    : null,
+                              ));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'شكرًا لتقييمك! تم إرسال التقييم بنجاح.',
+                                textDirection: TextDirection.rtl,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF6B00),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'إرسال التقييم وإنهاء المشوار',
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

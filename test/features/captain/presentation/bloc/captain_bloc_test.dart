@@ -16,6 +16,8 @@ import 'package:laffah/features/captain/domain/usecases/respond_to_trip_usecase.
 import 'package:laffah/features/captain/domain/usecases/toggle_captain_status_usecase.dart';
 import 'package:laffah/features/captain/domain/usecases/update_location_usecase.dart';
 import 'package:laffah/features/captain/domain/usecases/update_trip_status_usecase.dart';
+import 'package:laffah/core/services/captain_trip_alert_sound_service.dart';
+import 'package:laffah/features/captain/domain/usecases/get_captain_nearby_requests_usecase.dart';
 import 'package:laffah/features/captain/presentation/bloc/core/captain_bloc.dart';
 import 'package:laffah/features/captain/presentation/bloc/core/captain_event.dart';
 import 'package:laffah/features/captain/presentation/bloc/core/captain_state.dart';
@@ -113,8 +115,10 @@ void main() {
       requestPayoutUseCase: RequestPayoutUseCase(repo),
       fetchBonusDataUseCase: FetchBonusDataUseCase(repo),
       updateLocationUseCase: UpdateLocationUseCase(repo),
+      getNearbyRequestsUseCase: GetCaptainNearbyRequestsUseCase(repo),
       routingService: RoutingService(),
       pusherService: PusherService(),
+      alertSoundService: CaptainTripAlertSoundService(),
     );
   });
 
