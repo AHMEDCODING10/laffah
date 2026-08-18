@@ -546,6 +546,31 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
               ),
               child: ElevatedButton(
                 onPressed: () {
+                  final String cleanDropoff = widget.dropoff.trim();
+                  if (cleanDropoff.isEmpty ||
+                      cleanDropoff == 'وجهة مختارة' ||
+                      cleanDropoff == 'حدد وجهتك' ||
+                      (widget.dropoffLatLng == null && cleanDropoff.length < 3)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'يرجى تحديد وجهة الوصول بدقة قبل تأكيد اللَفّة',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        backgroundColor: AppColors.danger,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
                   context.read<RideBloc>().add(ConfirmUnifiedBooking(
                         pickup: widget.pickup,
                         dropoff: widget.dropoff,

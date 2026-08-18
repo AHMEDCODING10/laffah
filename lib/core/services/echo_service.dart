@@ -21,7 +21,7 @@ class EchoService {
   Echo? get echo => _echo;
   bool get isConnected => _isConnected;
 
-  /// Initialize Pusher / Laravel Echo connection
+  /// Initialize Pusher / Laravel Echo connection safely
   Future<void> init() async {
     if (_echo != null && _isConnected) return;
     if (_isInitializing) return;
@@ -29,8 +29,6 @@ class EchoService {
     _isInitializing = true;
 
     try {
-      final PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
-
       final String key = AppEnv.pusherAppKey;
       final String cluster = AppEnv.pusherAppCluster;
 
@@ -39,6 +37,8 @@ class EchoService {
         _isInitializing = false;
         return;
       }
+
+      final PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
 
       await pusher.init(
         apiKey: key,
@@ -63,8 +63,9 @@ class EchoService {
       _isConnected = true;
       debugPrint("✅ [EchoService] Successfully connected to Real-time WebSocket!");
     } catch (e) {
-      debugPrint("❌ [EchoService] Initialization error: $e");
+      debugPrint("⚠️ [EchoService] WebSocket initialization error (Smart Polling handles fallback): $e");
       _isConnected = false;
+      _echo = null;
     } finally {
       _isInitializing = false;
     }
@@ -72,15 +73,21 @@ class EchoService {
 
   /// 1. Listen for new available trip requests (For Online Captains)
   void listenToAvailableTrips(Function(Map<String, dynamic> data) onNewTrip) {
-    if (_echo == null) {
-      init().then((_) {
-        if (_echo != null) {
-          _subscribeAvailableTrips(onNewTrip);
-        }
-      });
-      return;
+    try {
+      if (_echo == null) {
+        init().then((_) {
+          if (_echo != null) {
+            _subscribeAvailableTrips(onNewTrip);
+          }
+        }).catchError((e) {
+          debugPrint("⚠️ [EchoService] listenToAvailableTrips init error: $e");
+        });
+        return;
+      }
+      _subscribeAvailableTrips(onNewTrip);
+    } catch (e) {
+      debugPrint("⚠️ [EchoService] listenToAvailableTrips error: $e");
     }
-    _subscribeAvailableTrips(onNewTrip);
   }
 
   void _subscribeAvailableTrips(Function(Map<String, dynamic> data) onNewTrip) {
@@ -113,29 +120,36 @@ class EchoService {
 
   /// 2. Listen for active trip status changes (For Passengers & Captains)
   void listenToTripStatus(String tripId, Function(Map<String, dynamic> data) onStatusUpdated) {
-    if (_echo == null) {
-      init().then((_) {
-        if (_echo != null) {
-          _subscribeTripStatus(tripId, onStatusUpdated);
-        }
-      });
-      return;
+    try {
+      if (_echo == null) {
+        init().then((_) {
+          if (_echo != null) {
+            _subscribeTripStatus(tripId, onStatusUpdated);
+          }
+        }).catchError((e) {
+          debugPrint("⚠️ [EchoService] listenToTripStatus init error: $e");
+        });
+        return;
+      }
+      _subscribeTripStatus(tripId, onStatusUpdated);
+    } catch (e) {
+      debugPrint("⚠️ [EchoService] listenToTripStatus error: $e");
     }
-    _subscribeTripStatus(tripId, onStatusUpdated);
   }
 
   void _subscribeTripStatus(String tripId, Function(Map<String, dynamic> data) onStatusUpdated) {
     final echo = _echo;
     if (echo == null) return;
     try {
-      echo.channel('trip.$tripId').listen('TripStatusUpdated', (dynamic event) {
-        debugPrint("🔄 [EchoService] TripStatusUpdated received for trip #$tripId: $event");
+      final channelName = 'trip.$tripId';
+      echo.channel(channelName).listen('TripStatusUpdated', (dynamic event) {
+        debugPrint("🔔 [EchoService] TripStatusUpdated event received on $channelName: $event");
         if (event != null) {
           final Map<String, dynamic> parsed = _parseEventData(event);
           onStatusUpdated(parsed);
         }
       });
-      debugPrint("📡 [EchoService] Subscribed to channel: trip.$tripId");
+      debugPrint("📡 [EchoService] Subscribed to channel: $channelName");
     } catch (e) {
       debugPrint("❌ [EchoService] Failed to listen to trip.$tripId: $e");
     }
@@ -152,32 +166,42 @@ class EchoService {
     }
   }
 
-  /// 3. Listen for live captain GPS location updates (For Passenger tracking map)
-  void listenToCaptainLocation(
-      String captainId, Function(Map<String, dynamic> data) onLocationUpdate) {
-    if (_echo == null) {
-      init().then((_) {
-        if (_echo != null) {
-          _subscribeCaptainLocation(captainId, onLocationUpdate);
-        }
-      });
-      return;
+  /// 3. Listen for live captain GPS location (For Passenger Map)
+  void listenToCaptainLocation(String captainId, Function(double lat, double lng, double? heading) onLocationUpdated) {
+    try {
+      if (_echo == null) {
+        init().then((_) {
+          if (_echo != null) {
+            _subscribeCaptainLocation(captainId, onLocationUpdated);
+          }
+        }).catchError((e) {
+          debugPrint("⚠️ [EchoService] listenToCaptainLocation init error: $e");
+        });
+        return;
+      }
+      _subscribeCaptainLocation(captainId, onLocationUpdated);
+    } catch (e) {
+      debugPrint("⚠️ [EchoService] listenToCaptainLocation error: $e");
     }
-    _subscribeCaptainLocation(captainId, onLocationUpdate);
   }
 
-  void _subscribeCaptainLocation(
-      String captainId, Function(Map<String, dynamic> data) onLocationUpdate) {
+  void _subscribeCaptainLocation(String captainId, Function(double lat, double lng, double? heading) onLocationUpdated) {
     final echo = _echo;
     if (echo == null) return;
     try {
-      echo.channel('captain-location.$captainId').listen('CaptainLocationUpdated', (dynamic event) {
+      final channelName = 'captain-location.$captainId';
+      echo.channel(channelName).listen('CaptainLocationUpdated', (dynamic event) {
         if (event != null) {
           final Map<String, dynamic> parsed = _parseEventData(event);
-          onLocationUpdate(parsed);
+          final lat = (parsed['latitude'] as num?)?.toDouble();
+          final lng = (parsed['longitude'] as num?)?.toDouble();
+          final heading = (parsed['heading'] as num?)?.toDouble();
+          if (lat != null && lng != null) {
+            onLocationUpdated(lat, lng, heading);
+          }
         }
       });
-      debugPrint("📡 [EchoService] Subscribed to channel: captain-location.$captainId");
+      debugPrint("📡 [EchoService] Subscribed to channel: $channelName");
     } catch (e) {
       debugPrint("❌ [EchoService] Failed to listen to captain-location.$captainId: $e");
     }
@@ -194,32 +218,31 @@ class EchoService {
     }
   }
 
-  /// Disconnect all sockets
-  Future<void> disconnect() async {
-    try {
-      final echo = _echo;
-      if (echo != null) {
-        echo.disconnect();
-        _isConnected = false;
-        debugPrint("🔌 [EchoService] Disconnected WebSocket.");
-      }
-    } catch (e) {
-      debugPrint("❌ [EchoService] Disconnect error: $e");
-    }
-  }
-
-  /// Safely parses incoming event payload whether it's already a Map or a JSON string
+  /// Helper to safely decode event payload
   Map<String, dynamic> _parseEventData(dynamic event) {
     if (event is Map<String, dynamic>) {
       return event;
     } else if (event is String) {
       try {
-        final decoded = json.decode(event);
+        final decoded = jsonDecode(event);
         if (decoded is Map<String, dynamic>) {
           return decoded;
         }
       } catch (_) {}
     }
-    return <String, dynamic>{};
+    return {'data': event};
+  }
+
+  /// Disconnect and cleanup
+  void disconnect() {
+    final echo = _echo;
+    if (echo != null) {
+      try {
+        echo.disconnect();
+      } catch (_) {}
+      _echo = null;
+      _isConnected = false;
+      debugPrint("🔌 [EchoService] Disconnected from WebSocket.");
+    }
   }
 }

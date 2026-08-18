@@ -177,6 +177,34 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               ),
             ),
           );
+        } else if ((state is RideBookingConfirmed && state.status == 'completed') ||
+            state is RideCompleted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: Colors.white, size: 22),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'وصلت بحمد الله وتوفيقه! تم إنهاء الرحلة بنجاح 🎉',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF00C853),
+              duration: const Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
         }
       },
       builder: (context, rideState) {
@@ -195,6 +223,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               ? null
               : HomeBottomNavBar(isDark: isDark, currentIndex: 0),
           body: Stack(
+            fit: StackFit.expand,
             children: [
               // ==========================================
               // LAYER 1: Interactive Simulated Map Component
@@ -258,79 +287,107 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               // ==========================================
               // LAYER 3: Dynamic Bottom Panel / Captain on the Way Card
               // ==========================================
-              BlocBuilder<RideBloc, RideState>(
-                builder: (context, state) {
-                  if (state is RideBookingConfirmed) {
-                    final s = state.status.toLowerCase();
-                    if (s == 'accepted' ||
-                        s == 'arrived' ||
-                        s == 'found' ||
-                        (state.captainName.isNotEmpty && state.captainName != 'قيد البحث')) {
-                      return Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: CaptainOnTheWayCard(state: state),
-                      );
-                    } else if (s == 'in_transit' || s == 'started' || s == 'in_progress') {
-                      return Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: RideInProgressCard(state: state),
-                        ),
-                      );
-                    } else if (s == 'completed') {
-                      return Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: RideCompletedCard(state: state),
-                        ),
-                      );
-                    } else if (s == 'pending' || state.captainName == 'قيد البحث') {
-                      return const SizedBox.shrink();
-                    }
-                  } else if (state is RideAccepted) {
-                    return Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: CaptainOnTheWayCard(
-                        state: RideBookingConfirmed(
-                          pickup: _pickupController.text.trim(),
-                          dropoff: _dropoffController.text.trim(),
-                          selectedOption: const RideOption(
-                            id: 'laffah',
-                            titleAr: 'لَفّة',
-                            titleEn: 'Laffah',
-                            basePrice: 1250.0,
-                            etaMinutes: 5,
-                            iconKey: 'car',
-                            descriptionAr: 'لَفّة',
+              Positioned.fill(
+                child: BlocBuilder<RideBloc, RideState>(
+                  builder: (context, state) {
+                    if (state is RideBookingConfirmed) {
+                      final s = state.status.toLowerCase();
+                      if (s == 'accepted' ||
+                          s == 'arrived' ||
+                          s == 'found' ||
+                          (state.captainName.isNotEmpty && state.captainName != 'قيد البحث')) {
+                        return Align(
+                          alignment: Alignment.bottomCenter,
+                          child: CaptainOnTheWayCard(state: state),
+                        );
+                      } else if (s == 'in_transit' || s == 'started' || s == 'in_progress') {
+                        return Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: RideInProgressCard(state: state),
                           ),
-                          captainName: state.captainName,
-                          captainPhone: '',
-                          vehicleModel: state.vehicleModel,
-                          vehiclePlate: state.vehiclePlate,
-                          rating: state.captainRating,
-                          status: 'accepted',
+                        );
+                      } else if (s == 'completed') {
+                        return Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: RideCompletedCard(state: state),
+                          ),
+                        );
+                      } else if (s == 'pending' || state.captainName == 'قيد البحث') {
+                        return const SizedBox.shrink();
+                      }
+                    } else if (state is RideAccepted) {
+                      return Align(
+                        alignment: Alignment.bottomCenter,
+                        child: CaptainOnTheWayCard(
+                          state: RideBookingConfirmed(
+                            pickup: _pickupController.text.trim(),
+                            dropoff: _dropoffController.text.trim(),
+                            selectedOption: const RideOption(
+                              id: 'laffah',
+                              titleAr: 'لَفّة',
+                              titleEn: 'Laffah',
+                              basePrice: 1250.0,
+                              etaMinutes: 5,
+                              iconKey: 'car',
+                              descriptionAr: 'لَفّة',
+                            ),
+                            captainName: state.captainName,
+                            captainPhone: '',
+                            vehicleModel: state.vehicleModel,
+                            vehiclePlate: state.vehiclePlate,
+                            rating: state.captainRating,
+                            status: 'accepted',
+                          ),
                         ),
-                      ),
-                    );
-                  } else if (state is ParcelSubmitted) {
-                    return Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: ParcelSubmittedCard(state: state),
-                      ),
-                    );
-                  }
+                      );
+                    } else if (state is ParcelSubmitted) {
+                      return Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ParcelSubmittedCard(state: state),
+                        ),
+                      );
+                    } else if (state is RideCompleted) {
+                      return Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: RideCompletedCard(
+                            state: RideBookingConfirmed(
+                              pickup: _pickupController.text.trim(),
+                              dropoff: _dropoffController.text.trim().isNotEmpty
+                                  ? _dropoffController.text.trim()
+                                  : 'وجهتك',
+                              selectedOption: const RideOption(
+                                id: 'laffah',
+                                titleAr: 'لَفّة',
+                                titleEn: 'Laffah',
+                                basePrice: 1250.0,
+                                etaMinutes: 5,
+                                iconKey: 'car',
+                                descriptionAr: 'لَفّة',
+                              ),
+                              captainName: 'كابتن لَفَّة',
+                              captainPhone: '',
+                              vehicleModel: 'دراجة نارية',
+                              vehiclePlate: '---',
+                              rating: 5.0,
+                              status: 'completed',
+                            ),
+                          ),
+                        ),
+                      );
+                    }
 
-                  // Default Draggable & Collapsible Home Panel
-                  return _buildStitchHomePanel(context, isDark);
-                },
+                    // Default Draggable & Collapsible Home Panel
+                    return _buildStitchHomePanel(context, isDark);
+                  },
+                ),
               ),
 
               // ==========================================
@@ -343,17 +400,31 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                 child: SafeArea(
                   child: BlocBuilder<RideBloc, RideState>(
                     builder: (context, state) {
+                      final bool isSearching = state is RideSearching ||
+                          (state is RideBookingConfirmed &&
+                              (state.status == 'pending' ||
+                                  state.captainName == 'قيد البحث'));
+
+                      if (isSearching) {
+                        return const SizedBox.shrink();
+                      }
+
                       final bool isCaptainActive = (state is RideBookingConfirmed &&
                               (state.status == 'accepted' ||
                                   state.status == 'arrived' ||
                                   state.status == 'in_transit' ||
                                   state.status == 'started' ||
+                                  state.status == 'completed' ||
                                   state.status == 'found' ||
                                   (state.captainName.isNotEmpty &&
                                       state.captainName != 'قيد البحث'))) ||
-                          state is RideAccepted;
+                          state is RideAccepted ||
+                          state is RideCompleted;
 
                       if (isCaptainActive) {
+                        final bool isCompleted = (state is RideBookingConfirmed &&
+                                state.status.toLowerCase() == 'completed') ||
+                            state is RideCompleted;
                         final bool isArrived = state is RideBookingConfirmed &&
                             state.status.toLowerCase() == 'arrived';
                         final bool isInTransit = state is RideBookingConfirmed &&
@@ -362,6 +433,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                         return _buildCaptainOnTheWayTopHeader(
                           context,
                           isDark,
+                          isCompleted: isCompleted,
                           isArrived: isArrived,
                           isInTransit: isInTransit,
                         );
@@ -380,11 +452,11 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               // ==========================================
               // LAYER 5: Full-screen Searching Captain Overlay
               // ==========================================
-              BlocBuilder<RideBloc, RideState>(
-                builder: (context, state) {
-                  if (state is RideSearching) {
-                    return Positioned.fill(
-                      child: SearchingCaptainOverlay(
+              Positioned.fill(
+                child: BlocBuilder<RideBloc, RideState>(
+                  builder: (context, state) {
+                    if (state is RideSearching) {
+                      return SearchingCaptainOverlay(
                         pickup: _pickupController.text.trim().isNotEmpty
                             ? _pickupController.text.trim()
                             : null,
@@ -397,13 +469,11 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                               .read<RideBloc>()
                               .add(const CancelRideRequested());
                         },
-                      ),
-                    );
-                  }
-                  if (state is RideBookingConfirmed &&
-                      (state.status == 'pending' || state.captainName == 'قيد البحث')) {
-                    return Positioned.fill(
-                      child: SearchingCaptainOverlay(
+                      );
+                    }
+                    if (state is RideBookingConfirmed &&
+                        (state.status == 'pending' || state.captainName == 'قيد البحث')) {
+                      return SearchingCaptainOverlay(
                         pickup: state.pickup.isNotEmpty
                             ? state.pickup
                             : _pickupController.text.trim(),
@@ -417,11 +487,11 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                               .read<RideBloc>()
                               .add(const CancelRideRequested());
                         },
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ),
             ],
           ),
@@ -558,10 +628,11 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     );
   }
 
-  /// Top floating header displayed when a captain accepts, arrives, or starts trip
+  /// Top floating header displayed when a captain accepts, arrives, starts, or completes trip
   Widget _buildCaptainOnTheWayTopHeader(
     BuildContext context,
     bool isDark, {
+    bool isCompleted = false,
     bool isArrived = false,
     bool isInTransit = false,
   }) {
@@ -571,7 +642,13 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     IconData iconData = Icons.two_wheeler_rounded;
     String subtitle = 'يرجى التواجد في نقطة الانطلاق المحددة';
 
-    if (isArrived) {
+    if (isCompleted) {
+      themeColor = const Color(0xFF00C853);
+      title = 'اكتمل المشوار بنجاح!';
+      iconTag = '🎉';
+      iconData = Icons.verified_rounded;
+      subtitle = 'شكراً لاختيارك لَفَّة، نتمنى لك يوماً سعيداً';
+    } else if (isArrived) {
       themeColor = const Color(0xFF00C853);
       title = 'وصل الكابتن إلى موقعك!';
       iconTag = '📍';

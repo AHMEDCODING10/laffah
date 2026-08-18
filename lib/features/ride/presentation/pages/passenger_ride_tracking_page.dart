@@ -70,23 +70,19 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
 
   void _listenToLiveTracking() {
     _echoService.init().then((_) {
-      _echoService.listenToCaptainLocation(_activeCaptainId, (data) {
+      _echoService.listenToCaptainLocation(_activeCaptainId, (lat, lng, heading) {
         if (!mounted) return;
 
-        final double newLat = ((data['latitude'] ?? data['lat']) as num).toDouble();
-        final double newLng = ((data['longitude'] ?? data['lng']) as num).toDouble();
-        final double newHeading = ((data['heading'] ?? 0.0) as num).toDouble();
-
-        _latTween = Tween<double>(begin: _captainLocation.latitude, end: newLat)
+        _latTween = Tween<double>(begin: _captainLocation.latitude, end: lat)
             .animate(CurvedAnimation(
                 parent: _animController, curve: Curves.easeInOut));
         _lngTween =
-            Tween<double>(begin: _captainLocation.longitude, end: newLng)
+            Tween<double>(begin: _captainLocation.longitude, end: lng)
                 .animate(CurvedAnimation(
                     parent: _animController, curve: Curves.easeInOut));
 
         setState(() {
-          _captainHeading = newHeading;
+          _captainHeading = heading ?? 0.0;
         });
 
         _animController.forward(from: 0.0);
