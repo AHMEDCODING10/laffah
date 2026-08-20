@@ -60,7 +60,7 @@ class _PrimaryGradientButtonState extends State<PrimaryGradientButton> {
                   : LinearGradient(
                       colors: _isHovered
                           ? [const Color(0xFFFF8E3C), const Color(0xFFFFA564)]
-                          : [const Color(0xFFFF6B00), const Color(0xFFFF8E3C)],
+                          : [AppColors.primary500, const Color(0xFFFF8E3C)],
                       begin: Alignment.centerRight,
                       end: Alignment.centerLeft,
                     ),
@@ -68,7 +68,7 @@ class _PrimaryGradientButtonState extends State<PrimaryGradientButton> {
                   ? []
                   : [
                       BoxShadow(
-                        color: const Color(0xFFFF6B00)
+                        color: AppColors.primary500
                             .withValues(alpha: _isHovered ? 0.5 : 0.3),
                         blurRadius: _isHovered ? 16 : 12,
                         offset: Offset(0, _isHovered ? 6 : 4),

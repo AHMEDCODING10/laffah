@@ -105,7 +105,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                        color: AppColors.primary500.withValues(alpha: 0.1),
                         borderRadius: AppSpacing.radiusMD,
                       ),
                       child: const Text(
@@ -114,7 +114,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                           fontFamily: 'monospace',
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
-                          color: Color(0xFFFF6B00),
+                          color: AppColors.primary500,
                         ),
                       ),
                     ),
@@ -248,7 +248,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
                         // Accept parcel order logic
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B00),
+                        backgroundColor: AppColors.primary500,
                         foregroundColor: AppColors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: const RoundedRectangleBorder(

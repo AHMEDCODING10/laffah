@@ -1069,6 +1069,23 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage>
 
     if (image == null) return;
 
+    final fileBytes = await image.length();
+    const maxSizeBytes = 10 * 1024 * 1024; // 10 MB
+    if (fileBytes > maxSizeBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.error,
+            content: Text(
+              'حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت',
+              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
     // Show persistent Loading SnackBar for upload & processing
     final snackBar = SnackBar(
       backgroundColor: AppColors.black,

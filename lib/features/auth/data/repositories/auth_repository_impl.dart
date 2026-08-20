@@ -17,11 +17,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.secureStorage,
   });
 
-  // Helper to save token
-  Future<void> _saveToken(String? token) async {
-    if (token != null) {
+  // Helper to save token and user role
+  Future<void> _saveSession(String? token, String? role) async {
+    if (token != null && token.isNotEmpty) {
       DioClient.setToken(token);
       await secureStorage.write(key: 'auth_token', value: token);
+      if (role != null && role.isNotEmpty) {
+        await secureStorage.write(key: 'user_role', value: role);
+      }
     }
   }
 
@@ -31,7 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await remoteDataSource.login(phone, password);
       if (response.success && response.data != null) {
-        await _saveToken(response.data!.token);
+        await _saveSession(response.data!.token, response.data!.role);
         return Right(response.data!);
       } else {
         return Left(ServerFailure(response.message));
@@ -61,7 +64,9 @@ class AuthRepositoryImpl implements AuthRepository {
         'password': password,
       });
       if (response.success && response.data != null) {
-        await _saveToken(response.data!.token ?? 'token_${DateTime.now().millisecondsSinceEpoch}');
+        await _saveSession(
+            response.data!.token ?? 'token_${DateTime.now().millisecondsSinceEpoch}',
+            response.data!.role.isNotEmpty ? response.data!.role : 'passenger');
         return Right(response.data!);
       } else {
         return Left(ServerFailure(response.message.isNotEmpty ? response.message : 'فشل إنشاء حساب الراكب'));
@@ -107,7 +112,9 @@ class AuthRepositoryImpl implements AuthRepository {
         'plate_number': vehiclePlate,
       });
       if (response.success && response.data != null) {
-        await _saveToken(response.data!.token ?? 'token_${DateTime.now().millisecondsSinceEpoch}');
+        await _saveSession(
+            response.data!.token ?? 'token_${DateTime.now().millisecondsSinceEpoch}',
+            response.data!.role.isNotEmpty ? response.data!.role : 'captain');
         return Right(response.data!);
       } else {
         return Left(ServerFailure(response.message.isNotEmpty ? response.message : 'فشل إنشاء حساب الكابتن'));
@@ -141,7 +148,28 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     DioClient.setToken(null);
     await secureStorage.delete(key: 'auth_token');
+    await secureStorage.delete(key: 'user_role');
     return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteAccount() async {
+    try {
+      final response = await remoteDataSource.deleteAccount();
+      if (response.success) {
+        DioClient.setToken(null);
+        await secureStorage.delete(key: 'auth_token');
+        await secureStorage.delete(key: 'user_role');
+        return const Right(null);
+      } else {
+        return Left(ServerFailure(response.message));
+      }
+    } on DioException catch (e) {
+      return Left(ServerFailure(
+          e.response?.data?['message']?.toString() ?? 'فشل حذف الحساب'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override

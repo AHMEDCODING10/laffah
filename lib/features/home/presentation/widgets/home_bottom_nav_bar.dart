@@ -104,7 +104,7 @@ class HomeBottomNavBar extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFFFF6B00).withValues(alpha: 0.15)
+                              ? AppColors.primary500.withValues(alpha: 0.15)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(24),
                         ),
@@ -115,7 +115,7 @@ class HomeBottomNavBar extends StatelessWidget {
                               item['icon'] as IconData,
                               size: 24,
                               color: isSelected
-                                  ? const Color(0xFFFF6B00)
+                                  ? AppColors.primary500
                                   : (isDark
                                       ? AppColors.gray500
                                       : AppColors.gray400),
@@ -128,7 +128,7 @@ class HomeBottomNavBar extends StatelessWidget {
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                 ),
                               ),
                             ],

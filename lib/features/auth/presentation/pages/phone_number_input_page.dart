@@ -289,7 +289,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                           fontFamily: 'IBM Plex Sans Arabic',
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFFFF6B00),
+                                          color: AppColors.primary500,
                                         ),
                                       ),
                                     ),
@@ -339,7 +339,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFFFF6B00),
+                                    color: AppColors.primary500,
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
@@ -389,13 +389,13 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                   decoration: BoxDecoration(
                     borderRadius: AppSpacing.borderSM,
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFF8E3C), Color(0xFFFF6B00)],
+                      colors: [Color(0xFFFF8E3C), AppColors.primary500],
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                        color: AppColors.primary500.withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -497,7 +497,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
         boxShadow: [
           if (_isPhoneFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -535,7 +535,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
             color:
-                _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+                _isPhoneFocused ? AppColors.primary500 : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: Row(
@@ -548,7 +548,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
-                  color: Color(0xFFFF6B00),
+                  color: AppColors.primary500,
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -573,7 +573,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
           focusedBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: const BorderSide(
-              color: Color(0xFFFF6B00),
+              color: AppColors.primary500,
               width: 1.8,
             ),
           ),
@@ -615,7 +615,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
         boxShadow: [
           if (_isPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -648,7 +648,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
           suffixIcon: Icon(
             Icons.lock_rounded,
             color: _isPasswordFocused
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
@@ -677,7 +677,7 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
           focusedBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: const BorderSide(
-              color: Color(0xFFFF6B00),
+              color: AppColors.primary500,
               width: 1.8,
             ),
           ),

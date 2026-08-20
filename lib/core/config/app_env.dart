@@ -1,13 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../network/api_endpoints.dart';
 
 /// Centralized, type-safe configuration provider for Laffah application environment variables.
 class AppEnv {
   // Prevent instantiation
   AppEnv._();
 
+  /// Are we running in local mode (for dual-environment)? 
+  /// Set to true to point to Localhost/IP, false for Production Domain.
+  static const bool isLocalMode = !kReleaseMode;
+
   /// Backend API Base URL
-  static String get apiBaseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://localhost:8000/api';
+  static String get apiBaseUrl => ApiEndpoints.baseUrl;
 
   /// MapTiler Vector & Raster Tile API Key
   static String get mapTilerKey => dotenv.env['MAPTILER_API_KEY'] ?? '';
@@ -17,9 +22,6 @@ class AppEnv {
 
   /// Pusher / Reverb App Key
   static String get pusherAppKey => dotenv.env['PUSHER_APP_KEY'] ?? '';
-
-  /// Pusher / Reverb App Secret
-  static String get pusherAppSecret => dotenv.env['PUSHER_APP_SECRET'] ?? '';
 
   /// Pusher Cluster (default: eu)
   static String get pusherAppCluster =>

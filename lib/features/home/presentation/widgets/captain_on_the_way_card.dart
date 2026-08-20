@@ -150,7 +150,7 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
     final state = widget.state;
     final isArrived = state.status.toLowerCase() == 'arrived';
 
-    final Color primaryColor = isArrived ? const Color(0xFF00C853) : const Color(0xFFFF6B00);
+    final Color primaryColor = isArrived ? const Color(0xFF00C853) : AppColors.primary500;
     final captainName = state.captainName.isNotEmpty && state.captainName != 'قيد البحث'
         ? state.captainName
         : 'كابتن لَفَّة';
@@ -194,7 +194,7 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                           ? const Color(0xFF00C853).withValues(alpha: 0.7)
                           : (isDark
                               ? Colors.white.withValues(alpha: 0.1)
-                              : const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+                              : AppColors.primary500.withValues(alpha: 0.3)),
                       width: isArrived ? 2.0 : 1.5,
                     ),
                   ),
@@ -248,7 +248,7 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                             decoration: BoxDecoration(
                               color: isArrived
                                   ? const Color(0xFF00C853).withValues(alpha: 0.1)
-                                  : const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                                  : AppColors.primary500.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(

@@ -74,7 +74,7 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
               if (state is CaptainTripsInitial ||
                   (state is CaptainTripsLoading && state.isFirstFetch)) {
                 return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFF6B00)));
+                    child: CircularProgressIndicator(color: AppColors.primary500));
               } else if (state is CaptainTripsError) {
                 return Center(
                   child: Column(
@@ -100,7 +100,7 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                 );
               } else if (state is CaptainTripsLoaded) {
                 return RefreshIndicator(
-                  color: const Color(0xFFFF6B00),
+                  color: AppColors.primary500,
                   onRefresh: () async {
                     _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
                   },
@@ -168,10 +168,10 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+        color: AppColors.primary500.withValues(alpha: 0.1),
         borderRadius: AppSpacing.radiusLG,
         border: Border.all(
-          color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+          color: AppColors.primary500.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -181,13 +181,13 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
           Container(
               width: 1,
               height: 40,
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+              color: AppColors.primary500.withValues(alpha: 0.3)),
           _StatItem(
               title: 'الطرود', value: totalParcels.toString(), isDark: isDark),
           Container(
               width: 1,
               height: 40,
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.3)),
+              color: AppColors.primary500.withValues(alpha: 0.3)),
           _StatItem(
               title: 'الأرباح',
               value: '${totalEarnings.toInt()}',
@@ -210,7 +210,7 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
     final IconData icon =
         type == 'ride' ? Icons.motorcycle_rounded : Icons.inventory_2_rounded;
     final Color iconColor =
-        type == 'ride' ? const Color(0xFFFF6B00) : const Color(0xFF3B82F6);
+        type == 'ride' ? AppColors.primary500 : const Color(0xFF3B82F6);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s16),
@@ -276,7 +276,7 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                   fontWeight: FontWeight.w900,
                   color: isCanceled
                       ? (isDark ? AppColors.gray400 : AppColors.gray500)
-                      : const Color(0xFFFF6B00),
+                      : AppColors.primary500,
                 ),
               ),
               AppSpacing.h4,

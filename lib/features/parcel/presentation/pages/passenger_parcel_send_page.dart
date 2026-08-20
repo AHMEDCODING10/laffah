@@ -119,7 +119,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
           backgroundColor: AppColors.error,
           content: Text(
             'يرجى التأكد من ملء جميع الحقول المطلوبة بشكل صحيح.',
-            style: TextStyle(fontFamily: 'Cairo'),
+            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
           ),
         ),
       );
@@ -132,7 +132,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
           backgroundColor: AppColors.error,
           content: Text(
             'يرجى تحديد موقع تسليم الطرد.',
-            style: TextStyle(fontFamily: 'Cairo'),
+            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
           ),
         ),
       );
@@ -188,7 +188,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 backgroundColor: AppColors.success,
                 content: Text(
                   'تم إرسال طلب الطرد بنجاح!',
-                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
                 ),
               ),
             );
@@ -200,7 +200,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 backgroundColor: AppColors.error,
                 content: Text(
                   state.message,
-                  style: const TextStyle(fontFamily: 'Cairo'),
+                  style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
                 ),
               ),
             );
@@ -220,7 +220,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 title: const Text(
                   'إرسال طرد فوري',
                   style: TextStyle(
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.w900,
                     fontSize: 18,
                   ),
@@ -343,7 +343,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                                 Text(
                                   'جاري إرسال طلب الطرد...',
                                   style: TextStyle(
-                                    fontFamily: 'Cairo',
+                                    fontFamily: 'IBM Plex Sans Arabic',
                                     color: AppColors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -388,7 +388,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 Text(
                   'خدمة توصيل الطرود السريعة عبر لَفَّة',
                   style: TextStyle(
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.w900,
                     fontSize: 13.5,
                     color: AppColors.primary500,
@@ -398,7 +398,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 Text(
                   'توصيل موثوق من الباب إلى الباب بأسرع وقت وأفضل سعر في صنعاء.',
                   style: TextStyle(
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 11.5,
                     color: AppColors.gray500,
                   ),
@@ -419,7 +419,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
         Text(
           title,
           style: const TextStyle(
-            fontFamily: 'Cairo',
+            fontFamily: 'IBM Plex Sans Arabic',
             fontWeight: FontWeight.w900,
             fontSize: 14,
             color: AppColors.primary500,
@@ -443,7 +443,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 controller: _pickupLocationController,
                 style: TextStyle(
                   fontSize: 13,
-                  fontFamily: 'Cairo',
+                  fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
@@ -468,7 +468,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 controller: _dropoffLocationController,
                 style: TextStyle(
                   fontSize: 13,
-                  fontFamily: 'Cairo',
+                  fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
@@ -506,7 +506,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
           const Text(
             'حجم الشحنة:',
             style: TextStyle(
-              fontFamily: 'Cairo',
+              fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.bold,
               fontSize: 12.5,
               color: AppColors.gray500,
@@ -549,7 +549,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                           Text(
                             s['key'] as String,
                             style: TextStyle(
-                              fontFamily: 'Cairo',
+                              fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: isSelected

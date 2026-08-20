@@ -11,6 +11,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
     on<GetCompanyAccountsEvent>(_onGetCompanyAccounts);
     on<RechargeWalletEvent>(_onRechargeWallet);
     on<RequestPayoutEvent>(_onRequestPayout);
+    on<ResetWalletEvent>((event, emit) => emit(WalletInitial()));
   }
 
   Future<void> _onGetWalletBalance(

@@ -93,7 +93,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
             IconButton(
               icon: Icon(
                 Icons.done_all_rounded,
-                color: _isAllRead ? AppColors.gray500 : const Color(0xFFFF6B00),
+                color: _isAllRead ? AppColors.gray500 : AppColors.primary500,
               ),
               tooltip: AppLocalizations.of(context)!.capt_notif_mark_all_read,
               onPressed: _markAllAsRead,
@@ -131,7 +131,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? (isDark
-                                      ? const Color(0xFFFF6B00)
+                                      ? AppColors.primary500
                                       : AppColors.white)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(16),
@@ -158,7 +158,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                                 color: isSelected
                                     ? (isDark
                                         ? Colors.white
-                                        : const Color(0xFFFF6B00))
+                                        : AppColors.primary500)
                                     : AppColors.gray500,
                               ),
                             ),
@@ -179,7 +179,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                     if (state is CaptainNotificationsLoading) {
                       return const Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFFFF6B00)));
+                              color: AppColors.primary500));
                     } else if (state is CaptainNotificationsError) {
                       return Center(
                         child: Column(
@@ -207,7 +207,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                         onRefresh: () async {
                           _bloc.add(RefreshNotificationsAndRequests());
                         },
-                        color: const Color(0xFFFF6B00),
+                        color: AppColors.primary500,
                         child: _buildListBasedOnCategory(state, isDark),
                       );
                     }
@@ -310,7 +310,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
             ? []
             : [
                 BoxShadow(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.05),
+                  color: AppColors.primary500.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -318,7 +318,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
         border: Border.all(
           color: isParcel
               ? AppColors.info.withValues(alpha: 0.3)
-              : const Color(0xFFFF6B00).withValues(alpha: 0.2),
+              : AppColors.primary500.withValues(alpha: 0.2),
           width: 1.5,
         ),
       ),
@@ -335,14 +335,14 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                   decoration: BoxDecoration(
                     color: isParcel
                         ? AppColors.info.withValues(alpha: 0.1)
-                        : const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                        : AppColors.primary500.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     isParcel
                         ? Icons.inventory_2_rounded
                         : Icons.local_taxi_rounded,
-                    color: isParcel ? AppColors.info : const Color(0xFFFF6B00),
+                    color: isParcel ? AppColors.info : AppColors.primary500,
                     size: 24,
                   ),
                 ),
@@ -433,11 +433,11 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.05),
+                      color: AppColors.primary500.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                           color:
-                              const Color(0xFFFF6B00).withValues(alpha: 0.1)),
+                              AppColors.primary500.withValues(alpha: 0.1)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,7 +447,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                                 child: Row(
                                   children: [
                                     const Icon(Icons.add_location_alt_rounded,
-                                        size: 16, color: Color(0xFFFF6B00)),
+                                        size: 16, color: AppColors.primary500),
                                     const SizedBox(width: 8),
                                     Expanded(
                                         child: Text(s,
@@ -533,7 +533,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B00),
+                      backgroundColor: AppColors.primary500,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -587,7 +587,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
               shape: BoxShape.circle,
             ),
             child: Icon(iconData,
-                color: isRead ? AppColors.gray500 : const Color(0xFFFF6B00),
+                color: isRead ? AppColors.gray500 : AppColors.primary500,
                 size: 22),
           ),
           const SizedBox(width: 12),
@@ -677,7 +677,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
       children: [
         Icon(icon,
             size: 16,
-            color: isHighlight ? const Color(0xFFFF6B00) : AppColors.gray500),
+            color: isHighlight ? AppColors.primary500 : AppColors.gray500),
         const SizedBox(width: 4),
         Text(
           value,
@@ -686,7 +686,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
             fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
             fontSize: 13,
             color: isHighlight
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : (isDark ? Colors.white70 : AppColors.gray700),
           ),
         ),

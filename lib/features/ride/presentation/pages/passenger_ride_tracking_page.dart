@@ -15,10 +15,18 @@ import '../../../../core/services/echo_service.dart';
 
 class PassengerRideTrackingPage extends StatefulWidget {
   final String? captainId;
+  final double captainLat;
+  final double captainLng;
+  final double passengerLat;
+  final double passengerLng;
 
   const PassengerRideTrackingPage({
     super.key,
     this.captainId,
+    this.captainLat = 15.3500,
+    this.captainLng = 44.2000,
+    this.passengerLat = 15.3421,
+    this.passengerLng = 44.2081,
   });
 
   @override
@@ -32,8 +40,8 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
   final EchoService _echoService = EchoService();
   List<LatLng> _routePoints = [];
 
-  LatLng _captainLocation = const LatLng(15.3500, 44.2000);
-  final LatLng _passengerLocation = const LatLng(15.3421, 44.2081);
+  late LatLng _captainLocation;
+  late final LatLng _passengerLocation;
   double _captainHeading = 0.0;
   late String _activeCaptainId;
 
@@ -45,6 +53,8 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
   void initState() {
     super.initState();
     _activeCaptainId = widget.captainId ?? '1';
+    _captainLocation = LatLng(widget.captainLat, widget.captainLng);
+    _passengerLocation = LatLng(widget.passengerLat, widget.passengerLng);
     _fetchRoute();
 
     _animController = AnimationController(
@@ -245,35 +255,39 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                               ),
                             ),
                             AppSpacing.w12,
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isCaptainArrived
-                                      ? 'الكابتن وصل إلى موقعك!'
-                                      : 'الكابتن في الطريق إليك...',
-                                  style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                    color: isDark
-                                        ? AppColors.white
-                                        : AppColors.gray900,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isCaptainArrived
+                                        ? 'الكابتن وصل إلى موقعك!'
+                                        : 'الكابتن في الطريق إليك...',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      color: isDark
+                                          ? AppColors.white
+                                          : AppColors.gray900,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  isCaptainArrived
-                                      ? 'يرجى التوجه للمركبة'
-                                      : 'يصل خلال دقائق',
-                                  style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    fontSize: 13,
-                                    color: isDark
-                                        ? AppColors.gray400
-                                        : AppColors.gray600,
+                                  Text(
+                                    isCaptainArrived
+                                        ? 'يرجى التوجه للمركبة'
+                                        : 'يصل خلال دقائق',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontSize: 13,
+                                      color: isDark
+                                          ? AppColors.gray400
+                                          : AppColors.gray600,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -297,6 +311,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                 children: [
                                   Text(
                                     captainName,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontWeight: FontWeight.bold,

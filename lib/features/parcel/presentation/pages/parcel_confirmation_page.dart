@@ -167,7 +167,7 @@ class ParcelConfirmationPage extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B00),
+                    backgroundColor: AppColors.primary500,
                     foregroundColor: AppColors.white,
                     shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD,

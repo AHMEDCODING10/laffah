@@ -83,12 +83,12 @@ class CaptainRideInvoicePage extends StatelessWidget {
                   color: isDark ? AppColors.surfaceDark : AppColors.white,
                   borderRadius: AppSpacing.radiusLG,
                   border: Border.all(
-                    color: const Color(0xFFFF6B00).withValues(alpha: 0.5),
+                    color: AppColors.primary500.withValues(alpha: 0.5),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                      color: AppColors.primary500.withValues(alpha: 0.1),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
@@ -106,7 +106,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                             fontFamily: 'monospace',
                             fontSize: 48,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFFFF6B00),
+                            color: AppColors.primary500,
                             height: 1,
                           ),
                         ),
@@ -119,7 +119,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFFFF6B00),
+                              color: AppColors.primary500,
                             ),
                           ),
                         ),
@@ -130,7 +130,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                        color: AppColors.primary500.withValues(alpha: 0.1),
                         borderRadius: AppSpacing.radiusMD,
                       ),
                       child: const Text(
@@ -138,7 +138,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFFF6B00),
+                          color: AppColors.primary500,
                         ),
                       ),
                     ),
@@ -183,7 +183,7 @@ class CaptainRideInvoicePage extends StatelessWidget {
                     context.go(LaffahRoutes.captainHome);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B00),
+                    backgroundColor: AppColors.primary500,
                     foregroundColor: AppColors.white,
                     shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD,

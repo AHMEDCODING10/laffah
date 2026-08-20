@@ -64,7 +64,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                     : Icons.motorcycle_rounded,
                 color: item.isNegative
                     ? AppColors.danger
-                    : const Color(0xFFFF6B00),
+                    : AppColors.primary500,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -105,7 +105,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                 style: const TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFF6B00),
+                  color: AppColors.primary500,
                 ),
               ),
 
@@ -136,7 +136,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
             fontSize: isHighlight ? 15 : 12.5,
             fontWeight: FontWeight.w900,
             color: isHighlight
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : (isDark ? Colors.white : AppColors.gray900),
           ),
         ),
@@ -300,7 +300,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                               color: isNegative
                                                   ? AppColors.danger
                                                       .withValues(alpha: 0.1)
-                                                  : const Color(0xFFFF6B00)
+                                                  : AppColors.primary500
                                                       .withValues(alpha: 0.1),
                                               shape: BoxShape.circle,
                                             ),
@@ -312,7 +312,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                               size: 20,
                                               color: isNegative
                                                   ? AppColors.danger
-                                                  : const Color(0xFFFF6B00),
+                                                  : AppColors.primary500,
                                             ),
                                           ),
                                           AppSpacing.w12,
@@ -357,7 +357,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                               fontWeight: FontWeight.w900,
                                               color: isNegative
                                                   ? AppColors.danger
-                                                  : const Color(0xFFFF6B00),
+                                                  : AppColors.primary500,
                                               fontFamily:
                                                   'IBM Plex Sans Arabic',
                                             ),
@@ -403,7 +403,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
 
   Widget _buildTabChip(String label, String value, bool isSelected, bool isDark,
       {Color? color}) {
-    final chipColor = color ?? const Color(0xFFFF6B00);
+    final chipColor = color ?? AppColors.primary500;
 
     return GestureDetector(
       onTap: () {

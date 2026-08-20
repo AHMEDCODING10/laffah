@@ -10,6 +10,7 @@ abstract class AuthRemoteDataSource {
       Map<String, dynamic> data);
   Future<BaseResponseModel<UserModel>> login(String phone, String password);
   Future<void> logoutFromServer();
+  Future<BaseResponseModel<dynamic>> deleteAccount();
   Future<BaseResponseModel<dynamic>> forgotPassword(String phone);
   Future<BaseResponseModel<dynamic>> verifyResetCode(String phone, String code);
   Future<BaseResponseModel<dynamic>> resetPassword(
@@ -57,6 +58,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> logoutFromServer() async {
     await dioClient.dio.post(ApiEndpoints.logout);
+  }
+
+  @override
+  Future<BaseResponseModel<dynamic>> deleteAccount() async {
+    final response = await dioClient.dio.delete('/user/profile');
+    return BaseResponseModel.fromJson(response.data, (data) => data);
   }
 
   @override

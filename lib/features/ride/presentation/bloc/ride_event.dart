@@ -11,17 +11,31 @@ abstract class RideEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class ResetRideState extends RideEvent {
+  const ResetRideState();
+}
+
 class CalculateSingleTripFare extends RideEvent {
   final String pickup;
   final String dropoff;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? dropoffLatitude;
+  final double? dropoffLongitude;
+  final List<Map<String, dynamic>>? stops;
 
   const CalculateSingleTripFare({
     required this.pickup,
     required this.dropoff,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.dropoffLatitude,
+    this.dropoffLongitude,
+    this.stops,
   });
 
   @override
-  List<Object?> get props => [pickup, dropoff];
+  List<Object?> get props => [pickup, dropoff, pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude];
 }
 
 class ConfirmUnifiedBooking extends RideEvent {

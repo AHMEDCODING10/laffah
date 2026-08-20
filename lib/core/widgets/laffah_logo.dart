@@ -28,7 +28,7 @@ class LaffahLogo extends StatelessWidget {
             borderRadius: BorderRadius.circular(height * 0.22),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFF6B00).withValues(alpha: 0.2),
+                color: AppColors.primary500.withValues(alpha: 0.2),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, 4),

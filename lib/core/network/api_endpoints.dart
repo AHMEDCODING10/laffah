@@ -5,18 +5,33 @@ class ApiEndpoints {
   // Laravel Local Development Environment (Sanctum/API)
   static String get baseUrl {
     final envUrl = dotenv.env['API_BASE_URL'];
+
+    // 1. Web Platform (Chrome / Edge / Firefox)
+    if (kIsWeb) {
+      if (envUrl != null && envUrl.startsWith('https://')) {
+        return envUrl.replaceAll('/api/v1', '/api');
+      }
+      return 'http://127.0.0.1:8000/api';
+    }
+
+    // 2. Mobile / Desktop Platforms
     if (envUrl != null && envUrl.isNotEmpty) {
       String cleaned = envUrl.replaceAll('/api/v1', '/api');
-      if (kIsWeb &&
-          (cleaned.contains('10.0.2.2') || cleaned.contains('172.20.10.13'))) {
-        return 'http://localhost:8000/api';
+      // If pointing to localhost/127.0.0.1 and running on Android Emulator, route to host machine alias
+      if (defaultTargetPlatform == TargetPlatform.android &&
+          (cleaned.contains('localhost') || cleaned.contains('127.0.0.1'))) {
+        return cleaned
+            .replaceAll('localhost', '10.0.2.2')
+            .replaceAll('127.0.0.1', '10.0.2.2');
       }
       return cleaned;
     }
-    if (kIsWeb) {
-      return 'http://localhost:8000/api';
+
+    // Default Fallbacks
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000/api';
     }
-    return 'http://10.0.2.2:8000/api';
+    return 'http://127.0.0.1:8000/api';
   }
 
   // Auth Endpoints

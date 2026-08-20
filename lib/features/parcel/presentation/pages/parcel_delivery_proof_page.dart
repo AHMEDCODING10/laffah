@@ -91,12 +91,12 @@ class ParcelDeliveryProofPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B00)
+                              color: AppColors.primary500
                                   .withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.camera_alt_rounded,
-                                color: Color(0xFFFF6B00), size: 40),
+                                color: AppColors.primary500, size: 40),
                           ),
                           AppSpacing.h16,
                           Text(
@@ -133,7 +133,7 @@ class ParcelDeliveryProofPage extends StatelessWidget {
                       context.pop();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B00),
+                      backgroundColor: AppColors.primary500,
                       foregroundColor: AppColors.white,
                       shape: const RoundedRectangleBorder(
                         borderRadius: AppSpacing.radiusMD,

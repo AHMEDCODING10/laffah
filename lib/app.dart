@@ -7,6 +7,14 @@ import 'l10n/app_localizations.dart';
 import 'core/bloc/locale/locale_bloc.dart';
 import 'core/bloc/locale/locale_state.dart';
 import 'core/theme/theme_controller.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/presentation/bloc/auth_state.dart';
+import 'features/ride/presentation/bloc/ride_bloc.dart';
+import 'features/captain/presentation/bloc/core/captain_bloc.dart';
+import 'features/captain/presentation/bloc/core/captain_event.dart';
+import 'features/passenger/presentation/bloc/wallet_bloc.dart';
+import 'features/passenger/presentation/bloc/wallet_event.dart';
+import 'core/widgets/offline_warning_wrapper.dart';
 
 /// LaffahApp — Root Application Widget for لَفَّة
 /// =================================================
@@ -25,7 +33,15 @@ class LaffahApp extends StatelessWidget {
       builder: (context, currentThemeMode, child) {
         return BlocBuilder<LocaleBloc, LocaleState>(
           builder: (context, localeState) {
-            return MaterialApp.router(
+            return BlocListener<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is AuthInitial) {
+                  context.read<RideBloc>().add(const ResetRideState());
+                  context.read<CaptainBloc>().add(const ResetCaptainState());
+                  context.read<WalletBloc>().add(const ResetWalletEvent());
+                }
+              },
+              child: MaterialApp.router(
               // App identity
               title: 'لَفَّة',
               debugShowCheckedModeBanner: false,
@@ -43,21 +59,24 @@ class LaffahApp extends StatelessWidget {
               supportedLocales: AppLocalizations.supportedLocales,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
 
-              // Global builder: enforce Directionality and text scaling
+
+              // Global builder: enforce Directionality and strict text scaling clamp (1.0)
               builder: (BuildContext context, Widget? child) {
                 return MediaQuery.withClampedTextScaling(
                   minScaleFactor: 1.0,
-                  maxScaleFactor: 1.3,
+                  maxScaleFactor: 1.0,
                   child: Directionality(
                     // Automatically adjust direction based on the current locale
                     textDirection: localeState.locale.languageCode == 'ar'
                         ? TextDirection.rtl
                         : TextDirection.ltr,
-                    child: child ?? const SizedBox.shrink(),
+                    child: OfflineWarningWrapper(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 );
               },
-            );
+            ));
           },
         );
       },

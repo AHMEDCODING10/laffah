@@ -178,7 +178,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(32)),
                   border: Border.all(
-                    color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                    color: AppColors.primary500.withValues(alpha: 0.3),
                     width: 1.2,
                   ),
                 ),
@@ -206,33 +206,37 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B00)
-                                      .withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary500
+                                        .withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    color: AppColors.primary500,
+                                    size: 22,
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.account_balance_wallet_rounded,
-                                  color: Color(0xFFFF6B00),
-                                  size: 22,
+                                AppSpacing.w10,
+                                Expanded(
+                                  child: Text(
+                                    AppLocalizations.of(context)!.capt_wallet_req_payout,
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 18,
+                                      color:
+                                          isDark ? Colors.white : AppColors.gray900,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              AppSpacing.w10,
-                              Text(
-                                AppLocalizations.of(context)!.capt_wallet_req_payout,
-                                style: TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 18,
-                                  color:
-                                      isDark ? Colors.white : AppColors.gray900,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -290,7 +294,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFFFF6B00)
+                                  ? AppColors.primary500
                                       .withValues(alpha: 0.12)
                                   : (isDark
                                       ? Colors.white.withValues(alpha: 0.03)
@@ -298,7 +302,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
-                                    ? const Color(0xFFFF6B00)
+                                    ? AppColors.primary500
                                     : (isDark
                                         ? Colors.white.withValues(alpha: 0.06)
                                         : AppColors.gray200),
@@ -311,7 +315,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? const Color(0xFFFF6B00)
+                                        ? AppColors.primary500
                                         : (isDark
                                             ? Colors.white12
                                             : AppColors.gray200),
@@ -361,7 +365,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                                       ? Icons.radio_button_checked_rounded
                                       : Icons.radio_button_unchecked_rounded,
                                   color: isSelected
-                                      ? const Color(0xFFFF6B00)
+                                      ? AppColors.primary500
                                       : AppColors.gray400,
                                   size: 22,
                                 ),
@@ -426,7 +430,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             suffixStyle: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFFFF6B00),
+                              color: AppColors.primary500,
                               fontSize: 14,
                             ),
                           ),
@@ -495,7 +499,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                             hintText: '77XXXXXXX',
                             border: InputBorder.none,
                             icon: Icon(Icons.phone_android_rounded,
-                                size: 20, color: Color(0xFFFF6B00)),
+                                size: 20, color: AppColors.primary500),
                           ),
                         ),
                       ),
@@ -523,11 +527,11 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
                         child: ElevatedButton.icon(
                           onPressed: _submitPayout,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6B00),
+                            backgroundColor: AppColors.primary500,
                             foregroundColor: Colors.white,
                             elevation: 4,
                             shadowColor:
-                                const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                                AppColors.primary500.withValues(alpha: 0.4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
                             ),
@@ -567,14 +571,14 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isFull
-                ? const Color(0xFFFF6B00).withValues(alpha: 0.15)
+                ? AppColors.primary500.withValues(alpha: 0.15)
                 : (isDark
                     ? Colors.white.withValues(alpha: 0.04)
                     : AppColors.gray100),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isFull
-                  ? const Color(0xFFFF6B00)
+                  ? AppColors.primary500
                   : (isDark ? Colors.white12 : AppColors.gray200),
             ),
           ),
@@ -585,7 +589,7 @@ class _CaptainPayoutDialogState extends State<CaptainPayoutDialog> {
               fontSize: 11.5,
               fontWeight: FontWeight.bold,
               color: isFull
-                  ? const Color(0xFFFF6B00)
+                  ? AppColors.primary500
                   : (isDark ? AppColors.gray300 : AppColors.gray700),
             ),
           ),

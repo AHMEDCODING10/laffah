@@ -195,7 +195,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       color: isDark ? AppColors.white : AppColors.gray900,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'تأكيد كلمة المرور',
+                      hintText: AppLocalizations.of(context)!.auth_confirm_password.replaceAll(':', ''),
                       hintStyle: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         color: isDark ? AppColors.gray600 : AppColors.gray400,

@@ -239,7 +239,7 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 14,
           fontWeight: FontWeight.w900,
-          color: Color(0xFFFF6B00),
+          color: AppColors.primary500,
         ),
       ),
     );
@@ -256,7 +256,7 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
     return SwitchListTile(
       value: value,
       onChanged: onChanged,
-      activeThumbColor: const Color(0xFFFF6B00),
+      activeThumbColor: AppColors.primary500,
       title: Text(
         title,
         style: TextStyle(
@@ -304,7 +304,7 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: Color(0xFFFF6B00),
+          color: AppColors.primary500,
         ),
       ),
       leading:

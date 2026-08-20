@@ -20,6 +20,8 @@ import '../../../../core/bloc/locale/locale_bloc.dart';
 import '../../../../core/bloc/locale/locale_event.dart';
 import '../../../../core/bloc/locale/locale_state.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 
 /// UserProfilePage — Passenger Profile Page connected to real backend via ProfileBloc
 class UserProfilePage extends StatelessWidget {
@@ -41,6 +43,57 @@ class _ProfileView extends StatelessWidget {
     LogoutConfirmationDialog.show(context, isDark, () {
       context.go(LaffahRoutes.authLanding);
     });
+  }
+
+  void _showDeleteAccountDialog(BuildContext context, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderMD),
+          title: Text(
+            'حذف الحساب نهائياً',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          content: Text(
+            'هل أنت متأكد من رغبتك في حذف الحساب نهائياً؟ ستفقد جميع بياناتك ورصيدك ولا يمكن التراجع عن هذا الإجراء.',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              color: isDark ? AppColors.gray400 : AppColors.gray500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('إلغاء',
+                  style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: AppColors.primary500,
+                      fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                context.read<AuthBloc>().add(const DeleteAccountRequested());
+                context.go(LaffahRoutes.authLanding);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSM),
+              ),
+              child: const Text('نعم، احذف الحساب',
+                  style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic', color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -225,7 +278,7 @@ class _ProfileView extends StatelessWidget {
                                       Navigator.pop(bottomSheetContext);
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          backgroundColor: const Color(0xFFFF6B00),
+                                          backgroundColor: AppColors.primary500,
                                           content: Text(
                                             AppLocalizations.of(context)!.pass_profile_lang_ar_success,
                                             style: const TextStyle(
@@ -254,7 +307,7 @@ class _ProfileView extends StatelessWidget {
                                       Navigator.pop(bottomSheetContext);
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          backgroundColor: const Color(0xFFFF6B00),
+                                          backgroundColor: AppColors.primary500,
                                           content: Text(
                                             AppLocalizations.of(context)!.pass_profile_lang_en_success,
                                             style: const TextStyle(
@@ -364,6 +417,39 @@ class _ProfileView extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.danger.withValues(alpha: 0.12),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppSpacing.borderMD,
+                      ),
+                    ),
+                  ),
+                ),
+
+                AppSpacing.h16,
+
+                // Delete Account Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showDeleteAccountDialog(context, isDark),
+                    icon: const Icon(
+                      Icons.person_remove_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      'حذف الحساب',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.danger,
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(

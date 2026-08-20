@@ -42,7 +42,7 @@ Widget _buildGlassSheetWrapper({
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(32)),
               border: Border.all(
-                color: const Color(0xFFFF6B00).withValues(alpha: 0.25),
+                color: AppColors.primary500.withValues(alpha: 0.25),
                 width: 1.2,
               ),
             ),
@@ -157,7 +157,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               widget.onSave(_nameController.text, _phoneController.text);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B00),
+              backgroundColor: AppColors.primary500,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -218,7 +218,7 @@ class VehicleDetailsSheet extends StatelessWidget {
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFFF6B00)),
+              side: const BorderSide(color: AppColors.primary500),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
@@ -226,7 +226,7 @@ class VehicleDetailsSheet extends StatelessWidget {
               'إغلاق',
               style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
-                  color: Color(0xFFFF6B00),
+                  color: AppColors.primary500,
                   fontWeight: FontWeight.bold),
             ),
           ),
@@ -271,7 +271,7 @@ class OfficialDocumentsSheet extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B00),
+              backgroundColor: AppColors.primary500,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
@@ -405,7 +405,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B00),
+              backgroundColor: AppColors.primary500,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -460,14 +460,14 @@ class HelpCenterSheet extends StatelessWidget {
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFFF6B00)),
+              side: const BorderSide(color: AppColors.primary500),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
             child: Text(AppLocalizations.of(context)!.capt_understood,
                 style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
-                    color: Color(0xFFFF6B00),
+                    color: AppColors.primary500,
                     fontWeight: FontWeight.bold)),
           ),
           AppSpacing.h16,
@@ -583,7 +583,7 @@ class _FAQSheetState extends State<FAQSheet> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isExpanded
-                        ? const Color(0xFFFF6B00)
+                        ? AppColors.primary500
                         : (isDark
                             ? Colors.white.withValues(alpha: 0.05)
                             : AppColors.gray200),
@@ -603,7 +603,7 @@ class _FAQSheetState extends State<FAQSheet> {
                               fontSize: 12.5,
                               fontWeight: FontWeight.w900,
                               color: isExpanded
-                                  ? const Color(0xFFFF6B00)
+                                  ? AppColors.primary500
                                   : (isDark ? Colors.white : AppColors.gray900),
                             ),
                           ),
@@ -612,7 +612,7 @@ class _FAQSheetState extends State<FAQSheet> {
                           isExpanded
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
-                          color: const Color(0xFFFF6B00),
+                          color: AppColors.primary500,
                           size: 20,
                         ),
                       ],
@@ -638,14 +638,14 @@ class _FAQSheetState extends State<FAQSheet> {
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFFF6B00)),
+              side: const BorderSide(color: AppColors.primary500),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
             child: const Text('إغلاق',
                 style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
-                    color: Color(0xFFFF6B00),
+                    color: AppColors.primary500,
                     fontWeight: FontWeight.bold)),
           ),
           AppSpacing.h16,
@@ -692,7 +692,7 @@ class DirectSupportSheet extends StatelessWidget {
             isDark: isDark,
             label: AppLocalizations.of(context)!.capt_call_support,
             icon: Icons.phone_in_talk_rounded,
-            color: const Color(0xFFFF6B00),
+            color: AppColors.primary500,
             onTap: () async {
               Navigator.pop(context);
               final uri = Uri.parse('tel:770291452');
@@ -804,7 +804,7 @@ class TermsAndPrivacySheet extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B00),
+              backgroundColor: AppColors.primary500,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
@@ -892,14 +892,14 @@ class LanguageSelectorSheet extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFFF6B00).withValues(alpha: 0.12)
+              ? AppColors.primary500.withValues(alpha: 0.12)
               : (isDark
                   ? Colors.white.withValues(alpha: 0.03)
                   : AppColors.gray50),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : (isDark
                     ? Colors.white.withValues(alpha: 0.05)
                     : AppColors.gray200),
@@ -916,13 +916,13 @@ class LanguageSelectorSheet extends StatelessWidget {
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                 fontSize: 13,
                 color: isSelected
-                    ? const Color(0xFFFF6B00)
+                    ? AppColors.primary500
                     : (isDark ? Colors.white : AppColors.gray900),
               ),
             ),
             if (isSelected)
               const Icon(Icons.check_circle_rounded,
-                  color: Color(0xFFFF6B00), size: 20),
+                  color: AppColors.primary500, size: 20),
           ],
         ),
       ),
@@ -981,7 +981,7 @@ Widget _buildInputField({
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 12,
             color: AppColors.gray500),
-        icon: Icon(icon, color: const Color(0xFFFF6B00), size: 18),
+        icon: Icon(icon, color: AppColors.primary500, size: 18),
       ),
     ),
   );

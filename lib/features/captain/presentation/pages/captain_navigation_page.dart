@@ -29,6 +29,10 @@ class CaptainNavigationPage extends StatefulWidget {
   final double fare;
   final String distance;
   final String duration;
+  final double pickupLat;
+  final double pickupLng;
+  final double dropoffLat;
+  final double dropoffLng;
 
   const CaptainNavigationPage({
     super.key,
@@ -41,6 +45,10 @@ class CaptainNavigationPage extends StatefulWidget {
     required this.fare,
     required this.distance,
     required this.duration,
+    this.pickupLat = 15.3694,
+    this.pickupLng = 44.1910,
+    this.dropoffLat = 15.3521,
+    this.dropoffLng = 44.2014,
   });
 
   @override
@@ -54,9 +62,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
 
   final RoutingService _routingService = RoutingService();
   List<LatLng> _routePoints = [];
-  final LatLng _pickupCoords = const LatLng(15.3694, 44.1910);
-  final LatLng _dropoffCoords = const LatLng(15.3521, 44.2014);
-  final LatLng _captainCoords = const LatLng(15.3660, 44.1890);
 
   @override
   void initState() {
@@ -65,7 +70,10 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   }
 
   Future<void> _initLiveNavigationRoute() async {
-    final route = await _routingService.getRoute(_pickupCoords, _dropoffCoords);
+    final route = await _routingService.getRoute(
+      LatLng(widget.pickupLat, widget.pickupLng), 
+      LatLng(widget.dropoffLat, widget.dropoffLng),
+    );
     if (route != null && mounted) {
       setState(() {
         _routePoints = route.points;
@@ -262,12 +270,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.s12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                        color: AppColors.primary500.withValues(alpha: 0.15),
                         borderRadius: AppSpacing.borderMD,
                       ),
                       child: const Icon(
                         Icons.turn_left_rounded,
-                        color: Color(0xFFFF6B00),
+                        color: AppColors.primary500,
                         size: 26,
                       ),
                     ),
@@ -354,7 +362,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                           children: [
                             CircleAvatar(
                               radius: 24,
-                              backgroundColor: const Color(0xFFFF6B00)
+                              backgroundColor: AppColors.primary500
                                   .withValues(alpha: 0.2),
                               child: Text(
                                 widget.passengerName.isNotEmpty
@@ -363,7 +371,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                   fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
@@ -440,7 +448,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                 HapticFeedback.mediumImpact();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    backgroundColor: const Color(0xFFFF6B00),
+                                    backgroundColor: AppColors.primary500,
                                     content: Text(
                                       'جاري الاتصال بالراكب (${widget.passengerPhone})...',
                                       style: const TextStyle(
@@ -510,7 +518,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontWeight: FontWeight.w900,
                                   fontSize: 11.5,
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                 ),
                               ),
                             ),
@@ -533,7 +541,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                             child: Row(
                               children: [
                                 const Icon(Icons.payments_rounded,
-                                    color: Color(0xFFFF6B00), size: 18),
+                                    color: AppColors.primary500, size: 18),
                                 AppSpacing.w8,
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,7 +638,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
 
   Widget _buildStepActionButton(BuildContext context, bool isDark) {
     String label = '';
-    Color btnColor = const Color(0xFFFF6B00);
+    Color btnColor = AppColors.primary500;
     IconData icon = Icons.check_circle_rounded;
 
     if (_currentStep == 0) {
@@ -643,7 +651,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       icon = Icons.play_arrow_rounded;
     } else {
       label = 'إنهاء الرحلة وتأكيد الوصول ';
-      btnColor = const Color(0xFFFF6B00);
+      btnColor = AppColors.primary500;
       icon = Icons.verified_rounded;
     }
 
@@ -737,7 +745,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
           backgroundColor: AppColors.info,
           content: Text(
             'تم تسجيل وصولك لموقع الراكب، وبدء مؤقت الانتظار.',
-            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
           ),
         ),
       );
@@ -755,7 +763,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
           backgroundColor: AppColors.success,
           content: Text(
             'بدأت الرحلة الآن! جاري الملاحة نحو وجهة الراكب.',
-            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
           ),
         ),
       );
@@ -773,7 +781,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
           backgroundColor: AppColors.primary500,
           content: Text(
             'تم إنهاء الرحلة بنجاح وحساب المستحقات!',
-            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
           ),
         ),
       );
@@ -839,7 +847,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         ),
         child: Icon(
           icon,
-          color: const Color(0xFFFF6B00),
+          color: AppColors.primary500,
           size: 20,
         ),
       ),
@@ -847,21 +855,25 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   }
 
   Widget _buildNavigationMap(bool isDark) {
-    final destination = _currentStep < 2 ? _pickupCoords : _dropoffCoords;
+    final pickup = LatLng(widget.pickupLat, widget.pickupLng);
+    final dropoff = LatLng(widget.dropoffLat, widget.dropoffLng);
+    final captain = pickup;
+
+    final destination = _currentStep < 2 ? pickup : dropoff;
     final currentCaptainPos = _currentStep == 0
-        ? _captainCoords
+        ? captain
         : (_currentStep == 1
-            ? _pickupCoords
+            ? pickup
             : LatLng(
-                (_pickupCoords.latitude + _dropoffCoords.latitude) / 2,
-                (_pickupCoords.longitude + _dropoffCoords.longitude) / 2,
+                (pickup.latitude + dropoff.latitude) / 2,
+                (pickup.longitude + dropoff.longitude) / 2,
               ));
 
     return LaffahMapView(
       isDark: isDark,
       initialCenter: destination,
-      passengerLocation: _pickupCoords,
-      dropoffLocation: _dropoffCoords,
+      passengerLocation: pickup,
+      dropoffLocation: dropoff,
       captainLocation: currentCaptainPos,
       routePoints: _routePoints.isNotEmpty ? _routePoints : null,
       followCaptain: true,

@@ -128,7 +128,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
           title: Text(
             title,
             style: TextStyle(
-              fontFamily: 'Cairo',
+              fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.bold,
               color: isDark ? AppColors.white : AppColors.gray900,
               fontSize: 18,
@@ -154,14 +154,14 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                 onChanged: _onSearchChanged,
                 autofocus: true,
                 style: TextStyle(
-                  fontFamily: 'Cairo',
+                  fontFamily: 'IBM Plex Sans Arabic',
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
                 decoration: InputDecoration(
                   hintText: l10n.pass_loc_search_hint,
                   hintStyle: TextStyle(
                     color: isDark ? AppColors.gray500 : AppColors.gray400,
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                   ),
                   prefixIcon: const Icon(Icons.search_rounded,
                       color: AppColors.primary500),
@@ -210,7 +210,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                       Text(
                         l10n.pass_loc_map_pin,
                         style: TextStyle(
-                          fontFamily: 'Cairo',
+                          fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                           color: isDark ? AppColors.white : AppColors.gray900,
@@ -239,7 +239,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                   child: Text(
                     l10n.pass_loc_no_results,
                     style: TextStyle(
-                      fontFamily: 'Cairo',
+                      fontFamily: 'IBM Plex Sans Arabic',
                       color: isDark ? AppColors.gray500 : AppColors.gray400,
                     ),
                   ),
@@ -267,7 +267,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: 'Cairo',
+                          fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.bold,
                           color: isDark ? AppColors.white : AppColors.gray900,
                         ),
@@ -277,7 +277,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: 'Cairo',
+                          fontFamily: 'IBM Plex Sans Arabic',
                           fontSize: 12,
                           color: isDark ? AppColors.gray400 : AppColors.gray600,
                         ),

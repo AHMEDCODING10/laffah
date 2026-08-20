@@ -305,7 +305,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                           ),
                           child: CircleAvatar(
                             radius: 32,
-                            backgroundColor: const Color(0xFFFF6B00),
+                            backgroundColor: AppColors.primary500,
                             child: avatarChild,
                           ),
                         ),
@@ -429,7 +429,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.edit_note_rounded,
-                              color: Color(0xFFFF6B00), size: 28),
+                              color: AppColors.primary500, size: 28),
                           onPressed: () {
                             HapticFeedback.lightImpact();
 
@@ -602,7 +602,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                       context.read<LocaleBloc>().add(ChangeLocale(Locale(code)));
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          backgroundColor: const Color(0xFFFF6B00),
+                          backgroundColor: AppColors.primary500,
                           content: Text(
                             code == 'ar'
                                 ? 'تم تغيير لغة التطبيق إلى العربية بنجاح'
@@ -752,7 +752,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
+                        color: AppColors.primary500.withValues(alpha: 0.08),
                         shape: BoxShape.circle),
                     child: Center(
                       child: Text(
@@ -760,7 +760,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFFFF6B00),
+                            color: AppColors.primary500,
                             fontFamily: 'IBM Plex Sans Arabic'),
                       ),
                     ),
@@ -840,9 +840,9 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
+                  color: AppColors.primary500.withValues(alpha: 0.08),
                   shape: BoxShape.circle),
-              child: Icon(icon, color: const Color(0xFFFF6B00), size: 20),
+              child: Icon(icon, color: AppColors.primary500, size: 20),
             ),
             title: Text(
               title,
@@ -896,7 +896,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
             HapticFeedback.selectionClick();
             onChanged(val);
           },
-          activeTrackColor: const Color(0xFFFF6B00),
+          activeTrackColor: AppColors.primary500,
           title: Text(
             title,
             style: const TextStyle(
@@ -914,9 +914,9 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
           secondary: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
+                color: AppColors.primary500.withValues(alpha: 0.08),
                 shape: BoxShape.circle),
-            child: Icon(icon, color: const Color(0xFFFF6B00), size: 20),
+            child: Icon(icon, color: AppColors.primary500, size: 20),
           ),
         ),
         ),

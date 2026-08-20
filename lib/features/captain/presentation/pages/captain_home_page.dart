@@ -108,6 +108,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
   // Selected map marker details info card state
   String? _selectedPinTitle;
   String? _selectedPinSnippet;
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -254,12 +255,22 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                     duration: state.duration,
                     timeTag: state.timeTag,
                     onAccept: () {
+                      if (_isSubmitting) return;
+                      setState(() => _isSubmitting = true);
                       HapticFeedback.heavyImpact();
                       context.read<CaptainBloc>().add(const AcceptTrip());
+                      Future.delayed(const Duration(seconds: 3), () {
+                        if (mounted) setState(() => _isSubmitting = false);
+                      });
                     },
                     onReject: () {
+                      if (_isSubmitting) return;
+                      setState(() => _isSubmitting = true);
                       HapticFeedback.mediumImpact();
                       context.read<CaptainBloc>().add(const RejectTrip());
+                      Future.delayed(const Duration(seconds: 1), () {
+                        if (mounted) setState(() => _isSubmitting = false);
+                      });
                     },
                   );
                 }
@@ -429,6 +440,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                   children: [
                     Text(
                       AppLocalizations.of(context)!.capt_you_are_offline,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -439,6 +451,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                     const SizedBox(height: 4),
                     Text(
                       AppLocalizations.of(context)!.capt_tap_button_above_to_receive,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: AppColors.gray500,
@@ -489,13 +502,16 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            AppLocalizations.of(context)!.capt_searching_orders,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'IBM Plex Sans Arabic',
-              color: isDark ? Colors.white : AppColors.gray900,
+          Expanded(
+            child: Text(
+              AppLocalizations.of(context)!.capt_searching_orders,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'IBM Plex Sans Arabic',
+                color: isDark ? Colors.white : AppColors.gray900,
+              ),
             ),
           ),
         ],
@@ -512,7 +528,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
             : Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+          color: AppColors.primary500.withValues(alpha: 0.4),
         ),
         boxShadow: const [
           BoxShadow(
@@ -527,12 +543,12 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+              color: AppColors.primary500.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.location_on_rounded,
-              color: Color(0xFFFF6B00),
+              color: AppColors.primary500,
               size: 24,
             ),
           ),
