@@ -387,7 +387,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                                   Row(
                                     children: [
                                       const Icon(Icons.calendar_today_rounded,
-                                          color: Color(0xFFFF6B00), size: 13),
+                                          color: AppColors.primary500, size: 13),
                                       const SizedBox(width: 6),
                                       Text(
                                         AppLocalizations.of(context)!
@@ -528,7 +528,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                                   .capt_wallet_view_all,
                               style: const TextStyle(
                                 fontSize: 12.5,
-                                color: Color(0xFFFF6B00),
+                                color: AppColors.primary500,
                                 fontWeight: FontWeight.w900,
                                 fontFamily: 'IBM Plex Sans Arabic',
                               ),
@@ -585,7 +585,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                 decoration: BoxDecoration(
                   color: isNegative
                       ? AppColors.danger.withValues(alpha: 0.12)
-                      : const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                      : AppColors.primary500.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -594,7 +594,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                       : Icons.motorcycle_rounded,
                   size: 20,
                   color:
-                      isNegative ? AppColors.danger : const Color(0xFFFF6B00),
+                      isNegative ? AppColors.danger : AppColors.primary500,
                 ),
               ),
               AppSpacing.w12,
@@ -632,7 +632,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                   fontSize: 14.5,
                   fontWeight: FontWeight.w900,
                   color:
-                      isNegative ? AppColors.danger : const Color(0xFFFF6B00),
+                      isNegative ? AppColors.danger : AppColors.primary500,
                   fontFamily: 'IBM Plex Sans Arabic',
                 ),
               ),

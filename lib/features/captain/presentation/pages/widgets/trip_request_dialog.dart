@@ -118,7 +118,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                       : Colors.white.withValues(alpha: 0.94),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
-                    color: const Color(0xFFFF6B00).withValues(alpha: 0.35),
+                    color: AppColors.primary500.withValues(alpha: 0.35),
                     width: 1.5,
                   ),
                 ),
@@ -135,13 +135,13 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                             Container(
                               padding: const EdgeInsets.all(AppSpacing.s8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF6B00)
+                                color: AppColors.primary500
                                     .withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.two_wheeler_rounded,
-                                color: Color(0xFFFF6B00),
+                                color: AppColors.primary500,
                                 size: 22,
                               ),
                             ),
@@ -150,11 +150,11 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 5),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF6B00)
+                                color: AppColors.primary500
                                     .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFFF6B00)
+                                  color: AppColors.primary500
                                       .withValues(alpha: 0.3),
                                 ),
                               ),
@@ -163,7 +163,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                   fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
@@ -187,7 +187,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   _secondsRemaining <= 5
                                       ? AppColors.danger
-                                      : const Color(0xFFFF6B00),
+                                      : AppColors.primary500,
                                 ),
                               ),
                             ),
@@ -217,7 +217,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                         CircleAvatar(
                           radius: 24,
                           backgroundColor:
-                              const Color(0xFFFF6B00).withValues(alpha: 0.2),
+                              AppColors.primary500.withValues(alpha: 0.2),
                           child: Text(
                             widget.passengerName.isNotEmpty
                                 ? widget.passengerName[0]
@@ -225,7 +225,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFFFF6B00),
+                              color: AppColors.primary500,
                               fontFamily: 'IBM Plex Sans Arabic',
                             ),
                           ),
@@ -270,10 +270,10 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color:
-                                const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                                AppColors.primary500.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: const Color(0xFFFF6B00)
+                              color: AppColors.primary500
                                   .withValues(alpha: 0.25),
                             ),
                           ),
@@ -287,7 +287,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'IBM Plex Sans Arabic',
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                 ),
                               ),
                               Text(
@@ -295,7 +295,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                   fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
@@ -501,10 +501,10 @@ class _TripRequestDialogState extends State<TripRequestDialog>
                                 widget.onAccept();
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6B00),
+                                backgroundColor: AppColors.primary500,
                                 foregroundColor: Colors.white,
                                 elevation: 4,
-                                shadowColor: const Color(0xFFFF6B00)
+                                shadowColor: AppColors.primary500
                                     .withValues(alpha: 0.4),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -552,7 +552,7 @@ class _TripRequestDialogState extends State<TripRequestDialog>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFFFF6B00)),
+          Icon(icon, size: 16, color: AppColors.primary500),
           const SizedBox(width: 6),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

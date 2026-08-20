@@ -6,6 +6,7 @@ import '../../domain/usecases/register_captain_usecase.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import '../../../../core/network/dio_client.dart';
 
 /// AuthBloc — Clean Architecture auth state management.
 /// Handles Login (phone + password), Register Passenger, Register Captain, Logout.
@@ -14,6 +15,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final RegisterPassengerUseCase registerPassengerUseCase;
   final RegisterCaptainUseCase registerCaptainUseCase;
   final AuthRepository authRepository;
+  late final StreamSubscription<String> _networkAuthSub;
 
   AuthBloc({
     required this.loginUseCase,
@@ -25,9 +27,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterPassengerRequested>(_onRegisterPassengerRequested);
     on<RegisterCaptainRequested>(_onRegisterCaptainRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<DeleteAccountRequested>(_onDeleteAccountRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<VerifyResetCodeRequested>(_onVerifyResetCodeRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+
+    _networkAuthSub = NetworkEventBus.authEvents.listen((event) {
+      if (event == 'UNAUTHENTICATED') {
+        if (state is! AuthInitial) {
+          add(const LogoutRequested());
+        }
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _networkAuthSub.cancel();
+    return super.close();
   }
 
   // ─────────────────────────────────────────────
@@ -100,6 +117,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     await authRepository.logout();
     emit(const AuthInitial());
+  }
+
+  // ─────────────────────────────────────────────
+  // DELETE ACCOUNT
+  // ─────────────────────────────────────────────
+  FutureOr<void> _onDeleteAccountRequested(
+    DeleteAccountRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await authRepository.deleteAccount();
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (_) => emit(const AuthInitial()),
+    );
   }
 
   // ─────────────────────────────────────────────

@@ -177,6 +177,8 @@ class AppRouter {
     return false;
   }
 
+  static bool isAppInitialized = false;
+
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: LaffahRoutes.splash,
@@ -194,6 +196,10 @@ class AppRouter {
       final isPublic = _isPublicRoute(path);
 
       if (!isPublic && (token == null || token.isEmpty)) {
+        if (!isAppInitialized) {
+          // Send to splash to resolve token from storage first
+          return LaffahRoutes.splash;
+        }
         return LaffahRoutes.authLanding;
       }
 
@@ -342,9 +348,9 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return PassengerRideInvoicePage(
-            fare: (extra['fare'] as num?)?.toDouble() ?? 1200.0,
-            tripId: extra['tripId'] as String? ?? 'LF-83210',
-            captainName: extra['captainName'] as String? ?? 'محمد علي',
+            fare: (extra['fare'] as num?)?.toDouble() ?? 0.0,
+            tripId: extra['tripId'] as String? ?? 'N/A',
+            captainName: extra['captainName'] as String? ?? 'غير محدد',
             discount: (extra['discount'] as num?)?.toDouble() ?? 0.0,
           );
         },

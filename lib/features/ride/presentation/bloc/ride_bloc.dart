@@ -10,6 +10,7 @@ import '../../domain/usecases/rate_trip_use_case.dart';
 import '../../../parcel/domain/usecases/submit_parcel_order_usecase.dart';
 import '../../../../core/services/echo_service.dart';
 import '../../../../core/services/captain_trip_alert_sound_service.dart';
+import '../../data/datasources/ride_remote_data_source.dart';
 
 export 'ride_event.dart';
 export 'ride_state.dart';
@@ -97,6 +98,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   final GetTripHistoryUseCase getTripHistoryUseCase;
   final RateTripUseCase? rateTripUseCase;
   final CaptainTripAlertSoundService alertSoundService;
+  final RideRemoteDataSource remoteDataSource;
   final EchoService _echoService = EchoService();
 
   String? _currentActiveRideId;
@@ -110,6 +112,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     required this.getTripHistoryUseCase,
     this.rateTripUseCase,
     required this.alertSoundService,
+    required this.remoteDataSource,
   }) : super(const RideInitial()) {
     on<CalculateSingleTripFare>(_onCalculateSingleTripFare);
     on<ConfirmUnifiedBooking>(_onConfirmUnifiedBooking);
@@ -121,63 +124,50 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     on<LoadTripHistoryEvent>(_onLoadTripHistory);
     on<TripStatusUpdatedFromWebSocket>(_onTripStatusUpdatedFromWebSocket);
     on<ActiveRidePolledStatusUpdated>(_onActiveRidePolledStatusUpdated);
+    on<ResetRideState>(_onResetRideState);
   }
 
-  static const List<RideOption> rideTiers = [
-    RideOption(
-      id: 'laffah',
-      titleAr: 'لَفّة',
-      titleEn: 'Laffah',
-      basePrice: 2450.0,
-      etaMinutes: 18,
-      iconKey: 'car',
-      descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
-    ),
-  ];
-
-  static Map<String, dynamic> calculateDynamicMetrics(
-      String pickup, String dropoff) {
-    final pClean = pickup.trim().toLowerCase();
-    final dClean = dropoff.trim().toLowerCase();
-
-    if (pClean.isEmpty ||
-        pClean.contains('حدة') ||
-        pClean.contains('hada') ||
-        dClean.contains('صنعاء') ||
-        dClean.contains('sana') ||
-        dClean.isEmpty) {
-      return {
-        'distance': 4.2,
-        'duration': 14,
-        'fare': 1250.0,
-      };
-    } else if (pClean.contains('تحرير') ||
-        pClean.contains('tahrir') ||
-        dClean.contains('جامعة') ||
-        dClean.contains('university')) {
-      return {
-        'distance': 6.8,
-        'duration': 19,
-        'fare': 1850.0,
-      };
-    } else {
-      final calculatedDist = 3.5 + (pickup.length % 5) * 1.5;
-      final calculatedDur = (calculatedDist * 3.0).round();
-      final calculatedFare = (500 + (calculatedDist * 200)).roundToDouble();
-
-      return {
-        'distance': calculatedDist,
-        'duration': calculatedDur,
-        'fare': calculatedFare,
-      };
+  void _onResetRideState(ResetRideState event, Emitter<RideState> emit) {
+    _stopSmartPolling();
+    if (_currentActiveRideId != null) {
+      _echoService.stopListeningToTripStatus(_currentActiveRideId!);
+      _currentActiveRideId = null;
     }
+    emit(const RideInitial());
   }
 
+  // Backend-Driven Fare Estimation
+  // All fare values come from the backend's /trips/estimate endpoint
+  // which reads from the admin settings table (cached 15 min).
+  // Zero client-side arithmetic — no hardcoded base fares or per-km rates.
   FutureOr<void> _onCalculateSingleTripFare(
     CalculateSingleTripFare event,
     Emitter<RideState> emit,
-  ) {
-    final metrics = calculateDynamicMetrics(event.pickup, event.dropoff);
+  ) async {
+    emit(const RideLoading());
+
+    if ((event.pickupLatitude ?? 0) == 0 || (event.pickupLongitude ?? 0) == 0 || (event.dropoffLatitude ?? 0) == 0 || (event.dropoffLongitude ?? 0) == 0) {
+      emit(const RideError('يرجى تحديد موقع الاستلام والتسليم على الخريطة بدقة'));
+      return;
+    }
+
+    final result = await remoteDataSource.estimateFare(
+      pickupLatitude: event.pickupLatitude!,
+      pickupLongitude: event.pickupLongitude!,
+      dropoffLatitude: event.dropoffLatitude!,
+      dropoffLongitude: event.dropoffLongitude!,
+      stops: event.stops,
+    );
+
+    if (result.isEmpty) {
+      emit(const RideError('تعذر حساب تكلفة الرحلة. يرجى التحقق من الإنترنت والمحاولة مجدداً'));
+      return;
+    }
+
+    // Backend returns integer YER price (already min-floored & ceil-rounded)
+    final int estimatedPrice = (result['estimated_price'] as num?)?.toInt() ?? 0;
+    final double distanceKm = (result['distance_km'] as num?)?.toDouble() ?? 0.0;
+    final int durationMin = ((distanceKm / 25.0) * 60).ceil().clamp(3, 120);
 
     emit(RideOptionsLoaded(
       pickup: event.pickup,
@@ -187,15 +177,15 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           id: 'laffah',
           titleAr: 'لَفّة',
           titleEn: 'Laffah',
-          basePrice: metrics['fare'],
-          etaMinutes: metrics['duration'],
+          basePrice: estimatedPrice.toDouble(),
+          etaMinutes: durationMin,
           iconKey: 'car',
           descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
         )
       ],
-      distance: metrics['distance'],
-      duration: metrics['duration'],
-      fare: metrics['fare'],
+      distance: distanceKm,
+      duration: durationMin,
+      fare: estimatedPrice.toDouble(),
     ));
   }
 
@@ -270,9 +260,24 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ConfirmBooking event,
     Emitter<RideState> emit,
   ) async {
-    final metrics = calculateDynamicMetrics(event.pickup, event.dropoff);
-    final double calculatedPrice = metrics['fare'];
-    final int duration = metrics['duration'];
+    double calculatedPrice = 1200.0;
+    int duration = 15;
+
+    if ((event.pickupLatitude ?? 0) != 0 && (event.dropoffLatitude ?? 0) != 0) {
+      try {
+        final estimate = await remoteDataSource.estimateFare(
+          pickupLatitude: event.pickupLatitude!,
+          pickupLongitude: event.pickupLongitude ?? 0,
+          dropoffLatitude: event.dropoffLatitude!,
+          dropoffLongitude: event.dropoffLongitude ?? 0,
+          stops: null,
+        );
+        if (estimate['estimated_price'] != null) {
+          calculatedPrice = (estimate['estimated_price'] as num).toDouble();
+          duration = ((estimate['distance_km'] as num? ?? 5.0) / 25.0 * 60).ceil().clamp(3, 120);
+        }
+      } catch (_) {}
+    }
 
     final selectedOption = RideOption(
       id: 'laffah',

@@ -37,3 +37,7 @@ class RequestPayoutEvent extends WalletEvent {
   @override
   List<Object?> get props => [amount, accountNumber];
 }
+
+class ResetWalletEvent extends WalletEvent {
+  const ResetWalletEvent();
+}

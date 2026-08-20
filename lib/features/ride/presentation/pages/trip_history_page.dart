@@ -184,23 +184,30 @@ class __TripHistoryViewState extends State<_TripHistoryView>
       return _buildEmptyState(_emptyMessage(type, l10n));
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
-      itemCount: trips.length,
-      itemBuilder: (context, index) {
-        final item = _mapApiTripToCard(trips[index], l10n);
-        switch (type) {
-          case 'active':
-            return ActiveTripCard(
-              item: item,
-              isDark: isDark,
-              onCancel: () {
-                context
-                    .read<RideBloc>()
-                    .add(CancelRideRequested(tripId: item['id']));
-              },
-            );
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<RideBloc>().add(const LoadTripHistoryEvent());
+        await Future.delayed(const Duration(milliseconds: 800));
+      },
+      color: AppColors.primary500,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
+        itemCount: trips.length,
+        itemBuilder: (context, index) {
+          final item = _mapApiTripToCard(trips[index], l10n);
+          switch (type) {
+            case 'active':
+              return ActiveTripCard(
+                item: item,
+                isDark: isDark,
+                onCancel: () {
+                  context
+                      .read<RideBloc>()
+                      .add(CancelRideRequested(tripId: item['id']));
+                },
+              );
           case 'scheduled':
             return ScheduledTripCard(
               item: item,
@@ -219,8 +226,9 @@ class __TripHistoryViewState extends State<_TripHistoryView>
             return const SizedBox.shrink();
         }
       },
-    );
-  }
+    ),
+  );
+}
 
   /// Maps API response fields to the format expected by TripHistoryCards
   Map<String, dynamic> _mapApiTripToCard(Map<String, dynamic> trip, AppLocalizations l10n) {

@@ -98,6 +98,11 @@ class LogoutRequested extends AuthEvent {
   const LogoutRequested();
 }
 
+/// Event triggered when user taps Delete Account button.
+class DeleteAccountRequested extends AuthEvent {
+  const DeleteAccountRequested();
+}
+
 class ForgotPasswordRequested extends AuthEvent {
   final String phone;
   const ForgotPasswordRequested({required this.phone});

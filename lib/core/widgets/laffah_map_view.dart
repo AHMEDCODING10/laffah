@@ -284,10 +284,10 @@ class _LaffahMapViewState extends State<LaffahMapView>
                     height: 70 + (pulseVal * 12),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFFF6B00)
+                      color: AppColors.primary500
                           .withValues(alpha: 0.08 + pulseVal * 0.06),
                       border: Border.all(
-                        color: const Color(0xFFFF6B00)
+                        color: AppColors.primary500
                             .withValues(alpha: 0.2 + pulseVal * 0.15),
                         width: 1.5,
                       ),
@@ -299,7 +299,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
                     height: 48 + (pulseVal * 6),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFFF6B00)
+                      color: AppColors.primary500
                           .withValues(alpha: 0.15 + pulseVal * 0.1),
                     ),
                   ),
@@ -310,12 +310,12 @@ class _LaffahMapViewState extends State<LaffahMapView>
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00),
+                        color: AppColors.primary500,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFF6B00)
+                            color: AppColors.primary500
                                 .withValues(alpha: 0.45 + pulseVal * 0.25),
                             blurRadius: 16 + pulseVal * 8,
                             spreadRadius: 2 + pulseVal * 3,
@@ -495,7 +495,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
       // Main orange route line
       Polyline(
         points: points,
-        color: const Color(0xFFFF6B00),
+        color: AppColors.primary500,
         strokeWidth: 5.5,
         strokeCap: StrokeCap.round,
         strokeJoin: StrokeJoin.round,
@@ -555,9 +555,9 @@ class _LaffahMapViewState extends State<LaffahMapView>
             const Scalebar(
               alignment: Alignment.bottomLeft,
               padding: EdgeInsets.fromLTRB(12, 0, 0, 14),
-              lineColor: Color(0xFFFF6B00),
+              lineColor: AppColors.primary500,
               textStyle: TextStyle(
-                color: Color(0xFFFF6B00),
+                color: AppColors.primary500,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'IBM Plex Sans Arabic',
@@ -617,7 +617,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
                   isDark: widget.isDark,
                   color: _userInteracted
                       ? (widget.isDark ? Colors.white54 : AppColors.gray400)
-                      : const Color(0xFFFF6B00),
+                      : AppColors.primary500,
                   onPressed: _reCenter,
                 ),
               ),
@@ -644,12 +644,12 @@ class _LaffahMapViewState extends State<LaffahMapView>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 18, vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B00),
+                      color: AppColors.primary500,
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
                           color:
-                              const Color(0xFFFF6B00).withValues(alpha: 0.45),
+                              AppColors.primary500.withValues(alpha: 0.45),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),

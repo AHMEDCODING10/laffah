@@ -122,7 +122,7 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                         iconBackgroundColor: isDark
                             ? AppColors.backgroundDark
                             : const Color(0xFFFFE8B5), // refined yellow
-                        iconColor: const Color(0xFFFF6B00), // orange
+                        iconColor: AppColors.primary500, // orange
                         onPressed: () {
                           context.push('/auth/register/passenger');
                         },
@@ -147,7 +147,7 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                         iconBackgroundColor: isDark
                             ? AppColors.backgroundDark
                             : const Color(0xFFFFDBCA),
-                        iconColor: const Color(0xFFFF6B00),
+                        iconColor: AppColors.primary500,
                         onPressed: () {
                           context.push('/auth/register/captain');
                         },
@@ -182,7 +182,7 @@ class _AuthLandingPageState extends State<AuthLandingPage>
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFFFF6B00),
+                                color: AppColors.primary500,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
@@ -321,13 +321,13 @@ class _AnimatedRoleCardState extends State<AnimatedRoleCard> {
                     gradient: LinearGradient(
                       colors: _isHovered
                           ? [const Color(0xFFFF8E3C), const Color(0xFFFFA564)]
-                          : [const Color(0xFFFF6B00), const Color(0xFFFF8E3C)],
+                          : [AppColors.primary500, const Color(0xFFFF8E3C)],
                       begin: Alignment.centerRight,
                       end: Alignment.centerLeft,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF6B00)
+                        color: AppColors.primary500
                             .withValues(alpha: _isHovered ? 0.5 : 0.3),
                         blurRadius: _isHovered ? 16 : 12,
                         offset: Offset(0, _isHovered ? 6 : 4),
@@ -345,14 +345,6 @@ class _AnimatedRoleCardState extends State<AnimatedRoleCard> {
                           fontSize: 16,
                           color: AppColors.white,
                         ),
-                      ),
-                      AppSpacing.w12,
-                      AnimatedPadding(
-                        padding: EdgeInsets.only(right: _isHovered ? 8.0 : 0.0),
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOut,
-                        child: const Icon(Icons.arrow_back_rounded,
-                            size: 20, color: AppColors.white),
                       ),
                     ],
                   ),

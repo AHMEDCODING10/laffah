@@ -175,6 +175,7 @@ Future<void> init() async {
       getTripHistoryUseCase: sl(),
       rateTripUseCase: sl(),
       alertSoundService: sl(),
+      remoteDataSource: sl<RideRemoteDataSource>(), // ✅ Required for backend-driven fare estimation
     ),
   );
 

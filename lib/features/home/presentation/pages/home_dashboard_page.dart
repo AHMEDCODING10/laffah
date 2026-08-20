@@ -59,10 +59,26 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
   Future<void> _fetchCurrentLocation() async {
     try {
-      final perm = await Geolocator.checkPermission();
+      var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
-        await Geolocator.requestPermission();
+        perm = await Geolocator.requestPermission();
       }
+      
+      if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
+        if (mounted) {
+          _showLocationPermissionDialog();
+        }
+        return;
+      }
+      
+      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!isServiceEnabled) {
+        if (mounted) {
+          _showLocationPermissionDialog(isServiceDisabled: true);
+        }
+        return;
+      }
+
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
       );
@@ -74,6 +90,46 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     } catch (_) {
       // Fallback remains Sanaa Center
     }
+  }
+
+  void _showLocationPermissionDialog({bool isServiceDisabled = false}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.location_disabled_rounded, color: Colors.red),
+            const SizedBox(width: 8),
+            Text(
+              isServiceDisabled ? 'تفعيل الـ GPS' : 'صلاحية الموقع',
+              style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          isServiceDisabled
+              ? 'يرجى تفعيل خدمة تحديد الموقع (GPS) في هاتفك لتتمكن من استخدام التطبيق.'
+              : 'للحصول على أفضل تجربة وتحديد موقعك بدقة، يرجى السماح للتطبيق بالوصول إلى موقعك من إعدادات الهاتف.',
+          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (isServiceDisabled) {
+                Geolocator.openLocationSettings();
+              } else {
+                Geolocator.openAppSettings();
+              }
+            },
+            child: const Text('فتح الإعدادات', style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadRecentDestinations() async {
@@ -636,7 +692,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     bool isArrived = false,
     bool isInTransit = false,
   }) {
-    Color themeColor = const Color(0xFFFF6B00);
+    Color themeColor = AppColors.primary500;
     String title = 'الكابتن في الطريق إليك';
     String iconTag = '🛵';
     IconData iconData = Icons.two_wheeler_rounded;

@@ -79,7 +79,7 @@ class CaptainPerformancePage extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: const Color(0xFFFF6B00), width: 3),
+                                color: AppColors.primary500, width: 3),
                           ),
                           child: Center(
                             child: Text(
@@ -292,7 +292,7 @@ class CaptainPerformancePage extends StatelessWidget {
                     index < rating
                         ? Icons.star_rounded
                         : Icons.star_border_rounded,
-                    color: const Color(0xFFFF6B00),
+                    color: AppColors.primary500,
                     size: 16,
                   );
                 }),

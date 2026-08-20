@@ -312,7 +312,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFFFF6B00),
+                                      color: AppColors.primary500,
                                       decoration: TextDecoration.underline,
                                     ),
                                   ),
@@ -357,7 +357,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         boxShadow: [
           if (_isNameFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -393,7 +393,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
               : AppColors.gray50,
           suffixIcon: Icon(
             Icons.person_rounded,
-            color: _isNameFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            color: _isNameFocused ? AppColors.primary500 : AppColors.gray600,
             size: 20,
           ),
           enabledBorder: OutlineInputBorder(
@@ -407,7 +407,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           focusedBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: const BorderSide(
-              color: Color(0xFFFF6B00),
+              color: AppColors.primary500,
               width: 1.8,
             ),
           ),
@@ -441,7 +441,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         boxShadow: [
           if (_isPhoneFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -483,7 +483,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
             color:
-                _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+                _isPhoneFocused ? AppColors.primary500 : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: Row(
@@ -496,7 +496,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
-                  color: Color(0xFFFF6B00),
+                  color: AppColors.primary500,
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -521,7 +521,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           focusedBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: const BorderSide(
-              color: Color(0xFFFF6B00),
+              color: AppColors.primary500,
               width: 1.8,
             ),
           ),
@@ -558,7 +558,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         boxShadow: [
           if (_isPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -594,7 +594,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           suffixIcon: Icon(
             Icons.lock_open_rounded,
             color: _isPasswordFocused
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
@@ -620,7 +620,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           focusedBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: const BorderSide(
-              color: Color(0xFFFF6B00),
+              color: AppColors.primary500,
               width: 1.8,
             ),
           ),
@@ -654,7 +654,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         boxShadow: [
           if (_isConfirmPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -692,7 +692,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           suffixIcon: Icon(
             Icons.lock_rounded,
             color: _isConfirmPasswordFocused
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
@@ -718,7 +718,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           focusedBorder: OutlineInputBorder(
             borderRadius: AppSpacing.borderSM,
             borderSide: const BorderSide(
-              color: Color(0xFFFF6B00),
+              color: AppColors.primary500,
               width: 1.8,
             ),
           ),
@@ -781,7 +781,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
         focusedBorder: OutlineInputBorder(
           borderRadius: AppSpacing.borderSM,
           borderSide: const BorderSide(
-            color: Color(0xFFFF6B00),
+            color: AppColors.primary500,
             width: 1.8,
           ),
         ),
@@ -798,7 +798,7 @@ class _RegisterPassengerPageState extends State<RegisterPassengerPage>
           width: 24,
           child: Checkbox(
             value: _agreeToTerms,
-            activeColor: const Color(0xFFFF6B00),
+            activeColor: AppColors.primary500,
             checkColor: AppColors.white,
             side: BorderSide(
               color: isDark

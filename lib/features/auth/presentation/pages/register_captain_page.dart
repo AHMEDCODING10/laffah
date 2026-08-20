@@ -348,9 +348,9 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                   decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFFFF6B00),
+                                  decorationColor: AppColors.primary500,
                                 ),
                               ),
                             ),
@@ -378,7 +378,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
+        color: AppColors.primary500.withValues(alpha: 0.08),
         borderRadius: AppSpacing.radiusSM,
       ),
       child: Text(
@@ -387,7 +387,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 13.5,
           fontWeight: FontWeight.w900,
-          color: Color(0xFFFF6B00),
+          color: AppColors.primary500,
         ),
       ),
     );
@@ -440,7 +440,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
       ),
       focusedBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
-        borderSide: BorderSide(color: Color(0xFFFF6B00), width: 1.8),
+        borderSide: BorderSide(color: AppColors.primary500, width: 1.8),
       ),
       errorBorder: const OutlineInputBorder(
         borderRadius: AppSpacing.radiusSM,
@@ -461,7 +461,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         boxShadow: [
           if (_isNameFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -483,7 +483,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           hintText: AppLocalizations.of(context)!.auth_ex_name_4,
           suffixIcon: Icon(
             Icons.person_rounded,
-            color: _isNameFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+            color: _isNameFocused ? AppColors.primary500 : AppColors.gray600,
             size: 20,
           ),
         ),
@@ -508,7 +508,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         boxShadow: [
           if (_isPhoneFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -541,7 +541,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           suffixIcon: Icon(
             Icons.phone_iphone_rounded,
             color:
-                _isPhoneFocused ? const Color(0xFFFF6B00) : AppColors.gray600,
+                _isPhoneFocused ? AppColors.primary500 : AppColors.gray600,
             size: 20,
           ),
           prefixIcon: Row(
@@ -554,7 +554,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
-                  color: Color(0xFFFF6B00),
+                  color: AppColors.primary500,
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -593,7 +593,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         boxShadow: [
           if (_isPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -620,7 +620,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           suffixIcon: Icon(
             Icons.lock_open_rounded,
             color: _isPasswordFocused
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
@@ -657,7 +657,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         boxShadow: [
           if (_isConfirmPasswordFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -685,7 +685,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           suffixIcon: Icon(
             Icons.lock_rounded,
             color: _isConfirmPasswordFocused
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
@@ -724,7 +724,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         boxShadow: [
           if (_isPlateFocused)
             BoxShadow(
-              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+              color: AppColors.primary500.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 2,
             ),
@@ -768,7 +768,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
       children: [
         Checkbox(
           value: _agreeToTerms,
-          activeColor: const Color(0xFFFF6B00),
+          activeColor: AppColors.primary500,
           shape: const RoundedRectangleBorder(
             borderRadius: AppSpacing.radiusXS,
           ),
@@ -800,7 +800,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
                     text: AppLocalizations.of(context)!.auth_terms_policy,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFFF6B00),
+                      color: AppColors.primary500,
                       decoration: TextDecoration.underline,
                     ),
                   ),

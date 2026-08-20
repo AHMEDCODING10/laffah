@@ -80,6 +80,7 @@ class _SplashPageState extends State<SplashPage>
     if (!mounted) return;
 
     if (token == null || token.isEmpty) {
+      AppRouter.isAppInitialized = true;
       context.go(LaffahRoutes.authLanding);
       return;
     }
@@ -99,18 +100,21 @@ class _SplashPageState extends State<SplashPage>
         final isCapt = roles != null &&
             roles.any((r) => r is Map && r['name'] == 'captain');
 
+        AppRouter.isAppInitialized = true;
         context
             .go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
       } else {
         // Token invalid or expired
         await _storage.delete(key: 'auth_token');
         DioClient.setToken(null);
+        AppRouter.isAppInitialized = true;
         if (mounted) context.go(LaffahRoutes.authLanding);
       }
     } catch (_) {
       // If network fails, go to auth
       await _storage.delete(key: 'auth_token');
       DioClient.setToken(null);
+      AppRouter.isAppInitialized = true;
       if (mounted) {
         context.go(LaffahRoutes.authLanding);
       }
@@ -138,7 +142,7 @@ class _SplashPageState extends State<SplashPage>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF6B00)
+                        color: AppColors.primary500
                             .withValues(alpha: isDark ? 0.09 : 0.05),
                         blurRadius: _glowAnimation.value * 2,
                         spreadRadius: _glowAnimation.value,
@@ -191,7 +195,7 @@ class _SplashPageState extends State<SplashPage>
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(2),
                           child: LinearProgressIndicator(
-                            color: const Color(0xFFFF6B00),
+                            color: AppColors.primary500,
                             backgroundColor: isDark
                                 ? AppColors.white.withValues(alpha: 0.08)
                                 : AppColors.gray200,

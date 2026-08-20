@@ -363,7 +363,7 @@ class _ParcelSendPageState extends State<ParcelSendPage> {
                                 ),
                               ),
                               Icon(
-                                Icons.chevron_left_rounded,
+                                Icons.chevron_right_rounded,
                                 color: isDark
                                     ? AppColors.gray400
                                     : AppColors.gray500,
@@ -439,7 +439,7 @@ class _ParcelSendPageState extends State<ParcelSendPage> {
                                 ),
                               ),
                               Icon(
-                                Icons.chevron_left_rounded,
+                                Icons.chevron_right_rounded,
                                 color: isDark
                                     ? AppColors.gray400
                                     : AppColors.gray500,

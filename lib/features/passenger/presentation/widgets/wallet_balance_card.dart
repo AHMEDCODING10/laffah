@@ -1,5 +1,6 @@
 import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 /// WalletBalanceCard — Displays balance in YER and action buttons for local top-up.
@@ -20,14 +21,14 @@ class WalletBalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)],
+          colors: [Color(0xFFFF8C00), AppColors.primary500],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: AppSpacing.radiusLG,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+            color: AppColors.primary500.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -81,7 +82,7 @@ class WalletBalanceCard extends StatelessWidget {
                   onPressed: onTopUpPressed,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFFFF6B00),
+                    foregroundColor: AppColors.primary500,
                     elevation: 0,
                     shape: const RoundedRectangleBorder(
                       borderRadius: AppSpacing.radiusMD,

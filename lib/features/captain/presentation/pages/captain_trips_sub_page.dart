@@ -158,7 +158,7 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                             ),
                             border: InputBorder.none,
                             prefixIcon: const Icon(Icons.search_rounded,
-                                color: Color(0xFFFF6B00)),
+                                color: AppColors.primary500),
                             suffixIcon: _searchQuery.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear_rounded,
@@ -259,7 +259,7 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                   }
 
                   return RefreshIndicator(
-                    color: const Color(0xFFFF6B00),
+                    color: AppColors.primary500,
                     onRefresh: () async {
                       _tripsBloc.add(FetchCaptainTrips(
                           isRefresh: true,
@@ -279,7 +279,7 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                             padding: EdgeInsets.all(16.0),
                             child: Center(
                                 child: CircularProgressIndicator(
-                                    color: Color(0xFFFF6B00))),
+                                    color: AppColors.primary500)),
                           );
                         }
                         final trip = filtered[index];
@@ -323,7 +323,7 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   // ── Micro-animated Filter Chip ──
   Widget _buildFilterChip(String label, bool isSelected, bool isDark,
       {Color? color}) {
-    final chipColor = color ?? const Color(0xFFFF6B00);
+    final chipColor = color ?? AppColors.primary500;
 
     return _ScaleButton(
       onTap: () {
@@ -415,11 +415,11 @@ class _AnimatedTripCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                        color: AppColors.primary500.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.receipt_long_rounded,
-                          size: 14, color: Color(0xFFFF6B00)),
+                          size: 14, color: AppColors.primary500),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -547,7 +547,7 @@ class _AnimatedTripCard extends StatelessWidget {
                       trip['price'],
                       style: const TextStyle(
                         fontSize: 15,
-                        color: Color(0xFFFF6B00),
+                        color: AppColors.primary500,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'IBM Plex Sans Arabic',
                       ),
@@ -622,11 +622,11 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState>
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                      color: AppColors.primary500.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF6B00).withValues(
+                          color: AppColors.primary500.withValues(
                               alpha: 0.15 * (_scaleAnimation.value - 0.95)),
                           blurRadius: 20,
                           spreadRadius: 5,
@@ -634,7 +634,7 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState>
                       ],
                     ),
                     child: const Icon(Icons.search_off_rounded,
-                        size: 54, color: Color(0xFFFF6B00)),
+                        size: 54, color: AppColors.primary500),
                   ),
                 );
               },
@@ -667,11 +667,11 @@ class _AnimatedEmptyStateState extends State<_AnimatedEmptyState>
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                      colors: [Color(0xFFFF8C00), Color(0xFFFF6B00)]),
+                      colors: [Color(0xFFFF8C00), AppColors.primary500]),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                      color: AppColors.primary500.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     )

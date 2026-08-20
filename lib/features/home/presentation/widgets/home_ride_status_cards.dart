@@ -31,15 +31,19 @@ class CaptainFoundCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'تم قبول طلب لَفّتك بنجاح!',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                    color: isDark ? AppColors.white : AppColors.gray900,
+                Expanded(
+                  child: Text(
+                    'تم قبول طلب لَفّتك بنجاح!',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: isDark ? AppColors.white : AppColors.gray900,
+                    ),
                   ),
                 ),
+                AppSpacing.w8,
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -259,12 +263,12 @@ class RideInProgressCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                          color: AppColors.primary500.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.navigation_rounded,
-                          color: Color(0xFFFF6B00),
+                          color: AppColors.primary500,
                           size: 18,
                         ),
                       ),
@@ -318,7 +322,7 @@ class RideInProgressCard extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.location_on_rounded,
-                      color: Color(0xFFFF6B00),
+                      color: AppColors.primary500,
                       size: 16,
                     ),
                     const SizedBox(width: 6),
@@ -520,7 +524,7 @@ class _RideCompletedCardState extends State<RideCompletedCard> {
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFFFF6B00),
+                        color: AppColors.primary500,
                       ),
                     ),
                   ],
@@ -598,7 +602,7 @@ class _RideCompletedCardState extends State<RideCompletedCard> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                      color: AppColors.primary500.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -634,7 +638,7 @@ class _RideCompletedCardState extends State<RideCompletedCard> {
                           );
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B00),
+                    backgroundColor: AppColors.primary500,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

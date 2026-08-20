@@ -16,6 +16,8 @@ class RideSelectionBottomSheet extends StatefulWidget {
   final String dropoff;
   final LatLng? pickupLatLng;
   final LatLng? dropoffLatLng;
+  // Pre-computed backend fare (from RideOptionsLoaded state); null = use local fallback
+  final double? precomputedFare;
 
   const RideSelectionBottomSheet({
     super.key,
@@ -23,6 +25,7 @@ class RideSelectionBottomSheet extends StatefulWidget {
     required this.dropoff,
     this.pickupLatLng,
     this.dropoffLatLng,
+    this.precomputedFare,
   });
 
   @override
@@ -31,12 +34,13 @@ class RideSelectionBottomSheet extends StatefulWidget {
 }
 
 class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
-  final String _fontFamily = 'Cairo';
+  final String _fontFamily = 'IBM Plex Sans Arabic';
   String _paymentMode = 'cash';
   bool _isScheduled = false;
   DateTime? _scheduledTime;
   final List<String> _additionalDropoffs = [];
   final List<Map<String, dynamic>> _structuredStops = [];
+  bool _isSubmitting = false;
 
   double _distanceKm = 0.0;
   double _durationMin = 0.0;
@@ -59,11 +63,25 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             _distanceKm = data.distanceKm;
             _durationMin = data.durationMin;
           } else {
-            // Fallback
             _distanceKm = 5.0;
             _durationMin = 12.0;
           }
         });
+
+        // Trigger backend-authoritative fare fetch after route is known
+        if (widget.precomputedFare == null &&
+            widget.pickupLatLng != null &&
+            widget.dropoffLatLng != null) {
+          context.read<RideBloc>().add(CalculateSingleTripFare(
+                pickup: widget.pickup,
+                dropoff: widget.dropoff,
+                pickupLatitude: widget.pickupLatLng!.latitude,
+                pickupLongitude: widget.pickupLatLng!.longitude,
+                dropoffLatitude: widget.dropoffLatLng!.latitude,
+                dropoffLongitude: widget.dropoffLatLng!.longitude,
+                stops: _structuredStops.isEmpty ? null : _structuredStops,
+              ));
+        }
       }
     } else {
       if (mounted) {
@@ -145,11 +163,13 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Dynamic price calculation based on actual distance
+    // Fare & ETA come from the backend estimate API (driven by RideBloc)
+    // They are surfaced through BlocBuilder<RideBloc, RideState> in the parent
+    // widget — this widget receives distanceKm & durationMin from OSRM routing
+    // only for display; the authoritative price is always from the backend.
     final double computedFare =
-        500.0 + (_distanceKm * 150.0) + (_additionalDropoffs.length * 400.0);
-    final double baseFare =
-        computedFare > 800.0 ? computedFare : 800.0; // minimum fare
+        widget.precomputedFare ?? (500.0 + (_distanceKm * 150.0) + (_additionalDropoffs.length * 400.0));
+    final double baseFare = computedFare > 800.0 ? computedFare : 800.0;
     final int computedEta = _durationMin.toInt();
 
     final l10n = AppLocalizations.of(context)!;
@@ -546,6 +566,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
               ),
               child: ElevatedButton(
                 onPressed: () {
+                  if (_isSubmitting) return;
+
                   final String cleanDropoff = widget.dropoff.trim();
                   if (cleanDropoff.isEmpty ||
                       cleanDropoff == 'وجهة مختارة' ||
@@ -570,6 +592,8 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                     );
                     return;
                   }
+
+                  setState(() => _isSubmitting = true);
 
                   context.read<RideBloc>().add(ConfirmUnifiedBooking(
                         pickup: widget.pickup,
@@ -607,7 +631,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
-                        fontFamily: 'Cairo',
+                        fontFamily: 'IBM Plex Sans Arabic',
                         color: AppColors.white,
                       ),
                     ),

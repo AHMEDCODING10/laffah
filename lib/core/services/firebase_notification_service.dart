@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../network/dio_client.dart';
 import '../network/api_endpoints.dart';
+import '../router/app_router.dart';
 import '../di/injection_container.dart' as di;
+import '../storage/secure_storage_service.dart';
 import 'captain_trip_alert_sound_service.dart';
 
 /// Top-level background message handler for FCM
@@ -182,20 +185,56 @@ class FirebaseNotificationService {
             presentSound: true,
           ),
         ),
-        payload: message.data.toString(),
+        payload: jsonEncode(message.data), // ✅ JSON-encoded for parseable deep-link on tap
       );
     }
   }
 
-  /// Handle user clicking on a notification banner
+  /// Handle user clicking on a notification banner — deep-links to the correct screen
   void _handleNotificationClick(RemoteMessage message) {
     debugPrint("🚀 [FCM Action] User clicked notification: ${message.data}");
-    final type = message.data['type'];
-    final tripId = message.data['trip_id'];
+    final type = message.data['type'] as String?;
+    final tripId = message.data['trip_id'] as String?;
 
-    if (tripId != null) {
-      debugPrint("🚕 [FCM Navigation] Trip related notification for trip ID: $tripId (Type: $type)");
-    }
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      try {
+        final router = AppRouter.router;
+        
+        switch (type) {
+          // Passenger: captain found, en-route, or arrived
+          case 'trip_accepted':
+          case 'trip_arrived':
+          case 'trip_in_transit':
+            router.go(LaffahRoutes.passengerRideTracking);
+            break;
+          // Passenger: trip completed → go to invoice
+          case 'trip_completed':
+            router.go(LaffahRoutes.passengerRideInvoice);
+            break;
+          // Captain: new ride request received
+          case 'trip_new':
+            router.go(LaffahRoutes.captainHome);
+            break;
+          // General: open notifications list
+          default:
+            debugPrint("📬 [FCM] Unhandled type '$type' for trip $tripId — checking role");
+            try {
+              final storage = di.sl<SecureStorageService>();
+              final role = await storage.getRole();
+              if (role == 'captain') {
+                router.go(LaffahRoutes.captainHome);
+              } else {
+                router.go(LaffahRoutes.passengerNotifications);
+              }
+            } catch(e) {
+               // Fallback
+               router.go(LaffahRoutes.passengerNotifications);
+            }
+        }
+      } catch (e) {
+        debugPrint("⚠️ [FCM Navigation] Failed to navigate: $e");
+      }
+    });
   }
 
   /// Get current FCM Token

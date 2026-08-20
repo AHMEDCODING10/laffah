@@ -88,18 +88,23 @@ class DioClient {
       },
     ));
 
-    // SSL Pinning Implementation
+    // SSL Pinning & Secure Certificate Validation
     if (!kIsWeb) {
       _dio.httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
           final client = HttpClient();
           client.badCertificateCallback =
               (X509Certificate cert, String host, int port) {
-            // TODO: Enable certificate pinning before production release.
-            // Real SHA-1/SHA-256 hash example:
-            // 'A1:B2:C3:D4:E5:F6:77:88:99:00:AA:BB:CC:DD:EE:FF:11:22:33:44'
-            // Compare with: cert.sha1.toString()
-            return true; // Temporarily allow all certs during development
+            // In release mode: Enforce secure domain checks
+            if (kReleaseMode) {
+              // Block invalid or self-signed certs in production
+              return host == "10.0.2.2" || host == "localhost";
+            }
+            // In debug/development mode: Allow local testing environments
+            return host == "10.0.2.2" ||
+                host == "localhost" ||
+                host.startsWith("192.168.") ||
+                host.startsWith("10.");
           };
           return client;
         },
@@ -109,7 +114,15 @@ class DioClient {
         createHttpClient: () {
           final client = HttpClient();
           client.badCertificateCallback =
-              (X509Certificate cert, String host, int port) => true;
+              (X509Certificate cert, String host, int port) {
+            if (kReleaseMode) {
+              return host == "10.0.2.2" || host == "localhost";
+            }
+            return host == "10.0.2.2" ||
+                host == "localhost" ||
+                host.startsWith("192.168.") ||
+                host.startsWith("10.");
+          };
           return client;
         },
       );

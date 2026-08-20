@@ -164,7 +164,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                           boxShadow: [
                             if (_isPhoneFocused)
                               BoxShadow(
-                                color: const Color(0xFFFF6B00)
+                                color: AppColors.primary500
                                     .withValues(alpha: 0.12),
                                 blurRadius: 10,
                                 spreadRadius: 2,
@@ -205,7 +205,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                             suffixIcon: Icon(
                               Icons.phone_iphone_rounded,
                               color: _isPhoneFocused
-                                  ? const Color(0xFFFF6B00)
+                                  ? AppColors.primary500
                                   : AppColors.gray600,
                               size: 20,
                             ),
@@ -219,7 +219,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                     fontFamily: 'monospace',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 15,
-                                    color: Color(0xFFFF6B00),
+                                    color: AppColors.primary500,
                                   ),
                                 ),
                                 const SizedBox(width: AppSpacing.s8),
@@ -245,7 +245,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               borderRadius:
                                   BorderRadius.all(Radius.circular(8)),
                               borderSide: BorderSide(
-                                color: Color(0xFFFF6B00),
+                                color: AppColors.primary500,
                                 width: 1.8,
                               ),
                             ),

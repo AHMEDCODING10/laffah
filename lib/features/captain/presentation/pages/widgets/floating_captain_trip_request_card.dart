@@ -114,7 +114,7 @@ class _FloatingCaptainTripRequestCardState
                     border: Border.all(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.1)
-                          : const Color(0xFFFF6B00).withValues(alpha: 0.25),
+                          : AppColors.primary500.withValues(alpha: 0.25),
                       width: 1.5,
                     ),
                   ),
@@ -130,16 +130,16 @@ class _FloatingCaptainTripRequestCardState
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+                              color: AppColors.primary500.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                                color: AppColors.primary500.withValues(alpha: 0.3),
                                 width: 1.5,
                               ),
                             ),
                             child: const Icon(
                               Icons.two_wheeler_rounded,
-                              color: Color(0xFFFF6B00),
+                              color: AppColors.primary500,
                               size: 26,
                             ),
                           ),
@@ -159,7 +159,7 @@ class _FloatingCaptainTripRequestCardState
                                         fontFamily: 'IBM Plex Sans Arabic',
                                         fontSize: 16,
                                         fontWeight: FontWeight.w900,
-                                        color: Color(0xFFFF6B00),
+                                        color: AppColors.primary500,
                                       ),
                                     ),
                                     // Time Badge
@@ -265,7 +265,7 @@ class _FloatingCaptainTripRequestCardState
                                 height: 10,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: const Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                   border: Border.all(color: Colors.white, width: 1.5),
                                 ),
                               ),
@@ -325,7 +325,7 @@ class _FloatingCaptainTripRequestCardState
                               : const Color(0xFFFFF7F0),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                            color: AppColors.primary500.withValues(alpha: 0.15),
                           ),
                         ),
                         child: Row(
@@ -378,7 +378,7 @@ class _FloatingCaptainTripRequestCardState
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFFFF6B00),
+                                    color: AppColors.primary500,
                                   ),
                                 ),
                                 const SizedBox(width: 3),
@@ -388,7 +388,7 @@ class _FloatingCaptainTripRequestCardState
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFFFF6B00),
+                                    color: AppColors.primary500,
                                   ),
                                 ),
                               ],
@@ -443,7 +443,7 @@ class _FloatingCaptainTripRequestCardState
                                 widget.onAccept();
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6B00),
+                                backgroundColor: AppColors.primary500,
                                 foregroundColor: Colors.white,
                                 elevation: 4,
                                 padding:

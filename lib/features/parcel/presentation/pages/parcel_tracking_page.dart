@@ -205,7 +205,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                                 child: Text(
                                   '${_currentParcel.price.toStringAsFixed(0)} ر.ي',
                                   style: const TextStyle(
-                                    fontFamily: 'Cairo',
+                                    fontFamily: 'IBM Plex Sans Arabic',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 13,
                                     color: AppColors.primary500,
@@ -264,7 +264,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                               Text(
                                 'جاري تحديث التتبع المباشر...',
                                 style: TextStyle(
-                                  fontFamily: 'Cairo',
+                                  fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 11,
                                   color: Colors.white,
                                 ),
@@ -342,7 +342,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
           Text(
             text,
             style: TextStyle(
-              fontFamily: 'Cairo',
+              fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
               color: isDark ? AppColors.white : AppColors.gray900,
               fontSize: 13,
@@ -377,7 +377,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 12,
                     color: isDark ? AppColors.gray300 : AppColors.gray800,
                   ),
@@ -398,7 +398,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: isDark ? AppColors.white : AppColors.gray900,
@@ -499,7 +499,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
               Text(
                 title,
                 style: TextStyle(
-                  fontFamily: 'Cairo',
+                  fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 12.5,
                   fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
                   color: isCompleted
@@ -510,7 +510,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
               Text(
                 time,
                 style: TextStyle(
-                  fontFamily: 'Cairo',
+                  fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 11,
                   color: isCompleted
                       ? (isDark ? AppColors.gray400 : AppColors.gray600)
@@ -550,7 +550,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
               child: Text(
                 'جاري إرسال إشعار للكباتن القريبين لقبول المشوار...',
                 style: TextStyle(
-                  fontFamily: 'Cairo',
+                  fontFamily: 'IBM Plex Sans Arabic',
                   fontSize: 12,
                   color: AppColors.gray500,
                 ),
@@ -589,7 +589,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                 Text(
                   parcel.captainName!,
                   style: TextStyle(
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                     color: isDark ? AppColors.white : AppColors.gray900,
@@ -598,7 +598,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                 Text(
                   'كابتن لَفَّة • دراجة نارية',
                   style: TextStyle(
-                    fontFamily: 'Cairo',
+                    fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 11,
                     color: isDark ? AppColors.gray400 : AppColors.gray600,
                   ),

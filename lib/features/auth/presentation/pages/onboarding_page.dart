@@ -113,11 +113,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   width: 160,
                                   height: 160,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6B00)
+                                    color: AppColors.primary500
                                         .withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: const Color(0xFFFF6B00)
+                                      color: AppColors.primary500
                                           .withValues(alpha: 0.3),
                                       width: 2,
                                     ),
@@ -126,7 +126,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                     _getIconForType(
                                         _onboardingData[index]['icon']!),
                                     size: 80,
-                                    color: const Color(0xFFFF6B00),
+                                    color: AppColors.primary500,
                                   ),
                                 ),
                               );
@@ -181,7 +181,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           width: _currentPage == index ? 24 : 8,
                           decoration: BoxDecoration(
                             color: _currentPage == index
-                                ? const Color(0xFFFF6B00)
+                                ? AppColors.primary500
                                 : (isDark
                                     ? AppColors.gray700
                                     : AppColors.gray300),
@@ -207,7 +207,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF6B00),
+                          backgroundColor: AppColors.primary500,
                           foregroundColor: AppColors.white,
                           shape: const RoundedRectangleBorder(
                             borderRadius: AppSpacing.radiusMD,

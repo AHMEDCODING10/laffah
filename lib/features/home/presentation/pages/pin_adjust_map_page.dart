@@ -253,13 +253,17 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
                       ),
                     ),
                   ),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: isDark ? AppColors.white : AppColors.gray900,
+                  Expanded(
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? AppColors.white : AppColors.gray900,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 40),

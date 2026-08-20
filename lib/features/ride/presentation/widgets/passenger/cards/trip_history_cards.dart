@@ -170,7 +170,7 @@ class ActiveTripCard extends StatelessWidget {
     IconData icon,
     Color iconColor,
     String label,
-    String address,
+    String? address,
   ) {
     return Row(
       children: [
@@ -189,7 +189,7 @@ class ActiveTripCard extends StatelessWidget {
                 ),
               ),
               Text(
-                address,
+                address ?? 'غير محدد',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -256,7 +256,7 @@ class ScheduledTripCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        item['time'] ?? item['scheduledAt'] ?? 'غداً، 08:00 ص',
+                        _formatDate(item['time'] ?? item['scheduledAt']),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -333,7 +333,7 @@ class ScheduledTripCard extends StatelessWidget {
     IconData icon,
     Color iconColor,
     String label,
-    String address,
+    String? address,
   ) {
     return Row(
       children: [
@@ -352,7 +352,7 @@ class ScheduledTripCard extends StatelessWidget {
                 ),
               ),
               Text(
-                address,
+                address ?? 'غير محدد',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -536,7 +536,7 @@ class PastTripCard extends StatelessWidget {
     IconData icon,
     Color iconColor,
     String label,
-    String address,
+    String? address,
   ) {
     return Row(
       children: [
@@ -555,7 +555,7 @@ class PastTripCard extends StatelessWidget {
                 ),
               ),
               Text(
-                address,
+                address ?? 'غير محدد',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -703,7 +703,7 @@ class CancelledTripCard extends StatelessWidget {
     IconData icon,
     Color iconColor,
     String label,
-    String address,
+    String? address,
   ) {
     return Row(
       children: [
@@ -722,7 +722,7 @@ class CancelledTripCard extends StatelessWidget {
                 ),
               ),
               Text(
-                address,
+                address ?? 'غير محدد',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -736,5 +736,18 @@ class CancelledTripCard extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+String _formatDate(dynamic rawDate) {
+  if (rawDate == null) return 'غداً، 08:00 ص';
+  final dateStr = rawDate.toString();
+  try {
+    final dt = DateTime.parse(dateStr).toLocal();
+    final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final amPm = dt.hour >= 12 ? 'م' : 'ص';
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} $hour12:${dt.minute.toString().padLeft(2, '0')} $amPm';
+  } catch (_) {
+    return dateStr;
   }
 }

@@ -249,7 +249,7 @@ class ParcelLocationsCard extends StatelessWidget {
             icon: Icons.location_on_rounded,
             iconColor: AppColors.primary500,
             suffixIcon: const Icon(
-              Icons.chevron_left_rounded,
+              Icons.chevron_right_rounded,
               color: AppColors.gray400,
             ),
             isDark: isDark,
@@ -271,7 +271,7 @@ class ParcelLocationsCard extends StatelessWidget {
             icon: Icons.near_me_rounded,
             iconColor: AppColors.primary500,
             suffixIcon: const Icon(
-              Icons.chevron_left_rounded,
+              Icons.chevron_right_rounded,
               color: AppColors.gray400,
             ),
             isDark: isDark,

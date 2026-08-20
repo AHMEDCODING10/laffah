@@ -39,7 +39,7 @@ class CaptainCommunicationSheet extends StatelessWidget {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: const Color(0xFFFF6B00),
+        backgroundColor: AppColors.primary500,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Row(
@@ -133,14 +133,14 @@ class CaptainCommunicationSheet extends StatelessWidget {
                         CircleAvatar(
                           radius: 22,
                           backgroundColor:
-                              const Color(0xFFFF6B00).withValues(alpha: 0.18),
+                              AppColors.primary500.withValues(alpha: 0.18),
                           child: Text(
                             passengerName.isNotEmpty ? passengerName[0] : 'ر',
                             style: const TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: Color(0xFFFF6B00),
+                              color: AppColors.primary500,
                             ),
                           ),
                         ),
@@ -224,12 +224,12 @@ class CaptainCommunicationSheet extends StatelessWidget {
                             isDark: isDark,
                             label: AppLocalizations.of(context)!.capt_sms_chat,
                             icon: Icons.textsms_rounded,
-                            color: const Color(0xFFFF6B00),
+                            color: AppColors.primary500,
                             onTap: () {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  backgroundColor: const Color(0xFFFF6B00),
+                                  backgroundColor: AppColors.primary500,
                                   content: Text(
                                     'جاري فتح تطبيق الرسائل النصية لمراسلة $passengerName...',
                                     style: const TextStyle(
@@ -283,7 +283,7 @@ class CaptainCommunicationSheet extends StatelessWidget {
                               const Icon(
                                 Icons.flash_on_rounded,
                                 size: 16,
-                                color: Color(0xFFFF6B00),
+                                color: AppColors.primary500,
                               ),
                               AppSpacing.w10,
                               Expanded(

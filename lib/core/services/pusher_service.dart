@@ -6,13 +6,17 @@ class PusherService {
 
   bool get isConnected => _echoService.isConnected;
 
-  /// Connect and listen to incoming trip requests
+  /// Connect and listen to incoming trip requests and status dismissals
   void connect({
     required String captainId,
     required Function(Map<String, dynamic> data) onTripRequest,
+    Function(Map<String, dynamic> data)? onTripNoLongerAvailable,
   }) {
     _echoService.init().then((_) {
-      _echoService.listenToAvailableTrips(onTripRequest);
+      _echoService.listenToAvailableTrips(
+        onNewTrip: onTripRequest,
+        onTripNoLongerAvailable: onTripNoLongerAvailable,
+      );
     });
   }
 

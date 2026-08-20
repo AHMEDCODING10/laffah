@@ -71,36 +71,57 @@ class EchoService {
     }
   }
 
-  /// 1. Listen for new available trip requests (For Online Captains)
-  void listenToAvailableTrips(Function(Map<String, dynamic> data) onNewTrip) {
+  void listenToAvailableTrips({
+    required Function(Map<String, dynamic> data) onNewTrip,
+    Function(Map<String, dynamic> data)? onTripNoLongerAvailable,
+  }) {
     try {
       if (_echo == null) {
         init().then((_) {
           if (_echo != null) {
-            _subscribeAvailableTrips(onNewTrip);
+            _subscribeAvailableTrips(
+              onNewTrip: onNewTrip,
+              onTripNoLongerAvailable: onTripNoLongerAvailable,
+            );
           }
         }).catchError((e) {
           debugPrint("⚠️ [EchoService] listenToAvailableTrips init error: $e");
         });
         return;
       }
-      _subscribeAvailableTrips(onNewTrip);
+      _subscribeAvailableTrips(
+        onNewTrip: onNewTrip,
+        onTripNoLongerAvailable: onTripNoLongerAvailable,
+      );
     } catch (e) {
       debugPrint("⚠️ [EchoService] listenToAvailableTrips error: $e");
     }
   }
 
-  void _subscribeAvailableTrips(Function(Map<String, dynamic> data) onNewTrip) {
+  void _subscribeAvailableTrips({
+    required Function(Map<String, dynamic> data) onNewTrip,
+    Function(Map<String, dynamic> data)? onTripNoLongerAvailable,
+  }) {
     final echo = _echo;
     if (echo == null) return;
     try {
-      echo.channel('trips.available').listen('NewTripRequested', (dynamic event) {
-        debugPrint("🔔 [EchoService] NewTripRequested event received: $event");
-        if (event != null) {
-          final Map<String, dynamic> parsed = _parseEventData(event);
-          onNewTrip(parsed);
-        }
-      });
+      echo.channel('trips.available')
+        .listen('NewTripRequested', (dynamic event) {
+          debugPrint("🔔 [EchoService] NewTripRequested event received: $event");
+          if (event != null) {
+            final Map<String, dynamic> parsed = _parseEventData(event);
+            onNewTrip(parsed);
+          }
+        })
+        .listen('TripStatusUpdated', (dynamic event) {
+          debugPrint("🔄 [EchoService] TripStatusUpdated on trips.available: $event");
+          if (event != null) {
+            final Map<String, dynamic> parsed = _parseEventData(event);
+            if (onTripNoLongerAvailable != null) {
+              onTripNoLongerAvailable(parsed);
+            }
+          }
+        });
       debugPrint("📡 [EchoService] Subscribed to channel: trips.available");
     } catch (e) {
       debugPrint("❌ [EchoService] Failed to listen to trips.available: $e");

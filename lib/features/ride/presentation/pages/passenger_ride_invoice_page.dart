@@ -12,9 +12,9 @@ class PassengerRideInvoicePage extends StatelessWidget {
 
   const PassengerRideInvoicePage({
     super.key,
-    this.fare = 1200.0,
-    this.tripId = 'LF-83210',
-    this.captainName = 'محمد علي',
+    required this.fare,
+    required this.tripId,
+    required this.captainName,
     this.discount = 0.0,
   });
 

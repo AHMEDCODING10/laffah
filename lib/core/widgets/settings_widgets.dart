@@ -71,10 +71,10 @@ class SettingItemWidget extends StatelessWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
+                color: AppColors.primary500.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: const Color(0xFFFF6B00), size: 20),
+              child: Icon(icon, color: AppColors.primary500, size: 20),
             ),
             title: Text(
               title,
@@ -143,7 +143,7 @@ class SettingSwitchWidget extends StatelessWidget {
               HapticFeedback.selectionClick();
               onChanged(val);
             },
-            activeTrackColor: const Color(0xFFFF6B00),
+            activeTrackColor: AppColors.primary500,
             title: Text(
               title,
               style: const TextStyle(
@@ -163,10 +163,10 @@ class SettingSwitchWidget extends StatelessWidget {
             secondary: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
+                color: AppColors.primary500.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: const Color(0xFFFF6B00), size: 20),
+              child: Icon(icon, color: AppColors.primary500, size: 20),
             ),
           ),
         ),

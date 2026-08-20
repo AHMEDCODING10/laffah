@@ -189,14 +189,14 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                           CircleAvatar(
                             radius: 24,
                             backgroundColor:
-                                const Color(0xFFFF6B00).withValues(alpha: 0.18),
+                                AppColors.primary500.withValues(alpha: 0.18),
                             child: Text(
                               passengerName.isNotEmpty ? passengerName[0] : 'ع',
                               style: const TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontWeight: FontWeight.w900,
                                 fontSize: 20,
-                                color: Color(0xFFFF6B00),
+                                color: AppColors.primary500,
                               ),
                             ),
                           ),
@@ -417,11 +417,11 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B00).withValues(alpha: 0.08),
+                        color: AppColors.primary500.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color:
-                              const Color(0xFFFF6B00).withValues(alpha: 0.25),
+                              AppColors.primary500.withValues(alpha: 0.25),
                         ),
                       ),
                       child: Column(
@@ -437,14 +437,14 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFFFF6B00),
+                                  color: AppColors.primary500,
                                 ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B00)
+                                  color: AppColors.primary500
                                       .withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -454,7 +454,7 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFFFF6B00),
+                                    color: AppColors.primary500,
                                   ),
                                 ),
                               ),
@@ -542,7 +542,7 @@ class CaptainTripDetailsSheet extends StatelessWidget {
                                 Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6B00),
+                                backgroundColor: AppColors.primary500,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -591,7 +591,7 @@ class CaptainTripDetailsSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 16, color: const Color(0xFFFF6B00)),
+          Icon(icon, size: 16, color: AppColors.primary500),
           const SizedBox(height: 4),
           Text(
             label,
@@ -642,7 +642,7 @@ class CaptainTripDetailsSheet extends StatelessWidget {
             fontSize: isHighlight ? 16 : 13,
             fontWeight: FontWeight.w900,
             color: isHighlight
-                ? const Color(0xFFFF6B00)
+                ? AppColors.primary500
                 : (isDark ? Colors.white : AppColors.gray900),
           ),
         ),

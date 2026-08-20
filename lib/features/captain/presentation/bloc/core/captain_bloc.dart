@@ -6,6 +6,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:laffah/core/services/pusher_service.dart';
 import 'package:laffah/core/services/routing_service.dart';
 import 'package:laffah/core/services/captain_trip_alert_sound_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../core/network/network_info.dart';
+import '../../../../../core/di/injection_container.dart' as di;
 import '../../../domain/usecases/toggle_captain_status_usecase.dart';
 import '../../../domain/usecases/respond_to_trip_usecase.dart';
 import '../../../domain/usecases/update_trip_status_usecase.dart';
@@ -29,6 +32,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   final CaptainTripAlertSoundService alertSoundService;
 
   StreamSubscription<Position>? _positionSubscription;
+  StreamSubscription<bool>? _networkSubscription;
   Timer? _smartPollingTimer;
   String _currentCaptainId = '';
   final Set<String> _dismissedTripIds = {};
@@ -48,6 +52,15 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     required this.pusherService,
     required this.alertSoundService,
   }) : super(const CaptainOffline()) {
+    on<TripNoLongerAvailableReceived>(_onTripNoLongerAvailableReceived);
+    on<ResetCaptainState>(_onResetCaptainState);
+
+    _networkSubscription = di.sl<NetworkInfo>().isConnectedStream.listen((isConnected) {
+      if (isConnected) {
+        _syncPendingTripStatus();
+      }
+    });
+
     on<ToggleOnlineStatus>(_onToggleOnlineStatus);
     on<UpdateCaptainLocation>(_onUpdateCaptainLocation);
     on<AcceptTrip>(_onAcceptTrip);
@@ -56,6 +69,25 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     on<FetchBonusData>(_onFetchBonusData);
     on<RequestPayout>(_onRequestPayout);
     on<IncomingTripRequestReceived>(_onIncomingTripRequestReceived);
+  }
+
+    Future<void> _syncPendingTripStatus() async {
+    final prefs = di.sl<SharedPreferences>();
+    final pendingTripId = prefs.getString('pending_trip_id');
+    final pendingStatus = prefs.getString('pending_trip_status');
+
+    if (pendingTripId != null && pendingStatus != null) {
+      debugPrint('?? [OfflineCatch] Re-syncing trip $pendingTripId to status $pendingStatus');
+      final result = await updateTripStatusUseCase(tripId: pendingTripId, status: pendingStatus);
+      result.fold(
+        (failure) => debugPrint('? [OfflineCatch] Sync failed again: $failure.message'),
+        (_) {
+          debugPrint('? [OfflineCatch] Sync successful!');
+          prefs.remove('pending_trip_id');
+          prefs.remove('pending_trip_status');
+        }
+      );
+    }
   }
 
   Future<void> _onToggleOnlineStatus(
@@ -99,6 +131,12 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           pusherService.connect(
             captainId: cid,
             onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
+            onTripNoLongerAvailable: (data) {
+              final tripId = (data['trip_id'] ?? data['id'] ?? '').toString();
+              if (tripId.isNotEmpty) {
+                add(TripNoLongerAvailableReceived(tripId));
+              }
+            },
           );
         } else {
           emit(const CaptainOffline());
@@ -108,6 +146,25 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         }
       },
     );
+  }
+
+  void _onTripNoLongerAvailableReceived(
+      TripNoLongerAvailableReceived event, EmitFn emit) {
+    _dismissedTripIds.add(event.tripId);
+    if (state is IncomingTripRequest) {
+      final currentTrip = state as IncomingTripRequest;
+      if (currentTrip.tripId == event.tripId) {
+        emit(const CaptainOnline());
+      }
+    }
+  }
+
+  void _onResetCaptainState(ResetCaptainState event, EmitFn emit) {
+    _stopSmartPolling();
+    _stopLocationTracking();
+    pusherService.disconnect();
+    _dismissedTripIds.clear();
+    emit(const CaptainOffline());
   }
 
   /// Periodic Smart Polling for nearby pending trip requests while online
@@ -240,6 +297,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   Future<void> close() {
     _stopSmartPolling();
     _positionSubscription?.cancel();
+    _networkSubscription?.cancel();
     pusherService.disconnect();
     return super.close();
   }
@@ -402,3 +460,4 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     );
   }
 }
+

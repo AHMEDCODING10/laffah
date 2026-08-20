@@ -5,6 +5,10 @@ abstract class CaptainEvent {
   const CaptainEvent();
 }
 
+class ResetCaptainState extends CaptainEvent {
+  const ResetCaptainState();
+}
+
 /// Event to toggle online/offline status
 class ToggleOnlineStatus extends CaptainEvent {
   final bool isOnline;
@@ -95,3 +99,11 @@ class IncomingTripRequestReceived extends CaptainEvent {
 
   const IncomingTripRequestReceived(this.data);
 }
+
+/// Event triggered when a trip is taken by another captain, cancelled, or expired
+class TripNoLongerAvailableReceived extends CaptainEvent {
+  final String tripId;
+
+  const TripNoLongerAvailableReceived(this.tripId);
+}
+
