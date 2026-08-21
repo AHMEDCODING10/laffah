@@ -1,0 +1,71 @@
+name: Laffah CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-audit-and-build:
+    name: Backend CI & Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, gd, zip
+          coverage: none
+
+      - name: 📦 Install Composer Dependencies
+        working-directory: ./backend
+        run: composer install --no-progress --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: 🔑 Generate Application Key
+        working-directory: ./backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: 🧪 Run Backend Tests & Syntax Checks
+        working-directory: ./backend
+        run: php artisan route:list
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔨 Test Docker Build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: laffah-backend:test
+
+  flutter-app-analysis:
+    name: Flutter Code Quality & Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐦 Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.x'
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install Flutter Dependencies
+        working-directory: ./laffah
+        run: flutter pub get
+
+      - name: 🔍 Run Static Code Analysis
+        working-directory: ./laffah
+        run: flutter analyze

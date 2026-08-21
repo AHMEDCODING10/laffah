@@ -1,0 +1,84 @@
+# Render Infrastructure as Code Blueprint for Laffah Platform
+version: "1"
+
+services:
+  # Laffah Backend & Admin API Service
+  - type: web
+    name: laffah-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_NAME
+        value: "لَفَّة"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: Asia/Aden
+      - key: APP_LOCALE
+        value: ar
+      - key: APP_FALLBACK_LOCALE
+        value: ar
+      - key: APP_KEY
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: laffah-database
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: laffah-database
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: laffah-database
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: laffah-database
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: laffah-database
+          property: password
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: BROADCAST_CONNECTION
+        value: reverb
+      - key: REVERB_APP_ID
+        value: laffah_app
+      - key: REVERB_APP_KEY
+        generateValue: true
+      - key: REVERB_APP_SECRET
+        generateValue: true
+      - key: REVERB_HOST
+        value: 0.0.0.0
+      - key: REVERB_PORT
+        value: 8080
+      - key: REVERB_SCHEME
+        value: https
+      - key: ENABLE_REVERB
+        value: "true"
+      - key: ENABLE_QUEUE
+        value: "true"
+
+databases:
+  # Managed Cloud Database
+  - name: laffah-database
+    plan: free
+    region: frankfurt
+    databaseName: laffah_db
+    user: laffah_admin
