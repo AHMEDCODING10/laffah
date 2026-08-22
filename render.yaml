@@ -6,8 +6,9 @@ services:
   - type: web
     name: laffah-api
     runtime: docker
-    dockerfilePath: ./Dockerfile
-    dockerContext: ./backend
+    rootDir: backend
+    dockerfilePath: Dockerfile
+    dockerContext: .
     plan: free
     region: frankfurt
     healthCheckPath: /api/health
