@@ -59,8 +59,8 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Make start.sh executable
-RUN chmod +x /var/www/html/start.sh
+# Fix line endings (CRLF to LF) and make start.sh executable
+RUN sed -i 's/\r$//' /var/www/html/start.sh && chmod +x /var/www/html/start.sh
 
 # Expose default port (dynamic $PORT applied at runtime by start.sh)
 EXPOSE 80 8080

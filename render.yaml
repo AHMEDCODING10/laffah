@@ -6,7 +6,7 @@ services:
   - type: web
     name: laffah-api
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: ./backend
     plan: free
     region: frankfurt
