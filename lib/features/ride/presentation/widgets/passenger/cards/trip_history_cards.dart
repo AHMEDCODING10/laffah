@@ -1,8 +1,131 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../../core/theme/app_spacing.dart';
 import '../../../../../../core/widgets/glass_box.dart';
 import '../rating_and_support_dialog.dart';
+
+/// Helper widget for subtle, calm divider that avoids harsh dark lines
+Widget _buildSoftDivider(bool isDark) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Divider(
+      height: 1,
+      thickness: 0.7,
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : AppColors.gray200.withValues(alpha: 0.6),
+    ),
+  );
+}
+
+/// Shared helper widget for displaying connected route timeline (Pickup -> Dropoff)
+Widget _buildRouteTimeline({
+  required String pickup,
+  required String dropoff,
+  required bool isDark,
+}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Column(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: AppColors.success,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withValues(alpha: 0.35),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 1.5,
+            height: 18,
+            margin: const EdgeInsets.symmetric(vertical: 2),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : AppColors.gray300,
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+          const Icon(
+            Icons.location_on_rounded,
+            color: AppColors.danger,
+            size: 13,
+          ),
+        ],
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'نقطة الانطلاق: ',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.gray500,
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    pickup.isNotEmpty ? pickup : 'موقعك الحالي',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Text(
+                  'الوجهة: ',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.gray500,
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    dropoff.isNotEmpty ? dropoff : 'غير محدد',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
 /// ActiveTripCard — Displays ongoing / active rides or parcel orders in the trip history screen.
 class ActiveTripCard extends StatelessWidget {
@@ -20,24 +143,31 @@ class ActiveTripCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isRide = item['isRide'] ?? true;
+    final price = (item['price'] ?? item['fare'] ?? item['final_price'] ?? 0) as num;
 
     return GlassBox(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s16),
+      margin: const EdgeInsets.only(bottom: 10),
+      borderRadius: BorderRadius.circular(15),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+      customBorderColor: isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : AppColors.gray200.withValues(alpha: 0.8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
+          // Header Row: Type, Status, and Active Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.s8),
+                    padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
                       color: isRide
-                          ? AppColors.primary500.withValues(alpha: 0.12)
-                          : AppColors.info.withValues(alpha: 0.12),
+                          ? AppColors.primary500.withValues(alpha: 0.1)
+                          : AppColors.info.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -45,25 +175,25 @@ class ActiveTripCard extends StatelessWidget {
                           ? Icons.directions_car_filled_rounded
                           : Icons.inventory_2_rounded,
                       color: isRide ? AppColors.primary500 : AppColors.info,
-                      size: 18,
+                      size: 15,
                     ),
                   ),
-                  AppSpacing.w12,
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['type'],
+                        item['type'] ?? 'رحلة',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                           fontFamily: 'IBM Plex Sans Arabic',
                         ),
                       ),
                       Text(
-                        item['statusAr'],
+                        item['statusAr'] ?? 'قيد التنفيذ',
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary500,
                           fontFamily: 'IBM Plex Sans Arabic',
@@ -73,135 +203,112 @@ class ActiveTripCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s10,
-                  vertical: AppSpacing.s4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary500.withValues(alpha: 0.1),
-                  borderRadius: AppSpacing.borderXS,
-                ),
-                child: const Text(
-                  'نشط الآن',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary500,
-                    fontFamily: 'IBM Plex Sans Arabic',
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (price > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        '${price.toDouble().toStringAsFixed(0)} ريال',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary500,
+                          fontFamily: 'IBM Plex Sans Arabic',
+                        ),
+                      ),
+                    ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primary500.withValues(alpha: 0.25),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: const Text(
+                      'نشط الآن',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary500,
+                        fontFamily: 'IBM Plex Sans Arabic',
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
-          ),
-          if (isRide) ...[
-            _buildRouteRow(
-              Icons.radio_button_checked_rounded,
-              AppColors.success,
-              'نقطة الانطلاق',
-              item['pickup'],
-            ),
-            AppSpacing.h12,
-            _buildRouteRow(
-              Icons.place_rounded,
-              AppColors.danger,
-              'الوجهة',
-              item['dropoff'],
-            ),
-          ] else ...[
+          _buildSoftDivider(isDark),
+          if (isRide)
+            _buildRouteTimeline(
+              pickup: item['pickup'] ?? '',
+              dropoff: item['dropoff'] ?? '',
+              isDark: isDark,
+            )
+          else ...[
             Text(
               item['orderNumber'] ?? '',
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'monospace',
                 color: AppColors.primary500,
               ),
             ),
-            AppSpacing.h6,
+            const SizedBox(height: 4),
             Text(
               'محتوى الطرد: ${item['parcelContent'] ?? ''}',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11.5,
                 fontFamily: 'IBM Plex Sans Arabic',
                 color: isDark ? AppColors.gray400 : AppColors.gray600,
               ),
             ),
           ],
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onCancel,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.danger.withValues(alpha: 0.12),
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppSpacing.borderMD,
-                    ),
-                  ),
-                  child: const Text(
-                    'إلغاء الطلب',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      color: AppColors.danger,
-                    ),
-                  ),
+          _buildSoftDivider(isDark),
+          // Cancel Button - Sleek & Compact
+          SizedBox(
+            width: double.infinity,
+            height: 36,
+            child: OutlinedButton.icon(
+              onPressed: onCancel,
+              icon: const Icon(
+                Icons.cancel_outlined,
+                size: 14,
+                color: AppColors.danger,
+              ),
+              label: const Text(
+                'إلغاء الطلب',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  color: AppColors.danger,
                 ),
               ),
-            ],
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                side: BorderSide(
+                  color: AppColors.danger.withValues(alpha: 0.25),
+                  width: 0.9,
+                ),
+                backgroundColor: AppColors.danger.withValues(alpha: 0.04),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildRouteRow(
-    IconData icon,
-    Color iconColor,
-    String label,
-    String? address,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, color: iconColor, size: 16),
-        AppSpacing.w10,
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.gray500,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-              Text(
-                address ?? 'غير محدد',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -222,7 +329,13 @@ class ScheduledTripCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassBox(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s16),
+      margin: const EdgeInsets.only(bottom: 10),
+      borderRadius: BorderRadius.circular(15),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+      customBorderColor: isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : AppColors.gray200.withValues(alpha: 0.8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -232,33 +345,33 @@ class ScheduledTripCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.s8),
+                    padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: AppColors.primary500.withValues(alpha: 0.12),
+                      color: AppColors.primary500.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.calendar_today_rounded,
                       color: AppColors.primary500,
-                      size: 18,
+                      size: 15,
                     ),
                   ),
-                  AppSpacing.w12,
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item['type'] ?? 'رحلة مجدولة',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                           fontFamily: 'IBM Plex Sans Arabic',
                         ),
                       ),
                       Text(
-                        _formatDate(item['time'] ?? item['scheduledAt']),
+                        item['scheduledAt'] ?? 'مجدولة لاحقاً',
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary500,
                           fontFamily: 'IBM Plex Sans Arabic',
@@ -269,9 +382,9 @@ class ScheduledTripCard extends StatelessWidget {
                 ],
               ),
               Text(
-                '${((item['estimatedFare'] ?? item['fare'] ?? item['price'] ?? 0) as num).toDouble().toStringAsFixed(0)} ريال مقدراً',
+                '${((item['estimatedFare'] ?? item['fare'] ?? item['price'] ?? 0) as num).toDouble().toStringAsFixed(0)} ريال',
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                   fontFamily: 'IBM Plex Sans Arabic',
                   color: AppColors.primary500,
@@ -279,92 +392,47 @@ class ScheduledTripCard extends StatelessWidget {
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
+          _buildSoftDivider(isDark),
+          _buildRouteTimeline(
+            pickup: item['pickup'] ?? '',
+            dropoff: item['dropoff'] ?? '',
+            isDark: isDark,
           ),
-          _buildRouteRow(
-            Icons.radio_button_checked_rounded,
-            AppColors.success,
-            'نقطة الانطلاق',
-            item['pickup'],
-          ),
-          AppSpacing.h12,
-          _buildRouteRow(
-            Icons.place_rounded,
-            AppColors.danger,
-            'الوجهة',
-            item['dropoff'],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onCancel,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.danger),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppSpacing.borderMD,
-                    ),
-                  ),
-                  child: const Text(
-                    'إلغاء المشوار المجدول',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.danger,
-                      fontFamily: 'IBM Plex Sans Arabic',
-                    ),
-                  ),
+          _buildSoftDivider(isDark),
+          SizedBox(
+            width: double.infinity,
+            height: 36,
+            child: OutlinedButton.icon(
+              onPressed: onCancel,
+              icon: const Icon(
+                Icons.cancel_outlined,
+                size: 14,
+                color: AppColors.danger,
+              ),
+              label: const Text(
+                'إلغاء المشوار المجدول',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.danger,
+                  fontFamily: 'IBM Plex Sans Arabic',
                 ),
               ),
-            ],
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                side: BorderSide(
+                  color: AppColors.danger.withValues(alpha: 0.25),
+                  width: 0.9,
+                ),
+                backgroundColor: AppColors.danger.withValues(alpha: 0.04),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildRouteRow(
-    IconData icon,
-    Color iconColor,
-    String label,
-    String? address,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, color: iconColor, size: 16),
-        AppSpacing.w10,
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.gray500,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-              Text(
-                address ?? 'غير محدد',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -383,20 +451,27 @@ class PastTripCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isRide = item['isRide'] ?? true;
+    final fare = ((item['fare'] ?? item['price'] ?? 0) as num).toDouble();
 
     return GlassBox(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s16),
+      margin: const EdgeInsets.only(bottom: 10),
+      borderRadius: BorderRadius.circular(15),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+      customBorderColor: isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : AppColors.gray200.withValues(alpha: 0.8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Type, Fare
+          // Header: Type & Price
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.s8),
+                    padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
                       color: isRide
                           ? AppColors.primary500.withValues(alpha: 0.1)
@@ -408,65 +483,77 @@ class PastTripCard extends StatelessWidget {
                           ? Icons.directions_car_filled_rounded
                           : Icons.inventory_2_rounded,
                       color: isRide ? AppColors.primary500 : AppColors.info,
-                      size: 18,
+                      size: 15,
                     ),
                   ),
-                  AppSpacing.w12,
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item['type'] ?? 'رحلة',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                           fontFamily: 'IBM Plex Sans Arabic',
                         ),
                       ),
                       Text(
-                        item['date'] ?? 'اليوم',
+                        item['date'] ?? 'مكتملة',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           color: isDark ? AppColors.gray400 : AppColors.gray600,
                           fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-              Text(
-                '${((item['fare'] ?? item['price'] ?? 0) as num).toDouble().toStringAsFixed(0)} ريال',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  color: AppColors.primary500,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'مكتملة',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                        fontFamily: 'IBM Plex Sans Arabic',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${fare.toStringAsFixed(0)} ريال',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: AppColors.primary500,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
+          _buildSoftDivider(isDark),
+          _buildRouteTimeline(
+            pickup: item['pickup'] ?? '',
+            dropoff: item['dropoff'] ?? '',
+            isDark: isDark,
           ),
-          _buildRouteRow(
-            Icons.radio_button_checked_rounded,
-            AppColors.success,
-            'نقطة الانطلاق',
-            item['pickup'],
-          ),
-          AppSpacing.h12,
-          _buildRouteRow(
-            Icons.place_rounded,
-            AppColors.danger,
-            'الوجهة',
-            item['dropoff'],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
-          ),
+          _buildSoftDivider(isDark),
           // Captain info & support button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -475,14 +562,14 @@ class PastTripCard extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.person_outline_rounded,
-                    size: 16,
+                    size: 14,
                     color: AppColors.gray500,
                   ),
-                  AppSpacing.w6,
+                  const SizedBox(width: 5),
                   Text(
-                    'الكابتن: ${item['captainName']}',
+                    'الكابتن: ${item['captainName'] ?? 'كابتن لَفَّة'}',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: isDark ? AppColors.gray300 : AppColors.gray800,
                       fontFamily: 'IBM Plex Sans Arabic',
@@ -497,25 +584,25 @@ class PastTripCard extends StatelessWidget {
                     builder: (ctx) => RatingAndSupportDialog(
                       tripId: item['id']?.toString() ?? '',
                       captainName: item['captainName'] ?? 'الكابتن',
-                      fare: ((item['fare'] ?? item['price'] ?? 0) as num).toDouble(),
+                      fare: fare,
                     ),
                   );
                 },
-                borderRadius: AppSpacing.borderXS,
+                borderRadius: BorderRadius.circular(6),
                 child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   child: Row(
                     children: [
                       Icon(
                         Icons.support_agent_rounded,
-                        size: 16,
+                        size: 14,
                         color: AppColors.primary500,
                       ),
-                      SizedBox(width: 4),
+                      SizedBox(width: 3),
                       Text(
                         'مساعدة والتقييم',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary500,
                           fontFamily: 'IBM Plex Sans Arabic',
@@ -531,100 +618,73 @@ class PastTripCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildRouteRow(
-    IconData icon,
-    Color iconColor,
-    String label,
-    String? address,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, color: iconColor, size: 16),
-        AppSpacing.w10,
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.gray500,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-              Text(
-                address ?? 'غير محدد',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// CancelledTripCard — Displays cancelled trips in the trip history screen.
 class CancelledTripCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isDark;
+  final VoidCallback? onDelete;
 
   const CancelledTripCard({
     super.key,
     required this.item,
     required this.isDark,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     return GlassBox(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s16),
+      margin: const EdgeInsets.only(bottom: 10),
+      borderRadius: BorderRadius.circular(15),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+      customBorderColor: isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : AppColors.gray200.withValues(alpha: 0.8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: Calm, clean muted icon and soft badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.s8),
+                    padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: AppColors.danger.withValues(alpha: 0.12),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : AppColors.gray100,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.cancel_outlined,
-                      color: AppColors.danger,
-                      size: 18,
+                    child: Icon(
+                      Icons.history_toggle_off_rounded,
+                      color: isDark ? AppColors.gray400 : AppColors.gray500,
+                      size: 15,
                     ),
                   ),
-                  AppSpacing.w12,
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item['type'] ?? 'رحلة',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                           fontFamily: 'IBM Plex Sans Arabic',
                         ),
                       ),
                       Text(
-                        item['date'] ?? 'اليوم',
+                        item['date'] ?? 'ملغية',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           color: isDark ? AppColors.gray400 : AppColors.gray600,
                           fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -633,17 +693,17 @@ class CancelledTripCard extends StatelessWidget {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s8,
-                  vertical: AppSpacing.s4,
+                  horizontal: 8,
+                  vertical: 3,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.danger.withValues(alpha: 0.1),
-                  borderRadius: AppSpacing.borderXS,
+                  color: AppColors.danger.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
                   'ملغية',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.bold,
                     color: AppColors.danger,
                     fontFamily: 'IBM Plex Sans Arabic',
@@ -652,102 +712,90 @@ class CancelledTripCard extends StatelessWidget {
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
+          _buildSoftDivider(isDark),
+          _buildRouteTimeline(
+            pickup: item['pickup'] ?? '',
+            dropoff: item['dropoff'] ?? '',
+            isDark: isDark,
           ),
-          _buildRouteRow(
-            Icons.radio_button_checked_rounded,
-            AppColors.success,
-            'نقطة الانطلاق',
-            item['pickup'],
-          ),
-          AppSpacing.h12,
-          _buildRouteRow(
-            Icons.place_rounded,
-            AppColors.danger,
-            'الوجهة',
-            item['dropoff'],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-            child: Divider(height: 1),
-          ),
+          _buildSoftDivider(isDark),
+          // Bottom Row: Cancellation Reason on Right, Delete Button on Left
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                size: 14,
-                color: AppColors.danger,
-              ),
-              AppSpacing.w6,
               Expanded(
-                child: Text(
-                  'سبب الإلغاء: ${item['reason'] ?? 'تم الإلغاء بواسطة الراكب'}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.danger,
-                    fontFamily: 'IBM Plex Sans Arabic',
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 13,
+                      color: isDark
+                          ? const Color(0xFFEF6C6C)
+                          : const Color(0xFFD34545),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'سبب الإلغاء: ${item['reason'] ?? 'تم الإلغاء بواسطة الراكب'}',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? const Color(0xFFEF6C6C)
+                              : const Color(0xFFD34545),
+                          fontFamily: 'IBM Plex Sans Arabic',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 8),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary500.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.primary500,
+                            size: 13,
+                          ),
+                          SizedBox(width: 3),
+                          Text(
+                            'حذف',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary500,
+                              fontFamily: 'IBM Plex Sans Arabic',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildRouteRow(
-    IconData icon,
-    Color iconColor,
-    String label,
-    String? address,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, color: iconColor, size: 16),
-        AppSpacing.w10,
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.gray500,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-              Text(
-                address ?? 'غير محدد',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-String _formatDate(dynamic rawDate) {
-  if (rawDate == null) return 'غداً، 08:00 ص';
-  final dateStr = rawDate.toString();
-  try {
-    final dt = DateTime.parse(dateStr).toLocal();
-    final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-    final amPm = dt.hour >= 12 ? 'م' : 'ص';
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} $hour12:${dt.minute.toString().padLeft(2, '0')} $amPm';
-  } catch (_) {
-    return dateStr;
   }
 }

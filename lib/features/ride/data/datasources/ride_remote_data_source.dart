@@ -37,6 +37,9 @@ abstract class RideRemoteDataSource {
     required double rating,
     String? review,
   });
+
+  /// Deletes a trip from the backend server
+  Future<void> deleteTrip(String tripId);
 }
 
 class RideRemoteDataSourceImpl implements RideRemoteDataSource {
@@ -160,6 +163,11 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
       },
     );
     return BaseResponseModel.fromJson(response.data, (data) {});
+  }
+
+  @override
+  Future<void> deleteTrip(String tripId) async {
+    await dioClient.dio.delete('/trips/$tripId');
   }
 }
 

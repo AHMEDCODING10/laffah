@@ -29,6 +29,9 @@ abstract class RideRepository {
     String? review,
   });
 
+  /// Deletes a trip from history and database
+  Future<Either<Failure, void>> deleteTrip(String tripId);
+
   // For web-sockets / polling
   Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId);
 }

@@ -13,6 +13,8 @@ import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/services/osrm_service.dart';
 import '../../../../core/services/echo_service.dart';
 
+import '../../../../core/router/app_router.dart';
+
 class PassengerRideTrackingPage extends StatefulWidget {
   final String? captainId;
   final double captainLat;
@@ -123,21 +125,68 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            // Map View
-            BlocBuilder<RideBloc, RideState>(
-              builder: (context, state) {
-                return Positioned.fill(
-                  child: LaffahMapView(
-                    isDark: isDark,
-                    showDefaultMockData: false,
-                    followCaptain: true,
-                    // Real-time animated data
-                    captainLocation: _captainLocation,
+    return BlocListener<RideBloc, RideState>(
+      listener: (context, state) {
+        if ((state is RideBookingConfirmed &&
+                state.status.toLowerCase() == 'completed') ||
+            state is RideCompleted) {
+          final tripId = (state is RideBookingConfirmed)
+              ? (state.rideId ?? 'TRIP')
+              : 'TRIP';
+          final fare = (state is RideBookingConfirmed)
+              ? state.selectedOption.basePrice
+              : 1083.0;
+          final captainName = (state is RideBookingConfirmed)
+              ? state.captainName
+              : 'علي صالح صالح';
+          final captainPhone =
+              (state is RideBookingConfirmed) ? state.captainPhone : '';
+          final vehicleModel =
+              (state is RideBookingConfirmed) ? state.vehicleModel : 'دراجة نارية';
+          final vehiclePlate =
+              (state is RideBookingConfirmed) ? state.vehiclePlate : 'صنعاء';
+          final pickup = (state is RideBookingConfirmed)
+              ? state.pickup
+              : 'موقعك الحالي';
+          final dropoff = (state is RideBookingConfirmed)
+              ? state.dropoff
+              : 'شارع الزبيري';
+          final rating = (state is RideBookingConfirmed) ? state.rating : 5.0;
+
+          context.pushReplacement(
+            LaffahRoutes.passengerRideInvoice,
+            extra: {
+              'tripId': tripId,
+              'fare': fare,
+              'captainName': captainName,
+              'captainPhone': captainPhone,
+              'vehicleModel': vehicleModel,
+              'vehiclePlate': vehiclePlate,
+              'pickup': pickup,
+              'dropoff': dropoff,
+              'rating': rating,
+              'distance': '6.3 كم',
+              'duration': '7 دقيقة',
+              'paymentMethod': 'نقداً (Cash)',
+            },
+          );
+        }
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              // Map View
+              BlocBuilder<RideBloc, RideState>(
+                builder: (context, state) {
+                  return Positioned.fill(
+                    child: LaffahMapView(
+                      isDark: isDark,
+                      showDefaultMockData: false,
+                      followCaptain: true,
+                      // Real-time animated data
+                      captainLocation: _captainLocation,
                     passengerLocation: _passengerLocation,
                     captainHeading: _captainHeading,
                     routePoints: _routePoints.isNotEmpty ? _routePoints : null,
@@ -459,8 +508,9 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildCircleButton(IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(

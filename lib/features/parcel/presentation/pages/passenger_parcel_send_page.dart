@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/di/injection_container.dart' as di;
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -13,6 +11,7 @@ import '../bloc/parcel_bloc.dart';
 import '../bloc/parcel_event.dart';
 import '../bloc/parcel_state.dart';
 import '../widgets/passenger/form/parcel_form_cards.dart';
+import '../widgets/passenger/searching_parcel_captain_overlay.dart';
 
 class PassengerParcelSendPage extends StatefulWidget {
   const PassengerParcelSendPage({super.key});
@@ -183,18 +182,25 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
       child: BlocConsumer<ParcelBloc, ParcelState>(
         listener: (context, state) {
           if (state is ParcelSubmittedSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: AppColors.success,
-                content: Text(
-                  'تم إرسال طلب الطرد بنجاح!',
-                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
-                ),
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              isDismissible: false,
+              enableDrag: false,
+              backgroundColor: Colors.transparent,
+              builder: (ctx) => SearchingParcelCaptainOverlay(
+                parcel: state.parcel,
+                onCancel: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم إلغاء البحث عن كابتن',
+                          style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                    ),
+                  );
+                },
               ),
             );
-            context.go(LaffahRoutes.passengerParcelConfirm, extra: state.parcel);
           } else if (state is ParcelError) {
-
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 backgroundColor: AppColors.error,

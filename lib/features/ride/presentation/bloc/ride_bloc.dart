@@ -124,7 +124,39 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     on<LoadTripHistoryEvent>(_onLoadTripHistory);
     on<TripStatusUpdatedFromWebSocket>(_onTripStatusUpdatedFromWebSocket);
     on<ActiveRidePolledStatusUpdated>(_onActiveRidePolledStatusUpdated);
+    on<RateTripRequested>(_onRateTripRequested);
+    on<DeleteTripFromHistory>(_onDeleteTripFromHistory);
     on<ResetRideState>(_onResetRideState);
+  }
+
+  Future<void> _onDeleteTripFromHistory(
+    DeleteTripFromHistory event,
+    Emitter<RideState> emit,
+  ) async {
+    try {
+      await remoteDataSource.deleteTrip(event.tripId);
+    } catch (_) {}
+
+    if (state is TripHistoryLoaded) {
+      final currentList = (state as TripHistoryLoaded).trips;
+      final updatedList = currentList
+          .where((t) => t['id']?.toString() != event.tripId.toString())
+          .toList();
+      emit(TripHistoryLoaded(updatedList));
+    }
+  }
+
+  Future<void> _onRateTripRequested(
+    RateTripRequested event,
+    Emitter<RideState> emit,
+  ) async {
+    if (rateTripUseCase != null) {
+      await rateTripUseCase!(
+        tripId: event.tripId,
+        rating: event.rating,
+        review: event.comment,
+      );
+    }
   }
 
   void _onResetRideState(ResetRideState event, Emitter<RideState> emit) {
@@ -483,18 +515,33 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       _echoService.stopListeningToTripStatus(_currentActiveRideId!);
       _currentActiveRideId = null;
     }
-    if (state is RideBookingConfirmed) {
-      final rideId = (state as RideBookingConfirmed).rideId;
-      if (rideId != null) {
-        emit(const RideLoading());
-        final result = await cancelRideUseCase(rideId);
-        result.fold(
-          (failure) => emit(RideError(failure.message)),
-          (_) => emit(const RideInitial()),
-        );
-        return;
-      }
+
+    final targetTripId = event.tripId ??
+        (state is RideBookingConfirmed
+            ? (state as RideBookingConfirmed).rideId
+            : null);
+
+    if (targetTripId != null && targetTripId.isNotEmpty) {
+      await cancelRideUseCase(targetTripId);
     }
+
+    if (state is TripHistoryLoaded) {
+      final currentList = (state as TripHistoryLoaded).trips;
+      final nowStr = DateTime.now().toIso8601String();
+      final updatedList = currentList.map((t) {
+        if (t['id']?.toString() == targetTripId?.toString()) {
+          final updated = Map<String, dynamic>.from(t);
+          updated['status'] = 'cancelled';
+          updated['cancelled_at'] = nowStr;
+          updated['updated_at'] = nowStr;
+          return updated;
+        }
+        return t;
+      }).toList();
+      emit(TripHistoryLoaded(updatedList));
+      return;
+    }
+
     emit(const RideInitial());
   }
 
@@ -576,9 +623,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         ));
       }
     } else if (status == 'arrived') {
-      emit(const RideInProgress(etaToDestination: 'الكابتن وصل لموقعك'));
-    } else if (status == 'in_transit') {
-      emit(const RideInProgress(etaToDestination: 'في الطريق إلى الوجهة'));
+      if (state is RideBookingConfirmed) {
+        final s = state as RideBookingConfirmed;
+        emit(s.copyWith(status: 'arrived'));
+      } else {
+        emit(const RideInProgress(etaToDestination: 'الكابتن وصل لموقعك'));
+      }
+    } else if (status == 'in_transit' || status == 'started') {
+      if (state is RideBookingConfirmed) {
+        final s = state as RideBookingConfirmed;
+        emit(s.copyWith(status: 'in_transit'));
+      } else {
+        emit(const RideInProgress(etaToDestination: 'في الطريق إلى الوجهة'));
+      }
     } else if (status == 'completed') {
       _stopSmartPolling();
       alertSoundService.playSimpleTripAlert();

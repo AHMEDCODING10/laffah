@@ -58,7 +58,6 @@ class CaptainNavigationPage extends StatefulWidget {
 class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   // Navigation states: 0: driving to pickup ('accepted'), 1: arrived at pickup ('arrived'), 2: on trip ('started'), 3: finished ('completed')
   int _currentStep = 0;
-  double _sliderValue = 0.0;
 
   final RoutingService _routingService = RoutingService();
   List<LatLng> _routePoints = [];
@@ -174,7 +173,10 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         duration: widget.duration,
         pickup: widget.pickup,
         dropoff: widget.dropoff,
-        onFinish: () => _safePop(context),
+        onFinish: () {
+          context.read<CaptainBloc>().add(const ResetCaptainState());
+          context.go(LaffahRoutes.captainHome);
+        },
       );
     }
 
@@ -642,88 +644,69 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     IconData icon = Icons.check_circle_rounded;
 
     if (_currentStep == 0) {
-      label = 'وصلت لموقع الراكب ';
+      label = 'وصلت لموقع الراكب 📍';
       btnColor = AppColors.info;
       icon = Icons.pin_drop_rounded;
     } else if (_currentStep == 1) {
-      label = 'بدء الرحلة الآن ';
+      label = 'بدء الرحلة الآن 🛵';
       btnColor = AppColors.success;
       icon = Icons.play_arrow_rounded;
     } else {
-      label = 'إنهاء الرحلة وتأكيد الوصول ';
+      label = 'إنهاء الرحلة وتأكيد الوصول 🏁';
       btnColor = AppColors.primary500;
       icon = Icons.verified_rounded;
     }
 
-    return Container(
-      height: 54,
-      decoration: BoxDecoration(
-        color: btnColor.withValues(alpha: 0.12),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _handleStepProgression(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: btnColor.withValues(alpha: 0.3), width: 1.5),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Positioned(
-              right: 16,
-              child:
-                  Icon(Icons.double_arrow_rounded, color: btnColor, size: 18),
-            ),
-
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w900,
-                color: btnColor,
-                fontFamily: 'IBM Plex Sans Arabic',
+        child: Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: btnColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: btnColor.withValues(alpha: 0.35),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-            ),
-
-            // RTL Drag Handle Slider
-            GestureDetector(
-              onHorizontalDragUpdate: (details) {
-                setState(() {
-                  _sliderValue -= details.delta.dx / 200;
-                  if (_sliderValue < 0.0) _sliderValue = 0.0;
-                  if (_sliderValue > 1.0) _sliderValue = 1.0;
-                });
-              },
-              onTap: () => _handleStepProgression(context),
-              onHorizontalDragEnd: (details) {
-                if (_sliderValue > 0.65) {
-                  _handleStepProgression(context);
-                } else {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _sliderValue = 0.0;
-                  });
-                }
-              },
-              child: Align(
-                alignment: Alignment(1.0 - (_sliderValue * 2), 0),
-                child: Container(
-                  width: 54,
-                  height: 54,
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: btnColor,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: btnColor.withValues(alpha: 0.4),
-                        blurRadius: 10,
-                        offset: const Offset(-2, 2),
-                      )
-                    ],
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: Colors.white, size: 22),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    fontFamily: 'IBM Plex Sans Arabic',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white70,
+                  size: 16,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -738,7 +721,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
           );
       setState(() {
         _currentStep = 1;
-        _sliderValue = 0.0;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -756,7 +738,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
           );
       setState(() {
         _currentStep = 2;
-        _sliderValue = 0.0;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -774,7 +755,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
           );
       setState(() {
         _currentStep = 3;
-        _sliderValue = 0.0;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

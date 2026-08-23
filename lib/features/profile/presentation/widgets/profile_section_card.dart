@@ -3,7 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 
-/// Single item tile in profile section card
+/// Single item card in profile section
 class ProfileListTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -22,57 +22,67 @@ class ProfileListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppSpacing.radiusSM,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16,
-          vertical: AppSpacing.s14,
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.s8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.white.withValues(alpha: 0.05)
-                    : AppColors.gray100,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: isDark ? AppColors.white : AppColors.gray800,
-                size: 18,
-              ),
+    return GlassBox(
+      margin: const EdgeInsets.only(bottom: 8),
+      borderRadius: BorderRadius.circular(16),
+      padding: EdgeInsets.zero,
+      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+      customBorderColor: isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : AppColors.gray200.withValues(alpha: 0.8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
-            AppSpacing.w12,
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13.5,
-                  color: isDark ? AppColors.white : AppColors.gray900,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary500.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: AppColors.primary500,
+                    size: 18,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                  ),
+                ),
+                if (trailing != null) trailing!,
+                if (trailing == null)
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 13,
+                    color: isDark ? AppColors.gray500 : AppColors.gray400,
+                  ),
+              ],
             ),
-            if (trailing != null) trailing!,
-            if (trailing == null)
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: isDark ? AppColors.gray500 : AppColors.gray400,
-              ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// ProfileSectionCard — Section container wrapper for profile tiles
+/// ProfileSectionCard — Section container wrapper for profile cards
 class ProfileSectionCard extends StatelessWidget {
   final bool isDark;
   final String sectionTitle;
@@ -92,34 +102,21 @@ class ProfileSectionCard extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(
-              right: AppSpacing.s4, bottom: AppSpacing.s8),
+            right: AppSpacing.s4,
+            bottom: 8,
+          ),
           child: Text(
             sectionTitle,
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.bold,
-              fontSize: 13,
+              fontSize: 12.5,
               color: isDark ? AppColors.gray400 : AppColors.gray600,
             ),
           ),
         ),
-        GlassBox(
-          borderRadius: AppSpacing.radiusLG,
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (int i = 0; i < tiles.length; i++) ...[
-                tiles[i],
-                if (i < tiles.length - 1)
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? AppColors.white.withValues(alpha: 0.05)
-                        : AppColors.gray200,
-                  ),
-              ],
-            ],
-          ),
+        Column(
+          children: tiles,
         ),
       ],
     );

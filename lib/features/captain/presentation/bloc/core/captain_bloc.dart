@@ -93,18 +93,23 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   Future<void> _onToggleOnlineStatus(
       ToggleOnlineStatus event, EmitFn emit) async {
     // Get actual location from GPS Service before toggling
-    double lat = 0.0;
-    double lng = 0.0;
+    double lat = 15.3605;
+    double lng = 44.1852;
 
     try {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high),
-      );
+      ).timeout(const Duration(seconds: 3));
       lat = pos.latitude;
       lng = pos.longitude;
     } catch (_) {
       // Fallback: Use Sanaa center coordinates if GPS unavailable
+      lat = 15.3605;
+      lng = 44.1852;
+    }
+
+    if (lat < 12.0 || lat > 19.5 || lng < 41.5 || lng > 54.5) {
       lat = 15.3605;
       lng = 44.1852;
     }
@@ -154,6 +159,18 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     if (state is IncomingTripRequest) {
       final currentTrip = state as IncomingTripRequest;
       if (currentTrip.tripId == event.tripId) {
+        emit(const CaptainOnline());
+      }
+    } else if (state is TripAccepted) {
+      final currentTrip = state as TripAccepted;
+      if (currentTrip.tripId == event.tripId) {
+        alertSoundService.playSimpleTripAlert();
+        emit(const CaptainOnline());
+      }
+    } else if (state is TripInProgress) {
+      final currentTrip = state as TripInProgress;
+      if (currentTrip.tripId == event.tripId) {
+        alertSoundService.playSimpleTripAlert();
         emit(const CaptainOnline());
       }
     }
@@ -398,7 +415,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
     if (event.nextStatus == 'arrived' && currentState is TripAccepted) {
       emit(currentState.copyWith(tripProgress: 'arrived'));
-    } else if (event.nextStatus == 'started' && currentState is TripAccepted) {
+    } else if ((event.nextStatus == 'started' || event.nextStatus == 'in_transit') &&
+        currentState is TripAccepted) {
       emit(TripInProgress(
         tripId: currentState.tripId,
         passengerName: currentState.passengerName,
@@ -407,19 +425,34 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         pickup: currentState.pickup,
         dropoff: currentState.dropoff,
         fare: currentState.fare,
-        remainingDistance: '3.4 كم',
-        remainingDuration: '10 دقائق',
+        remainingDistance: currentState.distance,
+        remainingDuration: currentState.duration,
       ));
-    } else if (event.nextStatus == 'completed' &&
-        currentState is TripInProgress) {
+    } else if (event.nextStatus == 'completed') {
+      final tripId = (currentState is TripInProgress)
+          ? currentState.tripId
+          : (currentState is TripAccepted ? currentState.tripId : (event.tripId ?? ''));
+      final pName = (currentState is TripInProgress)
+          ? currentState.passengerName
+          : (currentState is TripAccepted ? currentState.passengerName : 'الراكب');
+      final pickup = (currentState is TripInProgress)
+          ? currentState.pickup
+          : (currentState is TripAccepted ? currentState.pickup : '');
+      final dropoff = (currentState is TripInProgress)
+          ? currentState.dropoff
+          : (currentState is TripAccepted ? currentState.dropoff : '');
+      final fare = (currentState is TripInProgress)
+          ? currentState.fare
+          : (currentState is TripAccepted ? currentState.fare : 1000.0);
+
       emit(TripCompleted(
-        tripId: currentState.tripId,
-        passengerName: currentState.passengerName,
-        pickup: currentState.pickup,
-        dropoff: currentState.dropoff,
-        fare: currentState.fare,
-        totalDistance: '8.4 كم',
-        totalDuration: '24 دقيقة',
+        tripId: tripId,
+        passengerName: pName,
+        pickup: pickup,
+        dropoff: dropoff,
+        fare: fare,
+        totalDistance: '6.3 كم',
+        totalDuration: '7 دقائق',
         paymentMethod: 'نقداً',
       ));
     }

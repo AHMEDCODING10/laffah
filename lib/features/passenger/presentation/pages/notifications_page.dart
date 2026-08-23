@@ -18,9 +18,7 @@ class NotificationsPage extends StatefulWidget {
   State<NotificationsPage> createState() => _NotificationsPageState();
 }
 
-class _NotificationsPageState extends State<NotificationsPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _NotificationsPageState extends State<NotificationsPage> {
   List<NotificationItemModel> _notifications = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -29,13 +27,11 @@ class _NotificationsPageState extends State<NotificationsPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
     _fetchNotifications();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -148,9 +144,16 @@ class _NotificationsPageState extends State<NotificationsPage>
           duration: const Duration(seconds: 3),
           content: Text(
             'تم حذف الإشعار "${item.title}"',
-            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+          ),
+          action: SnackBarAction(
+            label: 'تراجع',
+            textColor: AppColors.primary500,
+            onPressed: () {
+              setState(() {
+                _notifications.insert(index, item);
+              });
+            },
           ),
         ),
       );
@@ -160,87 +163,84 @@ class _NotificationsPageState extends State<NotificationsPage>
       final dioClient = di.sl<DioClient>();
       await dioClient.dio.delete(ApiEndpoints.deleteNotification(item.id));
     } catch (e) {
-      debugPrint("⚠️ [NotificationsPage] Error deleting notification: $e");
+      debugPrint("⚠️ [NotificationsPage] Error deleting notification from API: $e");
     }
   }
 
   Future<void> _clearAllNotifications() async {
-    final confirmed = await showDialog<bool>(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: isDark ? AppColors.surfaceElevatedDark : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              'مسح جميع الإشعارات',
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.surfaceElevatedDark : AppColors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 22),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'مسح الإشعارات',
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: isDark ? Colors.white : AppColors.gray900,
               ),
             ),
-            content: Text(
-              'هل أنت متأكد من حذف جميع الإشعارات؟ لن يمكنك استرجاعها بعد ذلك.',
+          ],
+        ),
+        content: const Text(
+          'هل أنت متأكد من رغبتك في حذف جميع الإشعارات؟',
+          style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'إلغاء',
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
-                fontSize: 14,
-                color: isDark ? AppColors.gray300 : AppColors.gray700,
+                color: isDark ? AppColors.gray400 : AppColors.gray600,
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(
-                  'إلغاء',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    color: isDark ? AppColors.gray400 : AppColors.gray600,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text(
-                  'حذف الكل',
-                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ),
-            ],
           ),
-        );
-      },
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'مسح الكل',
+              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
 
-    if (confirmed == true) {
-      HapticFeedback.heavyImpact();
-      setState(() {
-        _notifications.clear();
-      });
+    if (confirm != true) return;
 
-      try {
-        final dioClient = di.sl<DioClient>();
-        await dioClient.dio.delete(ApiEndpoints.clearAllNotifications);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              backgroundColor: AppColors.success,
-              content: Text(
-                'تم مسح جميع الإشعارات بنجاح ✔️',
-                style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
-              ),
-            ),
-          );
-        }
-      } catch (e) {
-        debugPrint("⚠️ [NotificationsPage] Error clearing all notifications: $e");
+    final backup = List<NotificationItemModel>.from(_notifications);
+    setState(() {
+      _notifications.clear();
+    });
+
+    try {
+      final dioClient = di.sl<DioClient>();
+      await dioClient.dio.delete(ApiEndpoints.clearAllNotifications);
+    } catch (e) {
+      debugPrint("⚠️ [NotificationsPage] Error clearing all notifications: $e");
+      if (mounted) {
+        setState(() {
+          _notifications = backup;
+        });
       }
     }
   }
@@ -251,11 +251,65 @@ class _NotificationsPageState extends State<NotificationsPage>
       null,
       'rides',
       'parcels',
-      'messages',
       'offers',
     ];
+    if (_selectedCategoryIndex >= categories.length) return _notifications;
     final selectedCat = categories[_selectedCategoryIndex];
     return _notifications.where((n) => n.category == selectedCat).toList();
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool isSelected,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8.5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary500.withValues(alpha: 0.14)
+              : (isDark
+                  ? const Color(0xFF161B26)
+                  : AppColors.gray100.withValues(alpha: 0.7)),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary500.withValues(alpha: 0.6)
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.gray200),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary500.withValues(alpha: 0.22),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : [],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+            color: isSelected
+                ? AppColors.primary500
+                : (isDark ? AppColors.gray400 : AppColors.gray600),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -300,14 +354,14 @@ class _NotificationsPageState extends State<NotificationsPage>
           ),
           title: Text(
             AppLocalizations.of(context)?.pass_notifications ?? 'الإشعارات والتنبيهات',
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: isDark ? AppColors.white : AppColors.gray900,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary500,
             ),
           ),
-          centerTitle: false,
+          centerTitle: true,
           actions: [
             IconButton(
               icon: const Icon(Icons.done_all_rounded, color: AppColors.primary500),
@@ -323,63 +377,48 @@ class _NotificationsPageState extends State<NotificationsPage>
         ),
         body: Column(
           children: [
-            // Filter Tabs
-            Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s16,
-                vertical: AppSpacing.s8,
-              ),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.backgroundDark
-                    : AppColors.backgroundLight,
-              ),
-              child: TabBar(
-                controller: _tabController,
-                onTap: (index) =>
-                    setState(() => _selectedCategoryIndex = index),
-                indicatorColor: AppColors.primary500,
-                indicatorWeight: 3,
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: AppColors.primary500,
-                unselectedLabelColor:
-                    isDark ? AppColors.gray400 : AppColors.gray600,
-                labelStyle: const TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11.5,
+            // ─── Filter Chips (Medium-sized Oval Chips: الكل, الرحلات, الطرود, العروض) ───
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s12),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildFilterChip(
+                      label: AppLocalizations.of(context)?.pass_all ?? 'الكل',
+                      isSelected: _selectedCategoryIndex == 0,
+                      isDark: isDark,
+                      onTap: () => setState(() => _selectedCategoryIndex = 0),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label: AppLocalizations.of(context)?.pass_rides ?? 'الرحلات',
+                      isSelected: _selectedCategoryIndex == 1,
+                      isDark: isDark,
+                      onTap: () => setState(() => _selectedCategoryIndex = 1),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label: AppLocalizations.of(context)?.pass_parcels ?? 'الطرود',
+                      isSelected: _selectedCategoryIndex == 2,
+                      isDark: isDark,
+                      onTap: () => setState(() => _selectedCategoryIndex = 2),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                      label: AppLocalizations.of(context)?.pass_offers ?? 'العروض',
+                      isSelected: _selectedCategoryIndex == 3,
+                      isDark: isDark,
+                      onTap: () => setState(() => _selectedCategoryIndex = 3),
+                    ),
+                  ],
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11.5,
-                ),
-                tabs: [
-                  Tab(
-                    icon: const Icon(Icons.apps_rounded, size: 20),
-                    text: AppLocalizations.of(context)?.pass_all ?? 'الكل',
-                  ),
-                  Tab(
-                    icon: const Icon(Icons.directions_car_rounded, size: 20),
-                    text: AppLocalizations.of(context)?.pass_rides ?? 'مشاوير',
-                  ),
-                  Tab(
-                    icon: const Icon(Icons.inventory_2_rounded, size: 20),
-                    text: AppLocalizations.of(context)?.pass_parcels ?? 'طرود',
-                  ),
-                  Tab(
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
-                    text: AppLocalizations.of(context)?.pass_messages ?? 'رسائل',
-                  ),
-                  Tab(
-                    icon: const Icon(Icons.local_offer_rounded, size: 20),
-                    text: AppLocalizations.of(context)?.pass_offers ?? 'عروض',
-                  ),
-                ],
               ),
             ),
 
-            // Notification List with Swipe-to-Delete and Pull to Refresh
+            // Notification List with comfortable spacing
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primary500))
@@ -391,7 +430,7 @@ class _NotificationsPageState extends State<NotificationsPage>
                           : ListView.builder(
                               padding: const EdgeInsets.fromLTRB(
                                 AppSpacing.s16,
-                                0,
+                                AppSpacing.s8,
                                 AppSpacing.s16,
                                 96,
                               ),

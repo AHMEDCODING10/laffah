@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -29,21 +30,8 @@ class _TripHistoryView extends StatefulWidget {
   State<_TripHistoryView> createState() => __TripHistoryViewState();
 }
 
-class __TripHistoryViewState extends State<_TripHistoryView>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+class __TripHistoryViewState extends State<_TripHistoryView> {
+  String _selectedFilter = 'all'; // 'all', 'active', 'past', 'cancelled'
 
   @override
   Widget build(BuildContext context) {
@@ -51,137 +39,395 @@ class __TripHistoryViewState extends State<_TripHistoryView>
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        extendBody: true,
-        appBar: LaffahAppBar(title: l10n.pass_trips_title),
-        bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 1),
-        body: BlocBuilder<RideBloc, RideState>(
-          builder: (context, state) {
-            if (state is TripHistoryLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary500),
-              );
+      backgroundColor:
+          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      extendBody: true,
+      appBar: LaffahAppBar(
+        title: l10n.pass_trips_title,
+        showMenuButton: false,
+        showBackButton: false,
+      ),
+      bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 1),
+      body: BlocBuilder<RideBloc, RideState>(
+        builder: (context, state) {
+          if (state is TripHistoryLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary500),
+            );
+          }
+
+          if (state is TripHistoryError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off_rounded,
+                      size: 48, color: AppColors.gray400),
+                  AppSpacing.h12,
+                  Text(
+                    state.message,
+                    style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        color: AppColors.gray600),
+                    textAlign: TextAlign.center,
+                  ),
+                  AppSpacing.h16,
+                  ElevatedButton.icon(
+                    onPressed: () => context
+                        .read<RideBloc>()
+                        .add(const LoadTripHistoryEvent()),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(l10n.pass_trips_retry,
+                        style:
+                            const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary500),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final List<Map<String, dynamic>> allTrips =
+              state is TripHistoryLoaded ? state.trips : [];
+
+          int getTripTimestamp(Map<String, dynamic> t) {
+            final val = t['cancelled_at'] ??
+                t['updated_at'] ??
+                t['completed_at'] ??
+                t['created_at'];
+            if (val != null) {
+              final dt = DateTime.tryParse(val.toString());
+              if (dt != null) return dt.millisecondsSinceEpoch;
             }
+            return 0;
+          }
 
-            if (state is TripHistoryError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.wifi_off_rounded,
-                        size: 48, color: AppColors.gray400),
-                    AppSpacing.h12,
-                    Text(
-                      state.message,
-                      style: const TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          color: AppColors.gray600),
-                      textAlign: TextAlign.center,
-                    ),
-                    AppSpacing.h16,
-                    ElevatedButton.icon(
-                      onPressed: () => context
-                          .read<RideBloc>()
-                          .add(const LoadTripHistoryEvent()),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(l10n.pass_trips_retry,
-                          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary500),
-                    ),
-                  ],
-                ),
-              );
+          int getTripNumericId(Map<String, dynamic> t) {
+            return int.tryParse(t['id']?.toString() ?? '0') ?? 0;
+          }
+
+          int compareTripsDesc(
+              Map<String, dynamic> a, Map<String, dynamic> b) {
+            final timeA = getTripTimestamp(a);
+            final timeB = getTripTimestamp(b);
+            if (timeB != timeA) {
+              return timeB.compareTo(timeA); // Newest timestamp first
             }
+            return getTripNumericId(b)
+                .compareTo(getTripNumericId(a)); // Highest ID first
+          }
 
-            final List<Map<String, dynamic>> allTrips =
-                state is TripHistoryLoaded ? state.trips : [];
+          final sortedAllTrips = List<Map<String, dynamic>>.from(allTrips)
+            ..sort(compareTripsDesc);
 
-            final activeTrips = allTrips
-                .where((t) =>
-                    t['status'] == 'pending' ||
-                    t['status'] == 'accepted' ||
-                    t['status'] == 'arrived' ||
-                    t['status'] == 'in_transit')
-                .toList();
-            final scheduledTrips =
-                allTrips.where((t) => t['status'] == 'scheduled').toList();
-            final pastTrips =
-                allTrips.where((t) => t['status'] == 'completed').toList();
-            final cancelledTrips =
-                allTrips.where((t) => t['status'] == 'cancelled').toList();
+          final activeTrips = sortedAllTrips
+              .where((t) =>
+                  t['status'] == 'pending' ||
+                  t['status'] == 'accepted' ||
+                  t['status'] == 'arrived' ||
+                  t['status'] == 'in_transit')
+              .toList();
 
-            return Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s16,
-                    vertical: AppSpacing.s8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.backgroundDark
-                        : AppColors.backgroundLight,
-                    borderRadius: AppSpacing.borderLG,
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    indicator: BoxDecoration(
-                      color: AppColors.primary500,
-                      borderRadius: AppSpacing.borderLG,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary500.withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    labelColor: AppColors.white,
-                    unselectedLabelColor:
-                        isDark ? AppColors.white : AppColors.black,
-                    labelStyle: const TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    tabs: [
-                      Tab(text: l10n.pass_trips_tab_active),
-                      Tab(text: l10n.pass_trips_tab_scheduled),
-                      Tab(text: l10n.pass_trips_tab_past),
-                      Tab(text: l10n.pass_trips_tab_cancelled),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
+          final pastTrips = sortedAllTrips
+              .where((t) => t['status'] == 'completed')
+              .toList();
+
+          final cancelledTrips = sortedAllTrips
+              .where((t) => t['status'] == 'cancelled')
+              .toList();
+
+          List<Map<String, dynamic>> currentDisplayTrips;
+          switch (_selectedFilter) {
+            case 'active':
+              currentDisplayTrips = activeTrips;
+              break;
+            case 'past':
+              currentDisplayTrips = pastTrips;
+              break;
+            case 'cancelled':
+              currentDisplayTrips = cancelledTrips;
+              break;
+            case 'all':
+            default:
+              currentDisplayTrips = sortedAllTrips;
+              break;
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Filter Options Chips (Matching Captain's Style) ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s12),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
                     children: [
-                      _buildTripList(activeTrips, isDark, 'active', l10n),
-                      _buildTripList(scheduledTrips, isDark, 'scheduled', l10n),
-                      _buildTripList(pastTrips, isDark, 'past', l10n),
-                      _buildTripList(cancelledTrips, isDark, 'cancelled', l10n),
+                      _buildFilterChip(
+                        label: 'الكل',
+                        isSelected: _selectedFilter == 'all',
+                        isDark: isDark,
+                        onTap: () => setState(() => _selectedFilter = 'all'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: 'قيد التنفيذ',
+                        isSelected: _selectedFilter == 'active',
+                        isDark: isDark,
+                        color: AppColors.warning,
+                        onTap: () => setState(() => _selectedFilter = 'active'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: 'تم الانتهاء',
+                        isSelected: _selectedFilter == 'past',
+                        isDark: isDark,
+                        color: AppColors.success,
+                        onTap: () => setState(() => _selectedFilter = 'past'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: 'ملغاة',
+                        isSelected: _selectedFilter == 'cancelled',
+                        isDark: isDark,
+                        color: AppColors.danger,
+                        onTap: () =>
+                            setState(() => _selectedFilter = 'cancelled'),
+                      ),
                     ],
+                  ),
+                ),
+              ),
+
+              // ── Trips List with Animated Switcher ──
+              Expanded(
+                child: _buildTripList(
+                  currentDisplayTrips,
+                  isDark,
+                  _selectedFilter,
+                  l10n,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool isSelected,
+    required bool isDark,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    final chipColor = color ?? AppColors.primary500;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8.5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? chipColor.withValues(alpha: 0.14)
+              : (isDark
+                  ? const Color(0xFF1A1F2B)
+                  : AppColors.gray100.withValues(alpha: 0.7)),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isSelected
+                ? chipColor.withValues(alpha: 0.6)
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.gray200),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: chipColor.withValues(alpha: 0.22),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : [],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+            color: isSelected
+                ? chipColor
+                : (isDark ? AppColors.gray400 : AppColors.gray600),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCancelConfirmationDialog(
+      BuildContext context, String tripId) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor:
+              isDark ? AppColors.surfaceElevatedDark : Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.cancel_outlined,
+                    color: AppColors.primary500, size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'إلغاء الطلب',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'هل أنت متأكد من رغبتك في إلغاء هذا المشوار؟',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(
+                        color: isDark ? Colors.white24 : AppColors.gray300,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'تراجع',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        color: isDark ? Colors.white70 : AppColors.gray700,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'تأكيد الإلغاء',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
-            );
-          },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (shouldCancel == true && context.mounted) {
+      context.read<RideBloc>().add(CancelRideRequested(tripId: tripId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.white),
+              SizedBox(width: 10),
+              Text(
+                'تم إلغاء الطلب بنجاح 🚫',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       );
+    }
+  }
+
+  void _handleDirectDelete(BuildContext context, String tripId) {
+    context.read<RideBloc>().add(DeleteTripFromHistory(tripId));
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.primary500,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(milliseconds: 2500),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: const Row(
+          children: [
+            Icon(Icons.delete_sweep_rounded, color: Colors.white),
+            SizedBox(width: 10),
+            Text(
+              'تم حذف الرحلة بنجاح 🗑️',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTripList(
-      List<Map<String, dynamic>> trips, bool isDark, String type, AppLocalizations l10n) {
+      List<Map<String, dynamic>> trips, bool isDark, String filter, AppLocalizations l10n) {
     if (trips.isEmpty) {
-      return _buildEmptyState(_emptyMessage(type, l10n));
+      return _buildEmptyState(_emptyMessage(filter, l10n));
     }
 
     return RefreshIndicator(
@@ -193,42 +439,41 @@ class __TripHistoryViewState extends State<_TripHistoryView>
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 96),
+            AppSpacing.s16, AppSpacing.s4, AppSpacing.s16, 96),
         itemCount: trips.length,
         itemBuilder: (context, index) {
           final item = _mapApiTripToCard(trips[index], l10n);
-          switch (type) {
-            case 'active':
-              return ActiveTripCard(
-                item: item,
-                isDark: isDark,
-                onCancel: () {
-                  context
-                      .read<RideBloc>()
-                      .add(CancelRideRequested(tripId: item['id']));
-                },
-              );
-          case 'scheduled':
+          final status = (trips[index]['status'] ?? '').toString();
+
+          if (status == 'cancelled') {
+            return CancelledTripCard(
+              item: item,
+              isDark: isDark,
+              onDelete: () =>
+                  _handleDirectDelete(context, item['id'] as String),
+            );
+          } else if (status == 'completed') {
+            return PastTripCard(item: item, isDark: isDark);
+          } else if (status == 'scheduled') {
             return ScheduledTripCard(
               item: item,
               isDark: isDark,
-              onCancel: () {
-                context
-                    .read<RideBloc>()
-                    .add(CancelRideRequested(tripId: item['id']));
-              },
+              onCancel: () =>
+                  _showCancelConfirmationDialog(context, item['id'] as String),
             );
-          case 'past':
-            return PastTripCard(item: item, isDark: isDark);
-          case 'cancelled':
-            return CancelledTripCard(item: item, isDark: isDark);
-          default:
-            return const SizedBox.shrink();
-        }
-      },
-    ),
-  );
-}
+          } else {
+            // Active / in_transit / arrived / pending / accepted
+            return ActiveTripCard(
+              item: item,
+              isDark: isDark,
+              onCancel: () =>
+                  _showCancelConfirmationDialog(context, item['id'] as String),
+            );
+          }
+        },
+      ),
+    );
+  }
 
   /// Maps API response fields to the format expected by TripHistoryCards
   Map<String, dynamic> _mapApiTripToCard(Map<String, dynamic> trip, AppLocalizations l10n) {
@@ -246,6 +491,10 @@ class __TripHistoryViewState extends State<_TripHistoryView>
       'rating': (trip['rating_by_user'] ?? 0).toDouble(),
       'isRide': trip['type'] != 'parcel',
       'scheduledAt': trip['scheduled_at'],
+      'reason': trip['cancellation_reason'] ?? 'تم الإلغاء بواسطة الراكب',
+      'cancelled_at': trip['cancelled_at'],
+      'updated_at': trip['updated_at'],
+      'created_at': trip['created_at'],
     };
   }
 
@@ -270,18 +519,17 @@ class __TripHistoryViewState extends State<_TripHistoryView>
     }
   }
 
-  String _emptyMessage(String type, AppLocalizations l10n) {
-    switch (type) {
+  String _emptyMessage(String filter, AppLocalizations l10n) {
+    switch (filter) {
       case 'active':
-        return l10n.pass_trips_empty_active;
-      case 'scheduled':
-        return l10n.pass_trips_empty_scheduled;
+        return 'لا توجد رحلات قيد التنفيذ حالياً';
       case 'past':
-        return l10n.pass_trips_empty_past;
+        return 'لا توجد رحلات مكتملة سابقة';
       case 'cancelled':
-        return l10n.pass_trips_empty_cancelled;
+        return 'لا توجد رحلات ملغاة';
+      case 'all':
       default:
-        return l10n.pass_trips_empty_unknown;
+        return 'لا توجد أي رحلات في سجلك حتى الآن';
     }
   }
 
@@ -296,14 +544,15 @@ class __TripHistoryViewState extends State<_TripHistoryView>
             Container(
               padding: const EdgeInsets.all(AppSpacing.s20),
               decoration: BoxDecoration(
-                color:
-                    isDark ? AppColors.surfaceElevatedDark : AppColors.gray100,
+                color: isDark
+                    ? AppColors.surfaceElevatedDark
+                    : AppColors.primary500.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.history_rounded,
+                Icons.search_off_rounded,
                 size: 48,
-                color: AppColors.gray400,
+                color: AppColors.primary500,
               ),
             ),
             AppSpacing.h16,
@@ -313,7 +562,7 @@ class __TripHistoryViewState extends State<_TripHistoryView>
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'IBM Plex Sans Arabic',
-                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                color: isDark ? AppColors.gray300 : AppColors.gray700,
               ),
             ),
           ],

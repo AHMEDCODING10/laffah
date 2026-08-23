@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../data/models/notification_item_model.dart';
 
@@ -21,49 +20,58 @@ class NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardColor = item.isUnread
         ? (isDark
-            ? AppColors.primary500.withValues(alpha: 0.08)
-            : AppColors.primary500.withValues(alpha: 0.05))
-        : null;
+            ? const Color(0xFF1E2330)
+            : AppColors.primary500.withValues(alpha: 0.04))
+        : (isDark ? const Color(0xFF161B26) : Colors.white);
+
+    final borderColor = item.isUnread
+        ? AppColors.primary500.withValues(alpha: 0.4)
+        : (isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : AppColors.gray200.withValues(alpha: 0.8));
+
+    final iconColor = _getCategoryColor(item.category);
 
     return GlassBox(
-      borderRadius: AppSpacing.radiusLG,
-      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      borderRadius: BorderRadius.circular(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       customBgColor: cardColor,
+      customBorderColor: borderColor,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Category Icon or Avatar
+            // Category Icon with Unread Badge
             Stack(
+              clipBehavior: Clip.none,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(AppSpacing.s10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _getCategoryColor(item.category)
-                        .withValues(alpha: 0.12),
+                    color: iconColor.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     _getCategoryIcon(item.category),
-                    color: _getCategoryColor(item.category),
-                    size: 20,
+                    color: iconColor,
+                    size: 18,
                   ),
                 ),
                 if (item.isUnread)
                   Positioned(
-                    top: 0,
-                    right: 0,
+                    top: -1,
+                    right: -1,
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: 9,
+                      height: 9,
                       decoration: BoxDecoration(
-                        color: AppColors.danger,
+                        color: AppColors.primary500,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color:
-                              isDark ? AppColors.surfaceDark : AppColors.white,
+                          color: isDark ? const Color(0xFF161B26) : Colors.white,
                           width: 1.5,
                         ),
                       ),
@@ -71,7 +79,8 @@ class NotificationCard extends StatelessWidget {
                   ),
               ],
             ),
-            AppSpacing.w12,
+            const SizedBox(width: 12),
+            // Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,53 +96,63 @@ class NotificationCard extends StatelessWidget {
                             fontWeight: item.isUnread
                                 ? FontWeight.w900
                                 : FontWeight.bold,
-                            fontSize: 14,
-                            color: isDark ? AppColors.white : AppColors.gray900,
+                            fontSize: 13.5,
+                            color: isDark ? Colors.white : AppColors.gray900,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         item.time,
                         style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 10.5,
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
                           color: AppColors.gray500,
                         ),
                       ),
                     ],
                   ),
-                  AppSpacing.h4,
+                  const SizedBox(height: 3),
                   Text(
                     item.message,
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 12,
-                      height: 1.4,
+                      fontSize: 11.5,
+                      height: 1.35,
                       color: isDark ? AppColors.gray400 : AppColors.gray600,
                     ),
                   ),
                   if (item.captainName != null) ...[
-                    AppSpacing.h6,
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.person_pin_circle_rounded,
-                          size: 14,
-                          color: AppColors.primary500,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.captainName!,
-                          style: const TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary500.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.person_pin_circle_rounded,
+                            size: 13,
                             color: AppColors.primary500,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 3),
+                          Text(
+                            item.captainName!,
+                            style: const TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10.5,
+                              color: AppColors.primary500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],

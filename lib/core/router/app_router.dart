@@ -348,10 +348,19 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return PassengerRideInvoicePage(
-            fare: (extra['fare'] as num?)?.toDouble() ?? 0.0,
-            tripId: extra['tripId'] as String? ?? 'N/A',
-            captainName: extra['captainName'] as String? ?? 'غير محدد',
+            fare: (extra['fare'] as num?)?.toDouble() ?? 1083.0,
+            tripId: (extra['tripId'] ?? extra['rideId'] ?? 'N/A').toString(),
+            captainName: extra['captainName'] as String? ?? 'علي صالح صالح',
+            captainPhone: extra['captainPhone'] as String? ?? '',
+            vehicleModel: extra['vehicleModel'] as String? ?? 'دراجة نارية',
+            vehiclePlate: extra['vehiclePlate'] as String? ?? 'صنعاء',
+            pickup: extra['pickup'] as String? ?? 'موقعك الحالي',
+            dropoff: extra['dropoff'] as String? ?? 'شارع الزبيري',
+            distance: extra['distance'] as String? ?? '6.3 كم',
+            duration: extra['duration'] as String? ?? '7 دقيقة',
+            paymentMethod: extra['paymentMethod'] as String? ?? 'نقداً (Cash)',
             discount: (extra['discount'] as num?)?.toDouble() ?? 0.0,
+            rating: (extra['rating'] as num?)?.toDouble() ?? 5.0,
           );
         },
       ),
