@@ -452,8 +452,13 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
               onDelete: () =>
                   _handleDirectDelete(context, item['id'] as String),
             );
-          } else if (status == 'completed') {
-            return PastTripCard(item: item, isDark: isDark);
+          } else if (status == 'completed' || status == 'delivered') {
+            return PastTripCard(
+              item: item,
+              isDark: isDark,
+              onDelete: () =>
+                  _handleDirectDelete(context, item['id'] as String),
+            );
           } else if (status == 'scheduled') {
             return ScheduledTripCard(
               item: item,

@@ -17,6 +17,7 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
     required super.grossFare,
     required super.timeTag,
     required super.isParcel,
+    super.parcelType,
     required super.stops,
   });
 
@@ -79,6 +80,9 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
       isParcel: json['isParcel'] == true ||
           json['is_parcel'] == true ||
           json['type'] == 'delivery',
+      parcelType: json['parcel_type'] as String? ??
+          json['parcelType'] as String? ??
+          json['notes'] as String?,
       stops: stopsList,
     );
   }

@@ -16,6 +16,7 @@ class CaptainTripRequestEntity extends Equatable {
   final double grossFare;
   final String timeTag;
   final bool isParcel;
+  final String? parcelType;
   final List<String> stops;
 
   const CaptainTripRequestEntity({
@@ -34,6 +35,7 @@ class CaptainTripRequestEntity extends Equatable {
     required this.grossFare,
     required this.timeTag,
     required this.isParcel,
+    this.parcelType,
     required this.stops,
   });
 
@@ -54,6 +56,7 @@ class CaptainTripRequestEntity extends Equatable {
         grossFare,
         timeTag,
         isParcel,
+        parcelType,
         stops,
       ];
 }

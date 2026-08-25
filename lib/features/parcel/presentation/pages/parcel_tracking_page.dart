@@ -87,6 +87,9 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
         return 0; // تم إنشاء الطلب
       case 'accepted':
         return 2; // تم قبول الطلب + الكابتن في الطريق
+      case 'arrived_at_pickup':
+      case 'arrived':
+        return 2; // الكابتن في موقع الاستلام (يمتد الخط وتنشط خطوة استلام الطرد)
       case 'picked_up':
         return 3; // تم استلام الطرد
       case 'in_transit':
@@ -461,44 +464,54 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
 
   /// 3. Stepper Timeline Card ("حالة الطرد")
   Widget _buildTimelineCard(bool isDark) {
-    final stepIndex = _getStatusStepIndex(_currentParcel.status);
+    final status = _currentParcel.status.toLowerCase();
+    final isArrivedAtPickup = status == 'arrived_at_pickup' || status == 'arrived';
+    final stepIndex = _getStatusStepIndex(status);
 
     final steps = [
       {
         'title': 'تم إنشاء الطلب',
-        'subtitle': '10:30 صباحاً',
+        'subtitle': 'تم إرسال الطلب للنظام',
         'isDone': stepIndex >= 0,
         'isActive': stepIndex == 0,
       },
       {
         'title': 'تم قبول الطلب',
-        'subtitle': '10:35 صباحاً',
+        'subtitle': 'وافق الكابتن على استلام الطلب',
         'isDone': stepIndex >= 1,
         'isActive': stepIndex == 1,
       },
       {
         'title': 'الكابتن في الطريق',
-        'subtitle': 'وصل الكابتن إلى منطقة الجمع',
+        'subtitle': isArrivedAtPickup
+            ? 'وصل الكابتن إلى موقع الاستلام وبانتظارك'
+            : (stepIndex >= 2 ? 'في الطريق إلى موقع الاستلام' : 'بانتظار انطلاق الكابتن'),
         'isDone': stepIndex >= 2,
-        'isActive': stepIndex == 2,
+        'isActive': stepIndex == 2 && !isArrivedAtPickup,
       },
       {
         'title': 'تم استلام الطرد',
-        'subtitle': 'تم فحص وتأكيد الاستلام',
+        'subtitle': stepIndex >= 3
+            ? 'تم فحص وتأكيد الاستلام'
+            : (isArrivedAtPickup ? 'الكابتن في الموقع لاستلام الشحنة' : 'بانتظار تسليم الطرد للكابتن'),
         'isDone': stepIndex >= 3,
-        'isActive': stepIndex == 3,
+        'isActive': isArrivedAtPickup,
       },
       {
         'title': 'جاري التوصيل',
-        'subtitle': 'في الطريق إلى موقع التسليم',
+        'subtitle': stepIndex >= 4
+            ? 'في الطريق إلى موقع التسليم'
+            : 'بانتظار الانطلاق نحو المستلم',
         'isDone': stepIndex >= 4,
-        'isActive': stepIndex == 4,
+        'isActive': stepIndex == 3,
       },
       {
         'title': 'تم التسليم',
-        'subtitle': 'تم تسليم الشحنة للعميل بنجاح',
+        'subtitle': stepIndex >= 5
+            ? 'تم تسليم الشحنة للعميل بنجاح'
+            : 'بانتظار وصول الشحنة للمستلم',
         'isDone': stepIndex >= 5,
-        'isActive': stepIndex == 5,
+        'isActive': stepIndex == 4,
       },
     ];
 

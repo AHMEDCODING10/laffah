@@ -169,17 +169,18 @@ class CaptainRepositoryImpl implements CaptainRepository {
                   id: e['id']?.toString() ?? '',
                   status: e['status'] ?? 'غير معروف',
                   statusColor: _getStatusColor(e['status'] ?? ''),
-                  passengerName: e['passenger_name'] ?? 'راكب',
-                  passengerPhone: e['passenger_phone'] ?? '',
+                  passengerName: e['passenger_name'] ?? e['passengerName'] ?? 'عميل',
+                  passengerPhone: e['passenger_phone'] ?? e['passengerPhone'] ?? '',
                   rating: (e['passenger_rating'] as num?)?.toDouble() ?? 5.0,
-                  pickup: e['pickup_location'] ?? '',
-                  dropoff: e['dropoff_location'] ?? '',
+                  pickup: e['pickup_location'] ?? e['pickup_address'] ?? e['pickup'] ?? 'موقع الاستلام',
+                  dropoff: e['dropoff_location'] ?? e['dropoff_address'] ?? e['dropoff'] ?? 'موقع الوصول',
                   price: '${e['price'] ?? 0} ر.ي',
-                  grossFare: (e['price'] as num?)?.toDouble() ?? 0.0,
-                  date: e['created_at'] ?? '',
-                  distance: '${e['distance_km'] ?? 0} كم',
-                  duration: '${e['duration_mins'] ?? 0} دقيقة',
+                  grossFare: (e['price'] as num?)?.toDouble() ?? (e['grossFare'] as num?)?.toDouble() ?? 0.0,
+                  date: e['timeTag'] ?? e['created_at'] ?? '',
+                  distance: e['distance'] != null ? e['distance'].toString() : '${e['distance_km'] ?? 0} كم',
+                  duration: e['duration'] != null ? e['duration'].toString() : '${e['duration_mins'] ?? 0} دقيقة',
                   paymentMethod: e['payment_method'] ?? 'نقداً',
+                  isParcel: e['isParcel'] == true || e['is_parcel'] == true || e['type'] == 'delivery',
                 ))
             .toList();
         return Right(trips);
@@ -196,12 +197,18 @@ class CaptainRepositoryImpl implements CaptainRepository {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'completed':
+      case 'delivered':
       case 'مكتملة':
+      case 'تم التسليم':
         return const Color(0xFF16A34A);
       case 'cancelled':
       case 'ملغاة':
         return const Color(0xFFDC2626);
       case 'active':
+      case 'in_transit':
+      case 'picked_up':
+      case 'arrived_at_pickup':
+      case 'arrived':
       case 'قيد التنفيذ':
         return const Color(0xFFFFB020);
       default:

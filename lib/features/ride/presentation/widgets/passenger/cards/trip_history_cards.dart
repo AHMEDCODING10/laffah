@@ -441,11 +441,13 @@ class ScheduledTripCard extends StatelessWidget {
 class PastTripCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isDark;
+  final VoidCallback? onDelete;
 
   const PastTripCard({
     super.key,
     required this.item,
     required this.isDark,
+    this.onDelete,
   });
 
   @override
@@ -554,7 +556,7 @@ class PastTripCard extends StatelessWidget {
             isDark: isDark,
           ),
           _buildSoftDivider(isDark),
-          // Captain info & support button
+          // Captain info & support/delete buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -577,40 +579,67 @@ class PastTripCard extends StatelessWidget {
                   ),
                 ],
               ),
-              InkWell(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => RatingAndSupportDialog(
-                      tripId: item['id']?.toString() ?? '',
-                      captainName: item['captainName'] ?? 'الكابتن',
-                      fare: fare,
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(6),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.support_agent_rounded,
-                        size: 14,
-                        color: AppColors.primary500,
-                      ),
-                      SizedBox(width: 3),
-                      Text(
-                        'مساعدة والتقييم',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary500,
-                          fontFamily: 'IBM Plex Sans Arabic',
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onDelete != null) ...[
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onDelete,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.all(4.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 16,
+                            color: AppColors.danger,
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  InkWell(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => RatingAndSupportDialog(
+                          tripId: item['id']?.toString() ?? '',
+                          captainName: item['captainName'] ?? 'الكابتن',
+                          fare: fare,
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.support_agent_rounded,
+                            size: 14,
+                            color: AppColors.primary500,
+                          ),
+                          SizedBox(width: 3),
+                          Text(
+                            'مساعدة والتقييم',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary500,
+                              fontFamily: 'IBM Plex Sans Arabic',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),

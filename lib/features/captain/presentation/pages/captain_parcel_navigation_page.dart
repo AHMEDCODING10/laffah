@@ -3,27 +3,36 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/router/app_router.dart';
+import '../../../../core/services/routing_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
-import '../../../../core/router/app_router.dart';
-import '../../../../core/services/routing_service.dart';
 import '../bloc/core/captain_bloc.dart';
 import '../bloc/core/captain_event.dart';
 import 'captain_trip_invoice_widget.dart';
 import 'widgets/captain_communication_sheet.dart';
 
-
-/// CaptainNavigationPage — High-fidelity live trip navigation and execution screen.
-/// Features interactive trip lifecycle progression (وصلت -> ابدأ الرحلة -> إنهاء الرحلة),
-/// WhatsApp/SMS/Call communication options, waiting timer, and transitions to invoice summary.
-class CaptainNavigationPage extends StatefulWidget {
-  final String tripId;
-  final String passengerName;
-  final String passengerPhone;
-  final double passengerRating;
+/// CaptainParcelNavigationPage — Dedicated live navigation and lifecycle execution screen for Parcel Deliveries.
+/// Steps:
+/// 0: Heading to pickup ("وصلت لموقع الاستلام 📍") -> status: arrived_at_pickup
+/// 1: At pickup / inspecting parcel ("تم استلام الطرد 📦") -> status: picked_up
+/// 2: In transit to dropoff ("بدء التوصيل نحو الوجهة 🛵") -> status: in_transit
+/// 3: At destination ("تم التسليم بنجاح 🏁") -> status: delivered
+/// 4: Completed -> Invoice Summary
+class CaptainParcelNavigationPage extends StatefulWidget {
+  final String parcelId;
+  final String trackingCode;
+  final String senderName;
+  final String senderPhone;
+  final String receiverName;
+  final String receiverPhone;
+  final String parcelType;
+  final String size;
   final String pickup;
   final String dropoff;
   final double fare;
@@ -34,12 +43,16 @@ class CaptainNavigationPage extends StatefulWidget {
   final double dropoffLat;
   final double dropoffLng;
 
-  const CaptainNavigationPage({
+  const CaptainParcelNavigationPage({
     super.key,
-    required this.tripId,
-    required this.passengerName,
-    required this.passengerPhone,
-    required this.passengerRating,
+    required this.parcelId,
+    this.trackingCode = '',
+    required this.senderName,
+    required this.senderPhone,
+    this.receiverName = 'المستلم',
+    this.receiverPhone = '',
+    this.parcelType = 'طرد',
+    this.size = 'متوسط',
     required this.pickup,
     required this.dropoff,
     required this.fare,
@@ -52,15 +65,16 @@ class CaptainNavigationPage extends StatefulWidget {
   });
 
   @override
-  State<CaptainNavigationPage> createState() => _CaptainNavigationPageState();
+  State<CaptainParcelNavigationPage> createState() =>
+      _CaptainParcelNavigationPageState();
 }
 
-class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
-  // Navigation states: 0: driving to pickup ('accepted'), 1: arrived at pickup ('arrived'), 2: on trip ('started'), 3: finished ('completed')
+class _CaptainParcelNavigationPageState
+    extends State<CaptainParcelNavigationPage> {
   int _currentStep = 0;
-
   final RoutingService _routingService = RoutingService();
   List<LatLng> _routePoints = [];
+  bool _isUpdatingStatus = false;
 
   @override
   void initState() {
@@ -70,7 +84,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
 
   Future<void> _initLiveNavigationRoute() async {
     final route = await _routingService.getRoute(
-      LatLng(widget.pickupLat, widget.pickupLng), 
+      LatLng(widget.pickupLat, widget.pickupLng),
       LatLng(widget.dropoffLat, widget.dropoffLng),
     );
     if (route != null && mounted) {
@@ -85,6 +99,15 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       context.pop();
     } else {
       context.go(LaffahRoutes.captainHome);
+    }
+  }
+
+  Future<void> _makePhoneCall(String phone) async {
+    HapticFeedback.heavyImpact();
+    final cleanPhone = phone.isNotEmpty ? phone : '770000000';
+    final Uri url = Uri.parse('tel:$cleanPhone');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     }
   }
 
@@ -115,7 +138,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
             ],
           ),
           content: const Text(
-            'في حال مواجهة أي حالة طوارئ أو حادث مروري في شوارع صنعاء، يمكنك الاتصال فوراً بطوارئ لَفَّة أو شرطة المرور.',
+            'في حال مواجهة أي حالة طوارئ أثناء توصيل الشحنة، يمكنك الاتصال فوراً بطوارئ لَفَّة أو فريق الدعم الفني.',
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 12.5,
@@ -160,14 +183,101 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     );
   }
 
+  Future<void> _updateParcelStatusOnServer(String status) async {
+    if (_isUpdatingStatus) return;
+    setState(() => _isUpdatingStatus = true);
+
+    try {
+      final dio = DioClient().dio;
+      await dio.post('/parcel/${widget.parcelId}/status', data: {
+        'status': status,
+      });
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() => _isUpdatingStatus = false);
+    }
+  }
+
+  void _handleStepProgression(BuildContext context) async {
+    HapticFeedback.heavyImpact();
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (_currentStep == 0) {
+      // Step 0 -> Step 1: Arrived at pickup
+      await _updateParcelStatusOnServer('arrived_at_pickup');
+      if (!mounted) return;
+      setState(() => _currentStep = 1);
+      messenger.showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.info,
+          content: Text(
+            'تم تسجيل وصولك لموقع الاستلام وإشعار المرسل.',
+            style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    } else if (_currentStep == 1) {
+      // Step 1 -> Step 2: Parcel Picked Up
+      await _updateParcelStatusOnServer('picked_up');
+      if (!mounted) return;
+      setState(() => _currentStep = 2);
+      messenger.showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.warning,
+          content: Text(
+            'تم استلام الطرد بنجاح! جاهز للانطلاق نحو الوجهة.',
+            style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.bold,
+                color: Colors.black),
+          ),
+        ),
+      );
+    } else if (_currentStep == 2) {
+      // Step 2 -> Step 3: In transit
+      await _updateParcelStatusOnServer('in_transit');
+      if (!mounted) return;
+      setState(() => _currentStep = 3);
+      messenger.showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.success,
+          content: Text(
+            'بدأت رحلة التوصيل الآن! جاري الملاحة نحو موقع التسليم.',
+            style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    } else if (_currentStep == 3) {
+      // Step 3 -> Step 4: Delivered
+      await _updateParcelStatusOnServer('delivered');
+      if (!mounted) return;
+      setState(() => _currentStep = 4);
+      messenger.showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.primary500,
+          content: Text(
+            'تم تسليم الطرد بنجاح وحساب المستحقات!',
+            style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (_currentStep == 3) {
+    if (_currentStep == 4) {
       return CaptainTripInvoiceWidget(
-        tripId: widget.tripId,
-        passengerName: widget.passengerName,
+        tripId: widget.trackingCode.isNotEmpty
+            ? widget.trackingCode
+            : widget.parcelId,
+        passengerName: widget.senderName,
         fare: widget.fare,
         distance: widget.distance,
         duration: widget.duration,
@@ -180,9 +290,14 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       );
     }
 
-    String appBarTitle = 'الذهاب للراكب';
-    if (_currentStep == 1) appBarTitle = 'في انتظار الراكب ⏱️';
-    if (_currentStep == 2) appBarTitle = 'في الطريق للوجهة ';
+    String appBarTitle = 'الذهاب لاستلام الطرد 📦';
+    if (_currentStep == 1) appBarTitle = 'في موقع استلام الطرد 📍';
+    if (_currentStep == 2) appBarTitle = 'تم الاستلام - جاهز للتوصيل 🛵';
+    if (_currentStep == 3) appBarTitle = 'جاري التوصيل نحو المستلم 🚀';
+
+    final orderCode = widget.trackingCode.isNotEmpty
+        ? widget.trackingCode
+        : widget.parcelId;
 
     return Scaffold(
       backgroundColor:
@@ -195,7 +310,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         title: Text(
           appBarTitle,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15.5,
             fontWeight: FontWeight.w900,
             fontFamily: 'IBM Plex Sans Arabic',
             color: isDark ? AppColors.white : AppColors.gray900,
@@ -275,8 +390,10 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                         color: AppColors.primary500.withValues(alpha: 0.15),
                         borderRadius: AppSpacing.borderMD,
                       ),
-                      child: const Icon(
-                        Icons.turn_left_rounded,
+                      child: Icon(
+                        _currentStep >= 2
+                            ? Icons.two_wheeler_rounded
+                            : Icons.inventory_2_rounded,
                         color: AppColors.primary500,
                         size: 26,
                       ),
@@ -287,23 +404,21 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _currentStep == 1
-                                ? 'أنت في نقطة الاستلام'
-                                : (_currentStep == 2
-                                    ? 'انعطف يساراً للوجهة'
-                                    : 'انعطف يساراً'),
+                            _currentStep == 0
+                                ? 'توجه لموقع المرسل للاستلام'
+                                : (_currentStep == 1
+                                    ? 'أنت في موقع الاستلام'
+                                    : (_currentStep == 2
+                                        ? 'تم استلام الشحنة'
+                                        : 'انطلق نحو موقع المستلم')),
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'IBM Plex Sans Arabic',
                             ),
                           ),
                           Text(
-                            _currentStep == 1
-                                ? widget.pickup
-                                : (_currentStep == 2
-                                    ? widget.dropoff
-                                    : 'شارع حِدة - باتجاه نقطة التجمع'),
+                            _currentStep < 2 ? widget.pickup : widget.dropoff,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -351,74 +466,106 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                   topRight: Radius.circular(AppSpacing.s32),
                 ),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s20, vertical: AppSpacing.s20),
+                    horizontal: AppSpacing.s20, vertical: 18),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Passenger Profile & Shortcuts Row
+                    // Parcel Code & Type Badge Row
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppColors.primary500
-                                  .withValues(alpha: 0.2),
-                              child: Text(
-                                widget.passengerName.isNotEmpty
-                                    ? widget.passengerName[0]
-                                    : 'ر',
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary500.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.inventory_2_rounded,
+                                  size: 13, color: AppColors.primary500),
+                              const SizedBox(width: 5),
+                              Text(
+                                'طلب: #$orderCode',
                                 style: const TextStyle(
-                                  fontSize: 18,
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primary500,
-                                  fontFamily: 'IBM Plex Sans Arabic',
                                 ),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: AppColors.warning,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${widget.passengerRating} âک…',
-                                style: const TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF1E2535)
+                                : AppColors.gray100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${widget.parcelType} • ${widget.size}',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
 
-                        AppSpacing.w12,
+                    const SizedBox(height: 12),
 
+                    // Sender & Receiver Contact Details
+                    Row(
+                      children: [
+                        // Sender Info
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                widget.passengerName,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  color:
-                                      isDark ? Colors.white : AppColors.gray900,
-                                ),
+                              Row(
+                                children: [
+                                  Icon(
+                                    _currentStep < 2
+                                        ? Icons.person_pin_circle_rounded
+                                        : Icons.person_outline_rounded,
+                                    size: 16,
+                                    color: _currentStep < 2
+                                        ? AppColors.primary500
+                                        : AppColors.gray500,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'المرسل: ${widget.senderName}',
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.gray900,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const Text(
-                                'طريقة الدفع: نقداً / محفظة',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  color: AppColors.gray500,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(height: 2),
+                              Text(
+                                'المستلم: ${widget.receiverName}',
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 11,
+                                  color: AppColors.gray500,
                                 ),
                               ),
                             ],
@@ -428,38 +575,37 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                         // Action Shortcuts (Call & Chat Buttons)
                         Row(
                           children: [
-                            // Chat & WhatsApp Options
+                            // Chat
                             _buildCircleCallAction(
                               Icons.chat_bubble_outline_rounded,
                               () {
+                                final activeName = _currentStep < 2
+                                    ? widget.senderName
+                                    : widget.receiverName;
+                                final activePhone = _currentStep < 2
+                                    ? widget.senderPhone
+                                    : (widget.receiverPhone.isNotEmpty
+                                        ? widget.receiverPhone
+                                        : widget.senderPhone);
                                 CaptainCommunicationSheet.show(
                                   context: context,
-                                  passengerName: widget.passengerName,
-                                  passengerPhone: widget.passengerPhone,
+                                  passengerName: activeName,
+                                  passengerPhone: activePhone,
                                 );
                               },
                               isDark,
                             ),
-
                             AppSpacing.w8,
-
-                            // Direct Call Phone Action
+                            // Call
                             _buildCircleCallAction(
                               Icons.phone_in_talk_rounded,
                               () {
-                                HapticFeedback.mediumImpact();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: AppColors.primary500,
-                                    content: Text(
-                                      'جاري الاتصال بالراكب (${widget.passengerPhone})...',
-                                      style: const TextStyle(
-                                        fontFamily: 'IBM Plex Sans Arabic',
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                );
+                                final activePhone = _currentStep < 2
+                                    ? widget.senderPhone
+                                    : (widget.receiverPhone.isNotEmpty
+                                        ? widget.receiverPhone
+                                        : widget.senderPhone);
+                                _makePhoneCall(activePhone);
                               },
                               isDark,
                             ),
@@ -468,165 +614,57 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                       ],
                     ),
 
-                    AppSpacing.h16,
+                    const SizedBox(height: 12),
 
-                    // Waiting Timer Banner (Visible when arrived at pickup: _currentStep == 1)
-                    if (_currentStep == 1)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: AppColors.success.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.timer_rounded,
-                                    color: AppColors.success, size: 18),
-                                SizedBox(width: 8),
-                                Text(
-                                  'وقت الانتظار المجاني: 01:45',
-                                  style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    color: AppColors.success,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            InkWell(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'تم إرسال التنبيه اللحظي للراكب: "الكابتن بانتظارك في الموقع "',
-                                      style: TextStyle(
-                                          fontFamily: 'IBM Plex Sans Arabic'),
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'تنبيه الراكب ',
+                    // Specs Row: Fare & Destination
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : AppColors.gray100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.place_rounded,
+                                  color: AppColors.info, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                _currentStep < 2
+                                    ? 'استلام: ${widget.pickup.split('،').first}'
+                                    : 'تسليم: ${widget.dropoff.split('،').first}',
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
-                                  fontWeight: FontWeight.w900,
                                   fontSize: 11.5,
-                                  color: AppColors.primary500,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.gray900,
                                 ),
                               ),
+                            ],
+                          ),
+                          Text(
+                            '${widget.fare.toStringAsFixed(0)} ر.ي',
+                            style: const TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary500,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-
-                    // Specs Bento Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.04)
-                                  : AppColors.gray100,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.payments_rounded,
-                                    color: AppColors.primary500, size: 18),
-                                AppSpacing.w8,
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'الأجرة المقدرة',
-                                      style: TextStyle(
-                                          fontSize: 9,
-                                          color: AppColors.gray500,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'IBM Plex Sans Arabic'),
-                                    ),
-                                    Text(
-                                      '${widget.fare.toStringAsFixed(0)} ر.ي',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w900,
-                                        fontFamily: 'IBM Plex Sans Arabic',
-                                        color: isDark
-                                            ? Colors.white
-                                            : AppColors.gray900,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        AppSpacing.w10,
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.04)
-                                  : AppColors.gray100,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.place_rounded,
-                                    color: AppColors.info, size: 18),
-                                AppSpacing.w8,
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'الوجهة',
-                                        style: TextStyle(
-                                            fontSize: 9,
-                                            color: AppColors.gray500,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: 'IBM Plex Sans Arabic'),
-                                      ),
-                                      Text(
-                                        widget.dropoff.split('،').first,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w900,
-                                          fontFamily: 'IBM Plex Sans Arabic',
-                                          color: isDark
-                                              ? Colors.white
-                                              : AppColors.gray900,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
 
-                    AppSpacing.h16,
+                    const SizedBox(height: 14),
 
-                    // Interactive Step Action Button
+                    // Interactive Step Action Button (Without chevron arrow)
                     _buildStepActionButton(context, isDark),
                   ],
                 ),
@@ -644,15 +682,19 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     IconData icon = Icons.check_circle_rounded;
 
     if (_currentStep == 0) {
-      label = 'وصلت لموقع الراكب 📍';
+      label = 'وصلت لموقع الاستلام 📍';
       btnColor = AppColors.info;
       icon = Icons.pin_drop_rounded;
     } else if (_currentStep == 1) {
-      label = 'بدء الرحلة الآن 🛵';
+      label = 'تم استلام الطرد 📦';
+      btnColor = AppColors.warning;
+      icon = Icons.inventory_2_rounded;
+    } else if (_currentStep == 2) {
+      label = 'بدء التوصيل نحو الوجهة 🛵';
       btnColor = AppColors.success;
-      icon = Icons.play_arrow_rounded;
+      icon = Icons.two_wheeler_rounded;
     } else {
-      label = 'إنهاء الرحلة وتأكيد الوصول 🏁';
+      label = 'تم التسليم بنجاح 🏁';
       btnColor = AppColors.primary500;
       icon = Icons.verified_rounded;
     }
@@ -660,10 +702,10 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _handleStepProgression(context),
+        onTap: _isUpdatingStatus ? null : () => _handleStepProgression(context),
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          height: 56,
+          height: 54,
           decoration: BoxDecoration(
             color: btnColor,
             borderRadius: BorderRadius.circular(20),
@@ -686,13 +728,13 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: Colors.white, size: 22),
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 15.5,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     fontFamily: 'IBM Plex Sans Arabic',
@@ -704,62 +746,6 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         ),
       ),
     );
-  }
-
-  void _handleStepProgression(BuildContext context) {
-    HapticFeedback.heavyImpact();
-    if (_currentStep == 0) {
-      // Transition from 'accepted' -> 'arrived'
-      context.read<CaptainBloc>().add(
-            UpdateTripProgressState('arrived', tripId: widget.tripId),
-          );
-      setState(() {
-        _currentStep = 1;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: AppColors.info,
-          content: Text(
-            'تم تسجيل وصولك لموقع الراكب، وبدء مؤقت الانتظار.',
-            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    } else if (_currentStep == 1) {
-      // Transition from 'arrived' -> 'in_transit'
-      context.read<CaptainBloc>().add(
-            UpdateTripProgressState('in_transit', tripId: widget.tripId),
-          );
-      setState(() {
-        _currentStep = 2;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: AppColors.success,
-          content: Text(
-            'بدأت الرحلة الآن! جاري الملاحة نحو وجهة الراكب.',
-            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    } else if (_currentStep == 2) {
-      // Transition from 'in_transit' -> 'completed'
-      context.read<CaptainBloc>().add(
-            UpdateTripProgressState('completed', tripId: widget.tripId),
-          );
-      setState(() {
-        _currentStep = 3;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: AppColors.primary500,
-          content: Text(
-            'تم إنهاء الرحلة بنجاح وحساب المستحقات!',
-            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    }
   }
 
   Widget _buildFloatingBubble(String val, String unit, bool isDark) {
@@ -812,8 +798,8 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
       child: Container(
-        width: 44,
-        height: 44,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color:
               isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray100,
@@ -822,7 +808,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         child: Icon(
           icon,
           color: AppColors.primary500,
-          size: 20,
+          size: 19,
         ),
       ),
     );
@@ -855,4 +841,3 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     );
   }
 }
-

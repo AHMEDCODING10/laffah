@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 
-/// FloatingCaptainTripRequestCard — Ultra-modern floating glassmorphic card for incoming ride requests.
+/// FloatingCaptainTripRequestCard — Ultra-modern floating glassmorphic card for incoming ride & parcel delivery requests.
 /// Displays directly above the Captain's bottom navigation bar on the interactive map.
-/// Uses ONLY motorcycle icon (دراجة نارية) and matches the notification card layout 100%.
+/// Distinctively handles Ride requests (🛵) and Parcel requests (📦).
 class FloatingCaptainTripRequestCard extends StatefulWidget {
   final String tripId;
   final String passengerName;
@@ -17,6 +17,8 @@ class FloatingCaptainTripRequestCard extends StatefulWidget {
   final String distance;
   final String duration;
   final String timeTag;
+  final bool isParcel;
+  final String? parcelType;
   final VoidCallback onAccept;
   final VoidCallback onReject;
 
@@ -31,6 +33,8 @@ class FloatingCaptainTripRequestCard extends StatefulWidget {
     required this.distance,
     required this.duration,
     this.timeTag = 'منذ ثواني',
+    this.isParcel = false,
+    this.parcelType,
     required this.onAccept,
     required this.onReject,
   });
@@ -80,6 +84,11 @@ class _FloatingCaptainTripRequestCardState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isParcel = widget.isParcel;
+
+    final cardTitle = isParcel ? 'طلب توصيل طرد جديد 📦' : 'طلب مشوار جديد 🛵';
+    final cardIcon = isParcel ? Icons.inventory_2_rounded : Icons.two_wheeler_rounded;
+    final acceptBtnText = isParcel ? 'قبول توصيل الطرد 📦' : 'قبول المشوار';
 
     return SlideTransition(
       position: _slideAnimation,
@@ -121,11 +130,11 @@ class _FloatingCaptainTripRequestCardState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // ─── Header: Title + Motorcycle Icon + Rating + Time ───
+                      // ─── Header: Title + Distinct Icon (Motorcycle vs Package) + Sender/Passenger + Time ───
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Motorcycle Icon in Orange Circle (دراجة فقط)
+                          // Icon Container
                           Container(
                             width: 48,
                             height: 48,
@@ -137,14 +146,14 @@ class _FloatingCaptainTripRequestCardState
                                 width: 1.5,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.two_wheeler_rounded,
+                            child: Icon(
+                              cardIcon,
                               color: AppColors.primary500,
-                              size: 26,
+                              size: 24,
                             ),
                           ),
                           AppSpacing.w12,
-                          // Title & Passenger Info
+                          // Title & Info
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,11 +162,11 @@ class _FloatingCaptainTripRequestCardState
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      'طلب مشوار جديد 🛵',
-                                      style: TextStyle(
+                                    Text(
+                                      cardTitle,
+                                      style: const TextStyle(
                                         fontFamily: 'IBM Plex Sans Arabic',
-                                        fontSize: 16,
+                                        fontSize: 15.5,
                                         fontWeight: FontWeight.w900,
                                         color: AppColors.primary500,
                                       ),
@@ -207,14 +216,18 @@ class _FloatingCaptainTripRequestCardState
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Icon(
-                                      Icons.person_rounded,
+                                    Icon(
+                                      isParcel
+                                          ? Icons.person_outline_rounded
+                                          : Icons.person_rounded,
                                       color: AppColors.gray400,
                                       size: 14,
                                     ),
                                     const SizedBox(width: 3),
                                     Text(
-                                      widget.passengerName,
+                                      isParcel
+                                          ? 'المرسل: ${widget.passengerName}'
+                                          : widget.passengerName,
                                       style: TextStyle(
                                         fontFamily: 'IBM Plex Sans Arabic',
                                         fontSize: 12,
@@ -224,6 +237,30 @@ class _FloatingCaptainTripRequestCardState
                                             : AppColors.gray700,
                                       ),
                                     ),
+                                    if (isParcel &&
+                                        widget.parcelType != null &&
+                                        widget.parcelType!.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary500
+                                              .withValues(alpha: 0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          widget.parcelType!,
+                                          style: const TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primary500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ],
@@ -241,7 +278,7 @@ class _FloatingCaptainTripRequestCardState
                       ),
                       const SizedBox(height: 12),
 
-                      // ─── Route: Current Location -> Destination ───
+                      // ─── Route: Pickup -> Dropoff ───
                       Row(
                         children: [
                           Column(
@@ -251,7 +288,7 @@ class _FloatingCaptainTripRequestCardState
                                 height: 10,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.blueAccent,
+                                  color: isParcel ? Colors.orange : Colors.blueAccent,
                                   border: Border.all(color: Colors.white, width: 1.5),
                                 ),
                               ),
@@ -279,7 +316,7 @@ class _FloatingCaptainTripRequestCardState
                                 Text(
                                   widget.pickup.isNotEmpty
                                       ? widget.pickup
-                                      : 'موقعك الحالي',
+                                      : (isParcel ? 'موقع استلام الطرد' : 'موقعك الحالي'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -295,7 +332,7 @@ class _FloatingCaptainTripRequestCardState
                                 Text(
                                   widget.dropoff.isNotEmpty
                                       ? widget.dropoff
-                                      : 'الوجهة المحددة',
+                                      : (isParcel ? 'موقع تسليم الطرد' : 'الوجهة المحددة'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -452,9 +489,9 @@ class _FloatingCaptainTripRequestCardState
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Text(
-                                'قبول المشوار',
-                                style: TextStyle(
+                              child: Text(
+                                acceptBtnText,
+                                style: const TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
                                   fontSize: 15,
                                   fontWeight: FontWeight.w900,

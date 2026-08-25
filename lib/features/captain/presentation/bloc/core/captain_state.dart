@@ -54,6 +54,8 @@ class IncomingTripRequest extends CaptainState {
   final String distance;
   final String duration;
   final String timeTag;
+  final bool isParcel;
+  final String? parcelType;
 
   const IncomingTripRequest({
     required this.tripId,
@@ -66,6 +68,8 @@ class IncomingTripRequest extends CaptainState {
     required this.distance,
     required this.duration,
     this.timeTag = 'منذ ثواني',
+    this.isParcel = false,
+    this.parcelType,
   });
 
   @override
@@ -82,7 +86,9 @@ class IncomingTripRequest extends CaptainState {
           fare == other.fare &&
           distance == other.distance &&
           duration == other.duration &&
-          timeTag == other.timeTag;
+          timeTag == other.timeTag &&
+          isParcel == other.isParcel &&
+          parcelType == other.parcelType;
 
   @override
   int get hashCode =>
@@ -95,7 +101,9 @@ class IncomingTripRequest extends CaptainState {
       fare.hashCode ^
       distance.hashCode ^
       duration.hashCode ^
-      timeTag.hashCode;
+      timeTag.hashCode ^
+      isParcel.hashCode ^
+      parcelType.hashCode;
 }
 
 /// State when captain accepts the trip but has not arrived or started it yet
@@ -113,6 +121,10 @@ class TripAccepted extends CaptainState {
   /// نقاط المسار من OSRM لعرضها على الخريطة
   final List<LatLng> routePoints;
 
+  final bool isParcel;
+  final String? parcelType;
+  final String? trackingCode;
+
   const TripAccepted({
     required this.tripId,
     required this.passengerName,
@@ -125,6 +137,9 @@ class TripAccepted extends CaptainState {
     required this.duration,
     required this.tripProgress,
     this.routePoints = const [],
+    this.isParcel = false,
+    this.parcelType,
+    this.trackingCode,
   });
 
   TripAccepted copyWith({
@@ -139,6 +154,9 @@ class TripAccepted extends CaptainState {
     String? duration,
     String? tripProgress,
     List<LatLng>? routePoints,
+    bool? isParcel,
+    String? parcelType,
+    String? trackingCode,
   }) {
     return TripAccepted(
       tripId: tripId ?? this.tripId,
@@ -152,6 +170,9 @@ class TripAccepted extends CaptainState {
       duration: duration ?? this.duration,
       tripProgress: tripProgress ?? this.tripProgress,
       routePoints: routePoints ?? this.routePoints,
+      isParcel: isParcel ?? this.isParcel,
+      parcelType: parcelType ?? this.parcelType,
+      trackingCode: trackingCode ?? this.trackingCode,
     );
   }
 
@@ -161,10 +182,11 @@ class TripAccepted extends CaptainState {
       other is TripAccepted &&
           runtimeType == other.runtimeType &&
           tripId == other.tripId &&
-          tripProgress == other.tripProgress;
+          tripProgress == other.tripProgress &&
+          isParcel == other.isParcel;
 
   @override
-  int get hashCode => tripId.hashCode ^ tripProgress.hashCode;
+  int get hashCode => tripId.hashCode ^ tripProgress.hashCode ^ isParcel.hashCode;
 }
 
 /// State when captain is actively driving the passenger to destination (Screenshot 2)

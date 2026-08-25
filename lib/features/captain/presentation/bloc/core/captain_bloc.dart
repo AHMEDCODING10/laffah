@@ -224,6 +224,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             'distance': req.distance,
             'duration': req.duration,
             'timeTag': req.timeTag,
+            'is_parcel': req.isParcel,
+            'parcel_type': req.parcelType ?? req.description,
           }));
         }
       },
@@ -243,6 +245,13 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     // Play subtle chime / alert sound once
     alertSoundService.playSimpleTripAlert();
 
+    final isParcel = d['is_parcel'] == true ||
+        d['isParcel'] == true ||
+        d['type'] == 'delivery';
+    final parcelType = d['parcel_type']?.toString() ??
+        d['notes']?.toString() ??
+        (isParcel ? 'طرد' : null);
+
     emit(IncomingTripRequest(
       tripId: tripId,
       passengerName: (d['passenger_name'] ?? 'محمد').toString(),
@@ -258,6 +267,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       distance: (d['distance'] ?? '2.5 كم').toString(),
       duration: (d['duration'] ?? '6 د').toString(),
       timeTag: (d['timeTag'] ?? 'منذ ثواني').toString(),
+      isParcel: isParcel,
+      parcelType: parcelType,
     ));
   }
 
@@ -382,6 +393,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             duration: routeResult?.durationText ?? currentState.duration,
             tripProgress: 'accepted',
             routePoints: routeResult?.points ?? [pickupPos, dropoffPos],
+            isParcel: currentState.isParcel,
+            parcelType: currentState.parcelType,
           ));
         },
       );

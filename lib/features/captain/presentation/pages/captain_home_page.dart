@@ -116,16 +116,33 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
     const bool hasInternet = true;
 
     return BlocListener<CaptainBloc, CaptainState>(
+      listenWhen: (previous, current) {
+        // Only trigger navigation push when transitioning into a new accepted trip, NOT on status updates within the same trip
+        if (current is TripAccepted) {
+          if (previous is! TripAccepted) return true;
+          return previous.tripId != current.tripId;
+        }
+        return false;
+      },
       listener: (context, state) {
         if (state is TripAccepted) {
-          // Push captain navigation screen once a trip is accepted
+          final targetRoute = state.isParcel
+              ? '/captain/parcel/navigation'
+              : '/captain/navigation';
+
+          // Push captain navigation screen once a trip/parcel is accepted
           context.push(
-            '/captain/navigation',
+            targetRoute,
             extra: {
+              'parcelId': state.tripId,
               'tripId': state.tripId,
+              'trackingCode': state.trackingCode ?? state.tripId,
+              'senderName': state.passengerName,
+              'senderPhone': state.passengerPhone,
               'passengerName': state.passengerName,
               'passengerPhone': state.passengerPhone,
               'passengerRating': state.passengerRating,
+              'parcelType': state.parcelType ?? 'طرد',
               'pickup': state.pickup,
               'dropoff': state.dropoff,
               'fare': state.fare,
@@ -254,6 +271,8 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                     distance: state.distance,
                     duration: state.duration,
                     timeTag: state.timeTag,
+                    isParcel: state.isParcel,
+                    parcelType: state.parcelType,
                     onAccept: () {
                       if (_isSubmitting) return;
                       setState(() => _isSubmitting = true);

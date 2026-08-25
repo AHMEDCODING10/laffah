@@ -51,6 +51,7 @@ import '../../features/parcel/presentation/pages/parcel_delivery_proof_page.dart
 // Captain module
 import '../../features/captain/presentation/pages/captain_home_page.dart';
 import '../../features/captain/presentation/pages/captain_navigation_page.dart';
+import '../../features/captain/presentation/pages/captain_parcel_navigation_page.dart';
 import '../../features/captain/presentation/pages/captain_payout_request_page.dart';
 import '../../features/captain/presentation/pages/captain_document_upload_page.dart';
 
@@ -127,6 +128,7 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   static const String captainHome = '/captain/home';
   static const String captainNavigation = '/captain/navigation';
+  static const String captainParcelNavigation = '/captain/parcel/navigation';
   static const String captainHistory = '/captain/history';
   static const String captainPerformance = '/captain/performance';
   static const String captainBonus = '/captain/bonus';
@@ -482,6 +484,30 @@ class AppRouter {
             fare: (extra['fare'] as num?)?.toDouble() ?? 0.0,
             distance: extra['distance'] as String? ?? '—',
             duration: extra['duration'] as String? ?? '—',
+          );
+        },
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.captainParcelNavigation,
+        name: 'captain-parcel-navigation',
+        builder: (BuildContext context, GoRouterState state) {
+          final Map<String, dynamic> extra =
+              (state.extra as Map<String, dynamic>?) ?? <String, dynamic>{};
+          return CaptainParcelNavigationPage(
+            parcelId: extra['parcelId'] as String? ?? extra['tripId'] as String? ?? 'LF-P0000',
+            trackingCode: extra['trackingCode'] as String? ?? '',
+            senderName: extra['senderName'] as String? ?? extra['passengerName'] as String? ?? 'المرسل',
+            senderPhone: extra['senderPhone'] as String? ?? extra['passengerPhone'] as String? ?? '',
+            receiverName: extra['receiverName'] as String? ?? 'المستلم',
+            receiverPhone: extra['receiverPhone'] as String? ?? '',
+            parcelType: extra['parcelType'] as String? ?? 'طرد',
+            size: extra['size'] as String? ?? 'متوسط',
+            pickup: extra['pickup'] as String? ?? 'موقع الاستلام',
+            dropoff: extra['dropoff'] as String? ?? 'موقع التسليم',
+            fare: (extra['fare'] as num?)?.toDouble() ?? 0.0,
+            distance: extra['distance'] as String? ?? '2.5 كم',
+            duration: extra['duration'] as String? ?? '6 د',
           );
         },
       ),

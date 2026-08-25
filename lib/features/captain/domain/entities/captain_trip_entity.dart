@@ -16,6 +16,7 @@ class CaptainTripEntity extends Equatable {
   final String distance;
   final String duration;
   final String paymentMethod;
+  final bool isParcel;
 
   const CaptainTripEntity({
     required this.id,
@@ -32,6 +33,7 @@ class CaptainTripEntity extends Equatable {
     required this.distance,
     required this.duration,
     required this.paymentMethod,
+    this.isParcel = false,
   });
 
   @override
@@ -50,6 +52,7 @@ class CaptainTripEntity extends Equatable {
         distance,
         duration,
         paymentMethod,
+        isParcel,
       ];
 
   Map<String, dynamic> toMap() {
@@ -68,6 +71,7 @@ class CaptainTripEntity extends Equatable {
       'distance': distance,
       'duration': duration,
       'paymentMethod': paymentMethod,
+      'isParcel': isParcel,
     };
   }
 }
