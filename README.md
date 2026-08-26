@@ -77,4 +77,4 @@
 ## 👨‍💻 المطورين (Authors)
 
 تم التطوير والإطلاق بواسطة **Mohammed Alabed** ([@alabeddev](https://github.com/alabeddev)).
-تم التطوير والإطلاق بواسطة **Ahmed Tamis** ([@AHMEDCODING10](https://github.com/AHMEDCODING10)).
+و **Ahmed Tamis** ([@AHMEDCODING10](https://github.com/AHMEDCODING10)).
