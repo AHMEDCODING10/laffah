@@ -247,32 +247,11 @@ class ActiveTripCard extends StatelessWidget {
             ],
           ),
           _buildSoftDivider(isDark),
-          if (isRide)
-            _buildRouteTimeline(
-              pickup: item['pickup'] ?? '',
-              dropoff: item['dropoff'] ?? '',
-              isDark: isDark,
-            )
-          else ...[
-            Text(
-              item['orderNumber'] ?? '',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'monospace',
-                color: AppColors.primary500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'محتوى الطرد: ${item['parcelContent'] ?? ''}',
-              style: TextStyle(
-                fontSize: 11.5,
-                fontFamily: 'IBM Plex Sans Arabic',
-                color: isDark ? AppColors.gray400 : AppColors.gray600,
-              ),
-            ),
-          ],
+          _buildRouteTimeline(
+            pickup: item['pickup'] ?? '',
+            dropoff: item['dropoff'] ?? '',
+            isDark: isDark,
+          ),
           _buildSoftDivider(isDark),
           // Cancel Button - Sleek & Compact
           SizedBox(
@@ -454,6 +433,8 @@ class PastTripCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isRide = item['isRide'] ?? true;
     final fare = ((item['fare'] ?? item['price'] ?? 0) as num).toDouble();
+    final statusAr = item['statusAr'] ?? (!isRide ? 'تم التسليم' : 'مكتملة');
+    final titleType = item['type'] ?? (!isRide ? 'إرسال طرد 📦' : 'مشوار رحلة 🛵');
 
     return GlassBox(
       margin: const EdgeInsets.only(bottom: 10),
@@ -493,7 +474,7 @@ class PastTripCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['type'] ?? 'رحلة',
+                        titleType,
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
@@ -525,9 +506,9 @@ class PastTripCard extends StatelessWidget {
                       color: AppColors.success.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
-                      'مكتملة',
-                      style: TextStyle(
+                    child: Text(
+                      statusAr,
+                      style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.bold,
                         color: AppColors.success,
@@ -664,6 +645,9 @@ class CancelledTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isRide = item['isRide'] ?? true;
+    final titleType = item['type'] ?? (!isRide ? 'إرسال طرد 📦' : 'مشوار رحلة 🛵');
+
     return GlassBox(
       margin: const EdgeInsets.only(bottom: 10),
       borderRadius: BorderRadius.circular(15),
@@ -690,7 +674,9 @@ class CancelledTripCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.history_toggle_off_rounded,
+                      isRide
+                          ? Icons.history_toggle_off_rounded
+                          : Icons.inventory_2_outlined,
                       color: isDark ? AppColors.gray400 : AppColors.gray500,
                       size: 15,
                     ),
@@ -700,7 +686,7 @@ class CancelledTripCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['type'] ?? 'رحلة',
+                        titleType,
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,

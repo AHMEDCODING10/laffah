@@ -122,6 +122,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
     result.fold(
       (failure) {
+        emit(CaptainFailureState(failure.message));
         emit(const CaptainOffline());
         _stopSmartPolling();
       },
@@ -217,6 +218,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             'trip_id': req.id,
             'passenger_name': req.passengerName,
             'passenger_phone': req.passengerPhone,
+            'receiver_name': req.receiverName,
+            'receiver_phone': req.receiverPhone,
             'passenger_rating': req.passengerRating,
             'pickup_address': req.pickup,
             'dropoff_address': req.dropoff,
@@ -225,7 +228,9 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             'duration': req.duration,
             'timeTag': req.timeTag,
             'is_parcel': req.isParcel,
-            'parcel_type': req.parcelType ?? req.description,
+            'parcel_type': req.parcelType ?? (req.isParcel ? 'طرد' : null),
+            'size': req.size ?? 'متوسط',
+            'tracking_code': req.trackingCode ?? req.id,
           }));
         }
       },
@@ -237,7 +242,15 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     if (state is! CaptainOnline && state is! IncomingTripRequest) return;
 
     final d = event.data;
-    final tripId = (d['trip_id'] ?? d['id'] ?? 'TRIP-789').toString();
+    if (d.isEmpty) return;
+
+    final rawTripId = d['trip_id'] ?? d['id'] ?? d['tripId'];
+    if (rawTripId == null ||
+        rawTripId.toString().trim().isEmpty ||
+        rawTripId.toString() == 'TRIP-789') {
+      return;
+    }
+    final tripId = rawTripId.toString();
 
     // Check if dismissed
     if (_dismissedTripIds.contains(tripId)) return;
@@ -252,23 +265,60 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         d['notes']?.toString() ??
         (isParcel ? 'طرد' : null);
 
+    final String pName = (d['passenger_name'] ??
+            d['passengerName'] ??
+            d['sender_name'] ??
+            'عميل')
+        .toString();
+    final String pPhone = (d['passenger_phone'] ??
+            d['passengerPhone'] ??
+            d['sender_phone'] ??
+            '')
+        .toString();
+    final String rName = (d['receiver_name'] ??
+            d['receiverName'] ??
+            'المستلم')
+        .toString();
+    final String rPhone = (d['receiver_phone'] ??
+            d['receiverPhone'] ??
+            '')
+        .toString();
+    final String pickup = (d['pickup_address'] ??
+            d['pickup'] ??
+            d['pickup_location'] ??
+            'موقع الاستلام')
+        .toString();
+    final String dropoff = (d['dropoff_address'] ??
+            d['dropoff'] ??
+            d['dropoff_location'] ??
+            'موقع التسليم')
+        .toString();
+    final double fare = (d['fare'] is num)
+        ? (d['fare'] as num).toDouble()
+        : ((d['grossFare'] is num)
+            ? (d['grossFare'] as num).toDouble()
+            : (double.tryParse(d['price']?.toString() ?? '') ?? 0.0));
+
     emit(IncomingTripRequest(
       tripId: tripId,
-      passengerName: (d['passenger_name'] ?? 'محمد').toString(),
-      passengerPhone: (d['passenger_phone'] ?? '770000000').toString(),
+      passengerName: pName,
+      passengerPhone: pPhone,
+      receiverName: rName,
+      receiverPhone: rPhone,
       passengerRating: (d['passenger_rating'] is num)
           ? (d['passenger_rating'] as num).toDouble()
-          : 5.0,
-      pickup:
-          (d['pickup_address'] ?? d['pickup'] ?? 'موقعك الحالي').toString(),
-      dropoff: (d['dropoff_address'] ?? d['dropoff'] ?? 'ميدان التحرير، صنعاء')
-          .toString(),
-      fare: (d['fare'] is num) ? (d['fare'] as num).toDouble() : 870.44,
+          : ((d['passengerRating'] is num)
+              ? (d['passengerRating'] as num).toDouble()
+              : 5.0),
+      pickup: pickup,
+      dropoff: dropoff,
+      fare: fare,
       distance: (d['distance'] ?? '2.5 كم').toString(),
       duration: (d['duration'] ?? '6 د').toString(),
       timeTag: (d['timeTag'] ?? 'منذ ثواني').toString(),
       isParcel: isParcel,
       parcelType: parcelType,
+      size: d['size']?.toString() ?? 'متوسط',
     ));
   }
 
@@ -304,16 +354,25 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       );
     }
 
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: locationSettings,
-    ).listen((Position position) {
-      add(UpdateCaptainLocation(
-        captainId: _currentCaptainId,
-        lat: position.latitude,
-        lng: position.longitude,
-        heading: position.heading,
-      ));
-    });
+    try {
+      _positionSubscription = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen(
+        (Position position) {
+          add(UpdateCaptainLocation(
+            captainId: _currentCaptainId,
+            lat: position.latitude,
+            lng: position.longitude,
+            heading: position.heading,
+          ));
+        },
+        onError: (error) {
+          debugPrint('ℹ️ [CaptainLocation] GPS stream note (handled gracefully): $error');
+        },
+      );
+    } catch (e) {
+      debugPrint('ℹ️ [CaptainLocation] getPositionStream error: $e');
+    }
   }
 
   void _stopLocationTracking() {
@@ -385,6 +444,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             tripId: currentState.tripId,
             passengerName: currentState.passengerName,
             passengerPhone: currentState.passengerPhone,
+            receiverName: currentState.receiverName,
+            receiverPhone: currentState.receiverPhone,
             passengerRating: currentState.passengerRating,
             pickup: currentState.pickup,
             dropoff: currentState.dropoff,
@@ -395,6 +456,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             routePoints: routeResult?.points ?? [pickupPos, dropoffPos],
             isParcel: currentState.isParcel,
             parcelType: currentState.parcelType,
+            size: currentState.size,
+            trackingCode: currentState.tripId,
           ));
         },
       );

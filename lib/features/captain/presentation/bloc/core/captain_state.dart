@@ -47,6 +47,8 @@ class IncomingTripRequest extends CaptainState {
   final String tripId;
   final String passengerName;
   final String passengerPhone;
+  final String receiverName;
+  final String receiverPhone;
   final double passengerRating;
   final String pickup;
   final String dropoff;
@@ -56,11 +58,14 @@ class IncomingTripRequest extends CaptainState {
   final String timeTag;
   final bool isParcel;
   final String? parcelType;
+  final String? size;
 
   const IncomingTripRequest({
     required this.tripId,
     required this.passengerName,
     required this.passengerPhone,
+    this.receiverName = 'المستلم',
+    this.receiverPhone = '',
     required this.passengerRating,
     required this.pickup,
     required this.dropoff,
@@ -70,6 +75,7 @@ class IncomingTripRequest extends CaptainState {
     this.timeTag = 'منذ ثواني',
     this.isParcel = false,
     this.parcelType,
+    this.size,
   });
 
   @override
@@ -80,6 +86,8 @@ class IncomingTripRequest extends CaptainState {
           tripId == other.tripId &&
           passengerName == other.passengerName &&
           passengerPhone == other.passengerPhone &&
+          receiverName == other.receiverName &&
+          receiverPhone == other.receiverPhone &&
           passengerRating == other.passengerRating &&
           pickup == other.pickup &&
           dropoff == other.dropoff &&
@@ -95,6 +103,8 @@ class IncomingTripRequest extends CaptainState {
       tripId.hashCode ^
       passengerName.hashCode ^
       passengerPhone.hashCode ^
+      receiverName.hashCode ^
+      receiverPhone.hashCode ^
       passengerRating.hashCode ^
       pickup.hashCode ^
       dropoff.hashCode ^
@@ -111,6 +121,8 @@ class TripAccepted extends CaptainState {
   final String tripId;
   final String passengerName;
   final String passengerPhone;
+  final String receiverName;
+  final String receiverPhone;
   final double passengerRating;
   final String pickup;
   final String dropoff;
@@ -123,12 +135,15 @@ class TripAccepted extends CaptainState {
 
   final bool isParcel;
   final String? parcelType;
+  final String? size;
   final String? trackingCode;
 
   const TripAccepted({
     required this.tripId,
     required this.passengerName,
     required this.passengerPhone,
+    this.receiverName = 'المستلم',
+    this.receiverPhone = '',
     required this.passengerRating,
     required this.pickup,
     required this.dropoff,
@@ -139,6 +154,7 @@ class TripAccepted extends CaptainState {
     this.routePoints = const [],
     this.isParcel = false,
     this.parcelType,
+    this.size,
     this.trackingCode,
   });
 
@@ -146,6 +162,8 @@ class TripAccepted extends CaptainState {
     String? tripId,
     String? passengerName,
     String? passengerPhone,
+    String? receiverName,
+    String? receiverPhone,
     double? passengerRating,
     String? pickup,
     String? dropoff,
@@ -156,12 +174,15 @@ class TripAccepted extends CaptainState {
     List<LatLng>? routePoints,
     bool? isParcel,
     String? parcelType,
+    String? size,
     String? trackingCode,
   }) {
     return TripAccepted(
       tripId: tripId ?? this.tripId,
       passengerName: passengerName ?? this.passengerName,
       passengerPhone: passengerPhone ?? this.passengerPhone,
+      receiverName: receiverName ?? this.receiverName,
+      receiverPhone: receiverPhone ?? this.receiverPhone,
       passengerRating: passengerRating ?? this.passengerRating,
       pickup: pickup ?? this.pickup,
       dropoff: dropoff ?? this.dropoff,
@@ -172,6 +193,7 @@ class TripAccepted extends CaptainState {
       routePoints: routePoints ?? this.routePoints,
       isParcel: isParcel ?? this.isParcel,
       parcelType: parcelType ?? this.parcelType,
+      size: size ?? this.size,
       trackingCode: trackingCode ?? this.trackingCode,
     );
   }

@@ -387,15 +387,10 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                             child: RideCompletedCard(state: state),
                           ),
                         );
-                      } else if (s == 'in_transit' || s == 'started' || s == 'in_progress') {
-                        return Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: RideInProgressCard(state: state),
-                          ),
-                        );
-                      } else if (s == 'accepted' ||
+                      } else if (s == 'in_transit' ||
+                          s == 'started' ||
+                          s == 'in_progress' ||
+                          s == 'accepted' ||
                           s == 'arrived' ||
                           s == 'found' ||
                           (state.captainName.isNotEmpty &&

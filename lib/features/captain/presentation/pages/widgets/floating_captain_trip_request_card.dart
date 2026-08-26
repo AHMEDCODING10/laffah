@@ -81,6 +81,15 @@ class _FloatingCaptainTripRequestCardState
     super.dispose();
   }
 
+  String _cleanParcelTag(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return 'طرد';
+    String clean = raw.replaceAll(RegExp(r'\(\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*\)'), '');
+    clean = clean.split('|').first.trim();
+    clean = clean.split('•').first.trim();
+    if (clean.isEmpty) return 'طرد';
+    return clean;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -237,13 +246,11 @@ class _FloatingCaptainTripRequestCardState
                                             : AppColors.gray700,
                                       ),
                                     ),
-                                    if (isParcel &&
-                                        widget.parcelType != null &&
-                                        widget.parcelType!.isNotEmpty) ...[
+                                    if (isParcel) ...[
                                       const SizedBox(width: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 1.5),
+                                            horizontal: 7, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: AppColors.primary500
                                               .withValues(alpha: 0.12),
@@ -251,10 +258,12 @@ class _FloatingCaptainTripRequestCardState
                                               BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          widget.parcelType!,
+                                          _cleanParcelTag(widget.parcelType),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
                                             fontFamily: 'IBM Plex Sans Arabic',
-                                            fontSize: 10,
+                                            fontSize: 10.5,
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.primary500,
                                           ),

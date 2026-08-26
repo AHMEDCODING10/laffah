@@ -72,7 +72,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
 
   void _startPolling(BuildContext context) {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _refreshTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
       if (mounted) {
         context
             .read<ParcelBloc>()
@@ -86,18 +86,18 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
       case 'pending':
         return 0; // تم إنشاء الطلب
       case 'accepted':
-        return 2; // تم قبول الطلب + الكابتن في الطريق
+        return 1; // تم قبول الطلب
       case 'arrived_at_pickup':
       case 'arrived':
-        return 2; // الكابتن في موقع الاستلام (يمتد الخط وتنشط خطوة استلام الطرد)
+        return 2; // الكابتن في موقع الاستلام
       case 'picked_up':
         return 3; // تم استلام الطرد
       case 'in_transit':
-        return 4; // جاري التوصيل
+        return 4; // جاري التوصيل نحو الوجهة
       case 'delivered':
-        return 5; // تم التسليم
+        return 5; // تم التسليم بنجاح
       default:
-        return 1;
+        return 0;
     }
   }
 
@@ -329,7 +329,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
     );
   }
 
-  /// 2. Captain Card with Avatar, Rating, Vehicle and Action Buttons
+  /// 2. Captain Card with Avatar, Rating, Vehicle and Action Buttons (Aligned properly in RTL)
   Widget _buildCaptainCard(bool isDark) {
     final hasCaptain = _currentParcel.captainName != null || _currentParcel.status != 'pending';
     final captainName = _currentParcel.captainName ?? 'أحمد منصور';
@@ -346,10 +346,100 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
           : AppColors.gray200.withValues(alpha: 0.8),
       child: Row(
         children: [
-          // Action Buttons (Left in RTL)
+          // 1. Avatar (Right in RTL)
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary500.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+              color: AppColors.primary500.withValues(alpha: 0.12),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.person_rounded,
+                size: 28,
+                color: AppColors.primary500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // 2. Captain Details (Middle in RTL)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hasCaptain ? captainName : 'جاري البحث عن كابتن...',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: isDark ? Colors.white : AppColors.gray900,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+                    const SizedBox(width: 2),
+                    Text(
+                      rating.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.gray300 : AppColors.gray700,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '• $vehicle',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11.5,
+                        color: isDark ? AppColors.gray400 : AppColors.gray600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // 3. Action Buttons (Left in RTL)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Call Button
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.primary500.withValues(alpha: 0.15)
+                      : const Color(0xFFFFF3E6),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.phone_outlined,
+                      size: 18, color: AppColors.primary500),
+                  onPressed: () => _makePhoneCall(captainPhone),
+                ),
+              ),
+              const SizedBox(width: 8),
               // Message Button
               Container(
                 width: 38,
@@ -374,88 +464,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
-              // Call Button
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.primary500.withValues(alpha: 0.15)
-                      : const Color(0xFFFFF3E6),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.phone_outlined,
-                      size: 18, color: AppColors.primary500),
-                  onPressed: () => _makePhoneCall(captainPhone),
-                ),
-              ),
             ],
-          ),
-          const Spacer(),
-          // Captain Details
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                hasCaptain ? captainName : 'جاري البحث عن كابتن...',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: isDark ? Colors.white : AppColors.gray900,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    rating.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.gray300 : AppColors.gray700,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
-                  const SizedBox(width: 6),
-                  Text(
-                    '• $vehicle',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 11.5,
-                      color: isDark ? AppColors.gray400 : AppColors.gray600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(width: 12),
-          // Avatar
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary500.withValues(alpha: 0.4),
-                width: 1.5,
-              ),
-              color: AppColors.primary500.withValues(alpha: 0.12),
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.person_rounded,
-                size: 28,
-                color: AppColors.primary500,
-              ),
-            ),
           ),
         ],
       ),
@@ -465,53 +474,54 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
   /// 3. Stepper Timeline Card ("حالة الطرد")
   Widget _buildTimelineCard(bool isDark) {
     final status = _currentParcel.status.toLowerCase();
-    final isArrivedAtPickup = status == 'arrived_at_pickup' || status == 'arrived';
     final stepIndex = _getStatusStepIndex(status);
 
     final steps = [
       {
         'title': 'تم إنشاء الطلب',
-        'subtitle': 'تم إرسال الطلب للنظام',
+        'subtitle': 'تم تسجيل الطلب في النظام بنجاح',
         'isDone': stepIndex >= 0,
         'isActive': stepIndex == 0,
       },
       {
         'title': 'تم قبول الطلب',
-        'subtitle': 'وافق الكابتن على استلام الطلب',
+        'subtitle': stepIndex >= 1
+            ? 'وافق الكابتن وهو في طريقه إليك'
+            : 'بانتظار قبول الكابتن للطلب',
         'isDone': stepIndex >= 1,
         'isActive': stepIndex == 1,
       },
       {
-        'title': 'الكابتن في الطريق',
-        'subtitle': isArrivedAtPickup
-            ? 'وصل الكابتن إلى موقع الاستلام وبانتظارك'
-            : (stepIndex >= 2 ? 'في الطريق إلى موقع الاستلام' : 'بانتظار انطلاق الكابتن'),
+        'title': 'الكابتن في موقع الاستلام',
+        'subtitle': stepIndex >= 2
+            ? 'وصل الكابتن إلى موقع استلام الشحنة'
+            : 'في الطريق إلى موقع الاستلام',
         'isDone': stepIndex >= 2,
-        'isActive': stepIndex == 2 && !isArrivedAtPickup,
+        'isActive': stepIndex == 2,
       },
       {
         'title': 'تم استلام الطرد',
         'subtitle': stepIndex >= 3
-            ? 'تم فحص وتأكيد الاستلام'
-            : (isArrivedAtPickup ? 'الكابتن في الموقع لاستلام الشحنة' : 'بانتظار تسليم الطرد للكابتن'),
+            ? 'تم استلام وفحص الطرد من قبل الكابتن'
+            : 'بانتظار تسليم الطرد للكابتن',
         'isDone': stepIndex >= 3,
-        'isActive': isArrivedAtPickup,
-      },
-      {
-        'title': 'جاري التوصيل',
-        'subtitle': stepIndex >= 4
-            ? 'في الطريق إلى موقع التسليم'
-            : 'بانتظار الانطلاق نحو المستلم',
-        'isDone': stepIndex >= 4,
         'isActive': stepIndex == 3,
       },
       {
-        'title': 'تم التسليم',
+        'title': 'جاري التوصيل نحو الوجهة',
+        'subtitle': stepIndex >= 4
+            ? 'الكابتن في الطريق نحو موقع التسليم'
+            : 'بانتظار الانطلاق نحو المستلم',
+        'isDone': stepIndex >= 4,
+        'isActive': stepIndex == 4,
+      },
+      {
+        'title': 'تم تسليم الشحنة بنجاح',
         'subtitle': stepIndex >= 5
-            ? 'تم تسليم الشحنة للعميل بنجاح'
+            ? 'تم تسليم الطرد للمستلم بنجاح 🏁'
             : 'بانتظار وصول الشحنة للمستلم',
         'isDone': stepIndex >= 5,
-        'isActive': stepIndex == 4,
+        'isActive': stepIndex == 5,
       },
     ];
 

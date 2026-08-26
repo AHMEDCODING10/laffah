@@ -189,9 +189,14 @@ class _CaptainParcelNavigationPageState
 
     try {
       final dio = DioClient().dio;
-      await dio.post('/parcel/${widget.parcelId}/status', data: {
-        'status': status,
-      });
+      final targetId = widget.parcelId.isNotEmpty
+          ? widget.parcelId
+          : (widget.trackingCode.isNotEmpty ? widget.trackingCode : '');
+      if (targetId.isNotEmpty) {
+        await dio.post('/parcel/$targetId/status', data: {
+          'status': status,
+        });
+      }
     } catch (_) {}
 
     if (mounted) {
@@ -510,7 +515,7 @@ class _CaptainParcelNavigationPageState
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            '${widget.parcelType} • ${widget.size}',
+                            _cleanParcelType(widget.parcelType, widget.size),
                             style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontSize: 11,
@@ -524,94 +529,141 @@ class _CaptainParcelNavigationPageState
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
-                    // Sender & Receiver Contact Details
-                    Row(
-                      children: [
-                        // Sender Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    // Sender & Receiver Contact Rows (Compact & Full Working Actions)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : AppColors.gray50,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.04),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // ─── Sender Row ───
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    _currentStep < 2
-                                        ? Icons.person_pin_circle_rounded
-                                        : Icons.person_outline_rounded,
-                                    size: 16,
-                                    color: _currentStep < 2
-                                        ? AppColors.primary500
-                                        : AppColors.gray500,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'المرسل: ${widget.senderName}',
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? Colors.white
-                                          : AppColors.gray900,
-                                    ),
-                                  ),
-                                ],
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary500.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.person_pin_circle_rounded,
+                                  size: 14,
+                                  color: AppColors.primary500,
+                                ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'المستلم: ${widget.receiverName}',
-                                style: const TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 11,
-                                  color: AppColors.gray500,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'المرسل: ${widget.senderName}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : AppColors.gray900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              _buildMiniContactAction(
+                                icon: Icons.chat_bubble_outline_rounded,
+                                isDark: isDark,
+                                onTap: () {
+                                  CaptainCommunicationSheet.show(
+                                    context: context,
+                                    passengerName: widget.senderName,
+                                    passengerPhone: widget.senderPhone,
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 6),
+                              _buildMiniContactAction(
+                                icon: Icons.phone_in_talk_rounded,
+                                isDark: isDark,
+                                isCall: true,
+                                onTap: () => _makePhoneCall(widget.senderPhone),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 6),
+                          Divider(
+                            height: 1,
+                            thickness: 0.8,
+                            color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // ─── Receiver Row ───
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 14,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'المستلم: ${widget.receiverName}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : AppColors.gray900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              _buildMiniContactAction(
+                                icon: Icons.chat_bubble_outline_rounded,
+                                isDark: isDark,
+                                onTap: () {
+                                  CaptainCommunicationSheet.show(
+                                    context: context,
+                                    passengerName: widget.receiverName,
+                                    passengerPhone: widget.receiverPhone.isNotEmpty
+                                        ? widget.receiverPhone
+                                        : widget.senderPhone,
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 6),
+                              _buildMiniContactAction(
+                                icon: Icons.phone_in_talk_rounded,
+                                isDark: isDark,
+                                isCall: true,
+                                onTap: () => _makePhoneCall(
+                                  widget.receiverPhone.isNotEmpty
+                                      ? widget.receiverPhone
+                                      : widget.senderPhone,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-
-                        // Action Shortcuts (Call & Chat Buttons)
-                        Row(
-                          children: [
-                            // Chat
-                            _buildCircleCallAction(
-                              Icons.chat_bubble_outline_rounded,
-                              () {
-                                final activeName = _currentStep < 2
-                                    ? widget.senderName
-                                    : widget.receiverName;
-                                final activePhone = _currentStep < 2
-                                    ? widget.senderPhone
-                                    : (widget.receiverPhone.isNotEmpty
-                                        ? widget.receiverPhone
-                                        : widget.senderPhone);
-                                CaptainCommunicationSheet.show(
-                                  context: context,
-                                  passengerName: activeName,
-                                  passengerPhone: activePhone,
-                                );
-                              },
-                              isDark,
-                            ),
-                            AppSpacing.w8,
-                            // Call
-                            _buildCircleCallAction(
-                              Icons.phone_in_talk_rounded,
-                              () {
-                                final activePhone = _currentStep < 2
-                                    ? widget.senderPhone
-                                    : (widget.receiverPhone.isNotEmpty
-                                        ? widget.receiverPhone
-                                        : widget.senderPhone);
-                                _makePhoneCall(activePhone);
-                              },
-                              isDark,
-                            ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 12),
@@ -792,23 +844,43 @@ class _CaptainParcelNavigationPageState
     );
   }
 
-  Widget _buildCircleCallAction(
-      IconData icon, VoidCallback onTap, bool isDark) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color:
-              isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray100,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: AppColors.primary500,
-          size: 19,
+  String _cleanParcelType(String? type, String? size) {
+    String cleanType = type ?? 'طرد';
+    cleanType = cleanType.replaceAll(RegExp(r'\(\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*\)'), '');
+    cleanType = cleanType.split('|').first.trim();
+    cleanType = cleanType.split('•').first.trim();
+    if (cleanType.isEmpty) cleanType = 'طرد';
+    final cleanSize = (size != null && size.isNotEmpty) ? size : 'متوسط';
+    return '$cleanType • $cleanSize';
+  }
+
+  Widget _buildMiniContactAction({
+    required IconData icon,
+    required bool isDark,
+    required VoidCallback onTap,
+    bool isCall = false,
+  }) {
+    final color = isCall ? AppColors.primary500 : AppColors.info;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: color.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+          child: Icon(icon, size: 16, color: color),
         ),
       ),
     );

@@ -7,7 +7,8 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/di/injection_container.dart' as di;
 import '../bloc/trips/captain_trips_bloc.dart';
 import '../bloc/trips/captain_trips_event.dart';
 import '../bloc/trips/captain_trips_state.dart';
@@ -35,10 +36,93 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   @override
   void initState() {
     super.initState();
-    _tripsBloc = sl<CaptainTripsBloc>();
+    _tripsBloc = di.sl<CaptainTripsBloc>();
     _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
 
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _handleDeleteTrip(BuildContext context, String tripId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+              SizedBox(width: 8),
+              Text(
+                'حذف السجل',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'هل أنت متأكد من رغبتك في حذف هذا السجل نهائياً؟',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 13.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text('إلغاء',
+                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: const Text('حذف',
+                  style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final dio = di.sl<DioClient>().dio;
+        await dio.delete('/trips/$tripId');
+        if (mounted) {
+          messenger.showSnackBar(
+            const SnackBar(
+              backgroundColor: AppColors.success,
+              content: Text('تم حذف السجل بنجاح.',
+                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+            ),
+          );
+          _tripsBloc.add(FetchCaptainTrips(
+              isRefresh: true, statusFilter: _selectedStatusFilter));
+        }
+      } catch (e) {
+        if (mounted) {
+          messenger.showSnackBar(
+            const SnackBar(
+              backgroundColor: AppColors.danger,
+              content: Text('حدث خطأ أثناء الحذف.',
+                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _onScroll() {
@@ -284,7 +368,10 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
                         }
                         final trip = filtered[index];
                         return _AnimatedTripCard(
-                            tripEntity: trip, isDark: isDark);
+                          tripEntity: trip,
+                          isDark: isDark,
+                          onDelete: () => _handleDeleteTrip(context, trip.id),
+                        );
                       },
                     ),
                   );
@@ -305,13 +392,13 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
       physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
         return Shimmer.fromColors(
-          baseColor: isDark ? Colors.grey[900]! : Colors.grey[200]!,
-          highlightColor: isDark ? Colors.grey[850]! : Colors.grey[100]!,
+          baseColor: isDark ? const Color(0xFF1E2433) : AppColors.gray200,
+          highlightColor: isDark ? const Color(0xFF283044) : AppColors.gray100,
           child: Container(
             margin: const EdgeInsets.only(bottom: AppSpacing.s12),
-            height: 160,
+            height: 140,
             decoration: BoxDecoration(
-              color: isDark ? Colors.black : Colors.white,
+              color: isDark ? const Color(0xFF1E2433) : Colors.white,
               borderRadius: AppSpacing.radiusLG,
             ),
           ),
@@ -385,14 +472,66 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
 class _AnimatedTripCard extends StatelessWidget {
   final CaptainTripEntity tripEntity;
   final bool isDark;
+  final VoidCallback? onDelete;
 
-  const _AnimatedTripCard({required this.tripEntity, required this.isDark});
+  const _AnimatedTripCard({
+    required this.tripEntity,
+    required this.isDark,
+    this.onDelete,
+  });
+
+  String _getArabicStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'finished':
+      case 'مكتملة':
+      case 'تم الانتهاء':
+        return 'مكتملة';
+      case 'delivered':
+      case 'تم التسليم':
+        return 'تم التسليم';
+      case 'cancelled':
+      case 'canceled':
+      case 'ملغاة':
+      case 'ملغية':
+        return 'ملغاة';
+      case 'in_transit':
+      case 'picked_up':
+      case 'arrived_at_pickup':
+      case 'arrived':
+      case 'active':
+      case 'قيد التنفيذ':
+      case 'جارية':
+      case 'نشطة':
+        return 'قيد التنفيذ';
+      default:
+        return status;
+    }
+  }
+
+  Color _getStatusColor(String arabicStatus) {
+    switch (arabicStatus) {
+      case 'مكتملة':
+      case 'تم التسليم':
+        return AppColors.success;
+      case 'ملغاة':
+        return AppColors.danger;
+      case 'قيد التنفيذ':
+      default:
+        return AppColors.warning;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final trip = tripEntity.toMap();
-    final String status = trip['status'];
-    final Color statusColor = trip['statusColor'];
+    final bool isParcel = tripEntity.isParcel;
+    final String rawStatus = trip['status'] ?? '';
+    final String arabicStatus = _getArabicStatus(rawStatus);
+    final Color statusColor = _getStatusColor(arabicStatus);
+    final bool canDelete = arabicStatus == 'مكتملة' ||
+        arabicStatus == 'تم التسليم' ||
+        arabicStatus == 'ملغاة';
 
     return _ScaleButton(
       onTap: () {
@@ -406,7 +545,7 @@ class _AnimatedTripCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Row 1: ID & Status ──
+            // ── Row 1: Type / ID & Arabic Status & Delete ──
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -415,42 +554,73 @@ class _AnimatedTripCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.primary500.withValues(alpha: 0.1),
+                        color: (isParcel
+                                ? const Color(0xFF3B82F6)
+                                : AppColors.primary500)
+                            .withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.receipt_long_rounded,
-                          size: 14, color: AppColors.primary500),
+                      child: Icon(
+                        isParcel
+                            ? Icons.inventory_2_rounded
+                            : Icons.motorcycle_rounded,
+                        size: 15,
+                        color: isParcel
+                            ? const Color(0xFF3B82F6)
+                            : AppColors.primary500,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      AppLocalizations.of(context)!.capt_trip_number_id(trip['id']),
+                      isParcel
+                          ? 'توصيل طرد #${trip['id']} 📦'
+                          : 'مشوار رحلة #${trip['id']} 🛵',
                       style: TextStyle(
-                        fontSize: 12.5,
-                        color: isDark ? AppColors.gray300 : AppColors.gray800,
+                        fontSize: 13,
+                        color: isDark ? AppColors.gray200 : AppColors.gray900,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'IBM Plex Sans Arabic',
                       ),
                     ),
                   ],
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: statusColor.withValues(alpha: 0.25)),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color: statusColor,
-                      fontWeight: FontWeight.w900,
-                      fontFamily: 'IBM Plex Sans Arabic',
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: statusColor.withValues(alpha: 0.25)),
+                      ),
+                      child: Text(
+                        arabicStatus,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: statusColor,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'IBM Plex Sans Arabic',
+                        ),
+                      ),
                     ),
-                  ),
+                    if (canDelete && onDelete != null) ...[
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: onDelete,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: AppColors.danger.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -482,7 +652,7 @@ class _AnimatedTripCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        trip['pickup'],
+                        trip['pickup'] ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -494,7 +664,7 @@ class _AnimatedTripCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        trip['dropoff'],
+                        trip['dropoff'] ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -515,7 +685,7 @@ class _AnimatedTripCard extends StatelessWidget {
               child: Divider(height: 1),
             ),
 
-            // ── Footer: Passenger Name, Price & Date ──
+            // ── Footer: Passenger/Sender Name, Price & Date ──
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -523,16 +693,26 @@ class _AnimatedTripCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundColor:
-                          isDark ? Colors.white12 : AppColors.gray200,
-                      child: const Icon(Icons.person_rounded,
-                          size: 14, color: AppColors.gray500),
+                      backgroundColor: isParcel
+                          ? const Color(0xFF3B82F6).withValues(alpha: 0.12)
+                          : (isDark ? Colors.white12 : AppColors.gray200),
+                      child: Icon(
+                        isParcel
+                            ? Icons.inventory_2_outlined
+                            : Icons.person_rounded,
+                        size: 14,
+                        color: isParcel
+                            ? const Color(0xFF3B82F6)
+                            : AppColors.gray500,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      trip['passengerName'],
+                      isParcel
+                          ? 'المرسل: ${trip['passengerName']}'
+                          : 'الراكب: ${trip['passengerName']}',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'IBM Plex Sans Arabic',
                         color: isDark ? AppColors.gray300 : AppColors.gray700,
@@ -544,7 +724,7 @@ class _AnimatedTripCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      trip['price'],
+                      trip['price'] ?? '',
                       style: const TextStyle(
                         fontSize: 15,
                         color: AppColors.primary500,
@@ -553,7 +733,7 @@ class _AnimatedTripCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      trip['date'],
+                      trip['date'] ?? '',
                       style: const TextStyle(
                         fontSize: 10,
                         color: AppColors.gray500,

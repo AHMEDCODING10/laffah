@@ -126,11 +126,14 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
                   t['status'] == 'pending' ||
                   t['status'] == 'accepted' ||
                   t['status'] == 'arrived' ||
+                  t['status'] == 'arrived_at_pickup' ||
+                  t['status'] == 'picked_up' ||
                   t['status'] == 'in_transit')
               .toList();
 
           final pastTrips = sortedAllTrips
-              .where((t) => t['status'] == 'completed')
+              .where((t) =>
+                  t['status'] == 'completed' || t['status'] == 'delivered')
               .toList();
 
           final cancelledTrips = sortedAllTrips
@@ -482,19 +485,42 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
 
   /// Maps API response fields to the format expected by TripHistoryCards
   Map<String, dynamic> _mapApiTripToCard(Map<String, dynamic> trip, AppLocalizations l10n) {
+    final bool isParcel = trip['isParcel'] == true ||
+        trip['is_parcel'] == true ||
+        trip['type'] == 'parcel' ||
+        trip['type'] == 'delivery';
+
+    final rawCaptainName = trip['captainName'] ??
+        trip['captain']?['user']?['name'] ??
+        trip['captain']?['name'];
+
+    final captainName = (rawCaptainName != null && rawCaptainName.toString().trim().isNotEmpty)
+        ? rawCaptainName.toString().trim()
+        : (isParcel ? 'كابتن التوصيل' : l10n.pass_trips_captain_unknown);
+
+    final rawPrice = trip['final_price'] ?? trip['estimated_price'] ?? trip['price'] ?? 0;
+    final double price = (rawPrice is num)
+        ? rawPrice.toDouble()
+        : (double.tryParse(rawPrice.toString()) ?? 0.0);
+
     return {
       'id': trip['id']?.toString() ?? '',
-      'type': trip['type'] == 'parcel' ? l10n.pass_trips_type_parcel : l10n.pass_trips_type_ride,
-      'statusAr': _statusToArabic(trip['status'], l10n),
-      'captainName': trip['captain']?['user']?['name'] ?? l10n.pass_trips_captain_unknown,
-      'vehicleModel': trip['captain']?['vehicle_model'] ?? '',
+      'type': isParcel ? 'إرسال طرد 📦' : l10n.pass_trips_type_ride,
+      'statusAr': _statusToArabic(trip['status']?.toString(), isParcel, l10n),
+      'captainName': captainName,
+      'vehicleModel': trip['captain']?['vehicle_model'] ?? (isParcel ? 'دراجة توصيل' : ''),
       'vehiclePlate': trip['captain']?['plate_number'] ?? '',
-      'pickup': trip['pickup_address'] ?? '',
-      'dropoff': trip['dropoff_address'] ?? '',
-      'price': (trip['final_price'] ?? trip['estimated_price'] ?? 0).toDouble(),
-      'distance': trip['distance_km']?.toString() ?? '',
-      'rating': (trip['rating_by_user'] ?? 0).toDouble(),
-      'isRide': trip['type'] != 'parcel',
+      'pickup': trip['pickup_address'] ?? trip['pickup'] ?? '',
+      'dropoff': trip['dropoff_address'] ?? trip['dropoff'] ?? '',
+      'price': price,
+      'fare': price,
+      'distance': trip['distance_km']?.toString() ?? trip['distance']?.toString() ?? '',
+      'rating': (trip['rating_by_user'] != null && trip['rating_by_user'] is num)
+          ? (trip['rating_by_user'] as num).toDouble()
+          : 5.0,
+      'isRide': !isParcel,
+      'isParcel': isParcel,
+      'date': trip['timeTag'] ?? (isParcel ? 'تم التسليم' : 'مكتملة'),
       'scheduledAt': trip['scheduled_at'],
       'reason': trip['cancellation_reason'] ?? 'تم الإلغاء بواسطة الراكب',
       'cancelled_at': trip['cancelled_at'],
@@ -503,24 +529,30 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
     };
   }
 
-  String _statusToArabic(String? status, AppLocalizations l10n) {
-    switch (status) {
+  String _statusToArabic(String? status, bool isParcel, AppLocalizations l10n) {
+    switch (status?.toLowerCase()) {
       case 'pending':
-        return l10n.pass_trips_status_pending;
+        return isParcel ? 'بانتظار كابتن' : l10n.pass_trips_status_pending;
       case 'accepted':
         return l10n.pass_trips_status_accepted;
       case 'arrived':
-        return l10n.pass_trips_status_arrived;
+      case 'arrived_at_pickup':
+        return isParcel ? 'الكابتن وصل للاستلام' : l10n.pass_trips_status_arrived;
+      case 'picked_up':
+        return 'تم استلام الطرد';
       case 'in_transit':
-        return l10n.pass_trips_status_in_transit;
+        return isParcel ? 'جاري التوصيل' : l10n.pass_trips_status_in_transit;
       case 'completed':
         return l10n.pass_trips_status_completed;
+      case 'delivered':
+        return 'تم التسليم';
       case 'cancelled':
+      case 'canceled':
         return l10n.pass_trips_status_cancelled;
       case 'scheduled':
         return l10n.pass_trips_status_scheduled;
       default:
-        return l10n.pass_trips_status_unknown;
+        return isParcel ? 'تم التسليم' : l10n.pass_trips_status_completed;
     }
   }
 

@@ -152,7 +152,9 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = widget.state;
-    final isArrived = state.status.toLowerCase() == 'arrived';
+    final s = state.status.toLowerCase();
+    final isArrived = s == 'arrived';
+    final isInTransit = s == 'in_transit' || s == 'started' || s == 'in_progress';
 
     final Color primaryColor =
         isArrived ? const Color(0xFF00C853) : AppColors.primary500;
@@ -174,7 +176,7 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Container(
-            margin: EdgeInsets.fromLTRB(14, 0, 14, bottomPadding > 0 ? bottomPadding + 8 : 14),
+            margin: EdgeInsets.fromLTRB(14, 0, 14, bottomPadding > 0 ? bottomPadding + 12 : 18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -215,7 +217,7 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Status Badge
+                          // Status Badge (Right in RTL)
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4.5),
@@ -233,7 +235,9 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                 Icon(
                                   isArrived
                                       ? Icons.where_to_vote_rounded
-                                      : Icons.check_circle_rounded,
+                                      : (isInTransit
+                                          ? Icons.rocket_launch_rounded
+                                          : Icons.check_circle_rounded),
                                   color: primaryColor,
                                   size: 14,
                                 ),
@@ -241,7 +245,9 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                 Text(
                                   isArrived
                                       ? 'وصل الكابتن إلى موقعك! 📍'
-                                      : 'تم قبول المشوار 🛵',
+                                      : (isInTransit
+                                          ? 'في الطريق إلى الوجهة 🚀'
+                                          : 'تم قبول المشوار 🛵'),
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 11.5,
@@ -252,7 +258,7 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                               ],
                             ),
                           ),
-                          // ETA / Waiting Tag
+                          // ETA / Waiting Tag (Left in RTL)
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 9, vertical: 4.5),
@@ -266,13 +272,17 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                 Icon(
                                   isArrived
                                       ? Icons.timer_outlined
-                                      : Icons.access_time_filled_rounded,
+                                      : (isInTransit
+                                          ? Icons.near_me_rounded
+                                          : Icons.access_time_filled_rounded),
                                   color: primaryColor,
                                   size: 13,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isArrived ? 'بانتظارك الآن' : 'الوصول: ~3 د',
+                                  isArrived
+                                      ? 'بانتظارك الآن'
+                                      : (isInTransit ? 'الوصول: ~8 د' : 'الوصول: ~3 د'),
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 11,
@@ -323,93 +333,10 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
 
                       const SizedBox(height: 10),
 
-                      // ─── 2. Captain Profile: Avatar + Name + Rating + Plate Number ───
+                      // ─── 2. Captain Profile (Avatar on Right, Details Middle, Plate on Left in RTL) ───
                       Row(
                         children: [
-                          // Plate Number Tag (Left in RTL)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF1C2230)
-                                  : AppColors.gray100,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : AppColors.gray300,
-                              ),
-                            ),
-                            child: Text(
-                              vehiclePlate,
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? AppColors.gray300
-                                    : AppColors.gray800,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          // Captain Details
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                captainName,
-                                style: TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.gray900,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    vehicleModel,
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 11,
-                                      color: isDark
-                                          ? AppColors.gray400
-                                          : AppColors.gray600,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text('•',
-                                      style: TextStyle(color: AppColors.gray400)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    state.rating.toStringAsFixed(1),
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? Colors.white
-                                          : AppColors.gray900,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 2),
-                                  const Icon(
-                                    Icons.star_rounded,
-                                    color: Color(0xFFFFB800),
-                                    size: 14,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 10),
-                          // Captain Avatar
+                          // 1. Captain Avatar (Right in RTL)
                           Stack(
                             clipBehavior: Clip.none,
                             children: [
@@ -454,6 +381,99 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                               ),
                             ],
                           ),
+                          const SizedBox(width: 10),
+
+                          // 2. Captain Details (Middle in RTL)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  captainName,
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.gray900,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.star_rounded,
+                                      color: Color(0xFFFFB800),
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      state.rating.toStringAsFixed(1),
+                                      style: TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.gray900,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text('•',
+                                        style: TextStyle(color: AppColors.gray400)),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        vehicleModel,
+                                        style: TextStyle(
+                                          fontFamily: 'IBM Plex Sans Arabic',
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? AppColors.gray400
+                                              : AppColors.gray600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // 3. Plate Number Tag (Left in RTL)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF1C2230)
+                                  : AppColors.gray100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : AppColors.gray300,
+                              ),
+                            ),
+                            child: Text(
+                              vehiclePlate,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.gray300
+                                    : AppColors.gray800,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
 
@@ -466,23 +486,20 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                       ),
                       const SizedBox(height: 8),
 
-                      // ─── 3. Destination & Fare Summary ───
+                      // ─── 3. Destination & Fare Summary (Destination on Right, Fare on Left in RTL) ───
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '${state.selectedOption.basePrice.toStringAsFixed(0)} ر.ي',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: primaryColor,
-                            ),
-                          ),
+                          // Destination (Right in RTL)
                           Expanded(
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  color: primaryColor,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     state.dropoff.isNotEmpty
@@ -490,24 +507,28 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                         : 'الوجهة المحددة',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.end,
                                     style: TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
                                       color: isDark
-                                          ? AppColors.gray300
+                                          ? AppColors.gray200
                                           : AppColors.gray800,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.location_on_rounded,
-                                  color: primaryColor,
-                                  size: 15,
-                                ),
                               ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Fare (Left in RTL)
+                          Text(
+                            '${state.selectedOption.basePrice.toStringAsFixed(0)} ر.ي',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w900,
+                              color: primaryColor,
                             ),
                           ),
                         ],
@@ -515,58 +536,10 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
 
                       const SizedBox(height: 10),
 
-                      // ─── 4. Action Buttons: Call | Message | Cancel ───
+                      // ─── 4. Action Buttons (Call Button on Right, Chat in Middle, Cancel/SOS on Left in RTL) ───
                       Row(
                         children: [
-                          // Cancel Button ('X')
-                          InkWell(
-                            onTap: () => _confirmCancel(context),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: AppColors.danger.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.danger.withValues(alpha: 0.25),
-                                  width: 1,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: AppColors.danger,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-
-                          // Message Button (💬)
-                          InkWell(
-                            onTap: () => _sendSms(state.captainPhone),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: primaryColor.withValues(alpha: 0.25),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.chat_bubble_outline_rounded,
-                                color: primaryColor,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-
-                          // Call Captain Button (Primary Action)
+                          // Call Captain Button (Primary Action on Right in RTL)
                           Expanded(
                             child: SizedBox(
                               height: 42,
@@ -595,6 +568,65 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Message Button (💬) in Middle
+                          InkWell(
+                            onTap: () => _sendSms(state.captainPhone),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: primaryColor.withValues(alpha: 0.25),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                color: primaryColor,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Cancel Button / Safety SOS (Left in RTL)
+                          InkWell(
+                            onTap: () {
+                              if (isInTransit) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('خدمة الطوارئ والأمان نشطة على مدار الساعة 🛡️',
+                                        style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                                  ),
+                                );
+                              } else {
+                                _confirmCancel(context);
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: AppColors.danger.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.danger.withValues(alpha: 0.25),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Icon(
+                                isInTransit ? Icons.shield_outlined : Icons.close_rounded,
+                                color: AppColors.danger,
+                                size: 18,
                               ),
                             ),
                           ),

@@ -142,14 +142,9 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
       if (_notesController.text.trim().isNotEmpty)
         _notesController.text.trim(),
       if (_isInsuranceEnabled) 'شامل التأمين',
-      'من: ${_pickupLocationController.text.trim()} (${_pickupLatLng.latitude.toStringAsFixed(4)}, ${_pickupLatLng.longitude.toStringAsFixed(4)})',
-      if (_dropoffLatLng != null)
-        'إلى: ${_dropoffLocationController.text.trim()} (${_dropoffLatLng!.latitude.toStringAsFixed(4)}, ${_dropoffLatLng!.longitude.toStringAsFixed(4)})'
-      else
-        'إلى: ${_dropoffLocationController.text.trim()}',
       if (_estimatedValueController.text.trim().isNotEmpty)
-        'القيمة التقديرية: ${_estimatedValueController.text.trim()} ر.ي',
-    ].join(' | ');
+        'القيمة: ${_estimatedValueController.text.trim()} ر.ي',
+    ].join(' • ');
 
 
     context.read<ParcelBloc>().add(

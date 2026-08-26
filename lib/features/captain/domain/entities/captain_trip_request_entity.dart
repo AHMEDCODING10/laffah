@@ -5,6 +5,8 @@ class CaptainTripRequestEntity extends Equatable {
   final String title;
   final String passengerName;
   final String passengerPhone;
+  final String receiverName;
+  final String receiverPhone;
   final double passengerRating;
   final String description;
   final String pickup;
@@ -17,6 +19,8 @@ class CaptainTripRequestEntity extends Equatable {
   final String timeTag;
   final bool isParcel;
   final String? parcelType;
+  final String? size;
+  final String? trackingCode;
   final List<String> stops;
 
   const CaptainTripRequestEntity({
@@ -24,6 +28,8 @@ class CaptainTripRequestEntity extends Equatable {
     required this.title,
     required this.passengerName,
     required this.passengerPhone,
+    this.receiverName = 'المستلم',
+    this.receiverPhone = '',
     required this.passengerRating,
     required this.description,
     required this.pickup,
@@ -36,6 +42,8 @@ class CaptainTripRequestEntity extends Equatable {
     required this.timeTag,
     required this.isParcel,
     this.parcelType,
+    this.size,
+    this.trackingCode,
     required this.stops,
   });
 
@@ -45,6 +53,8 @@ class CaptainTripRequestEntity extends Equatable {
         title,
         passengerName,
         passengerPhone,
+        receiverName,
+        receiverPhone,
         passengerRating,
         description,
         pickup,
@@ -57,6 +67,8 @@ class CaptainTripRequestEntity extends Equatable {
         timeTag,
         isParcel,
         parcelType,
+        size,
+        trackingCode,
         stops,
       ];
 }
