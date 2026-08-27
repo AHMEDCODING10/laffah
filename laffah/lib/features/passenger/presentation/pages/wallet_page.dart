@@ -21,10 +21,9 @@ class WalletPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<WalletBloc>()..add(GetWalletBalanceEvent()),
-      child: const _WalletView(),
-    );
+    // Fire event on global singleton without creating a new BlocProvider that kills it on dispose
+    context.read<WalletBloc>().add(GetWalletBalanceEvent());
+    return const _WalletView();
   }
 }
 

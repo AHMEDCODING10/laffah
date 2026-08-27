@@ -16,10 +16,9 @@ class TripHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<RideBloc>()..add(const LoadTripHistoryEvent()),
-      child: const _TripHistoryView(),
-    );
+    // Fire event on global singleton without creating a new BlocProvider that kills it on dispose
+    context.read<RideBloc>().add(const LoadTripHistoryEvent());
+    return const _TripHistoryView();
   }
 }
 

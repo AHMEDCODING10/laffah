@@ -29,10 +29,9 @@ class UserProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<ProfileBloc>()..add(GetProfileEvent()),
-      child: const _ProfileView(),
-    );
+    // Fire event on global singleton without creating a new BlocProvider that kills it on dispose
+    context.read<ProfileBloc>().add(GetProfileEvent());
+    return const _ProfileView();
   }
 }
 
