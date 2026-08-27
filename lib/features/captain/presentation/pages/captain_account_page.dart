@@ -7,6 +7,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/di/injection_container.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_event.dart';
@@ -286,12 +288,15 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                     Widget avatarChild;
                     if (avatarUrl != null && avatarUrl.isNotEmpty) {
                       avatarChild = ClipOval(
-                        child: Image.network(
-                          avatarUrl,
+                        child: CachedNetworkImage(
+                          imageUrl: avatarUrl,
                           width: 64,
                           height: 64,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
+                          placeholder: (context, url) => Container(
+                            color: AppColors.primary500.withValues(alpha: 0.5),
+                          ),
+                          errorWidget: (context, url, error) =>
                               _buildFallbackAvatar(name),
                         ),
                       );

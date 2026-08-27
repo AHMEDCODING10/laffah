@@ -106,45 +106,70 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                   onRefresh: () async {
                     _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
                   },
-                  child: ListView(
-                    padding: const EdgeInsets.all(AppSpacing.s24),
-                    children: [
-                      _buildStatSummary(state, isDark),
-                      AppSpacing.h32,
-                      Text(
-                        'قائمة الرحلات',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: isDark ? AppColors.white : AppColors.gray900,
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.all(AppSpacing.s24),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildStatSummary(state, isDark),
+                              AppSpacing.h32,
+                              Text(
+                                'قائمة الرحلات',
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? AppColors.white : AppColors.gray900,
+                                ),
+                              ),
+                              AppSpacing.h16,
+                            ],
+                          ),
                         ),
                       ),
-                      AppSpacing.h16,
                       if (state.trips.isEmpty)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 40),
-                            child: Text('لا يوجد سجل رحلات حتى الآن.',
-                                style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    color: AppColors.gray500)),
+                        const SliverToBoxAdapter(
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 40),
+                              child: Text('لا يوجد سجل رحلات حتى الآن.',
+                                  style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      color: AppColors.gray500)),
+                            ),
                           ),
                         )
                       else
-                        ...state.trips.map((trip) => _buildTripItem(
-                              tripId: trip.id,
-                              type: trip.isParcel ? 'parcel' : 'ride',
-                              destination: trip.dropoff.isNotEmpty
-                                  ? trip.dropoff
-                                  : 'وجهة غير معروفة',
-                              time: trip.date,
-                              earnings: trip.price,
-                              status: trip.status,
-                              statusColor: trip.statusColor,
-                              isDark: isDark,
-                              onDelete: () => _confirmDelete(context, trip.id, isDark),
-                            )),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+                          sliver: SliverList.builder(
+                            itemCount: state.trips.length,
+                            itemBuilder: (context, index) {
+                              final trip = state.trips[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: AppSpacing.s16), // Apply some spacing between items
+                                child: _buildTripItem(
+                                  tripId: trip.id,
+                                  type: trip.isParcel ? 'parcel' : 'ride',
+                                  destination: trip.dropoff.isNotEmpty
+                                      ? trip.dropoff
+                                      : 'وجهة غير معروفة',
+                                  time: trip.date,
+                                  earnings: trip.price,
+                                  status: trip.status,
+                                  statusColor: trip.statusColor,
+                                  isDark: isDark,
+                                  onDelete: () => _confirmDelete(context, trip.id, isDark),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      // Bottom padding for scroll view
+                      const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
                     ],
                   ),
                 );

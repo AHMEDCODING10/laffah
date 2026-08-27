@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 /// ProfileUserHeader — User Info Header Card matching Laffah Captain Card design specifications.
 class ProfileUserHeader extends StatelessWidget {
@@ -46,12 +47,15 @@ class ProfileUserHeader extends StatelessWidget {
     Widget avatarChild;
     if (avatarUrl != null && avatarUrl!.isNotEmpty) {
       avatarChild = ClipOval(
-        child: Image.network(
-          avatarUrl!,
+        child: CachedNetworkImage(
+          imageUrl: avatarUrl!,
           width: 64,
           height: 64,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
+          placeholder: (context, url) => Container(
+            color: AppColors.primary500.withValues(alpha: 0.5),
+          ),
+          errorWidget: (context, url, error) =>
               _buildFallbackAvatar(userName),
         ),
       );
