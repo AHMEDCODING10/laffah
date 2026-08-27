@@ -1,36 +1,36 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
+# Root .gitignore for Laffah Platform (Pixelmind)
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Secrets & Environment
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.key
+*.jks
+*.p12
+*.keystore
+firebase-credentials.json
+
+# Dependencies & Build artifacts
+node_modules/
+vendor/
+build/
 .dart_tool/
+.pub-cache/
 .flutter-plugins
 .flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
 
-# Android related
-**/android/app/profile
-**/android/app/release
-**/android/app/debug
+# Logs & Cache
+*.log
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+.phpunit.result.cache
 
-# IDE and Editor files
+# OS & IDE
+.DS_Store
+Thumbs.db
 .idea/
 .vscode/
 *.iml
-*.ipr
-*.iws
-
-# Environment variables
-.env*
-!.env.example

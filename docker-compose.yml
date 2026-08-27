@@ -1,0 +1,142 @@
+# Production Docker Compose Configuration for Laffah Platform (VPS / Dedicated Server / Coolify)
+version: '3.8'
+
+services:
+  # 1. Main Web API & Admin Panel Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laffah_backend
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      - APP_NAME=لَفَّة
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost:8000
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=laffah_db
+      - DB_USERNAME=laffah_user
+      - DB_PASSWORD=laffah_secret_pass_2026
+      - CACHE_STORE=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+      - BROADCAST_CONNECTION=reverb
+      - REVERB_APP_ID=laffah_app
+      - REVERB_APP_KEY=laffah_key_2026
+      - REVERB_APP_SECRET=laffah_secret_2026
+      - REVERB_HOST=0.0.0.0
+      - REVERB_PORT=8080
+      - REVERB_SCHEME=http
+      - ENABLE_REVERB=false
+      - ENABLE_QUEUE=false
+    volumes:
+      - backend_storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - laffah_network
+
+  # 2. Real-Time Laravel Reverb WebSocket Service
+  reverb:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laffah_reverb
+    restart: unless-stopped
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_NAME=لَفَّة
+      - APP_ENV=production
+      - CACHE_STORE=redis
+      - REDIS_HOST=redis
+      - REVERB_APP_ID=laffah_app
+      - REVERB_APP_KEY=laffah_key_2026
+      - REVERB_APP_SECRET=laffah_secret_2026
+      - REVERB_HOST=0.0.0.0
+      - REVERB_PORT=8080
+    depends_on:
+      - redis
+    networks:
+      - laffah_network
+
+  # 3. Dedicated Background Queue Worker
+  queue_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laffah_queue_worker
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3"]
+    environment:
+      - APP_NAME=لَفَّة
+      - APP_ENV=production
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=laffah_db
+      - DB_USERNAME=laffah_user
+      - DB_PASSWORD=laffah_secret_pass_2026
+      - CACHE_STORE=redis
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - laffah_network
+
+  # 4. MySQL Database Engine
+  db:
+    image: mysql:8.0
+    container_name: laffah_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: laffah_db
+      MYSQL_USER: laffah_user
+      MYSQL_PASSWORD: laffah_secret_pass_2026
+      MYSQL_ROOT_PASSWORD: root_secret_password_2026
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - laffah_network
+
+  # 5. Redis High-Performance Cache & Pub/Sub
+  redis:
+    image: redis:7-alpine
+    container_name: laffah_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - laffah_network
+
+networks:
+  laffah_network:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:
+  backend_storage:

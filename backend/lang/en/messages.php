@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'msg_1' => 'Translated Message msg_1',
+    'msg_2' => 'Translated Message msg_2',
+    'msg_3' => 'Translated Message msg_3',
+    'msg_4' => 'Translated Message msg_4',
+    'msg_5' => 'Translated Message msg_5',
+    'msg_6' => 'Translated Message msg_6',
+    'msg_7' => 'Translated Message msg_7',
+    'msg_8' => 'Translated Message msg_8',
+    'msg_9' => 'Translated Message msg_9',
+    'msg_10' => 'Translated Message msg_10',
+    'msg_11' => 'Translated Message msg_11',
+    'msg_12' => 'Translated Message msg_12',
+    'msg_13' => 'Translated Message msg_13',
+    'msg_14' => 'Translated Message msg_14',
+    'msg_15' => 'Translated Message msg_15',
+    'msg_16' => 'Translated Message msg_16',
+    'msg_17' => 'Translated Message msg_17',
+    'msg_18' => 'Translated Message msg_18',
+    'msg_19' => 'Translated Message msg_19',
+    'msg_20' => 'Translated Message msg_20',
+    'msg_21' => 'Translated Message msg_21',
+    'msg_22' => 'Translated Message msg_22',
+    'msg_23' => 'Translated Message msg_23',
+    'msg_24' => 'Translated Message msg_24',
+];
