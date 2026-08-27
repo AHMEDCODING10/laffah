@@ -28,9 +28,9 @@ services:
       - key: APP_FALLBACK_LOCALE
         value: ar
       - key: APP_KEY
-        value: "base64:VvOUKIeNtGwQALxy/XudQLMQO/MMtPYZBfG2ly2Ba64="
+        generateValue: true
       - key: JWT_SECRET
-        value: "ArRr27nzIpprC6WhG7nMizWKYgXSIVKNtNeypZv2M7HfgEHxnaGUyyvlCxTBw2Gw"
+        generateValue: true
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
