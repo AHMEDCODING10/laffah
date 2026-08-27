@@ -1,10 +1,9 @@
 allprojects {
     repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
         google()
         mavenCentral()
-        maven { url = uri("https://download.flutter.io") }
-        maven { url = uri("https://storage.flutter-io.cn/download.flutter.io") }
-        maven { url = uri("https://plugins.gradle.org/m2/") }
     }
     configurations.all {
         resolutionStrategy.eachDependency {

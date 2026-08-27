@@ -45,6 +45,7 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
     if (_formKey.currentState!.validate()) {
       context.read<ProfileBloc>().add(UpdateProfileEvent(
             name: _nameController.text,
+            phone: _phoneController.text,
             email: _emailController.text,
           ));
     }
@@ -105,9 +106,12 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
                         CircleAvatar(
                           radius: 50,
                           backgroundColor:
-                              AppColors.primary500.withValues(alpha: 0.1),
-                          backgroundImage: const NetworkImage(
-                              'https://i.pravatar.cc/150?img=11'),
+                              AppColors.primary500.withValues(alpha: 0.12),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            size: 55,
+                            color: AppColors.primary500,
+                          ),
                         ),
                         Container(
                           decoration: const BoxDecoration(

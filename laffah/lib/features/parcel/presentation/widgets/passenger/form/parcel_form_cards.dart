@@ -453,8 +453,6 @@ class ParcelInsuranceCard extends StatelessWidget {
 /// ParcelPriceSummaryCard — Price calculation box & Submit button
 class ParcelPriceSummaryCard extends StatelessWidget {
   final bool isDark;
-  final bool hasSelectedDropoff;
-  final double? distanceKm;
   final double baseFee;
   final bool isInsuranceEnabled;
   final double insuranceFee;
@@ -464,8 +462,6 @@ class ParcelPriceSummaryCard extends StatelessWidget {
   const ParcelPriceSummaryCard({
     super.key,
     required this.isDark,
-    this.hasSelectedDropoff = true,
-    this.distanceKm,
     required this.baseFee,
     required this.isInsuranceEnabled,
     required this.insuranceFee,
@@ -491,37 +487,18 @@ class ParcelPriceSummaryCard extends StatelessWidget {
                   color: isDark ? AppColors.gray400 : AppColors.gray600,
                 ),
               ),
-              if (hasSelectedDropoff)
-                Text(
-                  '${baseFee.toStringAsFixed(0)} ريال ${distanceKm != null && distanceKm! > 0 ? "(${distanceKm!.toStringAsFixed(1)} كم)" : ""}',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: isDark ? AppColors.white : AppColors.gray900,
-                  ),
-                )
-              else
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary500.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'حدد موقع التسليم',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11.5,
-                      color: AppColors.primary500,
-                    ),
-                  ),
+              Text(
+                '${baseFee.toStringAsFixed(0)} ريال',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isDark ? AppColors.white : AppColors.gray900,
                 ),
+              ),
             ],
           ),
-          if (isInsuranceEnabled && hasSelectedDropoff) ...[
+          if (isInsuranceEnabled) ...[
             AppSpacing.h8,
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -562,26 +539,15 @@ class ParcelPriceSummaryCard extends StatelessWidget {
                   color: isDark ? AppColors.white : AppColors.gray900,
                 ),
               ),
-              if (hasSelectedDropoff)
-                Text(
-                  '${totalPrice.toStringAsFixed(0)} ريال يمني',
-                  style: const TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 17,
-                    color: AppColors.primary500,
-                  ),
-                )
-              else
-                Text(
-                  '-- ريال يمني',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: isDark ? AppColors.gray500 : AppColors.gray400,
-                  ),
+              Text(
+                '${totalPrice.toStringAsFixed(0)} ريال يمني',
+                style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                  color: AppColors.primary500,
                 ),
+              ),
             ],
           ),
           AppSpacing.h20,
@@ -599,21 +565,21 @@ class ParcelPriceSummaryCard extends StatelessWidget {
                   borderRadius: AppSpacing.radiusMD,
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    hasSelectedDropoff ? 'تأكيد وإرسال' : 'تحديد موقع التسليم لحساب السعر',
-                    style: const TextStyle(
+                    'تأكيد وإرسال',
+                    style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontWeight: FontWeight.w900,
-                      fontSize: 15,
+                      fontSize: 16,
                       color: AppColors.white,
                     ),
                   ),
                   AppSpacing.w10,
                   Icon(
-                    hasSelectedDropoff ? Icons.send_rounded : Icons.location_searching_rounded,
+                    Icons.send_rounded,
                     size: 18,
                     color: AppColors.white,
                   ),

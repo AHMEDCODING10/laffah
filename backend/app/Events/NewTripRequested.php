@@ -32,9 +32,41 @@ class NewTripRequested implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        // Broadcast to a public channel or a regional private channel
+        // Broadcast to public channel so online captains can listen seamlessly
         return [
-            new PrivateChannel('trips.available'),
+            new Channel('trips.available'),
+        ];
+    }
+
+    /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'NewTripRequested';
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'id' => (string) $this->trip->id,
+            'trip_id' => (string) $this->trip->id,
+            'passenger_name' => $this->trip->passenger?->name ?? 'الراكب',
+            'passenger_phone' => $this->trip->passenger?->phone ?? '',
+            'passenger_rating' => (float) ($this->trip->passenger?->rating ?? 5.0),
+            'pickup_address' => $this->trip->pickup_address,
+            'dropoff_address' => $this->trip->dropoff_address,
+            'fare' => (float) $this->trip->estimated_price,
+            'price' => (string) $this->trip->estimated_price,
+            'distance' => $this->trip->distance_km ? ($this->trip->distance_km . ' كم') : '2.5 كم',
+            'duration' => '5 د',
+            'timeTag' => 'الآن',
+            'trip' => (new \App\Http\Resources\TripResource($this->trip))->resolve(),
         ];
     }
 }

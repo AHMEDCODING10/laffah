@@ -1,47 +1,23 @@
 <div>
-    @php
-        $docTypes = [
-            'id_card' => 'بطاقة الهوية الوطنية',
-            'driving_license' => 'رخصة القيادة الشخصية',
-            'vehicle_registration' => 'كرت ملكية ورخصة الدراجة',
-            'bike_license' => 'رخصة الدراجة النارية',
-            'criminal_record' => 'صحيفة الحالة الجنائية (فيش وتشبيه)',
-            'license' => 'رخصة القيادة',
-            'identity' => 'بطاقة الهوية',
-        ];
-
-        $docStatusMap = [
-            'pending'  => ['label' => 'قيد الانتظار', 'c' => 'var(--color-warning)'],
-            'approved' => ['label' => 'مقبول وموثق',  'c' => 'var(--color-success)'],
-            'rejected' => ['label' => 'مرفوض',       'c' => 'var(--color-danger)'],
-        ];
-    @endphp
-
     <!-- Header -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
         <div style="display:flex; align-items:center; gap:20px;">
             <div style="width:80px; height:80px; border-radius:var(--radius-xl); background:linear-gradient(135deg, #FF9800, #FF6D00); display:flex; align-items:center; justify-content:center; font-size:32px; color:white; font-weight:700; box-shadow:0 8px 24px rgba(255,152,0,0.3);">
                 {{ mb_substr($captain->user?->name ?? '?', 0, 1) }}
             </div>
             <div>
                 <h2 style="font-size:24px; font-weight:700; color:var(--color-text-primary); margin-bottom:4px;">{{ $captain->user?->name ?? 'مجهول' }}</h2>
-                <div style="font-size:14px; color:var(--color-text-secondary); display:flex; gap:16px; flex-wrap:wrap;">
+                <div style="font-size:14px; color:var(--color-text-secondary); display:flex; gap:16px;">
                     <span>📞 {{ $captain->user?->phone ?? 'لا يوجد رقم' }}</span>
                     <span>✉️ {{ $captain->user?->email ?? 'لا يوجد بريد' }}</span>
                 </div>
             </div>
         </div>
-        <div style="display:flex; align-items:center; gap:12px;">
+        <div>
             @if($captain->is_verified)
-                <span class="badge badge-success" style="font-size:14px; padding:6px 14px;">✅ موثق</span>
-                <button wire:click="toggleVerification" class="btn btn-secondary btn-sm" style="color:var(--color-danger); border-color:var(--color-danger); font-size:13px;" wire:confirm="هل أنت متأكد من إلغاء توثيق هذا الكابتن؟">
-                    ⚠️ إلغاء التوثيق
-                </button>
+                <span class="badge badge-success" style="font-size:14px; padding:6px 12px;">موثق</span>
             @else
-                <span class="badge badge-warning" style="font-size:14px; padding:6px 14px;">⏳ غير موثق</span>
-                <button wire:click="toggleVerification" class="btn btn-success btn-sm" style="font-size:13px;">
-                    ✅ توثيق الحساب والموافقة
-                </button>
+                <span class="badge badge-warning" style="font-size:14px; padding:6px 12px;">غير موثق</span>
             @endif
         </div>
     </div>
@@ -55,7 +31,7 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                     <div>
                         <div style="font-size:12px; color:var(--color-text-muted); margin-bottom:4px;">النوع</div>
-                        <div style="font-size:14px; font-weight:600;">{{ $captain->vehicle_type ?? 'دراجة نارية' }}</div>
+                        <div style="font-size:14px; font-weight:600;">{{ $captain->vehicle_type ?? '—' }}</div>
                     </div>
                     <div>
                         <div style="font-size:12px; color:var(--color-text-muted); margin-bottom:4px;">الموديل</div>
@@ -100,23 +76,33 @@
 
         <!-- Documents -->
         <div class="card gradient-top">
-            <div class="card-header"><span class="card-title">📁 المستندات والوثائق</span></div>
+            <div class="card-header"><span class="card-title">📁 المستندات</span></div>
             <div class="card-body" style="padding:0;">
                 @if($captain->documents && $captain->documents->count())
                     <div style="display:flex; flex-direction:column;">
                         @foreach($captain->documents as $doc)
                             <div style="padding:12px 20px; border-bottom:1px solid var(--color-border); display:flex; justify-content:space-between; align-items:center;">
                                 <div>
-                                    <div style="font-size:14px; font-weight:600; color:var(--color-text-primary);">{{ $docTypes[$doc->type] ?? $doc->type }}</div>
                                     @php
+                                        $docTypes = [
+                                            'id_card' => 'بطاقة الهوية',
+                                            'vehicle_registration' => 'تسجيل المركبة',
+                                        ];
+                                    @endphp
+                                    <div style="font-size:14px; font-weight:600;">{{ $docTypes[$doc->type] ?? $doc->type }}</div>
+                                    @php
+                                        $docStatusMap = [
+                                            'pending'  => ['label' => 'انتظار', 'c' => 'var(--color-warning)'],
+                                            'approved' => ['label' => 'مقبول',  'c' => 'var(--color-success)'],
+                                            'rejected' => ['label' => 'مرفوض',  'c' => 'var(--color-danger)'],
+                                        ];
                                         $ds = $docStatusMap[$doc->status] ?? ['label' => $doc->status, 'c' => 'var(--color-text-muted)'];
                                     @endphp
-                                    <span style="font-size:11px; color:{{ $ds['c'] }}; font-weight:600;">● {{ $ds['label'] }}</span>
+                                    <span style="font-size:11px; color:{{ $ds['c'] }};">{{ $ds['label'] }}</span>
                                 </div>
-                                <button wire:click="openDocModal({{ $doc->id }})" class="btn btn-secondary btn-sm" style="font-size:12px;">
-                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="margin-left:3px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    معاينة
-                                </button>
+                                @if($doc->file_path)
+                                    <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-secondary btn-sm" style="font-size:12px;">عرض</a>
+                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -126,8 +112,11 @@
             </div>
             @if(!$captain->is_verified)
                 <div class="card-footer" style="padding:16px; border-top:1px solid var(--color-border); text-align:center;">
-                    <button wire:click="toggleVerification" class="btn btn-primary" style="width:100%;">
-                        ✅ توثيق الحساب واعتماد الوثائق
+                    @error('verification')
+                        <div style="color:var(--color-danger); font-size:12px; margin-bottom:8px;">{{ $message }}</div>
+                    @enderror
+                    <button wire:click="verifyCaptain" class="btn btn-primary" style="width:100%;">
+                        ✅ توثيق الحساب والموافقة
                     </button>
                 </div>
             @endif
@@ -185,68 +174,4 @@
             @endif
         </div>
     </div>
-
-    <!-- In-Page Document Preview Modal -->
-    @if($showDocModal && $selectedDoc)
-    <div class="modal-backdrop" wire:click.self="closeDocModal">
-        <div class="modal-content" style="max-width:720px;">
-            <div class="modal-header">
-                <span class="modal-title">
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                    معاينة الوثيقة: {{ $docTypes[$selectedDoc->type] ?? $selectedDoc->type }}
-                </span>
-                <button wire:click="closeDocModal" class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body" style="padding:18px;">
-                <!-- Details bar -->
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);margin-bottom:16px;">
-                    <div>
-                        <div style="font-size:14px;font-weight:700;color:var(--color-text-primary);">{{ $docTypes[$selectedDoc->type] ?? $selectedDoc->type }}</div>
-                        <div style="font-size:12px;color:var(--color-text-muted);">تاريخ الرفع: {{ $selectedDoc->created_at ? $selectedDoc->created_at->format('Y/m/d H:i') : '—' }}</div>
-                    </div>
-                    <div>
-                        @php
-                            $ds = $docStatusMap[$selectedDoc->status] ?? ['label' => $selectedDoc->status, 'c' => 'var(--color-text-muted)'];
-                        @endphp
-                        <span class="badge" style="background:var(--color-surface-elevated);color:{{ $ds['c'] }};border:1px solid {{ $ds['c'] }};font-size:13px;padding:6px 12px;">{{ $ds['label'] }}</span>
-                    </div>
-                </div>
-
-                <!-- Document Image -->
-                <div style="background:#0B0E14;border-radius:var(--radius-md);border:1px solid var(--color-border);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:300px;max-height:480px;">
-                    <img src="{{ route('admin.documents.file', $selectedDoc->id) }}" 
-                         alt="{{ $docTypes[$selectedDoc->type] ?? $selectedDoc->type }}" 
-                         style="max-width:100%;max-height:460px;object-fit:contain;border-radius:var(--radius-md);" />
-                </div>
-
-                @if($selectedDoc->status === 'rejected' && $selectedDoc->rejection_reason)
-                    <div style="margin-top:14px;padding:12px;background:var(--color-danger-bg);color:var(--color-danger-text);border-radius:var(--radius-sm);font-size:13px;border:1px solid rgba(239,68,68,0.2);">
-                        <strong>سبب الرفض:</strong> {{ $selectedDoc->rejection_reason }}
-                    </div>
-                @endif
-            </div>
-            <div class="modal-footer">
-                <a href="{{ route('admin.documents.file', $selectedDoc->id) }}" target="_blank" class="btn btn-secondary btn-sm" title="فتح الصورة بحجمها الأصلي">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="margin-left:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    فتح بحجم كامل
-                </a>
-                @if($selectedDoc->status !== 'approved')
-                    <button wire:click="approveDoc({{ $selectedDoc->id }})" class="btn btn-success btn-sm">
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="margin-left:4px;"><polyline points="20 6 9 17 4 12"/></svg>
-                        اعتماد الوثيقة
-                    </button>
-                @endif
-                @if($selectedDoc->status !== 'rejected')
-                    <button wire:click="rejectDoc({{ $selectedDoc->id }})" class="btn btn-danger btn-sm">
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="margin-left:4px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        رفض الوثيقة
-                    </button>
-                @endif
-                <button wire:click="closeDocModal" class="btn btn-secondary btn-sm">إغلاق</button>
-            </div>
-        </div>
-    </div>
-    @endif
 </div>

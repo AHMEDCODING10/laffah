@@ -93,18 +93,23 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   Future<void> _onToggleOnlineStatus(
       ToggleOnlineStatus event, EmitFn emit) async {
     // Get actual location from GPS Service before toggling
-    double lat = 0.0;
-    double lng = 0.0;
+    double lat = 15.3605;
+    double lng = 44.1852;
 
     try {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high),
-      );
+      ).timeout(const Duration(seconds: 3));
       lat = pos.latitude;
       lng = pos.longitude;
     } catch (_) {
       // Fallback: Use Sanaa center coordinates if GPS unavailable
+      lat = 15.3605;
+      lng = 44.1852;
+    }
+
+    if (lat < 12.0 || lat > 19.5 || lng < 41.5 || lng > 54.5) {
       lat = 15.3605;
       lng = 44.1852;
     }
@@ -117,6 +122,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
     result.fold(
       (failure) {
+        emit(CaptainFailureState(failure.message));
         emit(const CaptainOffline());
         _stopSmartPolling();
       },
@@ -156,15 +162,47 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       if (currentTrip.tripId == event.tripId) {
         emit(const CaptainOnline());
       }
+    } else if (state is TripAccepted) {
+      final currentTrip = state as TripAccepted;
+      if (currentTrip.tripId == event.tripId) {
+        alertSoundService.playSimpleTripAlert();
+        emit(const CaptainOnline());
+      }
+    } else if (state is TripInProgress) {
+      final currentTrip = state as TripInProgress;
+      if (currentTrip.tripId == event.tripId) {
+        alertSoundService.playSimpleTripAlert();
+        emit(const CaptainOnline());
+      }
     }
   }
 
   void _onResetCaptainState(ResetCaptainState event, EmitFn emit) {
-    _stopSmartPolling();
-    _stopLocationTracking();
-    pusherService.disconnect();
     _dismissedTripIds.clear();
-    emit(const CaptainOffline());
+
+    if (event.keepOnline) {
+      // Maintain captain online status and resume searching for new requests immediately
+      emit(const CaptainOnline());
+      if (_currentCaptainId.isNotEmpty) {
+        _startLocationTracking(_currentCaptainId);
+        pusherService.connect(
+          captainId: _currentCaptainId,
+          onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
+          onTripNoLongerAvailable: (data) {
+            final tripId = (data['trip_id'] ?? data['id'] ?? '').toString();
+            if (tripId.isNotEmpty) {
+              add(TripNoLongerAvailableReceived(tripId));
+            }
+          },
+        );
+      }
+      _startSmartPolling();
+    } else {
+      _stopSmartPolling();
+      _stopLocationTracking();
+      pusherService.disconnect();
+      emit(const CaptainOffline());
+    }
   }
 
   /// Periodic Smart Polling for nearby pending trip requests while online
@@ -200,6 +238,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             'trip_id': req.id,
             'passenger_name': req.passengerName,
             'passenger_phone': req.passengerPhone,
+            'receiver_name': req.receiverName,
+            'receiver_phone': req.receiverPhone,
             'passenger_rating': req.passengerRating,
             'pickup_address': req.pickup,
             'dropoff_address': req.dropoff,
@@ -207,6 +247,10 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             'distance': req.distance,
             'duration': req.duration,
             'timeTag': req.timeTag,
+            'is_parcel': req.isParcel,
+            'parcel_type': req.parcelType ?? (req.isParcel ? 'طرد' : null),
+            'size': req.size ?? 'متوسط',
+            'tracking_code': req.trackingCode ?? req.id,
           }));
         }
       },
@@ -218,7 +262,15 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     if (state is! CaptainOnline && state is! IncomingTripRequest) return;
 
     final d = event.data;
-    final tripId = (d['trip_id'] ?? d['id'] ?? 'TRIP-789').toString();
+    if (d.isEmpty) return;
+
+    final rawTripId = d['trip_id'] ?? d['id'] ?? d['tripId'];
+    if (rawTripId == null ||
+        rawTripId.toString().trim().isEmpty ||
+        rawTripId.toString() == 'TRIP-789') {
+      return;
+    }
+    final tripId = rawTripId.toString();
 
     // Check if dismissed
     if (_dismissedTripIds.contains(tripId)) return;
@@ -226,21 +278,67 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     // Play subtle chime / alert sound once
     alertSoundService.playSimpleTripAlert();
 
+    final isParcel = d['is_parcel'] == true ||
+        d['isParcel'] == true ||
+        d['type'] == 'delivery';
+    final parcelType = d['parcel_type']?.toString() ??
+        d['notes']?.toString() ??
+        (isParcel ? 'طرد' : null);
+
+    final String pName = (d['passenger_name'] ??
+            d['passengerName'] ??
+            d['sender_name'] ??
+            'عميل')
+        .toString();
+    final String pPhone = (d['passenger_phone'] ??
+            d['passengerPhone'] ??
+            d['sender_phone'] ??
+            '')
+        .toString();
+    final String rName = (d['receiver_name'] ??
+            d['receiverName'] ??
+            'المستلم')
+        .toString();
+    final String rPhone = (d['receiver_phone'] ??
+            d['receiverPhone'] ??
+            '')
+        .toString();
+    final String pickup = (d['pickup_address'] ??
+            d['pickup'] ??
+            d['pickup_location'] ??
+            'موقع الاستلام')
+        .toString();
+    final String dropoff = (d['dropoff_address'] ??
+            d['dropoff'] ??
+            d['dropoff_location'] ??
+            'موقع التسليم')
+        .toString();
+    final double fare = (d['fare'] is num)
+        ? (d['fare'] as num).toDouble()
+        : ((d['grossFare'] is num)
+            ? (d['grossFare'] as num).toDouble()
+            : (double.tryParse(d['price']?.toString() ?? '') ?? 0.0));
+
     emit(IncomingTripRequest(
       tripId: tripId,
-      passengerName: (d['passenger_name'] ?? 'محمد').toString(),
-      passengerPhone: (d['passenger_phone'] ?? '770000000').toString(),
+      passengerName: pName,
+      passengerPhone: pPhone,
+      receiverName: rName,
+      receiverPhone: rPhone,
       passengerRating: (d['passenger_rating'] is num)
           ? (d['passenger_rating'] as num).toDouble()
-          : 5.0,
-      pickup:
-          (d['pickup_address'] ?? d['pickup'] ?? 'موقعك الحالي').toString(),
-      dropoff: (d['dropoff_address'] ?? d['dropoff'] ?? 'ميدان التحرير، صنعاء')
-          .toString(),
-      fare: (d['fare'] is num) ? (d['fare'] as num).toDouble() : 870.44,
+          : ((d['passengerRating'] is num)
+              ? (d['passengerRating'] as num).toDouble()
+              : 5.0),
+      pickup: pickup,
+      dropoff: dropoff,
+      fare: fare,
       distance: (d['distance'] ?? '2.5 كم').toString(),
       duration: (d['duration'] ?? '6 د').toString(),
       timeTag: (d['timeTag'] ?? 'منذ ثواني').toString(),
+      isParcel: isParcel,
+      parcelType: parcelType,
+      size: d['size']?.toString() ?? 'متوسط',
     ));
   }
 
@@ -276,16 +374,25 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       );
     }
 
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: locationSettings,
-    ).listen((Position position) {
-      add(UpdateCaptainLocation(
-        captainId: _currentCaptainId,
-        lat: position.latitude,
-        lng: position.longitude,
-        heading: position.heading,
-      ));
-    });
+    try {
+      _positionSubscription = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen(
+        (Position position) {
+          add(UpdateCaptainLocation(
+            captainId: _currentCaptainId,
+            lat: position.latitude,
+            lng: position.longitude,
+            heading: position.heading,
+          ));
+        },
+        onError: (error) {
+          debugPrint('ℹ️ [CaptainLocation] GPS stream note (handled gracefully): $error');
+        },
+      );
+    } catch (e) {
+      debugPrint('ℹ️ [CaptainLocation] getPositionStream error: $e');
+    }
   }
 
   void _stopLocationTracking() {
@@ -357,6 +464,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             tripId: currentState.tripId,
             passengerName: currentState.passengerName,
             passengerPhone: currentState.passengerPhone,
+            receiverName: currentState.receiverName,
+            receiverPhone: currentState.receiverPhone,
             passengerRating: currentState.passengerRating,
             pickup: currentState.pickup,
             dropoff: currentState.dropoff,
@@ -365,6 +474,10 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             duration: routeResult?.durationText ?? currentState.duration,
             tripProgress: 'accepted',
             routePoints: routeResult?.points ?? [pickupPos, dropoffPos],
+            isParcel: currentState.isParcel,
+            parcelType: currentState.parcelType,
+            size: currentState.size,
+            trackingCode: currentState.tripId,
           ));
         },
       );
@@ -398,7 +511,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
     if (event.nextStatus == 'arrived' && currentState is TripAccepted) {
       emit(currentState.copyWith(tripProgress: 'arrived'));
-    } else if (event.nextStatus == 'started' && currentState is TripAccepted) {
+    } else if ((event.nextStatus == 'started' || event.nextStatus == 'in_transit') &&
+        currentState is TripAccepted) {
       emit(TripInProgress(
         tripId: currentState.tripId,
         passengerName: currentState.passengerName,
@@ -407,19 +521,34 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         pickup: currentState.pickup,
         dropoff: currentState.dropoff,
         fare: currentState.fare,
-        remainingDistance: '3.4 كم',
-        remainingDuration: '10 دقائق',
+        remainingDistance: currentState.distance,
+        remainingDuration: currentState.duration,
       ));
-    } else if (event.nextStatus == 'completed' &&
-        currentState is TripInProgress) {
+    } else if (event.nextStatus == 'completed') {
+      final tripId = (currentState is TripInProgress)
+          ? currentState.tripId
+          : (currentState is TripAccepted ? currentState.tripId : (event.tripId ?? ''));
+      final pName = (currentState is TripInProgress)
+          ? currentState.passengerName
+          : (currentState is TripAccepted ? currentState.passengerName : 'الراكب');
+      final pickup = (currentState is TripInProgress)
+          ? currentState.pickup
+          : (currentState is TripAccepted ? currentState.pickup : '');
+      final dropoff = (currentState is TripInProgress)
+          ? currentState.dropoff
+          : (currentState is TripAccepted ? currentState.dropoff : '');
+      final fare = (currentState is TripInProgress)
+          ? currentState.fare
+          : (currentState is TripAccepted ? currentState.fare : 1000.0);
+
       emit(TripCompleted(
-        tripId: currentState.tripId,
-        passengerName: currentState.passengerName,
-        pickup: currentState.pickup,
-        dropoff: currentState.dropoff,
-        fare: currentState.fare,
-        totalDistance: '8.4 كم',
-        totalDuration: '24 دقيقة',
+        tripId: tripId,
+        passengerName: pName,
+        pickup: pickup,
+        dropoff: dropoff,
+        fare: fare,
+        totalDistance: '6.3 كم',
+        totalDuration: '7 دقائق',
         paymentMethod: 'نقداً',
       ));
     }

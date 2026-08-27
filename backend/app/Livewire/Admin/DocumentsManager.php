@@ -19,24 +19,9 @@ class DocumentsManager extends Component
     public ?int $selectedDocId = null;
     public string $rejectionReason = '';
 
-    public bool $showViewModal = false;
-    public ?Document $viewingDoc = null;
-
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingStatusFilter(): void { $this->resetPage(); }
     public function updatingTypeFilter(): void { $this->resetPage(); }
-
-    public function openViewModal(int $id): void
-    {
-        $this->viewingDoc = Document::with('captainProfile.user')->findOrFail($id);
-        $this->showViewModal = true;
-    }
-
-    public function closeViewModal(): void
-    {
-        $this->showViewModal = false;
-        $this->viewingDoc = null;
-    }
 
     public function render()
     {
@@ -115,23 +100,6 @@ class DocumentsManager extends Component
 
         session()->flash('success', 'تم رفض المستند وإشعار الكابتن بالسبب.');
         $this->closeModal();
-    }
-
-    public function toggleCaptainVerification(int $captainProfileId): void
-    {
-        $captain = \App\Models\CaptainProfile::findOrFail($captainProfileId);
-        $newStatus = !$captain->is_verified;
-        $captain->update(['is_verified' => $newStatus]);
-
-        if ($newStatus) {
-            session()->flash('success', 'تم توثيق حساب الكابتن بنجاح ✅');
-        } else {
-            session()->flash('success', 'تم إلغاء توثيق حساب الكابتن ⚠️');
-        }
-
-        if ($this->viewingDoc && $this->viewingDoc->captain_profile_id == $captainProfileId) {
-            $this->viewingDoc->load('captainProfile.user');
-        }
     }
 
     public function closeModal(): void

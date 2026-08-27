@@ -95,10 +95,14 @@ class TripResource extends JsonResource
                     'longitude' => (float) $stop->longitude,
                 ];
             })->toArray() : [],
-            'created_at' => $this->created_at?->toIso8601String(),
-            'accepted_at' => $this->accepted_at?->toIso8601String(),
-            'started_at' => $this->started_at?->toIso8601String(),
-            'completed_at' => $this->completed_at?->toIso8601String(),
+            'created_at' => $this->created_at ? ($this->created_at instanceof \Carbon\Carbon ? $this->created_at->toIso8601String() : (string) $this->created_at) : null,
+            'accepted_at' => $this->accepted_at ? ($this->accepted_at instanceof \Carbon\Carbon ? $this->accepted_at->toIso8601String() : (string) $this->accepted_at) : null,
+            'started_at' => $this->started_at ? ($this->started_at instanceof \Carbon\Carbon ? $this->started_at->toIso8601String() : (string) $this->started_at) : null,
+            'completed_at' => $this->completed_at ? ($this->completed_at instanceof \Carbon\Carbon ? $this->completed_at->toIso8601String() : (string) $this->completed_at) : null,
+            'cancelled_at' => $this->cancelled_at ? ($this->cancelled_at instanceof \Carbon\Carbon ? $this->cancelled_at->toIso8601String() : (string) $this->cancelled_at) : null,
+            'updated_at' => $this->updated_at ? ($this->updated_at instanceof \Carbon\Carbon ? $this->updated_at->toIso8601String() : (string) $this->updated_at) : null,
+            'cancelled_by' => $this->cancelled_by,
+            'cancellation_reason' => $this->cancellation_reason,
         ];
     }
 }

@@ -117,28 +117,6 @@ class DatabaseSeeder extends Seeder
             ['captain_profile_id' => $captainProfile->id],
             ['latitude' => 15.3694, 'longitude' => 44.1910]
         );
-
-        // Seed system default settings
-        $defaultSettings = [
-            ['key' => 'price_per_km',           'value' => '175',   'type' => 'number', 'group' => 'pricing'],
-            ['key' => 'multi_stop_fee',         'value' => '300',   'type' => 'number', 'group' => 'pricing'],
-            ['key' => 'commission_percent',     'value' => '15',    'type' => 'number', 'group' => 'pricing'],
-            ['key' => 'parcel_percent_small',   'value' => '10',    'type' => 'number', 'group' => 'pricing'],
-            ['key' => 'parcel_percent_medium',  'value' => '15',    'type' => 'number', 'group' => 'pricing'],
-            ['key' => 'parcel_percent_large',   'value' => '20',    'type' => 'number', 'group' => 'pricing'],
-            ['key' => 'app_name',               'value' => 'لَفَّة', 'type' => 'text',   'group' => 'general'],
-            ['key' => 'support_phone',          'value' => '770291452', 'type' => 'text', 'group' => 'general'],
-            ['key' => 'support_email',          'value' => 'support@laffah.com', 'type' => 'text', 'group' => 'general'],
-            ['key' => 'search_radius_km',       'value' => '10',    'type' => 'number', 'group' => 'operational'],
-            ['key' => 'min_withdrawal_amount',  'value' => '1000',  'type' => 'number', 'group' => 'operational'],
-        ];
-
-        // Delete obsolete keys
-        \App\Models\Setting::whereIn('key', ['base_fare', 'max_captain_debt', 'min_fare', 'parcel_price_small', 'parcel_price_medium', 'parcel_price_large'])->delete();
-
-        foreach ($defaultSettings as $s) {
-            \App\Models\Setting::updateOrCreate(['key' => $s['key']], $s);
-        }
     }
 }
 

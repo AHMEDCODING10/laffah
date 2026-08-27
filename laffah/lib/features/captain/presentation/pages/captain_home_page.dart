@@ -33,6 +33,13 @@ class _CaptainHomePageState extends State<CaptainHomePage> {
   bool _isOnline = false;
 
   @override
+  void initState() {
+    super.initState();
+    final captainState = context.read<CaptainBloc>().state;
+    _isOnline = captainState is CaptainOnline;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -111,21 +118,83 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    final captainState = context.read<CaptainBloc>().state;
+    if (captainState is CaptainOnline && !widget.isOnline) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onOnlineChanged(true);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const bool hasInternet = true;
 
     return BlocListener<CaptainBloc, CaptainState>(
+      listenWhen: (previous, current) {
+        if (current is CaptainFailureState) return true;
+        if (current is CaptainOnline || current is CaptainOffline) return true;
+        // Only trigger navigation push when transitioning into a new accepted trip, NOT on status updates within the same trip
+        if (current is TripAccepted) {
+          if (previous is! TripAccepted) return true;
+          return previous.tripId != current.tripId;
+        }
+        return false;
+      },
       listener: (context, state) {
-        if (state is TripAccepted) {
-          // Push captain navigation screen once a trip is accepted
+        if (state is CaptainFailureState) {
+          widget.onOnlineChanged(false);
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.danger,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.message,
+                      style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else if (state is CaptainOnline) {
+          widget.onOnlineChanged(true);
+        } else if (state is CaptainOffline) {
+          widget.onOnlineChanged(false);
+        } else if (state is TripAccepted) {
+          final targetRoute = state.isParcel
+              ? '/captain/parcel/navigation'
+              : '/captain/navigation';
+
+          // Push captain navigation screen once a trip/parcel is accepted
           context.push(
-            '/captain/navigation',
+            targetRoute,
             extra: {
+              'parcelId': state.tripId,
               'tripId': state.tripId,
+              'trackingCode': state.trackingCode ?? state.tripId,
+              'senderName': state.passengerName,
+              'senderPhone': state.passengerPhone,
+              'receiverName': state.receiverName,
+              'receiverPhone': state.receiverPhone,
               'passengerName': state.passengerName,
               'passengerPhone': state.passengerPhone,
               'passengerRating': state.passengerRating,
+              'parcelType': state.parcelType ?? 'طرد',
+              'size': state.size ?? 'متوسط',
               'pickup': state.pickup,
               'dropoff': state.dropoff,
               'fare': state.fare,
@@ -133,10 +202,10 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
               'duration': state.duration,
             },
           ).then((_) {
-            // When returning from navigation, reset online toggle
+            // Keep captain ONLINE when returning to Home so they can receive new requests immediately!
             if (context.mounted) {
-              context.read<CaptainBloc>().add(const ToggleOnlineStatus(false));
-              widget.onOnlineChanged(false);
+              context.read<CaptainBloc>().add(const ToggleOnlineStatus(true));
+              widget.onOnlineChanged(true);
             }
           });
         }
@@ -254,6 +323,8 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                     distance: state.distance,
                     duration: state.duration,
                     timeTag: state.timeTag,
+                    isParcel: state.isParcel,
+                    parcelType: state.parcelType,
                     onAccept: () {
                       if (_isSubmitting) return;
                       setState(() => _isSubmitting = true);
@@ -394,77 +465,96 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
   }
 
   Widget _buildOfflineGuidanceCard(bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E2330).withValues(alpha: 0.95)
-            : Colors.white.withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.heavyImpact();
+        context.read<CaptainBloc>().add(const ToggleOnlineStatus(true));
+        widget.onOnlineChanged(true);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? const Color(0xFF1E2330).withValues(alpha: 0.95)
+              : Colors.white.withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F3F5),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: const Icon(
-                  Icons.power_settings_new_rounded,
-                  color: AppColors.gray700,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.capt_you_are_offline,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        color: isDark ? Colors.white : AppColors.gray900,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.heavyImpact();
+                      context
+                          .read<CaptainBloc>()
+                          .add(const ToggleOnlineStatus(true));
+                      widget.onOnlineChanged(true);
+                    },
+                    borderRadius: BorderRadius.circular(50),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F3F5),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: const Icon(
+                        Icons.power_settings_new_rounded,
+                        color: AppColors.gray700,
+                        size: 26,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppLocalizations.of(context)!.capt_tap_button_above_to_receive,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        color: AppColors.gray500,
-                        fontFamily: 'IBM Plex Sans Arabic',
-                      ),
-                    ),
-
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.capt_you_are_offline,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          color: isDark ? Colors.white : AppColors.gray900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'اضغط هنا أو على الزر بالأعلى لبدء استقبال الطلبات',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.gray500,
+                          fontFamily: 'IBM Plex Sans Arabic',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

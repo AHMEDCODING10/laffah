@@ -11,10 +11,6 @@ use App\Http\Controllers\Api\GeocodeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\WalletController;
-use App\Http\Controllers\Api\HealthController;
-
-// System Health Check (For Cloud, Render, Railway, Load Balancer)
-Route::get('health', [HealthController::class, 'check']);
 
 // Public Settings
 Route::get('settings', [SettingsController::class, 'index']);
@@ -81,6 +77,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('{id}/status', [TripController::class, 'updateStatus']);
         Route::post('{id}/cancel', [TripController::class, 'cancel']);
         Route::post('{id}/rate',   [TripController::class, 'rate']);
+        Route::delete('{id}',      [TripController::class, 'destroy']);
     });
 
     // Wallet & Payments

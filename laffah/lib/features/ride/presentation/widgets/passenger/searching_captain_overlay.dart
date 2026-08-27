@@ -53,7 +53,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
   late Animation<double> _pulseAnimation;
 
   // Local state flag to simulate switching to Captain Found state for demo/testing
-  bool _simulatedFound = false;
+  final bool _simulatedFound = false;
 
   @override
   void initState() {
@@ -348,55 +348,57 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
               // Only active during Searching State
               // ==========================================
               if (!isCaptainFound)
-                Center(
-                  child: AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 170 * _pulseAnimation.value,
-                            height: 170 * _pulseAnimation.value,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color:
-                                  AppColors.primary500.withValues(alpha: 0.12),
+                Positioned.fill(
+                  child: Center(
+                    child: AnimatedBuilder(
+                      animation: _pulseAnimation,
+                      builder: (context, child) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 170 * _pulseAnimation.value,
+                              height: 170 * _pulseAnimation.value,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    AppColors.primary500.withValues(alpha: 0.12),
+                              ),
                             ),
-                          ),
-                          Container(
-                            width: 115 * _pulseAnimation.value,
-                            height: 115 * _pulseAnimation.value,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color:
-                                  AppColors.primary500.withValues(alpha: 0.22),
+                            Container(
+                              width: 115 * _pulseAnimation.value,
+                              height: 115 * _pulseAnimation.value,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    AppColors.primary500.withValues(alpha: 0.22),
+                              ),
                             ),
-                          ),
-                          Container(
-                            width: 76,
-                            height: 76,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primary500,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary500
-                                      .withValues(alpha: 0.45),
-                                  blurRadius: 24,
-                                  spreadRadius: 4,
-                                ),
-                              ],
+                            Container(
+                              width: 76,
+                              height: 76,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.primary500,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary500
+                                        .withValues(alpha: 0.45),
+                                    blurRadius: 24,
+                                    spreadRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.motorcycle_rounded,
+                                color: Colors.white,
+                                size: 38,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.motorcycle_rounded,
-                              color: Colors.white,
-                              size: 38,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
 
@@ -441,65 +443,37 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                       // STATE 2: SEARCHING STATE BOTTOM CARD
                       // ==========================================
                       if (!isCaptainFound) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'جاري البحث عن كابتن...',
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: isDark
-                                          ? AppColors.white
-                                          : AppColors.gray900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'سنصل إليك قريبًا في صنعاء',
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 12.5,
-                                      color: isDark
-                                          ? AppColors.gray400
-                                          : AppColors.gray600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Circular Cancel Button (X)
-                            GestureDetector(
-                              onTap: widget.onCancel,
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.06)
-                                      : AppColors.gray100,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.1)
-                                        : AppColors.gray300,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.close_rounded,
-                                  size: 20,
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'جاري البحث عن كابتن...',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
                                   color: isDark
                                       ? AppColors.white
-                                      : AppColors.gray800,
+                                      : AppColors.gray900,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 3),
+                              Text(
+                                'سنصل إليك قريبًا في صنعاء',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 13,
+                                  color: isDark
+                                      ? AppColors.gray400
+                                      : AppColors.gray600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
 
                         AppSpacing.h16,
@@ -696,45 +670,47 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
 
                         AppSpacing.h16,
 
-                        // Full-Width Primary Action Button "تأكيد الموقع" / Simulated trigger
+                        // Full-Width Cancel Ride Action Button
                         SizedBox(
                           height: 52,
                           child: ElevatedButton(
                             onPressed: () {
-                              setState(() {
-                                _simulatedFound = true;
-                              });
                               context
                                   .read<RideBloc>()
-                                  .add(const SimulateRideStep(step: 'found'));
+                                  .add(const CancelRideRequested());
+                              widget.onCancel();
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary500,
-                              foregroundColor: AppColors.white,
-                              elevation: 4,
-                              shadowColor:
-                                  AppColors.primary500.withValues(alpha: 0.4),
-                              shape: const RoundedRectangleBorder(
+                              backgroundColor: isDark
+                                  ? const Color(0xFF1F2937)
+                                  : const Color(0xFFFEE2E2),
+                              foregroundColor: AppColors.danger,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
                                 borderRadius: AppSpacing.radiusMD,
+                                side: BorderSide(
+                                  color: AppColors.danger.withValues(alpha: 0.4),
+                                  width: 1.2,
+                                ),
                               ),
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                Icon(
+                                  Icons.close_rounded,
+                                  size: 20,
+                                  color: AppColors.danger,
+                                ),
+                                AppSpacing.w8,
                                 Text(
-                                  'تأكيد الموقع',
+                                  'إلغاء طلب الرحلة',
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontWeight: FontWeight.w900,
                                     fontSize: 15,
-                                    color: AppColors.white,
+                                    color: AppColors.danger,
                                   ),
-                                ),
-                                AppSpacing.w8,
-                                Icon(
-                                  Icons.check_circle_outline_rounded,
-                                  size: 20,
-                                  color: AppColors.white,
                                 ),
                               ],
                             ),

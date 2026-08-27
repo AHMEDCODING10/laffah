@@ -135,6 +135,19 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
+  Future<Either<Failure, void>> deleteTrip(String tripId) async {
+    try {
+      await remoteDataSource.deleteTrip(tripId);
+      return const Right(null);
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['message'] ?? 'فشل حذف الرحلة من السجل';
+      return Left(ServerFailure(errorMsg.toString()));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId) {
     webSocketClient.connect('trip.$rideId');
 

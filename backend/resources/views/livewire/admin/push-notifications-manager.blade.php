@@ -62,13 +62,13 @@
                     @endif
 
                     <!-- Phone Preview Simulation -->
-                    <div style="background:var(--color-surface-elevated); border-radius:16px; padding:16px; margin-top:20px; border:3px solid var(--color-border); position:relative;">
-                        <div style="width:40px;height:4px;background:var(--color-border);border-radius:4px;margin:0 auto 12px auto;"></div>
-                        <div style="background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; padding:12px; box-shadow:var(--shadow-card); display:flex; gap:12px; align-items:flex-start;">
+                    <div style="background:#f1f5f9; border-radius:16px; padding:16px; margin-top:20px; border:4px solid #cbd5e1; position:relative;">
+                        <div style="width:40px;height:4px;background:#cbd5e1;border-radius:4px;margin:0 auto 12px auto;"></div>
+                        <div style="background:white; border-radius:12px; padding:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); display:flex; gap:12px; align-items:flex-start;">
                             <div style="width:36px;height:36px;border-radius:8px;background:var(--color-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px;flex-shrink:0;">L</div>
                             <div>
-                                <div style="font-weight:700; font-size:13px; color:var(--color-text-primary); margin-bottom:4px;">{{ $title ?: 'عنوان الإشعار' }}</div>
-                                <div style="font-size:12px; color:var(--color-text-secondary); line-height:1.4;">{{ $body ?: 'محتوى الإشعار سيظهر هنا...' }}</div>
+                                <div style="font-weight:700; font-size:13px; color:#1e293b; margin-bottom:4px;">{{ $title ?: 'عنوان الإشعار' }}</div>
+                                <div style="font-size:12px; color:#64748b; line-height:1.4;">{{ $body ?: 'محتوى الإشعار سيظهر هنا...' }}</div>
                             </div>
                         </div>
                     </div>
@@ -92,7 +92,6 @@
             </div>
 
             <div class="table-responsive">
-                @if(count($history))
                 <table>
                     <thead>
                         <tr>
@@ -121,13 +120,6 @@
                         @endforeach
                     </tbody>
                 </table>
-                @else
-                    <div class="empty-state" style="padding:32px 16px;">
-                        <div class="empty-state-icon">🔔</div>
-                        <div class="empty-state-title">لا توجد إشعارات مسجلة</div>
-                        <div class="empty-state-desc">يمكنك إرسال أول إشعار مخصص عبر النموذج المقابل</div>
-                    </div>
-                @endif
             </div>
         </div>
     </div>

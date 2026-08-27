@@ -6,7 +6,18 @@ abstract class CaptainEvent {
 }
 
 class ResetCaptainState extends CaptainEvent {
-  const ResetCaptainState();
+  final bool keepOnline;
+  const ResetCaptainState({this.keepOnline = true});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ResetCaptainState &&
+          runtimeType == other.runtimeType &&
+          keepOnline == other.keepOnline;
+
+  @override
+  int get hashCode => keepOnline.hashCode;
 }
 
 /// Event to toggle online/offline status

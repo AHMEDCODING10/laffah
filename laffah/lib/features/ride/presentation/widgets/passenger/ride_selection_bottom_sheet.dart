@@ -35,8 +35,6 @@ class RideSelectionBottomSheet extends StatefulWidget {
 
 class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   final String _fontFamily = 'IBM Plex Sans Arabic';
-  late String _dropoff;
-  late LatLng? _dropoffLatLng;
   String _paymentMode = 'cash';
   bool _isScheduled = false;
   DateTime? _scheduledTime;
@@ -48,23 +46,16 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   double _durationMin = 0.0;
   final OsrmService _osrmService = OsrmService();
 
-  bool get _hasDropoff =>
-      _dropoffLatLng != null &&
-      _dropoff.trim().isNotEmpty &&
-      _dropoff != 'وجهة مختارة';
-
   @override
   void initState() {
     super.initState();
-    _dropoff = widget.dropoff;
-    _dropoffLatLng = widget.dropoffLatLng;
     _calculateRoute();
   }
 
   Future<void> _calculateRoute() async {
     final start = widget.pickupLatLng ?? const LatLng(15.3694, 44.1910);
-    if (_dropoffLatLng != null) {
-      final data = await _osrmService.getRoute(start, _dropoffLatLng!);
+    if (widget.dropoffLatLng != null) {
+      final data = await _osrmService.getRoute(start, widget.dropoffLatLng!);
 
       if (mounted) {
         setState(() {
@@ -72,22 +63,22 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             _distanceKm = data.distanceKm;
             _durationMin = data.durationMin;
           } else {
-            _distanceKm = 3.0;
-            _durationMin = 8.0;
+            _distanceKm = 5.0;
+            _durationMin = 12.0;
           }
         });
 
         // Trigger backend-authoritative fare fetch after route is known
         if (widget.precomputedFare == null &&
             widget.pickupLatLng != null &&
-            _dropoffLatLng != null) {
+            widget.dropoffLatLng != null) {
           context.read<RideBloc>().add(CalculateSingleTripFare(
                 pickup: widget.pickup,
-                dropoff: _dropoff,
+                dropoff: widget.dropoff,
                 pickupLatitude: widget.pickupLatLng!.latitude,
                 pickupLongitude: widget.pickupLatLng!.longitude,
-                dropoffLatitude: _dropoffLatLng!.latitude,
-                dropoffLongitude: _dropoffLatLng!.longitude,
+                dropoffLatitude: widget.dropoffLatLng!.latitude,
+                dropoffLongitude: widget.dropoffLatLng!.longitude,
                 stops: _structuredStops.isEmpty ? null : _structuredStops,
               ));
         }
@@ -95,32 +86,9 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
     } else {
       if (mounted) {
         setState(() {
-          _distanceKm = 0.0;
-          _durationMin = 0.0;
+          _distanceKm = 5.0;
+          _durationMin = 12.0;
         });
-      }
-    }
-  }
-
-  Future<void> _selectMainDropoff() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LocationSearchPage(locationType: 'dropoff'),
-      ),
-    );
-
-    if (result != null && result is Map<String, dynamic>) {
-      final name = (result['name'] ?? '') as String;
-      final lat = (result['lat'] as num?)?.toDouble();
-      final lon = (result['lon'] as num?)?.toDouble();
-
-      if (lat != null && lon != null) {
-        setState(() {
-          _dropoff = name;
-          _dropoffLatLng = LatLng(lat, lon);
-        });
-        _calculateRoute();
       }
     }
   }
@@ -146,7 +114,6 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
           'longitude': lon,
         });
       });
-      _calculateRoute();
     }
   }
 
@@ -197,10 +164,12 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Fare & ETA come from the backend estimate API (driven by RideBloc)
-    // Direct KM rate: distanceKm * 175 YER (+ multi-stop fee)
+    // They are surfaced through BlocBuilder<RideBloc, RideState> in the parent
+    // widget — this widget receives distanceKm & durationMin from OSRM routing
+    // only for display; the authoritative price is always from the backend.
     final double computedFare =
-        widget.precomputedFare ?? ((_distanceKm * 175.0) + (_additionalDropoffs.length * 300.0));
-    final double baseFare = computedFare;
+        widget.precomputedFare ?? (500.0 + (_distanceKm * 150.0) + (_additionalDropoffs.length * 400.0));
+    final double baseFare = computedFare > 800.0 ? computedFare : 800.0;
     final int computedEta = _durationMin.toInt();
 
     final l10n = AppLocalizations.of(context)!;
@@ -285,46 +254,9 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   _buildLocationRow(Icons.my_location_rounded,
                       AppColors.success, widget.pickup, isDark),
                   _buildDivider(),
-                  InkWell(
-                    onTap: _selectMainDropoff,
-                    borderRadius: AppSpacing.radiusXS,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded,
-                              color: AppColors.danger, size: 14),
-                          AppSpacing.w10,
-                          Expanded(
-                            child: Text(
-                              _hasDropoff ? _dropoff : 'اضغط هنا لتحديد وجهة النزول',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: _fontFamily,
-                                fontSize: 12,
-                                fontWeight: _hasDropoff
-                                    ? FontWeight.bold
-                                    : FontWeight.w700,
-                                color: _hasDropoff
-                                    ? (isDark
-                                        ? AppColors.white
-                                        : AppColors.gray900)
-                                    : AppColors.primary500,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            _hasDropoff
-                                ? Icons.edit_location_alt_outlined
-                                : Icons.search_rounded,
-                            size: 16,
-                            color: AppColors.primary500,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildLocationRow(Icons.location_on_rounded, AppColors.danger,
+                      widget.dropoff, isDark,
+                      isBold: true),
 
                   // Additional Dropoffs
                   ...List.generate(_additionalDropoffs.length, (index) {
@@ -448,9 +380,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         ),
                         AppSpacing.h4,
                         Text(
-                          _hasDropoff
-                              ? l10n.pass_ride_desc_laffah
-                              : 'حدد وجهة النزول لاحتساب السعر الدقيق',
+                          l10n.pass_ride_desc_laffah,
                           style: TextStyle(
                             fontFamily: _fontFamily,
                             fontSize: 10.5,
@@ -461,48 +391,29 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                       ],
                     ),
                   ),
-                  if (_hasDropoff)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          baseFare.toStringAsFixed(0),
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 18,
-                            color: AppColors.primary500,
-                          ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        baseFare.toStringAsFixed(0),
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color: AppColors.primary500,
                         ),
-                        Text(
-                          l10n.pass_ride_currency,
-                          style: TextStyle(
-                            fontFamily: _fontFamily,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary500,
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary500.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        '-- ر.ي',
+                      Text(
+                        l10n.pass_ride_currency,
                         style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 12,
+                          fontFamily: _fontFamily,
+                          fontSize: 9,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary500,
                         ),
                       ),
-                    ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -542,18 +453,17 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                                 ? Icons.payments_outlined
                                 : Icons.account_balance_wallet_outlined,
                             color: AppColors.primary500,
-                            size: 18,
+                            size: 16,
                           ),
-                          AppSpacing.w8,
+                          AppSpacing.w6,
                           Text(
-                            _paymentMode == 'cash' ? 'نقداً' : 'المحفظة',
+                            _paymentMode == 'cash' ? l10n.pass_ride_cash : l10n.pass_ride_wallet,
                             style: TextStyle(
                               fontFamily: _fontFamily,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? AppColors.white
-                                  : AppColors.gray800,
+                              color:
+                                  isDark ? AppColors.white : AppColors.gray800,
                             ),
                           ),
                         ],
@@ -656,20 +566,42 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  if (!_hasDropoff) {
-                    _selectMainDropoff();
+                  if (_isSubmitting) return;
+
+                  final String cleanDropoff = widget.dropoff.trim();
+                  if (cleanDropoff.isEmpty ||
+                      cleanDropoff == 'وجهة مختارة' ||
+                      cleanDropoff == 'حدد وجهتك' ||
+                      (widget.dropoffLatLng == null && cleanDropoff.length < 3)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'يرجى تحديد وجهة الوصول بدقة قبل تأكيد اللَفّة',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        backgroundColor: AppColors.danger,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
                     return;
                   }
-                  if (_isSubmitting) return;
+
                   setState(() => _isSubmitting = true);
 
                   context.read<RideBloc>().add(ConfirmUnifiedBooking(
                         pickup: widget.pickup,
-                        dropoff: _dropoff,
+                        dropoff: widget.dropoff,
                         pickupLatitude: widget.pickupLatLng?.latitude ?? 15.3694,
                         pickupLongitude: widget.pickupLatLng?.longitude ?? 44.1910,
-                        dropoffLatitude: _dropoffLatLng?.latitude ?? 15.3521,
-                        dropoffLongitude: _dropoffLatLng?.longitude ?? 44.2014,
+                        dropoffLatitude: widget.dropoffLatLng?.latitude ?? 15.3521,
+                        dropoffLongitude: widget.dropoffLatLng?.longitude ?? 44.2014,
                         additionalDropoffs: _additionalDropoffs,
                         stops: _structuredStops.isNotEmpty ? _structuredStops : null,
                         fare: baseFare,
@@ -695,7 +627,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _hasDropoff ? l10n.pass_ride_confirm : 'تحديد الوجهة لحساب الأجرة',
+                      l10n.pass_ride_confirm,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,

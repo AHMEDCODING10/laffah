@@ -19,20 +19,12 @@ class NotificationService
     public function __construct()
     {
         try {
-            $jsonEnv = env('FIREBASE_CREDENTIALS_JSON');
             $credentialsPath = base_path(config('services.firebase.credentials'));
 
-            if (!empty($jsonEnv)) {
-                $jsonArray = json_decode($jsonEnv, true);
-                if (is_array($jsonArray)) {
-                    $factory = (new Factory)->withServiceAccount($jsonArray);
-                    $this->messaging = $factory->createMessaging();
-                    Log::debug('Firebase Messaging initialized from FIREBASE_CREDENTIALS_JSON env.');
-                }
-            } elseif (file_exists($credentialsPath)) {
+            if (file_exists($credentialsPath)) {
                 $factory = (new Factory)->withServiceAccount($credentialsPath);
                 $this->messaging = $factory->createMessaging();
-                Log::debug('Firebase Messaging initialized from credentials file.');
+                Log::debug('Firebase Messaging initialized successfully.');
             } else {
                 Log::warning("Firebase credentials file not found at: {$credentialsPath}");
             }

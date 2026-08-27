@@ -65,7 +65,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'status' => 'success',
-            'data' => $request->user()->load(['captainProfile', 'wallet'])
+            'data' => $request->user()->load(['roles', 'captainProfile', 'wallet'])
         ]);
     }
 
@@ -75,25 +75,30 @@ class AuthController extends Controller
         
         $request->validate([
             'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20|unique:users,phone,' . $user->id,
             'email' => 'nullable|email|unique:users,email,' . $user->id,
             'fcm_token' => 'nullable|string',
             'app_language' => 'nullable|string|in:ar,en',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
-        $data = $request->only(['name', 'email', 'fcm_token', 'app_language']);
+        $data = $request->only(['name', 'phone', 'email', 'fcm_token', 'app_language']);
+        $data = array_filter($data, fn($value) => !is_null($value) && $value !== '');
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');
             $data['avatar'] = asset('storage/' . $path);
         }
 
-        $user->update($data);
+        if (!empty($data)) {
+            $user->update($data);
+        }
 
         return response()->json([
             'status' => 'success',
+            'success' => true,
             'message' => __('messages.msg_4') ?: 'تم تحديث الملف الشخصي بنجاح.',
-            'data' => $user->load(['captainProfile', 'wallet'])
+            'data' => $user->load(['roles', 'captainProfile', 'wallet'])
         ]);
     }
 

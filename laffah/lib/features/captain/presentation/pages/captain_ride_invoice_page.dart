@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/router/app_router.dart';
+import '../bloc/core/captain_bloc.dart';
+import '../bloc/core/captain_event.dart';
 
 /// CaptainRideInvoicePage — Shown to the captain immediately after a ride completes.
 /// Displays the cash amount to collect from the passenger.
@@ -22,7 +25,12 @@ class CaptainRideInvoicePage extends StatelessWidget {
           leading: IconButton(
             icon: Icon(Icons.close_rounded,
                 color: isDark ? AppColors.white : AppColors.gray900),
-            onPressed: () => context.go(LaffahRoutes.captainHome),
+            onPressed: () {
+              context
+                  .read<CaptainBloc>()
+                  .add(const ResetCaptainState(keepOnline: true));
+              context.go(LaffahRoutes.captainHome);
+            },
           ),
           centerTitle: true,
           title: Text(
@@ -180,6 +188,9 @@ class CaptainRideInvoicePage extends StatelessWidget {
                 height: 54,
                 child: ElevatedButton(
                   onPressed: () {
+                    context
+                        .read<CaptainBloc>()
+                        .add(const ResetCaptainState(keepOnline: true));
                     context.go(LaffahRoutes.captainHome);
                   },
                   style: ElevatedButton.styleFrom(

@@ -238,32 +238,57 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
         },
       );
     } else if (_activeCategoryIndex == 1) {
-      final systemUpdates =
-          state.notifications.where((n) => n.type == 'system').toList();
-      if (systemUpdates.isEmpty) {
+      final tripAndSystemUpdates = state.notifications.where((n) {
+        final t = n.type.toLowerCase();
+        return t == 'system' ||
+            t == 'trip_accepted' ||
+            t == 'trip_completed' ||
+            t == 'parcel' ||
+            t == 'parcel_delivered' ||
+            t == 'general' ||
+            t == 'ride' ||
+            t == 'delivery';
+      }).toList();
+
+      final displayList = tripAndSystemUpdates.isNotEmpty
+          ? tripAndSystemUpdates
+          : state.notifications;
+
+      if (displayList.isEmpty) {
         return _buildEmptyState(AppLocalizations.of(context)!.capt_notif_empty_updates,
             Icons.system_security_update_good, isDark);
       }
       return ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.s16),
-        itemCount: systemUpdates.length,
+        itemCount: displayList.length,
         itemBuilder: (context, index) {
-          final notif = systemUpdates[index];
+          final notif = displayList[index];
           return _buildNotificationCard(notif, isDark);
         },
       );
     } else {
-      final alerts =
-          state.notifications.where((n) => n.type == 'alert').toList();
-      if (alerts.isEmpty) {
+      final alerts = state.notifications.where((n) {
+        final t = n.type.toLowerCase();
+        return t == 'alert' ||
+            t == 'wallet' ||
+            t == 'payout' ||
+            t == 'bonus' ||
+            t == 'warning' ||
+            t == 'trip_completed' ||
+            t == 'parcel_delivered';
+      }).toList();
+
+      final displayList = alerts.isNotEmpty ? alerts : state.notifications;
+
+      if (displayList.isEmpty) {
         return _buildEmptyState(
             AppLocalizations.of(context)!.capt_notif_empty_alerts, Icons.notifications_none, isDark);
       }
       return ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.s16),
-        itemCount: alerts.length,
+        itemCount: displayList.length,
         itemBuilder: (context, index) {
-          final notif = alerts[index];
+          final notif = displayList[index];
           return _buildNotificationCard(notif, isDark);
         },
       );

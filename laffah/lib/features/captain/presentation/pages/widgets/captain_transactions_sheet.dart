@@ -289,63 +289,64 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                     ),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(10),
-                                            decoration: BoxDecoration(
-                                              color: isNegative
-                                                  ? AppColors.danger
-                                                      .withValues(alpha: 0.1)
-                                                  : AppColors.primary500
-                                                      .withValues(alpha: 0.1),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              isNegative
-                                                  ? Icons
-                                                      .account_balance_rounded
-                                                  : Icons.motorcycle_rounded,
-                                              size: 20,
-                                              color: isNegative
-                                                  ? AppColors.danger
-                                                  : AppColors.primary500,
-                                            ),
-                                          ),
-                                          AppSpacing.w12,
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                item.title,
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontFamily:
-                                                      'IBM Plex Sans Arabic',
-                                                  color: isDark
-                                                      ? Colors.white
-                                                      : AppColors.gray900,
-                                                ),
-                                              ),
-                                              AppSpacing.h4,
-                                              Text(
-                                                item.date,
-                                                style: const TextStyle(
-                                                  fontSize: 10.5,
-                                                  color: AppColors.gray500,
-                                                  fontFamily:
-                                                      'IBM Plex Sans Arabic',
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: isNegative
+                                              ? AppColors.danger
+                                                  .withValues(alpha: 0.1)
+                                              : AppColors.primary500
+                                                  .withValues(alpha: 0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          isNegative
+                                              ? Icons
+                                                  .account_balance_rounded
+                                              : Icons.motorcycle_rounded,
+                                          size: 20,
+                                          color: isNegative
+                                              ? AppColors.danger
+                                              : AppColors.primary500,
+                                        ),
                                       ),
+                                      AppSpacing.w12,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.title,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily:
+                                                    'IBM Plex Sans Arabic',
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : AppColors.gray900,
+                                              ),
+                                            ),
+                                            AppSpacing.h4,
+                                            Text(
+                                              item.date,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 10.5,
+                                                color: AppColors.gray500,
+                                                fontFamily:
+                                                    'IBM Plex Sans Arabic',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
                                       Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
@@ -353,7 +354,7 @@ class _CaptainTransactionsSheetState extends State<CaptainTransactionsSheet> {
                                           Text(
                                             '${isNegative ? '-' : '+'} ${item.amount} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
                                             style: TextStyle(
-                                              fontSize: 14.5,
+                                              fontSize: 13.5,
                                               fontWeight: FontWeight.w900,
                                               color: isNegative
                                                   ? AppColors.danger

@@ -1,8 +1,0 @@
-# Keystore configuration template for Android Release signing
-# Place upload-keystore.jks in laffah/android/app/
-# Copy this file to key.properties and configure your passwords
-
-storePassword=your_store_password
-keyPassword=your_key_password
-keyAlias=upload
-storeFile=../app/upload-keystore.jks

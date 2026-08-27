@@ -16,17 +16,10 @@ use Exception;
 
 class TripService
 {
+    const MAX_CAPTAIN_DEBT = -20000.00; // سقف المديونية الأقصى المسموح به للكابتن بالريال اليمني
+
     // TTL for pricing settings cache in seconds (15 minutes)
     const PRICING_CACHE_TTL = 900;
-
-    /**
-     * Get dynamic search radius in KM from settings.
-     */
-    public static function getSearchRadiusKm(): float
-    {
-        return (float) Cache::remember('setting_search_radius_km', self::PRICING_CACHE_TTL,
-            fn() => Setting::where('key', 'search_radius_km')->value('value') ?? 10.0);
-    }
 
     protected NotificationService $notificationService;
 
@@ -50,22 +43,33 @@ class TripService
 
         $stopsCount = isset($data['stops']) && is_array($data['stops']) ? count($data['stops']) : 0;
 
-        // Pricing pulled dynamically from settings cache
+        // --- All pricing pulled exclusively from the settings cache ---
+        $base = (float) Cache::remember('setting_base_fare', self::PRICING_CACHE_TTL,
+            fn() => Setting::where('key', 'base_fare')->value('value') ?? 500);
+
         $perKm = (float) Cache::remember('setting_price_per_km', self::PRICING_CACHE_TTL,
-            fn() => Setting::where('key', 'price_per_km')->value('value') ?? 175);
+            fn() => Setting::where('key', 'price_per_km')->value('value') ?? 150);
+
+        $minFare = (float) Cache::remember('setting_min_fare', self::PRICING_CACHE_TTL,
+            fn() => Setting::where('key', 'min_fare')->value('value') ?? 800);
 
         $multiStopFee = (float) Cache::remember('setting_multi_stop_fee', self::PRICING_CACHE_TTL,
             fn() => Setting::where('key', 'multi_stop_fee')->value('value') ?? 300);
 
-        $rawPrice = ($distanceKm * $perKm) + ($stopsCount * $multiStopFee);
-        $estimatedPrice = (int) ceil($rawPrice);
+        $rawPrice = $base + ($distanceKm * $perKm) + ($stopsCount * $multiStopFee);
+
+        // Apply minimum fare floor and round UP to nearest YER integer
+        $estimatedPrice = (int) ceil(max($rawPrice, $minFare));
 
         return [
             'distance_km'     => round($distanceKm, 2),
             'estimated_price' => $estimatedPrice,
             'currency'        => 'YER',
+            // Applied rates returned for client-side display/debug
             'applied_rates'   => [
+                'base_fare'      => $base,
                 'per_km_rate'    => $perKm,
+                'min_fare'       => $minFare,
                 'multi_stop_fee' => $multiStopFee,
                 'stops_count'    => $stopsCount,
             ],
@@ -129,12 +133,12 @@ class TripService
     public function acceptTrip($tripId, $captainProfileId)
     {
         return DB::transaction(function () use ($tripId, $captainProfileId) {
-            // 1. Zero Debt Policy: Captain cannot accept trips if balance is negative (< 0 YER)
+            // 1. Verify Captain does not exceed negative debt threshold
             $captainProfile = CaptainProfile::with('user')->find($captainProfileId);
             if ($captainProfile && $captainProfile->user_id) {
                 $wallet = Wallet::where('user_id', $captainProfile->user_id)->first();
-                if ($wallet && $wallet->balance < 0.0) {
-                    throw new Exception("لا يمكنك قبول مشاوير جديدة لوجود رصيد سالب في محفظتك (" . number_format($wallet->balance) . " ريال). يرجى شحن محفظتك للاستمرار.", 403);
+                if ($wallet && $wallet->balance < self::MAX_CAPTAIN_DEBT) {
+                    throw new Exception("لا يمكنك قبول مشاوير جديدة لتجاوز سقف العمولة المستحقة (" . number_format($wallet->balance) . " ريال). يرجى شحن محفظتك للاستمرار.", 403);
                 }
             }
 
@@ -186,6 +190,23 @@ class TripService
                 );
             }
 
+            // Send notification to Captain
+            if ($trip->captain && $trip->captain->user) {
+                $pName = $trip->passenger?->name ?? 'الراكب';
+                $price = number_format($trip->estimated_price ?? $trip->final_price ?? 0);
+                $this->notificationService->sendToUser(
+                    $trip->captain->user,
+                    'تم قبول المشوار بنجاح 🛵',
+                    "مشوار جديد للراكب {$pName} بقيمة {$price} ر.ي. من {$trip->pickup_address} إلى {$trip->dropoff_address}.",
+                    [
+                        'type' => 'trip_accepted',
+                        'status' => 'accepted',
+                        'trip_id' => (string) $trip->id,
+                        'passenger_name' => $pName,
+                    ]
+                );
+            }
+
             return $trip;
         });
     }
@@ -212,8 +233,10 @@ class TripService
      */
     public function updateStatus($tripId, $captainProfileId, $status)
     {
-        // Normalize 'started' to 'in_transit' for standard database lifecycle
-        if ($status === 'started') {
+        // Normalize status aliases
+        if (in_array($status, ['arrived_at_pickup', 'arrived'])) {
+            $status = 'arrived';
+        } elseif (in_array($status, ['started', 'in_progress', 'in_transit'])) {
             $status = 'in_transit';
         }
 
@@ -348,6 +371,22 @@ class TripService
                 }
             }
 
+            // Send completion notification to Captain
+            if ($status === 'completed' && $trip->captain && $trip->captain->user) {
+                $earning = number_format($trip->final_price * 0.85);
+                $this->notificationService->sendToUser(
+                    $trip->captain->user,
+                    'تم إنهاء المشوار بنجاح 🏁',
+                    "أحسنت! تم إكمال المشوار #{$trip->id} وإيداع صافي أرباحك ({$earning} ر.ي) في محفظتك.",
+                    [
+                        'type' => 'trip_completed',
+                        'status' => 'completed',
+                        'trip_id' => (string) $trip->id,
+                        'final_price' => (string) $trip->final_price,
+                    ]
+                );
+            }
+
             return $trip;
         });
     }
@@ -377,6 +416,41 @@ class TripService
             // Broadcast cancellation
             try {
                 event(new \App\Events\TripStatusUpdated($trip));
+            } catch (\Exception $e) {}
+
+            // Send cancellation notification to Captain or Passenger
+            try {
+                if ($trip->captain && $trip->captain->user) {
+                    // If passenger cancelled, notify captain
+                    if ($user->id === $trip->user_id) {
+                        $this->notificationService->sendToUser(
+                            $trip->captain->user,
+                            'تم إلغاء المشوار 🚫',
+                            "قام الراكب بإلغاء المشوار #{$trip->id}.",
+                            [
+                                'type' => 'trip_cancelled',
+                                'status' => 'cancelled',
+                                'trip_id' => (string) $trip->id,
+                            ]
+                        );
+                    }
+                }
+
+                if ($trip->passenger) {
+                    // If captain cancelled, notify passenger
+                    if ($user->id !== $trip->user_id) {
+                        $this->notificationService->sendToUser(
+                            $trip->passenger,
+                            'تم إلغاء المشوار 🚫',
+                            "قام الكابتن بإلغاء المشوار #{$trip->id}. يمكنك طلب كابتن آخر.",
+                            [
+                                'type' => 'trip_cancelled',
+                                'status' => 'cancelled',
+                                'trip_id' => (string) $trip->id,
+                            ]
+                        );
+                    }
+                }
             } catch (\Exception $e) {}
 
             return $trip;
@@ -461,7 +535,7 @@ class TripService
      * Combines Haversine straight-line distance with an Urban Road Network Detour Factor (1.25x)
      * to realistically reflect street routing and turns in Yemeni cities.
      */
-    public function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
         $earthRadius = 6371; // km
         $dLat = deg2rad($lat2 - $lat1);

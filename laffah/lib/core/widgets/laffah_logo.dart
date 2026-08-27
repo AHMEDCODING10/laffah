@@ -11,7 +11,7 @@ class LaffahLogo extends StatelessWidget {
     super.key,
     this.height = 140,
     this.width = 140,
-    this.showSubtitle = true,
+    this.showSubtitle = false,
   });
 
   @override

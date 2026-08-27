@@ -13,6 +13,8 @@ import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/services/osrm_service.dart';
 import '../../../../core/services/echo_service.dart';
 
+import '../../../../core/router/app_router.dart';
+
 class PassengerRideTrackingPage extends StatefulWidget {
   final String? captainId;
   final double captainLat;
@@ -80,23 +82,19 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
 
   void _listenToLiveTracking() {
     _echoService.init().then((_) {
-      _echoService.listenToCaptainLocation(_activeCaptainId, (data) {
+      _echoService.listenToCaptainLocation(_activeCaptainId, (lat, lng, heading) {
         if (!mounted) return;
 
-        final double newLat = ((data['latitude'] ?? data['lat']) as num).toDouble();
-        final double newLng = ((data['longitude'] ?? data['lng']) as num).toDouble();
-        final double newHeading = ((data['heading'] ?? 0.0) as num).toDouble();
-
-        _latTween = Tween<double>(begin: _captainLocation.latitude, end: newLat)
+        _latTween = Tween<double>(begin: _captainLocation.latitude, end: lat)
             .animate(CurvedAnimation(
                 parent: _animController, curve: Curves.easeInOut));
         _lngTween =
-            Tween<double>(begin: _captainLocation.longitude, end: newLng)
+            Tween<double>(begin: _captainLocation.longitude, end: lng)
                 .animate(CurvedAnimation(
                     parent: _animController, curve: Curves.easeInOut));
 
         setState(() {
-          _captainHeading = newHeading;
+          _captainHeading = heading ?? 0.0;
         });
 
         _animController.forward(from: 0.0);
@@ -127,21 +125,68 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            // Map View
-            BlocBuilder<RideBloc, RideState>(
-              builder: (context, state) {
-                return Positioned.fill(
-                  child: LaffahMapView(
-                    isDark: isDark,
-                    showDefaultMockData: false,
-                    followCaptain: true,
-                    // Real-time animated data
-                    captainLocation: _captainLocation,
+    return BlocListener<RideBloc, RideState>(
+      listener: (context, state) {
+        if ((state is RideBookingConfirmed &&
+                state.status.toLowerCase() == 'completed') ||
+            state is RideCompleted) {
+          final tripId = (state is RideBookingConfirmed)
+              ? (state.rideId ?? 'TRIP')
+              : 'TRIP';
+          final fare = (state is RideBookingConfirmed)
+              ? state.selectedOption.basePrice
+              : 1083.0;
+          final captainName = (state is RideBookingConfirmed)
+              ? state.captainName
+              : 'علي صالح صالح';
+          final captainPhone =
+              (state is RideBookingConfirmed) ? state.captainPhone : '';
+          final vehicleModel =
+              (state is RideBookingConfirmed) ? state.vehicleModel : 'دراجة نارية';
+          final vehiclePlate =
+              (state is RideBookingConfirmed) ? state.vehiclePlate : 'صنعاء';
+          final pickup = (state is RideBookingConfirmed)
+              ? state.pickup
+              : 'موقعك الحالي';
+          final dropoff = (state is RideBookingConfirmed)
+              ? state.dropoff
+              : 'شارع الزبيري';
+          final rating = (state is RideBookingConfirmed) ? state.rating : 5.0;
+
+          context.pushReplacement(
+            LaffahRoutes.passengerRideInvoice,
+            extra: {
+              'tripId': tripId,
+              'fare': fare,
+              'captainName': captainName,
+              'captainPhone': captainPhone,
+              'vehicleModel': vehicleModel,
+              'vehiclePlate': vehiclePlate,
+              'pickup': pickup,
+              'dropoff': dropoff,
+              'rating': rating,
+              'distance': '6.3 كم',
+              'duration': '7 دقيقة',
+              'paymentMethod': 'نقداً (Cash)',
+            },
+          );
+        }
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              // Map View
+              BlocBuilder<RideBloc, RideState>(
+                builder: (context, state) {
+                  return Positioned.fill(
+                    child: LaffahMapView(
+                      isDark: isDark,
+                      showDefaultMockData: false,
+                      followCaptain: true,
+                      // Real-time animated data
+                      captainLocation: _captainLocation,
                     passengerLocation: _passengerLocation,
                     captainHeading: _captainHeading,
                     routePoints: _routePoints.isNotEmpty ? _routePoints : null,
@@ -299,10 +344,15 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                         // Captain Info
                         Row(
                           children: [
-                            const CircleAvatar(
+                            CircleAvatar(
                               radius: 25,
-                              backgroundImage: NetworkImage(
-                                  'https://i.pravatar.cc/150?img=12'),
+                              backgroundColor:
+                                  AppColors.primary500.withValues(alpha: 0.12),
+                              child: const Icon(
+                                Icons.person_rounded,
+                                color: AppColors.primary500,
+                                size: 28,
+                              ),
                             ),
                             AppSpacing.w12,
                             Expanded(
@@ -458,8 +508,9 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildCircleButton(IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(

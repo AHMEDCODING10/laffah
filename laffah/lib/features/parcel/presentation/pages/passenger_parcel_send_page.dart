@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/di/injection_container.dart' as di;
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
-import '../../../../core/services/osrm_service.dart';
 import '../../../home/presentation/pages/location_search_page.dart';
 import '../bloc/parcel_bloc.dart';
 import '../bloc/parcel_event.dart';
 import '../bloc/parcel_state.dart';
 import '../widgets/passenger/form/parcel_form_cards.dart';
+import '../widgets/passenger/searching_parcel_captain_overlay.dart';
 
 class PassengerParcelSendPage extends StatefulWidget {
   const PassengerParcelSendPage({super.key});
@@ -45,8 +43,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
 
   LatLng _pickupLatLng = const LatLng(15.3694, 44.1910);
   LatLng? _dropoffLatLng;
-  double _distanceKm = 0.0;
-  final OsrmService _osrmService = OsrmService();
+
 
   final List<String> _parcelTypes = [
     'وثائق ومستندات',
@@ -60,8 +57,6 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
   String _selectedParcelType = 'طرد صغير / هدايا';
   String _selectedSize = 'صغير';
   bool _isInsuranceEnabled = false;
-
-  bool get _hasDropoff => _dropoffLocationController.text.trim().isNotEmpty;
 
   @override
   void dispose() {
@@ -77,17 +72,14 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
   }
 
   double get _baseFee {
-    if (!_hasDropoff) return 0.0;
-    final double distanceFee = _distanceKm > 0 ? (_distanceKm * 175.0) : 175.0;
-    double sizeMultiplier = 1.10; // صغير: +10%
-    if (_selectedSize == 'متوسط') sizeMultiplier = 1.15; // متوسط: +15%
-    if (_selectedSize == 'كبير') sizeMultiplier = 1.20; // كبير: +20%
-    return (distanceFee * sizeMultiplier).ceilToDouble();
+    if (_selectedSize == 'متوسط') return 1500.0;
+    if (_selectedSize == 'كبير') return 2000.0;
+    return 1200.0;
   }
 
-  double get _insuranceFee => (_isInsuranceEnabled && _hasDropoff) ? 300.0 : 0.0;
+  double get _insuranceFee => _isInsuranceEnabled ? 300.0 : 0.0;
 
-  double get _totalPrice => _hasDropoff ? (_baseFee + _insuranceFee) : 0.0;
+  double get _totalPrice => _baseFee + _insuranceFee;
 
   Future<void> _pickLocation(bool isPickup) async {
     final result = await Navigator.push(
@@ -100,11 +92,10 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
     );
 
     if (result != null && result is Map<String, dynamic>) {
-      final name = result['name'] ?? '';
-      final lat = result['lat'] as double?;
-      final lon = result['lon'] as double?;
-
       setState(() {
+        final name = result['name'] ?? '';
+        final lat = result['lat'] as double?;
+        final lon = result['lon'] as double?;
         if (isPickup) {
           _pickupLocationController.text = name;
           if (lat != null && lon != null) {
@@ -117,34 +108,10 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
           }
         }
       });
-
-      // Calculate route distance if dropoff is set
-      if (_dropoffLatLng != null) {
-        final route = await _osrmService.getRoute(_pickupLatLng, _dropoffLatLng!);
-        if (route != null && mounted) {
-          setState(() {
-            _distanceKm = route.distanceKm;
-          });
-        }
-      }
     }
   }
 
   void _handleSubmit(BuildContext context) {
-    if (!_hasDropoff) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: AppColors.error,
-          content: Text(
-            'يرجى تحديد موقع تسليم الطرد لحساب تكلفة الشحن.',
-            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
-          ),
-        ),
-      );
-      _pickLocation(false);
-      return;
-    }
-
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -158,18 +125,26 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
       return;
     }
 
+    if (_dropoffLocationController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.error,
+          content: Text(
+            'يرجى تحديد موقع تسليم الطرد.',
+            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+          ),
+        ),
+      );
+      return;
+    }
+
     final notes = [
       if (_notesController.text.trim().isNotEmpty)
         _notesController.text.trim(),
       if (_isInsuranceEnabled) 'شامل التأمين',
-      'من: ${_pickupLocationController.text.trim()} (${_pickupLatLng.latitude.toStringAsFixed(4)}, ${_pickupLatLng.longitude.toStringAsFixed(4)})',
-      if (_dropoffLatLng != null)
-        'إلى: ${_dropoffLocationController.text.trim()} (${_dropoffLatLng!.latitude.toStringAsFixed(4)}, ${_dropoffLatLng!.longitude.toStringAsFixed(4)})'
-      else
-        'إلى: ${_dropoffLocationController.text.trim()}',
       if (_estimatedValueController.text.trim().isNotEmpty)
-        'القيمة التقديرية: ${_estimatedValueController.text.trim()} ر.ي',
-    ].join(' | ');
+        'القيمة: ${_estimatedValueController.text.trim()} ر.ي',
+    ].join(' • ');
 
 
     context.read<ParcelBloc>().add(
@@ -202,18 +177,25 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
       child: BlocConsumer<ParcelBloc, ParcelState>(
         listener: (context, state) {
           if (state is ParcelSubmittedSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: AppColors.success,
-                content: Text(
-                  'تم إرسال طلب الطرد بنجاح!',
-                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
-                ),
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              isDismissible: false,
+              enableDrag: false,
+              backgroundColor: Colors.transparent,
+              builder: (ctx) => SearchingParcelCaptainOverlay(
+                parcel: state.parcel,
+                onCancel: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم إلغاء البحث عن كابتن',
+                          style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
+                    ),
+                  );
+                },
               ),
             );
-            context.go(LaffahRoutes.passengerParcelConfirm, extra: state.parcel);
           } else if (state is ParcelError) {
-
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 backgroundColor: AppColors.error,
@@ -331,8 +313,6 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                           AppSpacing.h8,
                           ParcelPriceSummaryCard(
                             isDark: isDark,
-                            hasSelectedDropoff: _hasDropoff,
-                            distanceKm: _distanceKm,
                             baseFee: _baseFee,
                             isInsuranceEnabled: _isInsuranceEnabled,
                             insuranceFee: _insuranceFee,

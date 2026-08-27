@@ -30,10 +30,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<Either<Failure, ProfileEntity>> updateProfile(
-      {required String name, String? email}) async {
+      {required String name, String? phone, String? email}) async {
     try {
       final response =
-          await remoteDataSource.updateProfile(name: name, email: email);
+          await remoteDataSource.updateProfile(name: name, phone: phone, email: email);
       if (response.success && response.data != null) {
         return Right(response.data!);
       } else {

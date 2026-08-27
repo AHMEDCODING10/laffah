@@ -48,11 +48,11 @@ class HomeTopHeader extends StatelessWidget {
                 child: Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.white : AppColors.gray900,
+                    color: AppColors.primary500,
                   ),
                 ),
               ),

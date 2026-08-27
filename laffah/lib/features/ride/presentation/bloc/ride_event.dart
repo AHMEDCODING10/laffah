@@ -231,3 +231,28 @@ class ActiveRidePolledStatusUpdated extends RideEvent {
       ];
 }
 
+class RateTripRequested extends RideEvent {
+  final String tripId;
+  final double rating;
+  final String? comment;
+
+  const RateTripRequested({
+    required this.tripId,
+    required this.rating,
+    this.comment,
+  });
+
+  @override
+  List<Object?> get props => [tripId, rating, comment];
+}
+
+class DeleteTripFromHistory extends RideEvent {
+  final String tripId;
+
+  const DeleteTripFromHistory(this.tripId);
+
+  @override
+  List<Object?> get props => [tripId];
+}
+
+

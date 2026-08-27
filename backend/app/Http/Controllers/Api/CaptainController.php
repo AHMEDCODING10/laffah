@@ -106,13 +106,13 @@ class CaptainController extends Controller
 
         $isOnline = (bool) $request->is_online;
 
-        // Zero Debt Policy: If trying to go online, verify wallet balance is not negative (< 0 YER)
+        // If trying to go online, verify wallet balance is not below debt cap (-2000 YER)
         if ($isOnline) {
             $wallet = Wallet::where('user_id', $user->id)->first();
-            if ($wallet && $wallet->balance < 0.0) {
+            if ($wallet && $wallet->balance < TripService::MAX_CAPTAIN_DEBT) {
                 return response()->json([
                     'status'  => 'error',
-                    'message' => 'لا يمكنك بدء العمل لأن رصيدك سالب (' . number_format($wallet->balance) . ' ريال). يرجى شحن محفظتك للاستمرار.'
+                    'message' => 'لا يمكنك بدء العمل لأن رصيدك سالب (' . number_format($wallet->balance) . ' ريال) وتجاوز سقف العمولة المسموح به. يرجى شحن محفظتك للاستمرار.'
                 ], 403);
             }
         }

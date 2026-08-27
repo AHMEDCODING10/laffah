@@ -43,6 +43,7 @@ class Trip extends Model
         'accepted_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
     public function passenger()

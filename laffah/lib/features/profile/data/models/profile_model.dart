@@ -18,21 +18,35 @@ class ProfileModel extends ProfileEntity {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    final captain = json['captain_profile'] ?? json['captainProfile'];
+    final rolesList = json['roles'] as List?;
+    String resolvedRole = json['role']?.toString() ??
+        (rolesList != null && rolesList.isNotEmpty
+            ? rolesList[0]['name']?.toString() ?? 'passenger'
+            : (captain != null ? 'captain' : 'passenger'));
+
+    double? parsedRating;
+    if (captain != null && captain['rating'] != null) {
+      parsedRating = double.tryParse(captain['rating'].toString());
+    } else if (json['rating'] != null) {
+      parsedRating = double.tryParse(json['rating'].toString());
+    }
+
     return ProfileModel(
-      id: json['id'].toString(),
-      name: json['name'] ?? '',
-      phone: json['phone'] ?? '',
-      email: json['email'],
-      avatarUrl: json['avatar_url'],
-      role: json['role'] ?? 'passenger',
-      vehicleType: json['captain_profile']?['vehicle_type'],
-      vehicleModel: json['captain_profile']?['vehicle_model'],
-      plateNumber: json['captain_profile']?['plate_number'],
-      rating: json['captain_profile']?['rating'] != null
-          ? double.tryParse(json['captain_profile']['rating'].toString())
-          : null,
-      isVerified: json['captain_profile']?['is_verified'] == true ||
-          json['captain_profile']?['is_verified'] == 1,
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      phone: (json['phone'] ?? '').toString(),
+      email: json['email']?.toString(),
+      avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString(),
+      role: resolvedRole,
+      vehicleType: (captain?['vehicle_type'] ?? captain?['vehicleType'])?.toString(),
+      vehicleModel: (captain?['vehicle_model'] ?? captain?['vehicleModel'])?.toString(),
+      plateNumber: (captain?['plate_number'] ?? captain?['plateNumber'])?.toString(),
+      rating: parsedRating,
+      isVerified: captain?['is_verified'] == true ||
+          captain?['is_verified'] == 1 ||
+          captain?['isVerified'] == true ||
+          captain?['isVerified'] == 1,
     );
   }
 

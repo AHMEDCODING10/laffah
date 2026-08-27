@@ -45,12 +45,18 @@ class ParcelBloc extends Bloc<ParcelEvent, ParcelState> {
 
   Future<void> _onTrackParcel(
       TrackParcelEvent event, Emitter<ParcelState> emit) async {
-    emit(ParcelLoading());
+    if (state is! ParcelTrackingLoaded) {
+      emit(ParcelLoading());
+    }
 
     final result = await trackParcelUseCase(event.identifier);
 
     result.fold(
-      (failure) => emit(ParcelError(failure.message)),
+      (failure) {
+        if (state is! ParcelTrackingLoaded) {
+          emit(ParcelError(failure.message));
+        }
+      },
       (parcel) => emit(ParcelTrackingLoaded(parcel)),
     );
   }

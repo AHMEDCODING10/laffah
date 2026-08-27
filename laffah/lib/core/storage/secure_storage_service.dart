@@ -31,6 +31,8 @@ class SecureStorageService {
 
   Future<String?> getRole() => _storage.read(key: _roleKey);
 
+  Future<void> clearRole() => _storage.delete(key: _roleKey);
+
   // ─── User ID ───
   Future<void> saveUserId(String id) =>
       _storage.write(key: _userIdKey, value: id);

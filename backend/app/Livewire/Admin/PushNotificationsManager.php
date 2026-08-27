@@ -34,12 +34,11 @@ class PushNotificationsManager extends Component
             ->take(20)
             ->get()
             ->map(function ($notification) {
-                $data = is_array($notification->data) ? $notification->data : (json_decode($notification->data, true) ?: []);
                 return (object) [
                     'id' => $notification->id,
-                    'title' => $data['title'] ?? 'إشعار',
-                    'body' => $data['description'] ?? ($data['body'] ?? '—'),
-                    'target' => $data['type'] ?? 'عام',
+                    'title' => $notification->data['title'] ?? 'إشعار',
+                    'body' => $notification->data['description'] ?? '',
+                    'target' => $notification->data['type'] ?? 'عام',
                     'created_at' => $notification->created_at,
                 ];
             });

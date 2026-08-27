@@ -3,7 +3,6 @@
 namespace App\Livewire\Admin;
 
 use App\Models\CaptainProfile;
-use App\Models\Document;
 use App\Models\Trip;
 use App\Models\Transaction;
 use Livewire\Component;
@@ -11,8 +10,6 @@ use Livewire\Component;
 class CaptainProfileViewer extends Component
 {
     public $captain;
-    public bool $showDocModal = false;
-    public ?Document $selectedDoc = null;
 
     public function mount($id)
     {
@@ -43,52 +40,23 @@ class CaptainProfileViewer extends Component
         ])->layout('components.admin-layout', ['title' => 'ملف الكابتن: ' . ($this->captain->user->name ?? 'غير معروف')]);
     }
 
-    public function toggleVerification(): void
+    public function verifyCaptain()
     {
-        $newStatus = !$this->captain->is_verified;
-        $this->captain->update(['is_verified' => $newStatus]);
+        // Require documents: id_card and vehicle_registration
+        $hasIdCard = $this->captain->documents()->where('type', 'id_card')->exists();
+        $hasVehicleRegistration = $this->captain->documents()->where('type', 'vehicle_registration')->exists();
 
-        if ($newStatus) {
-            $this->captain->documents()->where('status', 'pending')->update(['status' => 'approved']);
-            session()->flash('success', 'تم توثيق حساب الكابتن بنجاح ✅');
-        } else {
-            session()->flash('success', 'تم إلغاء توثيق حساب الكابتن ⚠️');
+        if (!$hasIdCard || !$hasVehicleRegistration) {
+            $this->addError('verification', 'يجب أن يرفع الكابتن بطاقة الهوية وتسجيل المركبة ليتم توثيقه.');
+            return;
         }
 
+        $this->captain->update(['is_verified' => true]);
+        
+        // Update documents status
+        $this->captain->documents()->whereIn('type', ['id_card', 'vehicle_registration'])->update(['status' => 'approved']);
+        
+        session()->flash('success', 'تم توثيق الحساب والموافقة على المستندات بنجاح.');
         $this->captain->refresh();
-    }
-
-    public function openDocModal(int $docId): void
-    {
-        $this->selectedDoc = Document::with('captainProfile.user')->findOrFail($docId);
-        $this->showDocModal = true;
-    }
-
-    public function closeDocModal(): void
-    {
-        $this->showDocModal = false;
-        $this->selectedDoc = null;
-    }
-
-    public function approveDoc(int $docId): void
-    {
-        $doc = Document::findOrFail($docId);
-        $doc->update(['status' => 'approved', 'rejection_reason' => null]);
-        session()->flash('success', 'تمت الموافقة على الوثيقة بنجاح ✅');
-        $this->captain->refresh();
-        if ($this->selectedDoc && $this->selectedDoc->id === $docId) {
-            $this->selectedDoc = $doc;
-        }
-    }
-
-    public function rejectDoc(int $docId): void
-    {
-        $doc = Document::findOrFail($docId);
-        $doc->update(['status' => 'rejected', 'rejection_reason' => 'الوثيقة غير واضحة أو غير مطابقة للبيانات']);
-        session()->flash('success', 'تم رفض الوثيقة وتحديث الحالة ⚠️');
-        $this->captain->refresh();
-        if ($this->selectedDoc && $this->selectedDoc->id === $docId) {
-            $this->selectedDoc = $doc;
-        }
     }
 }

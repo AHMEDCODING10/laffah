@@ -6,6 +6,8 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
     required super.title,
     required super.passengerName,
     required super.passengerPhone,
+    super.receiverName = 'المستلم',
+    super.receiverPhone = '',
     required super.passengerRating,
     required super.description,
     required super.pickup,
@@ -17,6 +19,9 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
     required super.grossFare,
     required super.timeTag,
     required super.isParcel,
+    super.parcelType,
+    super.size,
+    super.trackingCode,
     required super.stops,
   });
 
@@ -24,10 +29,19 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
     // Safely extract passenger details if nested or flat
     final passengerMap = json['passenger'] is Map ? json['passenger'] as Map<String, dynamic> : null;
     final String pName = json['passengerName'] as String? ??
+        json['sender_name'] as String? ??
         passengerMap?['name'] as String? ??
         'عميل';
     final String pPhone = json['passengerPhone'] as String? ??
+        json['sender_phone'] as String? ??
         passengerMap?['phone'] as String? ??
+        '';
+
+    final String rName = json['receiverName'] as String? ??
+        json['receiver_name'] as String? ??
+        'المستلم';
+    final String rPhone = json['receiverPhone'] as String? ??
+        json['receiver_phone'] as String? ??
         '';
 
     // Safely parse stops whether they are list of strings or list of maps
@@ -54,6 +68,8 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
       title: json['title'] as String? ?? 'طلب مشوار جديد',
       passengerName: pName,
       passengerPhone: pPhone,
+      receiverName: rName,
+      receiverPhone: rPhone,
       passengerRating: (json['passengerRating'] as num?)?.toDouble() ?? 5.0,
       description: json['description'] as String? ??
           "${json['pickup'] ?? json['pickup_address'] ?? ''} ← ${json['dropoff'] ?? json['dropoff_address'] ?? ''}",
@@ -79,6 +95,12 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
       isParcel: json['isParcel'] == true ||
           json['is_parcel'] == true ||
           json['type'] == 'delivery',
+      parcelType: json['parcel_type'] as String? ??
+          json['parcelType'] as String? ??
+          json['notes'] as String?,
+      size: json['size'] as String? ?? 'متوسط',
+      trackingCode: json['trackingCode'] as String? ??
+          json['tracking_code'] as String?,
       stops: stopsList,
     );
   }

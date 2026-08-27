@@ -96,7 +96,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   final TrackRideUseCase trackRideUseCase;
   final SubmitParcelOrderUseCase submitParcelOrderUseCase;
   final GetTripHistoryUseCase getTripHistoryUseCase;
-  final RateTripUseCase rateTripUseCase;
+  final RateTripUseCase? rateTripUseCase;
   final CaptainTripAlertSoundService alertSoundService;
   final RideRemoteDataSource remoteDataSource;
   final EchoService _echoService = EchoService();
@@ -110,7 +110,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     required this.trackRideUseCase,
     required this.submitParcelOrderUseCase,
     required this.getTripHistoryUseCase,
-    required this.rateTripUseCase,
+    this.rateTripUseCase,
     required this.alertSoundService,
     required this.remoteDataSource,
   }) : super(const RideInitial()) {
@@ -119,13 +119,44 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     on<ConfirmBooking>(_onConfirmBooking);
     on<SubmitParcelOrder>(_onSubmitParcelOrder);
     on<CancelRideRequested>(_onCancelRideRequested);
-    on<SubmitTripRating>(_onSubmitTripRating);
     on<SimulateRideStep>(_onSimulateRideStep);
     on<ScheduleRide>(_onScheduleRide);
     on<LoadTripHistoryEvent>(_onLoadTripHistory);
     on<TripStatusUpdatedFromWebSocket>(_onTripStatusUpdatedFromWebSocket);
     on<ActiveRidePolledStatusUpdated>(_onActiveRidePolledStatusUpdated);
+    on<RateTripRequested>(_onRateTripRequested);
+    on<DeleteTripFromHistory>(_onDeleteTripFromHistory);
     on<ResetRideState>(_onResetRideState);
+  }
+
+  Future<void> _onDeleteTripFromHistory(
+    DeleteTripFromHistory event,
+    Emitter<RideState> emit,
+  ) async {
+    try {
+      await remoteDataSource.deleteTrip(event.tripId);
+    } catch (_) {}
+
+    if (state is TripHistoryLoaded) {
+      final currentList = (state as TripHistoryLoaded).trips;
+      final updatedList = currentList
+          .where((t) => t['id']?.toString() != event.tripId.toString())
+          .toList();
+      emit(TripHistoryLoaded(updatedList));
+    }
+  }
+
+  Future<void> _onRateTripRequested(
+    RateTripRequested event,
+    Emitter<RideState> emit,
+  ) async {
+    if (rateTripUseCase != null) {
+      await rateTripUseCase!(
+        tripId: event.tripId,
+        rating: event.rating,
+        review: event.comment,
+      );
+    }
   }
 
   void _onResetRideState(ResetRideState event, Emitter<RideState> emit) {
@@ -194,8 +225,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ConfirmUnifiedBooking event,
     Emitter<RideState> emit,
   ) async {
-    emit(const RideLoading());
-
     final selectedOption = RideOption(
       id: 'laffah',
       titleAr: 'لَفّة',
@@ -205,6 +234,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       iconKey: 'car',
       descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
     );
+
+    // 1. Instantly emit Searching / Pending state so user immediately sees the Searching Radar
+    emit(RideBookingConfirmed(
+      pickup: event.pickup,
+      dropoff: event.dropoff,
+      selectedOption: selectedOption,
+      captainName: 'قيد البحث',
+      captainPhone: '',
+      vehicleModel: 'دراجة نارية',
+      vehiclePlate: '',
+      rating: 5.0,
+      status: 'pending',
+    ));
 
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
@@ -250,18 +292,24 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ConfirmBooking event,
     Emitter<RideState> emit,
   ) async {
-    emit(const RideLoading());
+    double calculatedPrice = 1200.0;
+    int duration = 15;
 
-    final estimate = await remoteDataSource.estimateFare(
-      pickupLatitude: event.pickupLatitude ?? 0,
-      pickupLongitude: event.pickupLongitude ?? 0,
-      dropoffLatitude: event.dropoffLatitude ?? 0,
-      dropoffLongitude: event.dropoffLongitude ?? 0,
-      stops: null,
-    );
-
-    final double calculatedPrice = (estimate['estimated_price'] as num?)?.toDouble() ?? 1200.0;
-    final int duration = ((estimate['distance_km'] as num? ?? 5.0) / 25.0 * 60).ceil().clamp(3, 120);
+    if ((event.pickupLatitude ?? 0) != 0 && (event.dropoffLatitude ?? 0) != 0) {
+      try {
+        final estimate = await remoteDataSource.estimateFare(
+          pickupLatitude: event.pickupLatitude!,
+          pickupLongitude: event.pickupLongitude ?? 0,
+          dropoffLatitude: event.dropoffLatitude!,
+          dropoffLongitude: event.dropoffLongitude ?? 0,
+          stops: null,
+        );
+        if (estimate['estimated_price'] != null) {
+          calculatedPrice = (estimate['estimated_price'] as num).toDouble();
+          duration = ((estimate['distance_km'] as num? ?? 5.0) / 25.0 * 60).ceil().clamp(3, 120);
+        }
+      } catch (_) {}
+    }
 
     final selectedOption = RideOption(
       id: 'laffah',
@@ -272,6 +320,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       iconKey: 'car',
       descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
     );
+
+    // 1. Instantly transition to Searching State on the map
+    emit(RideBookingConfirmed(
+      pickup: event.pickup,
+      dropoff: event.dropoff,
+      selectedOption: selectedOption,
+      captainName: 'قيد البحث',
+      captainPhone: '',
+      vehicleModel: 'دراجة نارية',
+      vehiclePlate: '',
+      rating: 5.0,
+      status: 'pending',
+    ));
 
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
@@ -355,17 +416,10 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     final bool wasSearching = state is RideBookingConfirmed &&
         ((state as RideBookingConfirmed).captainName == 'قيد البحث' ||
             (state as RideBookingConfirmed).status == 'pending');
-    final bool isArrivingNow = s == 'arrived' &&
-        state is RideBookingConfirmed &&
-        (state as RideBookingConfirmed).status != 'arrived';
-    final bool isStartingNow = (s == 'in_transit' || s == 'started') &&
-        state is RideBookingConfirmed &&
-        (state as RideBookingConfirmed).status != 'in_transit' &&
-        (state as RideBookingConfirmed).status != 'started';
 
     if (s == 'accepted' || s == 'arrived' || s == 'in_transit' || s == 'started') {
-      if (wasSearching || isArrivingNow || isStartingNow) {
-        // Play discrete chime on lifecycle progression
+      if (wasSearching) {
+        // Captain just accepted! Play simple discrete chime
         alertSoundService.playSimpleTripAlert();
       }
 
@@ -384,35 +438,30 @@ class RideBloc extends Bloc<RideEvent, RideState> {
             ? event.vehiclePlate!
             : '---',
         rating: event.rating,
-        status: s == 'started' ? 'in_transit' : s,
+        status: s,
         rideId: event.rideId,
       ));
     } else if (s == 'completed') {
       _stopSmartPolling();
       alertSoundService.playSimpleTripAlert();
-      if (state is RideBookingConfirmed) {
-        final sObj = state as RideBookingConfirmed;
-        emit(sObj.copyWith(status: 'completed'));
-      } else {
-        emit(RideBookingConfirmed(
-          pickup: event.pickup,
-          dropoff: event.dropoff,
-          selectedOption: event.option,
-          captainName: (event.captainName != null && event.captainName!.isNotEmpty)
-              ? event.captainName!
-              : 'كابتن لَفَّة',
-          captainPhone: event.captainPhone ?? '',
-          vehicleModel: (event.vehicleModel != null && event.vehicleModel!.isNotEmpty)
-              ? event.vehicleModel!
-              : 'دراجة نارية',
-          vehiclePlate: (event.vehiclePlate != null && event.vehiclePlate!.isNotEmpty)
-              ? event.vehiclePlate!
-              : '---',
-          rating: event.rating,
-          status: 'completed',
-          rideId: event.rideId,
-        ));
-      }
+      emit(RideBookingConfirmed(
+        pickup: event.pickup,
+        dropoff: event.dropoff,
+        selectedOption: event.option,
+        captainName: (event.captainName != null && event.captainName!.isNotEmpty)
+            ? event.captainName!
+            : 'كابتن لَفَّة',
+        captainPhone: event.captainPhone ?? '',
+        vehicleModel: (event.vehicleModel != null && event.vehicleModel!.isNotEmpty)
+            ? event.vehicleModel!
+            : 'دراجة نارية',
+        vehiclePlate: (event.vehiclePlate != null && event.vehiclePlate!.isNotEmpty)
+            ? event.vehiclePlate!
+            : '---',
+        rating: event.rating,
+        status: 'completed',
+        rideId: event.rideId,
+      ));
     } else if (s == 'cancelled') {
       _stopSmartPolling();
       emit(const RideInitial());
@@ -466,18 +515,33 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       _echoService.stopListeningToTripStatus(_currentActiveRideId!);
       _currentActiveRideId = null;
     }
-    if (state is RideBookingConfirmed) {
-      final rideId = (state as RideBookingConfirmed).rideId;
-      if (rideId != null) {
-        emit(const RideLoading());
-        final result = await cancelRideUseCase(rideId);
-        result.fold(
-          (failure) => emit(RideError(failure.message)),
-          (_) => emit(const RideInitial()),
-        );
-        return;
-      }
+
+    final targetTripId = event.tripId ??
+        (state is RideBookingConfirmed
+            ? (state as RideBookingConfirmed).rideId
+            : null);
+
+    if (targetTripId != null && targetTripId.isNotEmpty) {
+      await cancelRideUseCase(targetTripId);
     }
+
+    if (state is TripHistoryLoaded) {
+      final currentList = (state as TripHistoryLoaded).trips;
+      final nowStr = DateTime.now().toIso8601String();
+      final updatedList = currentList.map((t) {
+        if (t['id']?.toString() == targetTripId?.toString()) {
+          final updated = Map<String, dynamic>.from(t);
+          updated['status'] = 'cancelled';
+          updated['cancelled_at'] = nowStr;
+          updated['updated_at'] = nowStr;
+          return updated;
+        }
+        return t;
+      }).toList();
+      emit(TripHistoryLoaded(updatedList));
+      return;
+    }
+
     emit(const RideInitial());
   }
 
@@ -503,12 +567,12 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     }
   }
 
-  FutureOr<void> _onScheduleRide(
+  Future<void> _onScheduleRide(
     ScheduleRide event,
     Emitter<RideState> emit,
   ) async {
     emit(const RideLoading());
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(seconds: 1));
     emit(const RideScheduledSuccess());
   }
 
@@ -526,44 +590,46 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   }
 
   /// Handles real-time WebSocket trip status updates (accepted, arrived, in_transit, completed, cancelled)
-  FutureOr<void> _onTripStatusUpdatedFromWebSocket(
+  void _onTripStatusUpdatedFromWebSocket(
     TripStatusUpdatedFromWebSocket event,
     Emitter<RideState> emit,
   ) {
     final data = event.data;
-    final status = (data['status'] ?? '').toString().toLowerCase();
+    final status = data['status']?.toString();
 
-    if (status == 'accepted' || status == 'arrived') {
+    if (status == 'accepted') {
       alertSoundService.playSimpleTripAlert();
       if (state is RideBookingConfirmed) {
         final s = state as RideBookingConfirmed;
         emit(s.copyWith(
-          captainName: data['captain_name']?.toString() ?? s.captainName,
-          captainPhone: data['captain_phone']?.toString() ?? s.captainPhone,
-          vehicleModel: data['vehicle_model']?.toString() ?? s.vehicleModel,
-          vehiclePlate: data['vehicle_plate']?.toString() ?? (data['plate_number']?.toString() ?? s.vehiclePlate),
-          rating: (data['rating'] is num)
-              ? (data['rating'] as num).toDouble()
-              : ((data['captain_rating'] is num)
-                  ? (data['captain_rating'] as num).toDouble()
-                  : s.rating),
-          status: status,
+          captainName: data['captain_name']?.toString() ?? 'كابتن لَفَّة',
+          captainPhone: data['captain_phone']?.toString() ?? '',
+          vehicleModel: data['vehicle_model']?.toString() ?? 'دراجة نارية',
+          vehiclePlate: data['plate_number']?.toString() ?? '---',
+          rating: (data['captain_rating'] is num)
+              ? (data['captain_rating'] as num).toDouble()
+              : 5.0,
+          status: 'accepted',
         ));
       } else {
         emit(RideAccepted(
           captainName: data['captain_name']?.toString() ?? 'كابتن لَفَّة',
           vehicleModel: data['vehicle_model']?.toString() ?? 'دراجة نارية',
-          vehiclePlate: data['vehicle_plate']?.toString() ?? (data['plate_number']?.toString() ?? '---'),
-          captainRating: (data['rating'] is num)
-              ? (data['rating'] as num).toDouble()
-              : ((data['captain_rating'] is num)
-                  ? (data['captain_rating'] as num).toDouble()
-                  : 5.0),
-          eta: status == 'arrived' ? 'وصل الكابتن' : '3 دقائق',
+          vehiclePlate: data['plate_number']?.toString() ?? '---',
+          captainRating: (data['captain_rating'] is num)
+              ? (data['captain_rating'] as num).toDouble()
+              : 5.0,
+          eta: '3 دقائق',
         ));
       }
+    } else if (status == 'arrived') {
+      if (state is RideBookingConfirmed) {
+        final s = state as RideBookingConfirmed;
+        emit(s.copyWith(status: 'arrived'));
+      } else {
+        emit(const RideInProgress(etaToDestination: 'الكابتن وصل لموقعك'));
+      }
     } else if (status == 'in_transit' || status == 'started') {
-      alertSoundService.playSimpleTripAlert();
       if (state is RideBookingConfirmed) {
         final s = state as RideBookingConfirmed;
         emit(s.copyWith(status: 'in_transit'));
@@ -591,24 +657,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       }
       emit(const RideInitial());
     }
-  }
-
-  FutureOr<void> _onSubmitTripRating(
-    SubmitTripRating event,
-    Emitter<RideState> emit,
-  ) async {
-    final result = await rateTripUseCase(
-      tripId: event.tripId,
-      rating: event.rating,
-      review: event.review,
-    );
-    result.fold(
-      (failure) => emit(RideError('فشل إرسال التقييم: ${failure.message}')),
-      (_) {
-        _stopSmartPolling();
-        emit(const RideInitial());
-      },
-    );
   }
 
   @override

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -131,9 +133,8 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                         )
                       else
                         ...state.trips.map((trip) => _buildTripItem(
-                              type: trip.distance.contains('طرد')
-                                  ? 'parcel'
-                                  : 'ride', // Simplistic heuristic if no dedicated type field
+                              tripId: trip.id,
+                              type: trip.isParcel ? 'parcel' : 'ride',
                               destination: trip.dropoff.isNotEmpty
                                   ? trip.dropoff
                                   : 'وجهة غير معروفة',
@@ -142,6 +143,7 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                               status: trip.status,
                               statusColor: trip.statusColor,
                               isDark: isDark,
+                              onDelete: () => _confirmDelete(context, trip.id, isDark),
                             )),
                     ],
                   ),
@@ -155,14 +157,112 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
     );
   }
 
+  void _confirmDelete(BuildContext context, String tripId, bool isDark) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1B2232) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 24),
+              SizedBox(width: 10),
+              Text(
+                'حذف السجل',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'هل أنت متأكد من رغبتك في حذف هذا السجل من قائمة الرحلات؟',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 13,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'إلغاء',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  color: AppColors.gray500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _deleteTrip(tripId);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'تأكيد الحذف',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteTrip(String tripId) async {
+    try {
+      final dio = sl<DioClient>().dio;
+      await dio.delete('/trips/$tripId');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.primary500,
+            content: Text(
+              'تم حذف السجل بنجاح 🗑️',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+        _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.danger,
+            content: Text(
+              'فشل حذف السجل.',
+              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildStatSummary(CaptainTripsLoaded state, bool isDark) {
     int totalTrips = state.trips.length;
     double totalEarnings =
         state.trips.fold(0.0, (sum, trip) => sum + trip.grossFare);
-    // Simple heuristic for parcels based on status or type if available
-    int totalParcels = state.trips
-        .where((t) => t.pickup.contains('طرد') || t.distance.contains('طرد'))
-        .length;
+    int totalParcels = state.trips.where((t) => t.isParcel).length;
     int rides = totalTrips - totalParcels;
 
     return Container(
@@ -198,6 +298,7 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
   }
 
   Widget _buildTripItem({
+    required String tripId,
     required String type,
     required String destination,
     required String time,
@@ -205,10 +306,11 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
     required String status,
     required Color statusColor,
     required bool isDark,
+    required VoidCallback onDelete,
   }) {
     final bool isCanceled = status == 'ملغاة' || status == 'cancelled';
     final IconData icon =
-        type == 'ride' ? Icons.motorcycle_rounded : Icons.inventory_2_rounded;
+        type == 'ride' ? Icons.two_wheeler_rounded : Icons.inventory_2_rounded;
     final Color iconColor =
         type == 'ride' ? AppColors.primary500 : const Color(0xFF3B82F6);
 
@@ -235,30 +337,54 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
               shape: BoxShape.circle,
             ),
             child: Icon(icon,
-                color: isCanceled ? AppColors.gray500 : iconColor, size: 24),
+                color: isCanceled ? AppColors.gray500 : iconColor, size: 22),
           ),
           AppSpacing.w16,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  destination,
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.white : AppColors.gray900,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: (type == 'ride' ? AppColors.primary500 : Colors.blue)
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        type == 'ride' ? 'مشوار 🛵' : 'طرد 📦',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: type == 'ride' ? AppColors.primary500 : Colors.blue,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        destination,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 AppSpacing.h4,
                 Text(
                   time,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 12,
+                    fontSize: 11.5,
                     color: isDark ? AppColors.gray400 : AppColors.gray500,
                   ),
                 ),
@@ -272,7 +398,7 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                 earnings,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 15,
+                  fontSize: 14.5,
                   fontWeight: FontWeight.w900,
                   color: isCanceled
                       ? (isDark ? AppColors.gray400 : AppColors.gray500)
@@ -280,21 +406,43 @@ class _CaptainTripHistoryPageState extends State<CaptainTripHistoryPage> {
                 ),
               ),
               AppSpacing.h4,
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: AppSpacing.radiusSM,
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: AppSpacing.radiusSM,
+                    ),
+                    child: Text(
+                      status == 'delivered' ? 'تم التسليم' : (status == 'completed' ? 'مكتملة' : status),
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        size: 15,
+                        color: AppColors.danger,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

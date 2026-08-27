@@ -23,7 +23,7 @@ class UpdateTripStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|string|in:arrived,in_transit,started,completed,cancelled'
+            'status' => 'required|string|in:arrived,arrived_at_pickup,in_transit,in_progress,started,completed,cancelled'
         ];
     }
 }
