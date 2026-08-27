@@ -84,13 +84,31 @@ class _CaptainParcelNavigationPageState
   }
 
   Future<void> _initLiveNavigationRoute() async {
-    final route = await _routingService.getRoute(
-      LatLng(widget.pickupLat, widget.pickupLng),
-      LatLng(widget.dropoffLat, widget.dropoffLng),
-    );
-    if (route != null && mounted) {
+    // Retry up to 3 times with exponential backoff
+    for (int attempt = 1; attempt <= 3; attempt++) {
+      final route = await _routingService.getRoute(
+        LatLng(widget.pickupLat, widget.pickupLng),
+        LatLng(widget.dropoffLat, widget.dropoffLng),
+      );
+      if (route != null && mounted) {
+        setState(() {
+          _routePoints = route.points;
+        });
+        return; // Success — exit retry loop
+      }
+      // Wait before retrying (500ms, 1s, 2s)
+      if (attempt < 3) {
+        await Future.delayed(Duration(milliseconds: 500 * attempt));
+      }
+    }
+
+    // Fallback: straight-line polyline so map always shows something
+    if (mounted && _routePoints.isEmpty) {
       setState(() {
-        _routePoints = route.points;
+        _routePoints = [
+          LatLng(widget.pickupLat, widget.pickupLng),
+          LatLng(widget.dropoffLat, widget.dropoffLng),
+        ];
       });
     }
   }

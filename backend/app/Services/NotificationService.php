@@ -10,6 +10,8 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
+use Kreait\Firebase\Messaging\AndroidConfig;
+use Kreait\Firebase\Messaging\ApnsConfig;
 use Exception;
 use App\Jobs\SendPushNotification;
 
@@ -64,8 +66,31 @@ class NotificationService
         }
 
         try {
+            $type = $data['type'] ?? 'general';
+            $isTripAlert = in_array($type, ['trip_new', 'trip_accepted', 'trip_arrived', 'trip_in_transit']);
+            $channelId = $isTripAlert ? 'laffah_trip_alerts_channel' : 'laffah_general_channel';
+            
+            $androidConfig = AndroidConfig::fromArray([
+                'priority' => 'high',
+                'notification' => [
+                    'channel_id' => $channelId,
+                    'sound' => 'default',
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                ],
+            ]);
+
+            $apnsConfig = ApnsConfig::fromArray([
+                'payload' => [
+                    'aps' => [
+                        'sound' => 'default',
+                    ],
+                ],
+            ]);
+
             $message = CloudMessage::withTarget('token', $user->fcm_token)
                 ->withNotification(Notification::create($title, $body))
+                ->withAndroidConfig($androidConfig)
+                ->withApnsConfig($apnsConfig)
                 ->withData(array_map('strval', $data));
 
             $this->messaging->send($message);

@@ -511,6 +511,22 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       (failure) =>
           emit(RideError('فشل تقديم طلب إرسال الطرد: ${failure.message}')),
       (parcelEntity) {
+        // Start polling for parcel status immediately
+        _startSmartPolling(
+          parcelEntity.id,
+          RideOption(
+            id: 'parcel',
+            titleAr: 'طرد',
+            titleEn: 'Parcel',
+            basePrice: parcelEntity.price,
+            etaMinutes: 10,
+            iconKey: 'box',
+            descriptionAr: 'توصيل طرود',
+          ),
+          'موقع استلام الطرد',
+          'موقع تسليم الطرد',
+        );
+
         emit(ParcelSubmitted(
           data: event.data,
           trackingId: parcelEntity.id,

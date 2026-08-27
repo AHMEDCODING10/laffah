@@ -484,6 +484,10 @@ class AppRouter {
             fare: (extra['fare'] as num?)?.toDouble() ?? 0.0,
             distance: extra['distance'] as String? ?? '—',
             duration: extra['duration'] as String? ?? '—',
+            pickupLat: (extra['pickupLat'] as num?)?.toDouble() ?? 15.3694,
+            pickupLng: (extra['pickupLng'] as num?)?.toDouble() ?? 44.1910,
+            dropoffLat: (extra['dropoffLat'] as num?)?.toDouble() ?? 15.3521,
+            dropoffLng: (extra['dropoffLng'] as num?)?.toDouble() ?? 44.2014,
           );
         },
       ),
@@ -508,6 +512,10 @@ class AppRouter {
             fare: (extra['fare'] as num?)?.toDouble() ?? 0.0,
             distance: extra['distance'] as String? ?? '2.5 كم',
             duration: extra['duration'] as String? ?? '6 د',
+            pickupLat: (extra['pickupLat'] as num?)?.toDouble() ?? 15.3694,
+            pickupLng: (extra['pickupLng'] as num?)?.toDouble() ?? 44.1910,
+            dropoffLat: (extra['dropoffLat'] as num?)?.toDouble() ?? 15.3521,
+            dropoffLng: (extra['dropoffLng'] as num?)?.toDouble() ?? 44.2014,
           );
         },
       ),

@@ -57,16 +57,53 @@ class TripController extends Controller
     {
         try {
             $trip = Trip::with(['stops', 'passenger', 'captain.user'])->find($id);
-            if (!$trip) {
+            if ($trip) {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'المشوار غير موجود.'
-                ], 404);
+                    'status' => 'success',
+                    'data' => new TripResource($trip)
+                ]);
             }
+
+            // Fallback: Check if it's a parcel
+            $parcel = \App\Models\Parcel::with(['captain.user'])->find($id);
+            if ($parcel) {
+                $captainUser = $parcel->captain?->user;
+                return response()->json([
+                    'status' => 'success',
+                    'data' => [
+                        'id' => (string) $parcel->id,
+                        'status' => $parcel->status,
+                        'type' => 'delivery',
+                        'isParcel' => true,
+                        'title' => 'طلب توصيل طرد 📦',
+                        'price' => (float) $parcel->price,
+                        'grossFare' => (float) $parcel->price,
+                        'estimated_price' => (float) $parcel->price,
+                        'pickup_address' => $parcel->pickup_address,
+                        'dropoff_address' => $parcel->dropoff_address,
+                        'pickup_latitude' => (float) $parcel->pickup_latitude,
+                        'pickup_longitude' => (float) $parcel->pickup_longitude,
+                        'dropoff_latitude' => (float) $parcel->dropoff_latitude,
+                        'dropoff_longitude' => (float) $parcel->dropoff_longitude,
+                        'passengerName' => $parcel->sender_name ?? 'مرسل',
+                        'passengerPhone' => $parcel->sender_phone ?? '',
+                        'receiverName' => $parcel->receiver_name ?? 'مستلم',
+                        'receiverPhone' => $parcel->receiver_phone ?? '',
+                        'captain_name' => $captainUser?->name ?? null,
+                        'captain_phone' => $captainUser?->phone ?? null,
+                        'vehicle_model' => $parcel->captain?->vehicle_model ?? null,
+                        'vehicle_plate' => $parcel->captain?->plate_number ?? null,
+                        'rating' => $parcel->captain?->rating ?? 5.0,
+                        'timeTag' => $parcel->created_at ? $parcel->created_at->diffForHumans() : 'الآن',
+                    ]
+                ]);
+            }
+
             return response()->json([
-                'status' => 'success',
-                'data' => new TripResource($trip)
-            ]);
+                'status' => 'error',
+                'message' => 'المشوار أو الطرد غير موجود.'
+            ], 404);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
