@@ -504,29 +504,9 @@ class TripService
     private function notifyNearbyCaptains(Trip $trip): void
     {
         try {
-            $onlineCaptains = CaptainProfile::where('is_online', true)
-                ->whereNotNull('user_id')
-                ->with('user')
-                ->get();
-
-            foreach ($onlineCaptains as $captain) {
-                if ($captain->user) {
-                    $this->notificationService->sendToUser(
-                        $captain->user,
-                        'طلب مشوار جديد! 🛵',
-                        "مشوار من {$trip->pickup_address} إلى {$trip->dropoff_address} بقيمة " . number_format($trip->estimated_price) . " ريال",
-                        [
-                            'type' => 'trip_new',
-                            'trip_id' => (string) $trip->id,
-                            'pickup' => $trip->pickup_address,
-                            'dropoff' => $trip->dropoff_address,
-                            'price' => (string) $trip->estimated_price,
-                        ]
-                    );
-                }
-            }
+            \App\Jobs\NotifyNearbyCaptainsJob::dispatch($trip);
         } catch (Exception $e) {
-            Log::error("Failed to notify nearby captains for trip #{$trip->id}: " . $e->getMessage());
+            Log::error("Failed to dispatch notify nearby captains job for trip #{$trip->id}: " . $e->getMessage());
         }
     }
 

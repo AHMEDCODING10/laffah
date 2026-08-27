@@ -233,8 +233,9 @@ class TripController extends Controller
             }
         }
 
-        $trips = $tripQuery->take(100)->get();
-        $parcels = $parcelQuery->take(100)->get();
+        // Load up to 500 of each to support deeper pagination without memory exhaustion
+        $trips = $tripQuery->limit(500)->get();
+        $parcels = $parcelQuery->limit(500)->get();
 
         $tripData = TripResource::collection($trips)->resolve();
 

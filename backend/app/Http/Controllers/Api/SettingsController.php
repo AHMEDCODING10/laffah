@@ -11,8 +11,10 @@ class SettingsController extends Controller
     public function index()
     {
 
-        // Fetch settings and map to key-value array
-        $settings = Setting::all()->pluck('value', 'key')->toArray();
+        // Fetch settings and map to key-value array, cached forever until a setting is updated
+        $settings = \Illuminate\Support\Facades\Cache::rememberForever('app_settings', function () {
+            return Setting::all()->pluck('value', 'key')->toArray();
+        });
 
         return response()->json([
             'status' => 'success',
