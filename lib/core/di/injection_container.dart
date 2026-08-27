@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -100,6 +101,18 @@ Future<void> init() async {
   sl.registerLazySingleton<SecureStorageService>(
     () => SecureStorageService(sl()),
   );
+
+  // Preload cached auth token into DioClient to ensure instant auth synchronization
+  try {
+    final secureStorageService = sl<SecureStorageService>();
+    final savedToken = await secureStorageService.getToken();
+    if (savedToken != null && savedToken.isNotEmpty) {
+      DioClient.setToken(savedToken);
+      debugPrint("🔑 [Laffah DI] Cached session token loaded into DioClient.");
+    }
+  } catch (e) {
+    debugPrint("⚠️ [Laffah DI] Could not preload token: $e");
+  }
 
   sl.registerLazySingleton<LaffahWebSocketClient>(
     () => LaffahWebSocketClient(

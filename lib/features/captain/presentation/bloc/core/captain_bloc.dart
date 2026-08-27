@@ -178,11 +178,31 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   }
 
   void _onResetCaptainState(ResetCaptainState event, EmitFn emit) {
-    _stopSmartPolling();
-    _stopLocationTracking();
-    pusherService.disconnect();
     _dismissedTripIds.clear();
-    emit(const CaptainOffline());
+
+    if (event.keepOnline) {
+      // Maintain captain online status and resume searching for new requests immediately
+      emit(const CaptainOnline());
+      if (_currentCaptainId.isNotEmpty) {
+        _startLocationTracking(_currentCaptainId);
+        pusherService.connect(
+          captainId: _currentCaptainId,
+          onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
+          onTripNoLongerAvailable: (data) {
+            final tripId = (data['trip_id'] ?? data['id'] ?? '').toString();
+            if (tripId.isNotEmpty) {
+              add(TripNoLongerAvailableReceived(tripId));
+            }
+          },
+        );
+      }
+      _startSmartPolling();
+    } else {
+      _stopSmartPolling();
+      _stopLocationTracking();
+      pusherService.disconnect();
+      emit(const CaptainOffline());
+    }
   }
 
   /// Periodic Smart Polling for nearby pending trip requests while online

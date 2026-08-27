@@ -45,6 +45,7 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
     if (_formKey.currentState!.validate()) {
       context.read<ProfileBloc>().add(UpdateProfileEvent(
             name: _nameController.text,
+            phone: _phoneController.text,
             email: _emailController.text,
           ));
     }

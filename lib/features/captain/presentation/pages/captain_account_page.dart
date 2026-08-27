@@ -27,6 +27,7 @@ class CaptainAccountPage extends StatefulWidget {
 
 class _CaptainAccountPageState extends State<CaptainAccountPage> {
   late ProfileBloc _profileBloc;
+  dynamic _cachedProfile;
 
   @override
   void initState() {
@@ -259,25 +260,28 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 child: BlocBuilder<ProfileBloc, ProfileState>(
                   bloc: _profileBloc,
                   builder: (context, state) {
-                    String name = AppLocalizations.of(context)!.capt_acc_loading;
-                    String rating = '0.0';
-                    String? avatarUrl;
-                    String vehicleType = AppLocalizations.of(context)!.capt_acc_vehicle;
-                    String vehiclePlate = AppLocalizations.of(context)!.capt_acc_unspecified;
-
-                    bool isVerified = false;
-
                     if (state is ProfileLoaded) {
-                      name = state.profile.name;
-                      rating =
-                          state.profile.rating?.toStringAsFixed(1) ?? '5.0';
-                      avatarUrl = state.profile.avatarUrl;
-                      vehicleType = state.profile.vehicleType ?? AppLocalizations.of(context)!.capt_acc_vehicle;
-                      vehiclePlate = state.profile.plateNumber ?? AppLocalizations.of(context)!.capt_acc_unspecified;
-                      isVerified = state.profile.isVerified;
-                    } else if (state is ProfileError) {
-                      name = AppLocalizations.of(context)!.capt_acc_default_name;
+                      _cachedProfile = state.profile;
                     }
+
+                    final dynamic profile = _cachedProfile ??
+                        (state is ProfileLoaded ? state.profile : null);
+
+                    String name = profile?.name ?? '';
+                    if (name.isEmpty) {
+                      name = state is ProfileLoading
+                          ? AppLocalizations.of(context)!.capt_acc_loading
+                          : 'الكابتن';
+                    }
+
+                    String rating =
+                        profile?.rating?.toStringAsFixed(1) ?? '5.0';
+                    String? avatarUrl = profile?.avatarUrl;
+                    String vehicleType = profile?.vehicleType ??
+                        AppLocalizations.of(context)!.capt_acc_vehicle;
+                    String vehiclePlate = profile?.plateNumber ??
+                        AppLocalizations.of(context)!.capt_acc_unspecified;
+                    bool isVerified = profile?.isVerified ?? false;
 
                     Widget avatarChild;
                     if (avatarUrl != null && avatarUrl.isNotEmpty) {
@@ -433,14 +437,13 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                           onPressed: () {
                             HapticFeedback.lightImpact();
 
-                            String currentName = '';
-                            String currentPhone = '';
-                            if (_profileBloc.state is ProfileLoaded) {
-                              final profile =
-                                  (_profileBloc.state as ProfileLoaded).profile;
-                              currentName = profile.name;
-                              currentPhone = profile.phone;
-                            }
+                            final dynamic profile = _cachedProfile ??
+                                (_profileBloc.state is ProfileLoaded
+                                    ? (_profileBloc.state as ProfileLoaded)
+                                        .profile
+                                    : null);
+                            String currentName = profile?.name ?? '';
+                            String currentPhone = profile?.phone ?? '';
 
                             showModalBottomSheet(
                               context: context,
@@ -450,13 +453,16 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                                 currentName: currentName,
                                 currentPhone: currentPhone,
                                 onSave: (newName, newPhone) {
-                                  _profileBloc
-                                      .add(UpdateProfileEvent(name: newName));
+                                  _profileBloc.add(UpdateProfileEvent(
+                                    name: newName,
+                                    phone: newPhone,
+                                  ));
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       backgroundColor: AppColors.success,
                                       content: Text(
-                                          AppLocalizations.of(context)!.capt_acc_updating_profile,
+                                          AppLocalizations.of(context)!
+                                              .capt_acc_updating_profile,
                                           style: const TextStyle(
                                               fontFamily:
                                                   'IBM Plex Sans Arabic',
@@ -484,14 +490,12 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 title: AppLocalizations.of(context)!.capt_acc_profile,
                 subtitle: AppLocalizations.of(context)!.capt_acc_profile_desc,
                 onTap: () {
-                  String currentName = '';
-                  String currentPhone = '';
-                  if (_profileBloc.state is ProfileLoaded) {
-                    final profile =
-                        (_profileBloc.state as ProfileLoaded).profile;
-                    currentName = profile.name;
-                    currentPhone = profile.phone;
-                  }
+                  final dynamic profile = _cachedProfile ??
+                      (_profileBloc.state is ProfileLoaded
+                          ? (_profileBloc.state as ProfileLoaded).profile
+                          : null);
+                  String currentName = profile?.name ?? '';
+                  String currentPhone = profile?.phone ?? '';
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
@@ -500,7 +504,10 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                       currentName: currentName,
                       currentPhone: currentPhone,
                       onSave: (newName, newPhone) {
-                        _profileBloc.add(UpdateProfileEvent(name: newName));
+                        _profileBloc.add(UpdateProfileEvent(
+                          name: newName,
+                          phone: newPhone,
+                        ));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             backgroundColor: AppColors.success,

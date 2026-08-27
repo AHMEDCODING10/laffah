@@ -33,6 +33,13 @@ class _CaptainHomePageState extends State<CaptainHomePage> {
   bool _isOnline = false;
 
   @override
+  void initState() {
+    super.initState();
+    final captainState = context.read<CaptainBloc>().state;
+    _isOnline = captainState is CaptainOnline;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -109,6 +116,17 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
   String? _selectedPinTitle;
   String? _selectedPinSnippet;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final captainState = context.read<CaptainBloc>().state;
+    if (captainState is CaptainOnline && !widget.isOnline) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onOnlineChanged(true);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

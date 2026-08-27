@@ -174,7 +174,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         pickup: widget.pickup,
         dropoff: widget.dropoff,
         onFinish: () {
-          context.read<CaptainBloc>().add(const ResetCaptainState());
+          context
+              .read<CaptainBloc>()
+              .add(const ResetCaptainState(keepOnline: true));
           context.go(LaffahRoutes.captainHome);
         },
       );

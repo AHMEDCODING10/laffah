@@ -6,7 +6,7 @@ import '../models/profile_model.dart';
 abstract class ProfileRemoteDataSource {
   Future<BaseResponseModel<ProfileModel>> getProfile();
   Future<BaseResponseModel<ProfileModel>> updateProfile(
-      {required String name, String? email});
+      {required String name, String? phone, String? email});
   Future<BaseResponseModel<List<SavedPlaceModel>>> getSavedPlaces();
   Future<BaseResponseModel<SavedPlaceModel>> addSavedPlace(
       SavedPlaceModel place);
@@ -29,10 +29,18 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<BaseResponseModel<ProfileModel>> updateProfile(
-      {required String name, String? email}) async {
+      {required String name, String? phone, String? email}) async {
+    final Map<String, dynamic> body = {'name': name};
+    if (phone != null && phone.trim().isNotEmpty) {
+      body['phone'] = phone.trim();
+    }
+    if (email != null && email.trim().isNotEmpty) {
+      body['email'] = email.trim();
+    }
+
     final response = await dioClient.dio.post(
       ApiEndpoints.updateProfile,
-      data: {'name': name, 'email': email},
+      data: body,
     );
     return BaseResponseModel.fromJson(
       response.data,

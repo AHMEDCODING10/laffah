@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection_container.dart';
@@ -60,7 +61,7 @@ class _SplashPageState extends State<SplashPage>
 
     _animationController.forward();
     _navigationTimer = Timer(
-      const Duration(milliseconds: 3200),
+      const Duration(milliseconds: 2200),
       _navigateSmart,
     );
   }
@@ -72,25 +73,40 @@ class _SplashPageState extends State<SplashPage>
     super.dispose();
   }
 
-  /// تحقق من التوكن، ثم جلب profile لمعرفة الدور والتوجيه الصحيح.
+  /// تحقق ذكي من التوكن ودور المستخدم المخزن محلياً لضمان عدم الخروج عند إغلاق التطبيق.
   Future<void> _navigateSmart() async {
     if (!mounted) return;
 
     final token = await _storage.read(key: 'auth_token');
+    final savedRole = await _storage.read(key: 'user_role');
+
     if (!mounted) return;
 
+    // 1. إذا لم يكن هناك توكن مسجل، الانتقال لشاشات الدخول
     if (token == null || token.isEmpty) {
       AppRouter.isAppInitialized = true;
       context.go(LaffahRoutes.authLanding);
       return;
     }
 
-    // Set token in Dio for the profile request
+    // 2. تفعيل التوكن فوراً في محرك الطلبات الشبكية
     DioClient.setToken(token);
 
+    final bool isSavedCaptain = savedRole == 'captain';
+    final String fallbackRoute =
+        isSavedCaptain ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome;
+
+    // 3. محاولة التحقق وتحديث الملف الشخصي في الخلفية بهدوء
     try {
       final dioClient = sl<DioClient>();
-      final response = await dioClient.dio.get('/user/profile');
+      final response = await dioClient.dio.get(
+        '/user/profile',
+        options: Options(
+          sendTimeout: const Duration(seconds: 3),
+          receiveTimeout: const Duration(seconds: 3),
+        ),
+      );
+
       if (!mounted) return;
 
       final data = response.data;
@@ -100,25 +116,27 @@ class _SplashPageState extends State<SplashPage>
         final isCapt = roles != null &&
             roles.any((r) => r is Map && r['name'] == 'captain');
 
+        final String activeRole = isCapt ? 'captain' : 'passenger';
+        if (activeRole != savedRole) {
+          await _storage.write(key: 'user_role', value: activeRole);
+        }
+
         AppRouter.isAppInitialized = true;
-        context
-            .go(isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
-      } else {
-        // Token invalid or expired
-        await _storage.delete(key: 'auth_token');
-        DioClient.setToken(null);
-        AppRouter.isAppInitialized = true;
-        if (mounted) context.go(LaffahRoutes.authLanding);
+        if (mounted) {
+          context.go(
+              isCapt ? LaffahRoutes.captainHome : LaffahRoutes.passengerHome);
+        }
+        return;
       }
-    } catch (_) {
-      // If network fails, go to auth
-      await _storage.delete(key: 'auth_token');
-      DioClient.setToken(null);
-      AppRouter.isAppInitialized = true;
-      if (mounted) {
-        context.go(LaffahRoutes.authLanding);
-      }
+    } catch (e) {
+      debugPrint(
+          "ℹ️ [Laffah Splash] استخدام الجلسة المحفوظة محلياً (تخطي فحص الشبكة): $e");
     }
+
+    // 4. في حالة عدم توفر إنترنت أو بطء السيرفر، الدخول المباشر بالبيانات المخزنة دون طرد المستخدم
+    if (!mounted) return;
+    AppRouter.isAppInitialized = true;
+    context.go(fallbackRoute);
   }
 
   @override
@@ -169,7 +187,7 @@ class _SplashPageState extends State<SplashPage>
                         LaffahLogo(
                           height: 150,
                           width: 150,
-                          showSubtitle: true,
+                          showSubtitle: false,
                         ),
                       ],
                     ),
