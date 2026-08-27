@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
-import '../../../../core/di/injection_container.dart';
+
 import '../../../../l10n/app_localizations.dart';
 import '../../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../presentation/bloc/ride_bloc.dart';
