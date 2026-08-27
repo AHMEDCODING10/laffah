@@ -531,8 +531,9 @@ class TripService
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         $straightLineDist = $earthRadius * $c;
 
-        // Apply 1.25x Urban Road Network / Detour Multiplier
-        $roadDist = $straightLineDist * 1.25;
+        // Apply 1.4x Urban Road Network / Detour Multiplier
+        // (Raised from 1.25 to better match real OSRM road distances in Yemen)
+        $roadDist = $straightLineDist * 1.4;
 
         return max($roadDist, 1.0); // Minimum 1 km for calculation
     }
