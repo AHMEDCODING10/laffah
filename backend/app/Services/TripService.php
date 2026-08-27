@@ -266,8 +266,15 @@ class TripService
             } elseif ($status === 'completed') {
                 $updates['completed_at'] = now();
 
-                // Calculate final price and commission
-                $finalPrice = $trip->estimated_price;
+                // Calculate final price strictly based on exact DB settings and distance
+                $base = (float) Cache::remember('setting_base_fare', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'base_fare')->value('value') ?? 500);
+                $perKm = (float) Cache::remember('setting_price_per_km', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'price_per_km')->value('value') ?? 150);
+                $minFare = (float) Cache::remember('setting_min_fare', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'min_fare')->value('value') ?? 800);
+                $multiStopFee = (float) Cache::remember('setting_multi_stop_fee', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'multi_stop_fee')->value('value') ?? 300);
+
+                $stopsCount = $trip->is_multi_stop ? 1 : 0; // Or better if you have stops count
+                $rawPrice = $base + ($trip->distance_km * $perKm) + ($stopsCount * $multiStopFee);
+                $finalPrice = (int) ceil(max($rawPrice, $minFare));
 
                 // Apply promo code discount if any
                 if ($trip->promoCode) {
@@ -373,7 +380,7 @@ class TripService
 
             // Send completion notification to Captain
             if ($status === 'completed' && $trip->captain && $trip->captain->user) {
-                $earning = number_format($trip->final_price * 0.85);
+                $earning = number_format($trip->captain_earnings ?? 0);
                 $this->notificationService->sendToUser(
                     $trip->captain->user,
                     'تم إنهاء المشوار بنجاح 🏁',

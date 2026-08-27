@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/di/injection_container.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_event.dart';
@@ -32,12 +31,13 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
   @override
   void initState() {
     super.initState();
-    _profileBloc = sl<ProfileBloc>()..add(GetProfileEvent());
+    // Use the global ProfileBloc instance and fetch profile on load
+    _profileBloc = context.read<ProfileBloc>()..add(GetProfileEvent());
   }
 
   @override
   void dispose() {
-    _profileBloc.close();
+    // Do NOT close _profileBloc because it's a global LazySingleton!
     super.dispose();
   }
 

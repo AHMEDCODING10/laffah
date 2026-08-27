@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/routing_service.dart';
@@ -188,7 +189,7 @@ class _CaptainParcelNavigationPageState
     setState(() => _isUpdatingStatus = true);
 
     try {
-      final dio = DioClient().dio;
+      final dio = sl<DioClient>().dio;
       final targetId = widget.parcelId.isNotEmpty
           ? widget.parcelId
           : (widget.trackingCode.isNotEmpty ? widget.trackingCode : '');

@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../../core/storage/secure_storage_service.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/dio_client.dart';
@@ -10,7 +10,7 @@ import '../datasources/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
-  final FlutterSecureStorage secureStorage;
+  final SecureStorageService secureStorage;
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
@@ -21,9 +21,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> _saveSession(String? token, String? role) async {
     if (token != null && token.isNotEmpty) {
       DioClient.setToken(token);
-      await secureStorage.write(key: 'auth_token', value: token);
+      await secureStorage.saveToken(token);
       if (role != null && role.isNotEmpty) {
-        await secureStorage.write(key: 'user_role', value: role);
+        await secureStorage.saveRole(role);
       }
     }
   }
@@ -147,8 +147,8 @@ class AuthRepositoryImpl implements AuthRepository {
       // Even if backend call fails, clear local storage
     }
     DioClient.setToken(null);
-    await secureStorage.delete(key: 'auth_token');
-    await secureStorage.delete(key: 'user_role');
+    await secureStorage.clearToken();
+    await secureStorage.clearRole();
     return const Right(null);
   }
 
@@ -158,8 +158,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await remoteDataSource.deleteAccount();
       if (response.success) {
         DioClient.setToken(null);
-        await secureStorage.delete(key: 'auth_token');
-        await secureStorage.delete(key: 'user_role');
+        await secureStorage.clearToken();
+        await secureStorage.clearRole();
         return const Right(null);
       } else {
         return Left(ServerFailure(response.message));

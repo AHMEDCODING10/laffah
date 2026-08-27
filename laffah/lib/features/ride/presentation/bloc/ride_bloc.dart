@@ -292,8 +292,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ConfirmBooking event,
     Emitter<RideState> emit,
   ) async {
-    double calculatedPrice = 1200.0;
-    int duration = 15;
+    double calculatedPrice = 0.0;
+    int duration = 0;
 
     if ((event.pickupLatitude ?? 0) != 0 && (event.dropoffLatitude ?? 0) != 0) {
       try {

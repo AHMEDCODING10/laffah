@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 
@@ -46,6 +47,13 @@ class AppTheme {
           color: AppColors.gray900,
         ),
         iconTheme: IconThemeData(color: AppColors.gray900),
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+          systemNavigationBarColor: AppColors.backgroundLight,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -188,6 +196,13 @@ class AppTheme {
           color: AppColors.white,
         ),
         iconTheme: IconThemeData(color: AppColors.white),
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+          systemNavigationBarColor: AppColors.backgroundDark,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(

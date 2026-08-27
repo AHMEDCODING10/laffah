@@ -1,17 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../storage/secure_storage_service.dart';
 import '../error/exceptions.dart';
 
 class LaravelErrorInterceptor extends Interceptor {
-  final FlutterSecureStorage secureStorage;
+  final SecureStorageService secureStorage;
 
   LaravelErrorInterceptor(this.secureStorage);
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      await secureStorage.delete(key: 'auth_token');
-      await secureStorage.delete(key: 'sanctum_token');
+      await secureStorage.clearToken();
       return handler.reject(
         DioException(
           requestOptions: err.requestOptions,

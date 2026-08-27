@@ -488,12 +488,12 @@ class ParcelPriceSummaryCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${baseFee.toStringAsFixed(0)} ريال',
+                baseFee == 0 ? 'يُحسب حسب المسافة' : '${baseFee.toStringAsFixed(0)} ريال',
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: isDark ? AppColors.white : AppColors.gray900,
+                  fontSize: baseFee == 0 ? 11 : 13,
+                  color: baseFee == 0 ? AppColors.primary500 : (isDark ? AppColors.white : AppColors.gray900),
                 ),
               ),
             ],
@@ -540,11 +540,11 @@ class ParcelPriceSummaryCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${totalPrice.toStringAsFixed(0)} ريال يمني',
+                baseFee == 0 ? 'غير محدد' : '${totalPrice.toStringAsFixed(0)} ريال يمني',
                 style: const TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.w900,
-                  fontSize: 17,
+                  fontSize: 15,
                   color: AppColors.primary500,
                 ),
               ),

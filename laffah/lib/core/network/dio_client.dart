@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../storage/secure_storage_service.dart';
 import 'api_endpoints.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -20,7 +20,7 @@ class NetworkEventBus {
 class DioClient {
   late Dio _dio;
   late Dio _uploadDio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final SecureStorageService _storage;
 
   /// In-memory token cache to prevent Web storage latency issues
   static String? _inMemoryToken;
@@ -31,7 +31,7 @@ class DioClient {
 
   static String? get currentToken => _inMemoryToken;
 
-  DioClient() {
+  DioClient(this._storage) {
     _dio = Dio(BaseOptions(
       baseUrl: ApiEndpoints.baseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -48,7 +48,7 @@ class DioClient {
     // 2. Auth Bearer Token Injection
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = _inMemoryToken ?? await _storage.read(key: 'auth_token');
+        final token = _inMemoryToken ?? await _storage.getToken();
         if (token != null && token.isNotEmpty) {
           _inMemoryToken = token;
           options.headers['Authorization'] = 'Bearer $token';
@@ -70,7 +70,7 @@ class DioClient {
               e.requestOptions.headers.containsKey('Authorization');
           if (hasAuthHeader) {
             _inMemoryToken = null;
-            await _storage.delete(key: 'auth_token');
+            await _storage.clearToken();
             NetworkEventBus.emitUnauthenticated();
           }
         }
@@ -132,7 +132,7 @@ class DioClient {
 
     _uploadDio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = _inMemoryToken ?? await _storage.read(key: 'auth_token');
+        final token = _inMemoryToken ?? await _storage.getToken();
         if (token != null && token.isNotEmpty) {
           _inMemoryToken = token;
           options.headers['Authorization'] = 'Bearer $token';
@@ -151,7 +151,7 @@ class DioClient {
               e.requestOptions.headers.containsKey('Authorization');
           if (hasAuthHeader) {
             _inMemoryToken = null;
-            await _storage.delete(key: 'auth_token');
+            await _storage.clearToken();
             NetworkEventBus.emitUnauthenticated();
           }
         }

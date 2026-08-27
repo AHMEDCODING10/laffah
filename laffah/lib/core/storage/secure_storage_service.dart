@@ -1,47 +1,47 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SecureStorageService {
   static const _tokenKey = 'auth_token';
   static const _roleKey = 'user_role';
   static const _userIdKey = 'user_id';
 
-  final FlutterSecureStorage _storage;
+  final SharedPreferences _storage;
 
   SecureStorageService(this._storage);
 
   // ─── Token ───
   Future<void> saveToken(String token) async {
-    await _storage.write(key: _tokenKey, value: token);
-    await _storage.write(key: 'sanctum_token', value: token);
+    await _storage.setString(_tokenKey, token);
+    await _storage.setString('sanctum_token', token);
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: _tokenKey) ??
-        await _storage.read(key: 'sanctum_token');
+    return _storage.getString(_tokenKey) ??
+        _storage.getString('sanctum_token');
   }
 
   Future<void> clearToken() async {
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: 'sanctum_token');
+    await _storage.remove(_tokenKey);
+    await _storage.remove('sanctum_token');
   }
 
   // ─── Role ───
-  Future<void> saveRole(String role) =>
-      _storage.write(key: _roleKey, value: role);
+  Future<void> saveRole(String role) async =>
+      await _storage.setString(_roleKey, role);
 
-  Future<String?> getRole() => _storage.read(key: _roleKey);
+  Future<String?> getRole() async => _storage.getString(_roleKey);
 
-  Future<void> clearRole() => _storage.delete(key: _roleKey);
+  Future<void> clearRole() async => await _storage.remove(_roleKey);
 
   // ─── User ID ───
-  Future<void> saveUserId(String id) =>
-      _storage.write(key: _userIdKey, value: id);
+  Future<void> saveUserId(String id) async =>
+      await _storage.setString(_userIdKey, id);
 
-  Future<String?> getUserId() => _storage.read(key: _userIdKey);
+  Future<String?> getUserId() async => _storage.getString(_userIdKey);
 
   // ─── Session ───
   Future<bool> hasActiveSession() async =>
-      await _storage.read(key: _tokenKey) != null;
+      _storage.getString(_tokenKey) != null;
 
-  Future<void> clearAll() => _storage.deleteAll();
+  Future<void> clearAll() async => await _storage.clear();
 }

@@ -54,16 +54,32 @@ class ParcelController extends Controller
 
         $size = mb_strtolower(trim($validated['size']));
 
-        $baseSmall  = (float) \Illuminate\Support\Facades\Cache::remember('setting_parcel_price_small', 3600, fn() => Setting::where('key', 'parcel_price_small')->value('value') ?? 1200.00);
-        $baseMedium = (float) \Illuminate\Support\Facades\Cache::remember('setting_parcel_price_medium', 3600, fn() => Setting::where('key', 'parcel_price_medium')->value('value') ?? 1500.00);
-        $baseLarge  = (float) \Illuminate\Support\Facades\Cache::remember('setting_parcel_price_large', 3600, fn() => Setting::where('key', 'parcel_price_large')->value('value') ?? 2000.00);
+        $pickupLat = (float) ($validated['pickup_latitude'] ?? 15.3694);
+        $pickupLng = (float) ($validated['pickup_longitude'] ?? 44.1910);
+        $dropoffLat = (float) ($validated['dropoff_latitude'] ?? 15.3521);
+        $dropoffLng = (float) ($validated['dropoff_longitude'] ?? 44.2014);
 
-        $basePrice = $baseSmall;
+        $earthRadius = 6371; // km
+        $dLat = deg2rad($dropoffLat - $pickupLat);
+        $dLon = deg2rad($dropoffLng - $pickupLng);
+        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($pickupLat)) * cos(deg2rad($dropoffLat)) * sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        $distanceKm = max(0.1, $earthRadius * $c);
+
+        $base = (float) \Illuminate\Support\Facades\Cache::remember('setting_base_fare', 3600, fn() => \App\Models\Setting::where('key', 'base_fare')->value('value') ?? 500);
+        $perKm = (float) \Illuminate\Support\Facades\Cache::remember('setting_price_per_km', 3600, fn() => \App\Models\Setting::where('key', 'price_per_km')->value('value') ?? 150);
+        $minFare = (float) \Illuminate\Support\Facades\Cache::remember('setting_min_fare', 3600, fn() => \App\Models\Setting::where('key', 'min_fare')->value('value') ?? 800);
+
+        $rawPrice = $base + ($distanceKm * $perKm);
+        
+        $multiplier = 1.02; // Small 2%
         if (in_array($size, ['medium', 'متوسط'])) {
-            $basePrice = $baseMedium;
+            $multiplier = 1.03; // Medium 3%
         } elseif (in_array($size, ['large', 'كبير'])) {
-            $basePrice = $baseLarge;
+            $multiplier = 1.04; // Large 4%
         }
+
+        $basePrice = (int) ceil(max($rawPrice, $minFare) * $multiplier);
 
         $finalPrice = isset($validated['price']) && $validated['price'] > 0
             ? (float) $validated['price']

@@ -72,9 +72,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
   }
 
   double get _baseFee {
-    if (_selectedSize == 'متوسط') return 1500.0;
-    if (_selectedSize == 'كبير') return 2000.0;
-    return 1200.0;
+    return 0.0;
   }
 
   double get _insuranceFee => _isInsuranceEnabled ? 300.0 : 0.0;

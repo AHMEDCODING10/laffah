@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'cached_tile_provider.dart';
 import '../theme/app_colors.dart';
 import '../config/app_env.dart';
 
@@ -533,6 +534,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
             TileLayer(
               urlTemplate: _tileUrl,
               userAgentPackageName: 'com.laffah.app',
+              tileProvider: CachedTileProvider(),
               maxZoom: 19,
               retinaMode: true,
               tileDisplay: const TileDisplay.fadeIn(

@@ -87,7 +87,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => Connectivity());
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
 
-  sl.registerLazySingleton<DioClient>(() => DioClient());
+  sl.registerLazySingleton<DioClient>(() => DioClient(sl()));
 
   // Web-safe options for FlutterSecureStorage to prevent browser hanging
   sl.registerLazySingleton<FlutterSecureStorage>(
@@ -288,5 +288,5 @@ Future<void> init() async {
   // ==========================
   // Profile Feature
   // ==========================
-  sl.registerFactory(() => ProfileBloc(repository: sl()));
+  sl.registerLazySingleton(() => ProfileBloc(repository: sl()));
 }

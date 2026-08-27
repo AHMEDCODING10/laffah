@@ -11,6 +11,7 @@ use Kreait\Firebase\Messaging;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Exception;
+use App\Jobs\SendPushNotification;
 
 class NotificationService
 {
@@ -38,18 +39,28 @@ class NotificationService
      */
     public function sendToUser(User $user, string $title, string $body, array $data = []): bool
     {
-        // Always store in database via Laravel Notifications
+        // Always store in database via Laravel Notifications (FAST)
         $this->storeNotification($user, $title, $body, $data['type'] ?? 'general', $data);
 
-        // Send FCM push
+        // Dispatch FCM push to the queue (NON-BLOCKING)
+        dispatch(new SendPushNotification($user, $title, $body, $data));
+
+        return true;
+    }
+
+    /**
+     * Synchronous method used by the Queue Worker to actually call Firebase API.
+     */
+    public function sendToUserSync(User $user, string $title, string $body, array $data = []): bool
+    {
         if (!$user->fcm_token) {
-            Log::info("No FCM token for user ID: {$user->id} — notification stored in DB only.");
-            return true; // Still stored in DB
+            Log::info("No FCM token for user ID: {$user->id}");
+            return true;
         }
 
         if (!$this->messaging) {
-            Log::warning("Firebase Messaging not initialized — notification stored in DB only.");
-            return true; // Still stored in DB
+            Log::warning("Firebase Messaging not initialized");
+            return false;
         }
 
         try {
