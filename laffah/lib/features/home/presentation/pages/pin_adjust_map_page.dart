@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/widgets/cached_tile_provider.dart';
 
 import '../../../../core/config/app_env.dart';
 
@@ -142,6 +143,7 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
                 urlTemplate: tileUrl,
                 userAgentPackageName: 'com.laffah.app',
                 maxZoom: 19,
+                tileProvider: CachedTileProvider(),
               ),
               RichAttributionWidget(
                 attributions: [

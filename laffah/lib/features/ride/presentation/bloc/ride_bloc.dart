@@ -397,6 +397,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
             option: option,
             pickup: ride.pickupLocation.isNotEmpty ? ride.pickupLocation : pickup,
             dropoff: ride.dropoffLocation.isNotEmpty ? ride.dropoffLocation : dropoff,
+            backendFare: ride.price > 0 ? ride.price : null,
           ));
         },
       );
@@ -417,6 +418,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         ((state as RideBookingConfirmed).captainName == 'قيد البحث' ||
             (state as RideBookingConfirmed).status == 'pending');
 
+    // Build option with authoritative backend fare (if available)
+    final RideOption effectiveOption = (event.backendFare != null && event.backendFare! > 0)
+        ? RideOption(
+            id: event.option.id,
+            titleAr: event.option.titleAr,
+            titleEn: event.option.titleEn,
+            basePrice: event.backendFare!, // ← Backend-authoritative price
+            etaMinutes: event.option.etaMinutes,
+            iconKey: event.option.iconKey,
+            descriptionAr: event.option.descriptionAr,
+          )
+        : event.option;
+
     if (s == 'accepted' || s == 'arrived' || s == 'in_transit' || s == 'started') {
       if (wasSearching) {
         // Captain just accepted! Play simple discrete chime
@@ -426,7 +440,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       emit(RideBookingConfirmed(
         pickup: event.pickup,
         dropoff: event.dropoff,
-        selectedOption: event.option,
+        selectedOption: effectiveOption,
         captainName: (event.captainName != null && event.captainName!.isNotEmpty)
             ? event.captainName!
             : 'كابتن لَفَّة',
@@ -447,7 +461,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       emit(RideBookingConfirmed(
         pickup: event.pickup,
         dropoff: event.dropoff,
-        selectedOption: event.option,
+        selectedOption: effectiveOption,
         captainName: (event.captainName != null && event.captainName!.isNotEmpty)
             ? event.captainName!
             : 'كابتن لَفَّة',

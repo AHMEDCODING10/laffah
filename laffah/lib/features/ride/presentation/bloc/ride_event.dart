@@ -202,6 +202,7 @@ class ActiveRidePolledStatusUpdated extends RideEvent {
   final RideOption option;
   final String pickup;
   final String dropoff;
+  final double? backendFare; // Authoritative fare from backend API
 
   const ActiveRidePolledStatusUpdated({
     required this.status,
@@ -214,6 +215,7 @@ class ActiveRidePolledStatusUpdated extends RideEvent {
     required this.option,
     required this.pickup,
     required this.dropoff,
+    this.backendFare,
   });
 
   @override
@@ -228,6 +230,7 @@ class ActiveRidePolledStatusUpdated extends RideEvent {
         option,
         pickup,
         dropoff,
+        backendFare,
       ];
 }
 

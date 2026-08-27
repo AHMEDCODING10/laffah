@@ -44,11 +44,18 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
 
   double _distanceKm = 0.0;
   double _durationMin = 0.0;
+  double? _backendFare; // Authoritative fare from backend API — no local calculation
+  bool _isFareLoading = true; // Show loading state until backend fare arrives
   final OsrmService _osrmService = OsrmService();
 
   @override
   void initState() {
     super.initState();
+    // If parent already provides a backend fare, use it immediately
+    if (widget.precomputedFare != null) {
+      _backendFare = widget.precomputedFare;
+      _isFareLoading = false;
+    }
     _calculateRoute();
   }
 
@@ -163,17 +170,31 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Fare & ETA come from the backend estimate API (driven by RideBloc)
-    // They are surfaced through BlocBuilder<RideBloc, RideState> in the parent
-    // widget — this widget receives distanceKm & durationMin from OSRM routing
-    // only for display; the authoritative price is always from the backend.
-    final double computedFare =
-        widget.precomputedFare ?? (500.0 + (_distanceKm * 150.0) + (_additionalDropoffs.length * 400.0));
-    final double baseFare = computedFare > 800.0 ? computedFare : 800.0;
+    // === AUTHORITATIVE PRICING: 100% from backend API ===
+    // No local calculation — the backend's /trips/estimate endpoint is the
+    // single source of truth, reading from the admin settings table.
+    // _backendFare is set either from widget.precomputedFare (parent) or
+    // from RideOptionsLoaded state emitted by CalculateSingleTripFare event.
+    final double baseFare = _backendFare ?? 0.0;
     final int computedEta = _durationMin.toInt();
 
     final l10n = AppLocalizations.of(context)!;
-    return GlassBox(
+    return BlocListener<RideBloc, RideState>(
+      listener: (context, state) {
+        if (state is RideOptionsLoaded && mounted) {
+          setState(() {
+            _backendFare = state.fare;
+            _isFareLoading = false;
+            if (state.distance > 0) _distanceKm = state.distance;
+            if (state.duration > 0) _durationMin = state.duration.toDouble();
+          });
+        } else if (state is RideError && mounted) {
+          setState(() {
+            _isFareLoading = false;
+          });
+        }
+      },
+      child: GlassBox(
         borderRadius: AppSpacing.radiusBottomSheet,
         customBgColor: isDark
             ? const Color(0xFF111827).withValues(alpha: 0.9)
@@ -394,15 +415,30 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        baseFare.toStringAsFixed(0),
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          color: AppColors.primary500,
-                        ),
-                      ),
+                      _isFareLoading
+                          ? const SizedBox(
+                              width: 50,
+                              height: 20,
+                              child: Center(
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary500,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Text(
+                              baseFare > 0 ? baseFare.toStringAsFixed(0) : '---',
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                color: AppColors.primary500,
+                              ),
+                            ),
                       Text(
                         l10n.pass_ride_currency,
                         style: TextStyle(
@@ -647,6 +683,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
             ),
           ],
         ),
+    ),
     );
   }
 
