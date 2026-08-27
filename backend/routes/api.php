@@ -11,9 +11,13 @@ use App\Http\Controllers\Api\GeocodeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\HealthController;
 
 // Public Settings
 Route::get('settings', [SettingsController::class, 'index']);
+
+// Render Health Check
+Route::get('health', [HealthController::class, 'check']);
 
 // Public Geocoding — Yemen-biased, no auth required
 Route::prefix('geocode')->group(function () {
