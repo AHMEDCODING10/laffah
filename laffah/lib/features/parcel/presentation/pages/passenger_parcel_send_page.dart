@@ -12,6 +12,7 @@ import '../bloc/parcel_event.dart';
 import '../bloc/parcel_state.dart';
 import '../widgets/passenger/form/parcel_form_cards.dart';
 import '../widgets/passenger/searching_parcel_captain_overlay.dart';
+import '../../../ride/presentation/bloc/ride_bloc.dart';
 
 class PassengerParcelSendPage extends StatefulWidget {
   const PassengerParcelSendPage({super.key});
@@ -25,12 +26,9 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
-  final TextEditingController _senderNameController =
-      TextEditingController();
-  final TextEditingController _senderPhoneController =
-      TextEditingController();
-  final TextEditingController _receiverNameController =
-      TextEditingController();
+  final TextEditingController _senderNameController = TextEditingController();
+  final TextEditingController _senderPhoneController = TextEditingController();
+  final TextEditingController _receiverNameController = TextEditingController();
   final TextEditingController _receiverPhoneController =
       TextEditingController();
   final TextEditingController _pickupLocationController =
@@ -43,7 +41,6 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
 
   LatLng _pickupLatLng = const LatLng(15.3694, 44.1910);
   LatLng? _dropoffLatLng;
-
 
   final List<String> _parcelTypes = [
     'وثائق ومستندات',
@@ -71,9 +68,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
     super.dispose();
   }
 
-  double get _baseFee {
-    return 0.0;
-  }
+  double _baseFee = 0.0;
 
   double get _insuranceFee => _isInsuranceEnabled ? 300.0 : 0.0;
 
@@ -106,6 +101,22 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
           }
         }
       });
+      _estimateFare();
+    }
+  }
+
+  void _estimateFare() {
+    if (_dropoffLatLng != null) {
+      context.read<RideBloc>().add(
+            CalculateSingleTripFare(
+              pickupLatitude: _pickupLatLng.latitude,
+              pickupLongitude: _pickupLatLng.longitude,
+              dropoffLatitude: _dropoffLatLng!.latitude,
+              dropoffLongitude: _dropoffLatLng!.longitude,
+              pickup: _pickupLocationController.text,
+              dropoff: _dropoffLocationController.text,
+            ),
+          );
     }
   }
 
@@ -137,13 +148,11 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
     }
 
     final notes = [
-      if (_notesController.text.trim().isNotEmpty)
-        _notesController.text.trim(),
+      if (_notesController.text.trim().isNotEmpty) _notesController.text.trim(),
       if (_isInsuranceEnabled) 'شامل التأمين',
       if (_estimatedValueController.text.trim().isNotEmpty)
         'القيمة: ${_estimatedValueController.text.trim()} ر.ي',
     ].join(' • ');
-
 
     context.read<ParcelBloc>().add(
           SubmitParcelEvent(
@@ -164,7 +173,6 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
           ),
         );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -205,158 +213,169 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
             );
           }
         },
-
         builder: (context, state) {
           final isLoading = state is ParcelLoading;
 
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: Scaffold(
-              backgroundColor: isDark
-                  ? AppColors.backgroundDark
-                  : AppColors.backgroundLight,
-              appBar: AppBar(
-                title: const Text(
-                  'إرسال طرد فوري',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                  ),
-                ),
-                centerTitle: true,
-                elevation: 0,
-                backgroundColor: isDark
-                    ? AppColors.surfaceDark
-                    : AppColors.white,
-                foregroundColor:
-                    isDark ? AppColors.white : AppColors.gray900,
-              ),
-              body: Stack(
-                children: [
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s16,
-                      vertical: AppSpacing.s20,
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Top Info Banner
-                          _buildInfoBanner(isDark),
-                          AppSpacing.h20,
-
-                          // 1. Sender Info Card
-                          _buildSectionHeader('1. بيانات المرسل', Icons.person_pin_rounded),
-                          AppSpacing.h8,
-                          ParcelSenderCard(
-                            isDark: isDark,
-                            nameController: _senderNameController,
-                            phoneController: _senderPhoneController,
-                          ),
-                          AppSpacing.h20,
-
-                          // 2. Recipient Info Card
-                          _buildSectionHeader('2. بيانات المستلم', Icons.person_add_alt_1_rounded),
-                          AppSpacing.h8,
-                          ParcelRecipientCard(
-                            isDark: isDark,
-                            nameController: _receiverNameController,
-                            phoneController: _receiverPhoneController,
-                          ),
-                          AppSpacing.h20,
-
-                          // 3. Locations Card
-                          _buildSectionHeader('3. مسار التوصيل', Icons.alt_route_rounded),
-                          AppSpacing.h8,
-                          _buildLocationPickerCard(isDark),
-                          AppSpacing.h20,
-
-                          // 4. Parcel Details
-                          _buildSectionHeader('4. مواصفات الطرد', Icons.inventory_2_rounded),
-                          AppSpacing.h8,
-                          _buildSizeSelector(isDark),
-                          AppSpacing.h12,
-                          ParcelInfoCard(
-                            isDark: isDark,
-                            parcelTypes: _parcelTypes,
-                            selectedParcelType: _selectedParcelType,
-                            onChangedType: (val) {
-                              if (val != null) {
-                                setState(() => _selectedParcelType = val);
-                              }
-                            },
-                            estimatedValueController:
-                                _estimatedValueController,
-                            notesController: _notesController,
-                          ),
-                          AppSpacing.h20,
-
-                          // 5. Insurance Option
-                          _buildSectionHeader('5. خيارات الأمان', Icons.security_rounded),
-                          AppSpacing.h8,
-                          ParcelInsuranceCard(
-                            isDark: isDark,
-                            isInsuranceEnabled: _isInsuranceEnabled,
-                            onChanged: (val) {
-                              setState(() => _isInsuranceEnabled = val);
-                            },
-                          ),
-                          AppSpacing.h20,
-
-                          // 6. Pricing Summary & Submit
-                          _buildSectionHeader('6. ملخص التكلفة والتأكيد', Icons.receipt_long_rounded),
-                          AppSpacing.h8,
-                          ParcelPriceSummaryCard(
-                            isDark: isDark,
-                            baseFee: _baseFee,
-                            isInsuranceEnabled: _isInsuranceEnabled,
-                            insuranceFee: _insuranceFee,
-                            totalPrice: _totalPrice,
-                            onSubmit: () => _handleSubmit(context),
-                          ),
-                          AppSpacing.h32,
-                        ],
+          return BlocListener<RideBloc, RideState>(
+              listener: (context, rideState) {
+                if (rideState is RideOptionsLoaded) {
+                  setState(() {
+                    _baseFee = rideState.fare;
+                  });
+                }
+              },
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Scaffold(
+                  backgroundColor: isDark
+                      ? AppColors.backgroundDark
+                      : AppColors.backgroundLight,
+                  appBar: AppBar(
+                    title: const Text(
+                      'إرسال طرد فوري',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
                       ),
                     ),
+                    centerTitle: true,
+                    elevation: 0,
+                    backgroundColor:
+                        isDark ? AppColors.surfaceDark : AppColors.white,
+                    foregroundColor:
+                        isDark ? AppColors.white : AppColors.gray900,
                   ),
+                  body: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s16,
+                          vertical: AppSpacing.s20,
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Top Info Banner
+                              _buildInfoBanner(isDark),
+                              AppSpacing.h20,
 
-                  if (isLoading)
-                    Container(
-                      color: Colors.black45,
-                      child: const Center(
-                        child: Card(
-                          color: AppColors.surfaceDark,
-                          child: Padding(
-                            padding: EdgeInsets.all(AppSpacing.s24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.primary500),
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'جاري إرسال طلب الطرد...',
-                                  style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    color: AppColors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              // 1. Sender Info Card
+                              _buildSectionHeader(
+                                  '1. بيانات المرسل', Icons.person_pin_rounded),
+                              AppSpacing.h8,
+                              ParcelSenderCard(
+                                isDark: isDark,
+                                nameController: _senderNameController,
+                                phoneController: _senderPhoneController,
+                              ),
+                              AppSpacing.h20,
+
+                              // 2. Recipient Info Card
+                              _buildSectionHeader('2. بيانات المستلم',
+                                  Icons.person_add_alt_1_rounded),
+                              AppSpacing.h8,
+                              ParcelRecipientCard(
+                                isDark: isDark,
+                                nameController: _receiverNameController,
+                                phoneController: _receiverPhoneController,
+                              ),
+                              AppSpacing.h20,
+
+                              // 3. Locations Card
+                              _buildSectionHeader(
+                                  '3. مسار التوصيل', Icons.alt_route_rounded),
+                              AppSpacing.h8,
+                              _buildLocationPickerCard(isDark),
+                              AppSpacing.h20,
+
+                              // 4. Parcel Details
+                              _buildSectionHeader('4. مواصفات الطرد',
+                                  Icons.inventory_2_rounded),
+                              AppSpacing.h8,
+                              _buildSizeSelector(isDark),
+                              AppSpacing.h12,
+                              ParcelInfoCard(
+                                isDark: isDark,
+                                parcelTypes: _parcelTypes,
+                                selectedParcelType: _selectedParcelType,
+                                onChangedType: (val) {
+                                  if (val != null) {
+                                    setState(() => _selectedParcelType = val);
+                                  }
+                                },
+                                estimatedValueController:
+                                    _estimatedValueController,
+                                notesController: _notesController,
+                              ),
+                              AppSpacing.h20,
+
+                              // 5. Insurance Option
+                              _buildSectionHeader(
+                                  '5. خيارات الأمان', Icons.security_rounded),
+                              AppSpacing.h8,
+                              ParcelInsuranceCard(
+                                isDark: isDark,
+                                isInsuranceEnabled: _isInsuranceEnabled,
+                                onChanged: (val) {
+                                  setState(() => _isInsuranceEnabled = val);
+                                },
+                              ),
+                              AppSpacing.h20,
+
+                              // 6. Pricing Summary & Submit
+                              _buildSectionHeader('6. ملخص التكلفة والتأكيد',
+                                  Icons.receipt_long_rounded),
+                              AppSpacing.h8,
+                              ParcelPriceSummaryCard(
+                                isDark: isDark,
+                                baseFee: _baseFee,
+                                isInsuranceEnabled: _isInsuranceEnabled,
+                                insuranceFee: _insuranceFee,
+                                totalPrice: _totalPrice,
+                                onSubmit: () => _handleSubmit(context),
+                              ),
+                              AppSpacing.h32,
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-          );
+                      if (isLoading)
+                        Container(
+                          color: Colors.black45,
+                          child: const Center(
+                            child: Card(
+                              color: AppColors.surfaceDark,
+                              child: Padding(
+                                padding: EdgeInsets.all(AppSpacing.s24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          AppColors.primary500),
+                                    ),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'جاري إرسال طلب الطرد...',
+                                      style: TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        color: AppColors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ));
         },
       ),
     );
@@ -449,11 +468,15 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 decoration: InputDecoration(
                   labelText: 'موقع الاستلام (نقطة البداية)',
                   hintText: 'حدد موقع استلام الطرد',
-                  prefixIcon: const Icon(Icons.my_location_rounded, color: AppColors.primary500),
-                  suffixIcon: const Icon(Icons.search_rounded, color: AppColors.primary500),
+                  prefixIcon: const Icon(Icons.my_location_rounded,
+                      color: AppColors.primary500),
+                  suffixIcon: const Icon(Icons.search_rounded,
+                      color: AppColors.primary500),
                   filled: true,
-                  fillColor: isDark ? const Color(0x08FFFFFF) : AppColors.gray50,
-                  border: const OutlineInputBorder(borderRadius: AppSpacing.radiusSM),
+                  fillColor:
+                      isDark ? const Color(0x08FFFFFF) : AppColors.gray50,
+                  border: const OutlineInputBorder(
+                      borderRadius: AppSpacing.radiusSM),
                 ),
               ),
             ),
@@ -474,16 +497,19 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 decoration: InputDecoration(
                   labelText: 'موقع التسليم (الوجهة)',
                   hintText: 'إلى أين تريد إرسال الطرد؟',
-                  prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.error),
-                  suffixIcon: const Icon(Icons.search_rounded, color: AppColors.primary500),
+                  prefixIcon: const Icon(Icons.location_on_rounded,
+                      color: AppColors.error),
+                  suffixIcon: const Icon(Icons.search_rounded,
+                      color: AppColors.primary500),
                   filled: true,
-                  fillColor: isDark ? const Color(0x08FFFFFF) : AppColors.gray50,
-                  border: const OutlineInputBorder(borderRadius: AppSpacing.radiusSM),
+                  fillColor:
+                      isDark ? const Color(0x08FFFFFF) : AppColors.gray50,
+                  border: const OutlineInputBorder(
+                      borderRadius: AppSpacing.radiusSM),
                 ),
               ),
             ),
           ),
-
         ],
       ),
     );
@@ -491,9 +517,21 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
 
   Widget _buildSizeSelector(bool isDark) {
     final sizes = [
-      {'key': 'صغير', 'label': 'صغير (مستندات/مفاتيح)', 'icon': Icons.mail_outline_rounded},
-      {'key': 'متوسط', 'label': 'متوسط (حقيبة/ملابس)', 'icon': Icons.inventory_2_outlined},
-      {'key': 'كبير', 'label': 'كبير (صندوق/أجهزة)', 'icon': Icons.all_inbox_rounded},
+      {
+        'key': 'صغير',
+        'label': 'صغير (مستندات/مفاتيح)',
+        'icon': Icons.mail_outline_rounded
+      },
+      {
+        'key': 'متوسط',
+        'label': 'متوسط (حقيبة/ملابس)',
+        'icon': Icons.inventory_2_outlined
+      },
+      {
+        'key': 'كبير',
+        'label': 'كبير (صندوق/أجهزة)',
+        'icon': Icons.all_inbox_rounded
+      },
     ];
 
     return GlassBox(
@@ -542,7 +580,8 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                           Icon(
                             s['icon'] as IconData,
                             size: 20,
-                            color: isSelected ? Colors.white : AppColors.gray500,
+                            color:
+                                isSelected ? Colors.white : AppColors.gray500,
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -553,7 +592,9 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                               fontWeight: FontWeight.bold,
                               color: isSelected
                                   ? Colors.white
-                                  : (isDark ? AppColors.white : AppColors.gray900),
+                                  : (isDark
+                                      ? AppColors.white
+                                      : AppColors.gray900),
                             ),
                           ),
                         ],
@@ -569,4 +610,3 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
     );
   }
 }
-

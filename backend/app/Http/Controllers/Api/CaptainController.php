@@ -155,9 +155,9 @@ class CaptainController extends Controller
                 CaptainLocation::updateOrCreate(
                     ['captain_profile_id' => $captainProfile->id],
                     [
-                        'latitude'   => (float) $lat,
-                        'longitude'  => (float) $lng,
-                        'updated_at' => now(),
+                        'latitude'        => (float) $lat,
+                        'longitude'       => (float) $lng,
+                        'last_updated_at' => now(),
                     ]
                 );
             }
