@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -22,6 +21,7 @@ import '../../../../core/bloc/locale/locale_state.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import 'passenger_support_page.dart';
 
 /// UserProfilePage — Passenger Profile Page connected to real backend via ProfileBloc
 class UserProfilePage extends StatelessWidget {
@@ -356,17 +356,13 @@ class _ProfileView extends StatelessWidget {
                       icon: Icons.headset_mic_outlined,
                       label: AppLocalizations.of(context)!.pass_profile_tech_support,
                       isDark: isDark,
-                      onTap: () async {
-                        final Uri url =
-                            Uri.parse('whatsapp://send?phone=+967770291452');
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url);
-                        } else {
-                          final Uri phoneUrl = Uri.parse('tel:+967770291452');
-                          if (await canLaunchUrl(phoneUrl)) {
-                            await launchUrl(phoneUrl);
-                          }
-                        }
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PassengerSupportPage(),
+                          ),
+                        );
                       },
                     ),
                     ProfileListTile(

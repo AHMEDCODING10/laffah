@@ -16,12 +16,11 @@ use Exception;
 
 class TripService
 {
-    const MAX_CAPTAIN_DEBT = -20000.00; // سقف المديونية الأقصى المسموح به للكابتن بالريال اليمني
+    const CACHE_TTL = 300; // 5 minutes
+    const PRICING_CACHE_TTL = 3600; // 1 hour for settings
+    const MAX_CAPTAIN_DEBT = -3000; // Maximum allowed negative balance before blocking
 
-    // TTL for pricing settings cache in seconds (15 minutes)
-    const PRICING_CACHE_TTL = 900;
-
-    protected NotificationService $notificationService;
+    protected $notificationService;
 
     public function __construct(?NotificationService $notificationService = null)
     {
@@ -33,13 +32,14 @@ class TripService
      */
     public function estimate(array $data)
     {
-        // Coordinates must be real (validated upstream) – no hardcoded fallbacks
-        $distanceKm = $this->calculateDistance(
-            (float) $data['pickup_latitude'],
-            (float) $data['pickup_longitude'],
-            (float) $data['dropoff_latitude'],
-            (float) $data['dropoff_longitude']
-        );
+        $distanceKm = isset($data['distance']) && is_numeric($data['distance']) 
+            ? (float) $data['distance']
+            : $this->calculateDistance(
+                (float) $data['pickup_latitude'],
+                (float) $data['pickup_longitude'],
+                (float) $data['dropoff_latitude'],
+                (float) $data['dropoff_longitude']
+            );
 
         $stopsCount = isset($data['stops']) && is_array($data['stops']) ? count($data['stops']) : 0;
 
@@ -97,7 +97,9 @@ class TripService
                 'dropoff_longitude' => $data['dropoff_longitude'],
                 'distance_km' => $estimate['distance_km'],
                 'estimated_price' => $estimate['estimated_price'],
-                'status' => 'pending',
+                'status' => (isset($data['is_scheduled']) && $data['is_scheduled']) ? 'scheduled' : 'pending',
+                'is_scheduled' => $data['is_scheduled'] ?? false,
+                'scheduled_time' => isset($data['scheduled_time']) ? \Carbon\Carbon::parse($data['scheduled_time']) : null,
             ]);
 
             if (isset($data['stops']) && is_array($data['stops'])) {
@@ -114,13 +116,45 @@ class TripService
 
             $trip->load('stops', 'passenger');
 
-            // Broadcast new trip to nearby captains via WebSockets
-            try {
-                event(new \App\Events\NewTripRequested($trip));
-            } catch (\Exception $e) {}
+            if ($trip->is_scheduled) {
+                // Return immediately without broadcasting if it's a scheduled trip
+                return $trip;
+            }
 
-            // Send FCM push to all online captains
-            $this->notifyNearbyCaptains($trip);
+            // Dispatch Smart Queue using Geo-Redis
+            try {
+                // Find captains within 10 km
+                $nearbyCaptainIds = \Illuminate\Support\Facades\Redis::georadius(
+                    'captains_location', 
+                    $data['pickup_longitude'], 
+                    $data['pickup_latitude'], 
+                    10, 
+                    'km', 
+                    ['WITHDIST', 'ASC']
+                );
+
+                if (!empty($nearbyCaptainIds)) {
+                    // Extract just the IDs (georadius returns [["id", "distance"], ...])
+                    $captainIdsOnly = array_map(function($item) {
+                        return $item[0];
+                    }, $nearbyCaptainIds);
+
+                    // Push to Redis List (Queue)
+                    \Illuminate\Support\Facades\Redis::rpush("trip_queue:{$trip->id}", ...$captainIdsOnly);
+                    // Expire the queue after 15 minutes to prevent memory leaks
+                    \Illuminate\Support\Facades\Redis::expire("trip_queue:{$trip->id}", 900);
+
+                    // Start the sequential dispatch job
+                    \App\Jobs\DispatchTripToNextCaptainJob::dispatch($trip->id);
+                } else {
+                    // Fallback to old broadcast if Redis is empty (maybe offline or no redis)
+                    $this->notifyNearbyCaptains($trip);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Geo-Redis routing failed, falling back to old broadcast: " . $e->getMessage());
+                // Fallback if Redis fails
+                $this->notifyNearbyCaptains($trip);
+            }
 
             return $trip;
         });
@@ -151,6 +185,17 @@ class TripService
 
             if ($trip->status !== 'pending') {
                 throw new Exception("عذراً، تم قبول هذا المشوار بالفعل من قبل كابتن آخر.", 409);
+            }
+
+            // Verify Smart Queue authorization
+            try {
+                $offeredCaptainId = \Illuminate\Support\Facades\Redis::get("trip_offer:{$tripId}");
+                if ($offeredCaptainId !== null && (int)$offeredCaptainId !== (int)$captainProfileId) {
+                    throw new Exception("عذراً، هذا المشوار معروض حالياً لكابتن آخر. يرجى الانتظار.", 403);
+                }
+            } catch (\Exception $e) {
+                // Ignore Redis errors or explicitly thrown Exceptions from above
+                if ($e->getCode() === 403) throw $e;
             }
 
             $trip->update([
@@ -411,6 +456,14 @@ class TripService
                 throw new Exception("لا يمكن إلغاء هذه الرحلة لأنها مكتملة أو ملغية مسبقاً.", 400);
             }
 
+            // [SECURITY FIX]: Prevent IDOR - Only the passenger or the assigned captain can cancel the trip.
+            $isPassenger = $trip->user_id === $user->id;
+            $isAssignedCaptain = $user->captainProfile && $trip->captain_profile_id === $user->captainProfile->id;
+            
+            if (!$isPassenger && !$isAssignedCaptain) {
+                throw new Exception("غير مصرح لك بإلغاء هذه الرحلة.", 403);
+            }
+
             $trip->update([
                 'status' => 'cancelled',
                 'cancelled_by' => $user->id,
@@ -517,13 +570,16 @@ class TripService
         }
     }
 
-    /**
-     * Accurate Road Distance Calculation.
-     * Combines Haversine straight-line distance with an Urban Road Network Detour Factor (1.25x)
-     * to realistically reflect street routing and turns in Yemeni cities.
-     */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
+        $osrmService = app(\App\Services\OSRMService::class);
+        $route = $osrmService->getRouteDetails($lat1, $lon1, $lat2, $lon2);
+
+        if ($route && isset($route['distance'])) {
+            return max($route['distance'], 1.0); // Use real OSRM road distance
+        }
+
+        // Fallback to Haversine straight-line distance if OSRM fails
         $earthRadius = 6371; // km
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
@@ -531,10 +587,8 @@ class TripService
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         $straightLineDist = $earthRadius * $c;
 
-        // Apply 1.4x Urban Road Network / Detour Multiplier
-        // (Raised from 1.25 to better match real OSRM road distances in Yemen)
         $roadDist = $straightLineDist * 1.4;
 
-        return max($roadDist, 1.0); // Minimum 1 km for calculation
+        return max($roadDist, 1.0);
     }
 }

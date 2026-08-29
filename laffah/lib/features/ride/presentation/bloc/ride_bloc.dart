@@ -31,6 +31,13 @@ class ParcelData extends Equatable {
   final String parcelType;
   final String size;
   final String notes;
+  final String? pickupAddress;
+  final String? dropoffAddress;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? dropoffLatitude;
+  final double? dropoffLongitude;
+  final double? price;
 
   const ParcelData({
     required this.senderName,
@@ -40,6 +47,13 @@ class ParcelData extends Equatable {
     required this.parcelType,
     required this.size,
     required this.notes,
+    this.pickupAddress,
+    this.dropoffAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.dropoffLatitude,
+    this.dropoffLongitude,
+    this.price,
   });
 
   @override
@@ -51,6 +65,13 @@ class ParcelData extends Equatable {
         parcelType,
         size,
         notes,
+        pickupAddress,
+        dropoffAddress,
+        pickupLatitude,
+        pickupLongitude,
+        dropoffLatitude,
+        dropoffLongitude,
+        price,
       ];
 }
 
@@ -258,11 +279,23 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       rideType: 'ride',
       expectedPrice: event.fare,
       stops: event.stops,
+      isScheduled: event.isScheduled,
+      scheduledTime: event.scheduledTime,
     );
 
     result.fold(
-      (failure) => emit(RideError(failure.message)),
+      (failure) {
+        if (event.isScheduled) {
+          emit(const RideInitial());
+        }
+        emit(RideError(failure.message));
+      },
       (rideEntity) {
+        if (event.isScheduled) {
+          emit(const RideScheduledSuccess());
+          return;
+        }
+
         _currentActiveRideId = rideEntity.id;
         _echoService.listenToTripStatus(
           rideEntity.id,
@@ -373,7 +406,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     );
   }
 
-  /// Periodic Smart Polling for Ride Status (Every 2.5 seconds)
+  /// Periodic Smart Polling for Ride Status (Removed DDOS - only single fetch as fallback)
   void _startSmartPolling(
     String rideId,
     RideOption option,
@@ -381,7 +414,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     String dropoff,
   ) {
     _stopSmartPolling();
-    _smartPollingTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) async {
+    // Replaced DDOS timer with a single delayed fetch just to sync initial state.
+    _smartPollingTimer = Timer(const Duration(seconds: 10), () async {
       final res = await trackRideUseCase.fetchRide(rideId);
       res.fold(
         (failure) => null,
@@ -502,16 +536,29 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       senderPhone: event.data.senderPhone,
       receiverName: event.data.receiverName,
       receiverPhone: event.data.receiverPhone,
+      pickupAddress: event.data.pickupAddress,
+      pickupLatitude: event.data.pickupLatitude,
+      pickupLongitude: event.data.pickupLongitude,
+      dropoffAddress: event.data.dropoffAddress,
+      dropoffLatitude: event.data.dropoffLatitude,
+      dropoffLongitude: event.data.dropoffLongitude,
       parcelType: event.data.parcelType,
       size: event.data.size,
       notes: event.data.notes,
+      price: event.data.price,
     );
 
     result.fold(
       (failure) =>
           emit(RideError('فشل تقديم طلب إرسال الطرد: ${failure.message}')),
       (parcelEntity) {
-        // Start polling for parcel status immediately
+        _currentActiveRideId = parcelEntity.id;
+        _echoService.listenToTripStatus(
+          parcelEntity.id,
+          (data) => add(TripStatusUpdatedFromWebSocket(data)),
+        );
+
+        // Fallback fetch
         _startSmartPolling(
           parcelEntity.id,
           RideOption(

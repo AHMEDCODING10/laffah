@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
+import '../../../../core/services/echo_service.dart';
 import '../../domain/entities/parcel_entity.dart';
 import '../bloc/parcel_bloc.dart';
 import '../bloc/parcel_event.dart';
@@ -66,13 +67,22 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
 
   @override
   void dispose() {
+    EchoService().stopListeningToTripStatus(_targetIdentifier);
     _refreshTimer?.cancel();
     super.dispose();
   }
 
   void _startPolling(BuildContext context) {
+    // 1. Listen via WebSocket for real-time changes
+    EchoService().listenToTripStatus(_targetIdentifier, (data) {
+      if (mounted) {
+        context.read<ParcelBloc>().add(TrackParcelEvent(identifier: _targetIdentifier));
+      }
+    });
+
+    // 2. Gentle fallback fetch (single delayed fetch) instead of aggressive DDOS polling
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
+    _refreshTimer = Timer(const Duration(seconds: 10), () {
       if (mounted) {
         context
             .read<ParcelBloc>()

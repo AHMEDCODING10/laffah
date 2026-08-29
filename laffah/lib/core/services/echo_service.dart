@@ -20,6 +20,8 @@ class EchoService {
   final Map<String, List<Function(Map<String, dynamic>)>> _tripAvailableListeners = {};
   final Map<String, List<Function(Map<String, dynamic>)>> _tripStatusListeners = {};
   final Map<String, List<Function(double, double, double?)>> _captainLocationListeners = {};
+  
+  String _currentCaptainId = '';
 
   bool get isConnected => _isConnected;
 
@@ -81,12 +83,12 @@ class EchoService {
     final data = _parseEventData(event.data);
     if (data.isEmpty) return;
 
-    if (channelName == 'trips.available') {
+    if (channelName == 'trips.available' || channelName.startsWith('captain.')) {
       // Must contain a valid trip ID or payload
       if (data['id'] == null && data['trip_id'] == null && data['tripId'] == null) {
         return;
       }
-      final listeners = _tripAvailableListeners['trips.available'] ?? [];
+      final listeners = _tripAvailableListeners[channelName] ?? _tripAvailableListeners['trips.available'] ?? [];
       for (final callback in List.from(listeners)) {
         try {
           callback(data);
@@ -119,8 +121,12 @@ class EchoService {
   Future<void> listenToAvailableTrips({
     required Function(Map<String, dynamic> data) onNewTrip,
     Function(Map<String, dynamic> data)? onTripNoLongerAvailable,
+    String? captainId,
   }) async {
     try {
+      if (captainId != null) {
+          _currentCaptainId = captainId;
+      }
       if (_pusher == null || !_isConnected) {
         await init();
       }
@@ -139,6 +145,17 @@ class EchoService {
 
       await pusher.subscribe(channelName: 'trips.available');
       debugPrint("📡 [EchoService] Subscribed to channel: trips.available");
+
+      // Also subscribe to the targeted Smart Queue private channel
+      final captainProfileId = _currentCaptainId; 
+      if (captainProfileId.isNotEmpty) {
+          await pusher.subscribe(channelName: 'captain.$captainProfileId');
+          debugPrint("📡 [EchoService] Subscribed to targeted channel: captain.$captainProfileId");
+          _tripAvailableListeners.putIfAbsent('captain.$captainProfileId', () => []);
+          _tripAvailableListeners['captain.$captainProfileId']!.add((data) {
+             onNewTrip(data);
+          });
+      }
     } catch (e) {
       debugPrint("⚠️ [EchoService] listenToAvailableTrips (handled by Smart Polling): $e");
     }
@@ -150,7 +167,12 @@ class EchoService {
     try {
       _tripAvailableListeners.remove('trips.available');
       await pusher.unsubscribe(channelName: 'trips.available');
-      debugPrint("🔌 [EchoService] Left channel: trips.available");
+      
+      if (_currentCaptainId.isNotEmpty) {
+          _tripAvailableListeners.remove('captain.$_currentCaptainId');
+          await pusher.unsubscribe(channelName: 'captain.$_currentCaptainId');
+      }
+      debugPrint("🔌 [EchoService] Left trip channels");
     } catch (e) {
       debugPrint("⚠️ [EchoService] Error leaving trips.available: $e");
     }

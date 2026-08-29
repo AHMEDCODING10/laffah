@@ -34,6 +34,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   StreamSubscription<Position>? _positionSubscription;
   StreamSubscription<bool>? _networkSubscription;
   Timer? _smartPollingTimer;
+  Timer? _tripRequestTimer;
   String _currentCaptainId = '';
   final Set<String> _dismissedTripIds = {};
 
@@ -131,7 +132,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           final cid = status.captainId ?? 'captain';
           emit(const CaptainOnline());
           _startLocationTracking(cid);
-          _startSmartPolling();
+          _pollNearbyRequests();
 
           // Connect to real Pusher WebSocket to receive live trip requests
           pusherService.connect(
@@ -196,25 +197,17 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           },
         );
       }
-      _startSmartPolling();
+      // Removed _startSmartPolling() DDOS
+      _pollNearbyRequests(); // Do one initial fetch just in case
     } else {
-      _stopSmartPolling();
+      // Removed _stopSmartPolling()
       _stopLocationTracking();
       pusherService.disconnect();
       emit(const CaptainOffline());
     }
   }
 
-  /// Periodic Smart Polling for nearby pending trip requests while online
-  void _startSmartPolling() {
-    _stopSmartPolling();
-    // Poll immediately and then every 3.5 seconds
-    _pollNearbyRequests();
-    _smartPollingTimer = Timer.periodic(const Duration(milliseconds: 3500), (_) {
-      _pollNearbyRequests();
-    });
-  }
-
+  // Smart polling DDOS removed.
   void _stopSmartPolling() {
     _smartPollingTimer?.cancel();
     _smartPollingTimer = null;
@@ -251,6 +244,10 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             'parcel_type': req.parcelType ?? (req.isParcel ? 'طرد' : null),
             'size': req.size ?? 'متوسط',
             'tracking_code': req.trackingCode ?? req.id,
+            'pickupLat': req.pickupLat,
+            'pickupLng': req.pickupLng,
+            'dropoffLat': req.dropoffLat,
+            'dropoffLng': req.dropoffLng,
           }));
         }
       },
@@ -274,6 +271,16 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
     // Check if dismissed
     if (_dismissedTripIds.contains(tripId)) return;
+
+    // Reset any existing trip timer
+    _tripRequestTimer?.cancel();
+
+    // Start a 10-second timer to auto-dismiss if no action taken
+    _tripRequestTimer = Timer(const Duration(seconds: 10), () {
+      if (!isClosed) {
+        add(TripNoLongerAvailableReceived(tripId));
+      }
+    });
 
     // Play subtle chime / alert sound once
     alertSoundService.playSimpleTripAlert();
@@ -339,6 +346,10 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       isParcel: isParcel,
       parcelType: parcelType,
       size: d['size']?.toString() ?? 'متوسط',
+      pickupLat: d['pickupLat'] != null ? (d['pickupLat'] as num).toDouble() : null,
+      pickupLng: d['pickupLng'] != null ? (d['pickupLng'] as num).toDouble() : null,
+      dropoffLat: d['dropoffLat'] != null ? (d['dropoffLat'] as num).toDouble() : null,
+      dropoffLng: d['dropoffLng'] != null ? (d['dropoffLng'] as num).toDouble() : null,
     ));
   }
 
@@ -350,9 +361,9 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
+        distanceFilter: 30,
         forceLocationManager: true,
-        intervalDuration: const Duration(seconds: 5),
+        intervalDuration: const Duration(seconds: 10),
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationText: "كابتن لَفَّة متصل — جاري تتبع الموقع لاستقبال المشاوير",
           notificationTitle: "لَفَّة — خدمة الكابتن النشطة",
@@ -363,14 +374,14 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       locationSettings = AppleSettings(
         accuracy: LocationAccuracy.high,
         activityType: ActivityType.automotiveNavigation,
-        distanceFilter: 10,
-        pauseLocationUpdatesAutomatically: false,
+        distanceFilter: 30,
+        pauseLocationUpdatesAutomatically: true,
         showBackgroundLocationIndicator: true,
       );
     } else {
       locationSettings = const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
+        distanceFilter: 30,
       );
     }
 
@@ -428,11 +439,14 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   Future<void> _onAcceptTrip(AcceptTrip event, EmitFn emit) async {
     if (state is IncomingTripRequest) {
       final currentState = state as IncomingTripRequest;
+      _tripRequestTimer?.cancel();
+      
       emit(const CaptainLoading());
 
       final result = await respondToTripUseCase(
         tripId: currentState.tripId,
         accept: true,
+        isParcel: currentState.isParcel,
       );
 
       await result.fold(
@@ -455,8 +469,12 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             currentLng = pos.longitude;
           } catch (_) {}
 
-          final pickupPos = LatLng(currentLat + 0.002, currentLng + 0.002);
-          final dropoffPos = LatLng(currentLat - 0.015, currentLng - 0.015);
+          final pickupPos = currentState.pickupLat != null && currentState.pickupLng != null
+              ? LatLng(currentState.pickupLat!, currentState.pickupLng!)
+              : LatLng(currentLat + 0.002, currentLng + 0.002);
+          final dropoffPos = currentState.dropoffLat != null && currentState.dropoffLng != null
+              ? LatLng(currentState.dropoffLat!, currentState.dropoffLng!)
+              : LatLng(currentLat - 0.015, currentLng - 0.015);
 
           final routeResult = await routingService.getRoute(pickupPos, dropoffPos);
 
@@ -486,9 +504,18 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
   Future<void> _onRejectTrip(RejectTrip event, EmitFn emit) async {
     if (state is IncomingTripRequest) {
-      final tripId = (state as IncomingTripRequest).tripId;
-      _dismissedTripIds.add(tripId);
-      respondToTripUseCase(tripId: tripId, accept: false);
+      final req = state as IncomingTripRequest;
+      
+      _dismissedTripIds.add(req.tripId);
+      _tripRequestTimer?.cancel();
+      
+      // Notify backend that we rejected this
+      respondToTripUseCase(
+        tripId: req.tripId, 
+        accept: false, 
+        isParcel: req.isParcel
+      );
+      
       emit(const CaptainOnline());
     }
   }
@@ -540,6 +567,12 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       final fare = (currentState is TripInProgress)
           ? currentState.fare
           : (currentState is TripAccepted ? currentState.fare : 1000.0);
+      final distance = (currentState is TripInProgress)
+          ? currentState.remainingDistance
+          : (currentState is TripAccepted ? currentState.distance : 'غير معروف');
+      final duration = (currentState is TripInProgress)
+          ? currentState.remainingDuration
+          : (currentState is TripAccepted ? currentState.duration : 'غير معروف');
 
       emit(TripCompleted(
         tripId: tripId,
@@ -547,8 +580,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         pickup: pickup,
         dropoff: dropoff,
         fare: fare,
-        totalDistance: '6.3 كم',
-        totalDuration: '7 دقائق',
+        totalDistance: distance,
+        totalDuration: duration,
         paymentMethod: 'نقداً',
       ));
     }
@@ -588,5 +621,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       (_) => emit(const CaptainPayoutRequestSuccess()),
     );
   }
+
+
 }
 

@@ -121,7 +121,7 @@ class RecentDestinationsSection extends StatelessWidget {
                             ),
                             const SizedBox(width: 3),
                             Text(
-                              item['distance'] as String,
+                              (item['distance'] as String?) ?? '— كم',
                               style: TextStyle(
                                 fontFamily: 'IBM Plex Sans Arabic',
                                 fontSize: 11.5,

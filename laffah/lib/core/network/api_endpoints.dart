@@ -82,6 +82,7 @@ class ApiEndpoints {
 
   // Parcel Endpoints
   static const String submitParcel = '/parcel/request';
+  static String trackParcel(String identifier) => '/parcel/$identifier/track';
 
   // Wallet Endpoints
   static const String walletBalance = '/wallet/balance';

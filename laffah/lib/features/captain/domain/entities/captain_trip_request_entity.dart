@@ -22,6 +22,10 @@ class CaptainTripRequestEntity extends Equatable {
   final String? size;
   final String? trackingCode;
   final List<String> stops;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? dropoffLat;
+  final double? dropoffLng;
 
   const CaptainTripRequestEntity({
     required this.id,
@@ -45,6 +49,10 @@ class CaptainTripRequestEntity extends Equatable {
     this.size,
     this.trackingCode,
     required this.stops,
+    this.pickupLat,
+    this.pickupLng,
+    this.dropoffLat,
+    this.dropoffLng,
   });
 
   @override
@@ -70,5 +78,9 @@ class CaptainTripRequestEntity extends Equatable {
         size,
         trackingCode,
         stops,
+        pickupLat,
+        pickupLng,
+        dropoffLat,
+        dropoffLng,
       ];
 }

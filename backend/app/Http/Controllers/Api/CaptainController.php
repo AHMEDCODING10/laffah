@@ -54,17 +54,36 @@ class CaptainController extends Controller
             return response()->json(['status' => 'error', 'message' => 'لم يتم العثور على ملف تعريف الكابتن.'], 404);
         }
 
-        $location = CaptainLocation::updateOrCreate(
-            ['captain_profile_id' => $captainProfile->id],
-            [
-                'latitude'   => $lat,
-                'longitude'  => $lng,
-                'heading'    => (float) $heading,
-                'speed'      => (float) $speed,
-                'is_online'  => (bool) $captainProfile->is_online,
-                'updated_at' => now(),
-            ]
-        );
+        $location = null;
+        try {
+            // High-performance Redis GeoSpatial insert
+            \Illuminate\Support\Facades\Redis::geoAdd('captains_location', $lng, $lat, $captainProfile->id);
+            // Also store heading/speed in a hash
+            \Illuminate\Support\Facades\Redis::hSet('captain_details:' . $captainProfile->id, 'heading', (float) $heading);
+            \Illuminate\Support\Facades\Redis::hSet('captain_details:' . $captainProfile->id, 'speed', (float) $speed);
+            
+            $location = [
+                'captain_profile_id' => $captainProfile->id,
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'heading' => $heading,
+                'speed' => $speed,
+                'is_online' => (bool) $captainProfile->is_online,
+            ];
+        } catch (\Exception $e) {
+            // Fallback to MySQL if Redis is unavailable
+            $location = CaptainLocation::updateOrCreate(
+                ['captain_profile_id' => $captainProfile->id],
+                [
+                    'latitude'   => $lat,
+                    'longitude'  => $lng,
+                    'heading'    => (float) $heading,
+                    'speed'      => (float) $speed,
+                    'is_online'  => (bool) $captainProfile->is_online,
+                    'updated_at' => now(),
+                ]
+            );
+        }
 
         // Broadcast location update
         try {
@@ -125,15 +144,32 @@ class CaptainController extends Controller
         $lng = $request->longitude ?? $request->lng ?? $request->input('currentLng');
 
         if ($lat !== null && $lng !== null) {
-            CaptainLocation::updateOrCreate(
-                ['captain_profile_id' => $captainProfile->id],
-                [
-                    'latitude'   => (float) $lat,
-                    'longitude'  => (float) $lng,
-                    'is_online'  => $isOnline,
-                    'updated_at' => now(),
-                ]
-            );
+            try {
+                if ($isOnline) {
+                    \Illuminate\Support\Facades\Redis::geoAdd('captains_location', (float) $lng, (float) $lat, $captainProfile->id);
+                } else {
+                    \Illuminate\Support\Facades\Redis::zrem('captains_location', $captainProfile->id);
+                }
+            } catch (\Exception $e) {
+                // Fallback to MySQL
+                CaptainLocation::updateOrCreate(
+                    ['captain_profile_id' => $captainProfile->id],
+                    [
+                        'latitude'   => (float) $lat,
+                        'longitude'  => (float) $lng,
+                        'is_online'  => $isOnline,
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        } else if (!$isOnline) {
+            // Just remove from Redis if going offline without coords
+            try {
+                \Illuminate\Support\Facades\Redis::zrem('captains_location', $captainProfile->id);
+            } catch (\Exception $e) {
+                CaptainLocation::where('captain_profile_id', $captainProfile->id)
+                    ->update(['is_online' => false, 'updated_at' => now()]);
+            }
         }
 
         return response()->json([

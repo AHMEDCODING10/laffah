@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -33,6 +32,10 @@ class _ParcelSendPageState extends State<ParcelSendPage> {
 
   String _pickupLocationName = '';
   String _dropoffLocationName = '';
+  double? _pickupLat;
+  double? _pickupLng;
+  double? _dropoffLat;
+  double? _dropoffLng;
 
   final List<String> _parcelTypes = const [
     'إلكترونيات',
@@ -95,6 +98,8 @@ class _ParcelSendPageState extends State<ParcelSendPage> {
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _pickupLocationName = result['name'] as String;
+        _pickupLat = result['lat'] as double?;
+        _pickupLng = result['lon'] as double?;
       });
     }
   }
@@ -109,6 +114,8 @@ class _ParcelSendPageState extends State<ParcelSendPage> {
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _dropoffLocationName = result['name'] as String;
+        _dropoffLat = result['lat'] as double?;
+        _dropoffLng = result['lon'] as double?;
       });
     }
   }
@@ -151,13 +158,17 @@ class _ParcelSendPageState extends State<ParcelSendPage> {
       notes: _notesController.text.trim().isNotEmpty
           ? _notesController.text.trim()
           : 'شحنة طرد عادية',
+      pickupAddress: _pickupLocationName,
+      dropoffAddress: _dropoffLocationName,
+      pickupLatitude: _pickupLat,
+      pickupLongitude: _pickupLng,
+      dropoffLatitude: _dropoffLat,
+      dropoffLongitude: _dropoffLng,
     );
 
     try {
       context.read<RideBloc>().add(SubmitParcelOrder(parcelData));
     } catch (_) {}
-
-    context.pushReplacement(LaffahRoutes.passengerParcelTracking);
   }
 
   void _showErrorSnackBar(String message) {

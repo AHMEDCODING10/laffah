@@ -30,7 +30,7 @@ class ParcelRemoteDataSourceImpl implements ParcelRemoteDataSource {
 
   @override
   Future<BaseResponseModel<ParcelModel>> trackParcel(String identifier) async {
-    final response = await dioClient.dio.get('/parcel/$identifier/track');
+    final response = await dioClient.dio.get(ApiEndpoints.trackParcel(identifier));
     return BaseResponseModel.fromJson(
       response.data,
       (data) => ParcelModel.fromJson(data as Map<String, dynamic>),

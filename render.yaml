@@ -64,7 +64,7 @@ services:
       - key: REVERB_APP_ID
         value: laffah_app
       - key: REVERB_APP_KEY
-        generateValue: true
+        value: "laffah"
       - key: REVERB_APP_SECRET
         generateValue: true
       - key: REVERB_HOST
@@ -72,7 +72,7 @@ services:
       - key: REVERB_PORT
         value: 8080
       - key: REVERB_SCHEME
-        value: https
+        value: http
       - key: ENABLE_REVERB
         value: "true"
       - key: ENABLE_QUEUE

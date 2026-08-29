@@ -69,6 +69,7 @@ import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../network/api_endpoints.dart';
 
 import '../../features/parcel/presentation/bloc/parcel_bloc.dart';
 import '../../features/passenger/presentation/bloc/wallet_bloc.dart';
@@ -114,9 +115,14 @@ Future<void> init() async {
     debugPrint("⚠️ [Laffah DI] Could not preload token: $e");
   }
 
+  final String httpUrl = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/api$'), '');
+  final String wsUrl = httpUrl.startsWith('https')
+      ? httpUrl.replaceFirst('https', 'wss')
+      : httpUrl.replaceFirst('http', 'ws');
+
   sl.registerLazySingleton<LaffahWebSocketClient>(
     () => LaffahWebSocketClient(
-      baseWsUrl: 'wss://api.laffah.com',
+      baseWsUrl: wsUrl,
       storage: sl(),
     ),
   );

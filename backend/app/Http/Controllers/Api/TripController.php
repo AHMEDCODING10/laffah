@@ -375,6 +375,16 @@ class TripController extends Controller
             }
         }
 
+        // Debt limit check
+        $wallet = \App\Models\Wallet::where('user_id', $user->id)->first();
+        if ($wallet && $wallet->balance < \App\Services\TripService::MAX_CAPTAIN_DEBT) {
+            return response()->json([
+                'status' => 'success',
+                'data'   => [],
+                'message'=> 'لقد تجاوزت سقف المديونية المسموح به. يرجى سداد المديونية لتتمكن من استقبال طلبات جديدة.'
+            ]);
+        }
+
         // Use DB transaction to prevent race conditions between expiration and querying
         $trips = DB::transaction(function () {
             // 1. Auto-expire pending trips older than 3 minutes that have not been accepted by any captain
@@ -409,13 +419,23 @@ class TripController extends Controller
             return $query->take(20)->get();
         });
 
-        if ($lat && $lng) {
-            $trips = $trips->filter(function ($trip) use ($lat, $lng) {
-                if (!$trip->pickup_latitude || !$trip->pickup_longitude) return true;
-                $dist = $this->calculateDistance($lat, $lng, $trip->pickup_latitude, $trip->pickup_longitude);
-                return $dist <= 30.0; // within 30km radius
-            })->values();
-        }
+        $captainProfileId = $request->user()->captainProfile?->id;
+
+        $trips = $trips->filter(function ($trip) use ($lat, $lng, $captainProfileId) {
+            // Check Smart Queue Offer Lock
+            try {
+                $offeredCaptainId = \Illuminate\Support\Facades\Redis::get("trip_offer:{$trip->id}");
+                if ($offeredCaptainId !== null && (int)$offeredCaptainId !== (int)$captainProfileId) {
+                    return false; // Offered to someone else
+                }
+            } catch (\Exception $e) {
+                // Redis is down, fallback to legacy behavior
+            }
+
+            if (!$trip->pickup_latitude || !$trip->pickup_longitude) return true;
+            $dist = $this->calculateDistance((float)$lat, (float)$lng, (float)$trip->pickup_latitude, (float)$trip->pickup_longitude);
+            return $dist <= 30.0; // within 30km radius
+        })->values();
 
         $tripData = TripResource::collection($trips)->resolve();
 

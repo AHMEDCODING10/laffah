@@ -63,6 +63,8 @@ class CreateTripRequest extends FormRequest
             'stops.*.address' => 'required_with:stops|string|max:255',
             'stops.*.latitude' => 'required_with:stops|numeric|between:12.0,19.5',
             'stops.*.longitude' => 'required_with:stops|numeric|between:41.5,54.5',
+            'is_scheduled' => 'nullable|boolean',
+            'scheduled_time' => 'nullable|date|after:now',
         ];
     }
 }

@@ -207,8 +207,43 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                   }
                 },
                 builder: (context, state) {
+                  // Show loader while actively fetching
                   if (state is ProfileLoading) {
                     return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // Show loader if we haven't received places data yet
+                  // (e.g. bloc is in ProfileInitial or ProfileLoaded from a prior getProfile call)
+                  if (state is! SavedPlacesLoaded && state is! ProfileError && _savedPlaces.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is ProfileError && _savedPlaces.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.gray400),
+                          AppSpacing.h12,
+                          Text(
+                            'تعذّر تحميل الأماكن المحفوظة',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 14,
+                              color: isDark ? AppColors.gray400 : AppColors.gray600,
+                            ),
+                          ),
+                          AppSpacing.h12,
+                          TextButton(
+                            onPressed: () => context.read<ProfileBloc>().add(GetSavedPlacesEvent()),
+                            child: const Text(
+                              'إعادة المحاولة',
+                              style: TextStyle(fontFamily: 'IBM Plex Sans Arabic', color: AppColors.primary500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   }
 
                   if (_filteredPlaces.isEmpty) {

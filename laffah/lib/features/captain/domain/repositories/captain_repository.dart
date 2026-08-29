@@ -24,6 +24,7 @@ abstract class CaptainRepository {
   Future<Either<Failure, void>> respondToTripRequest({
     required String tripId,
     required bool accept,
+    bool isParcel = false,
   });
 
   Future<Either<Failure, void>> updateTripStatus({

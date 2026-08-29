@@ -58,6 +58,18 @@ class LaffahWebSocketClient {
           try {
             if (data is String) {
               final Map<String, dynamic> decoded = jsonDecode(data);
+              
+              // Handle Pusher Protocol: connection_established
+              if (decoded['event'] == 'pusher:connection_established') {
+                debugPrint('🌐 [Laffah WS] Connection established. Subscribing to channel: $_currentChannel');
+                send({
+                  "event": "pusher:subscribe",
+                  "data": {
+                    "channel": _currentChannel
+                  }
+                });
+              }
+              
               _eventController.add(decoded);
             }
           } catch (e) {

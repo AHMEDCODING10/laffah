@@ -23,6 +23,10 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
     super.size,
     super.trackingCode,
     required super.stops,
+    super.pickupLat,
+    super.pickupLng,
+    super.dropoffLat,
+    super.dropoffLng,
   });
 
   factory CaptainTripRequestModel.fromJson(Map<String, dynamic> json) {
@@ -102,6 +106,10 @@ class CaptainTripRequestModel extends CaptainTripRequestEntity {
       trackingCode: json['trackingCode'] as String? ??
           json['tracking_code'] as String?,
       stops: stopsList,
+      pickupLat: (json['pickup_latitude'] as num?)?.toDouble() ?? (json['pickupLat'] as num?)?.toDouble(),
+      pickupLng: (json['pickup_longitude'] as num?)?.toDouble() ?? (json['pickupLng'] as num?)?.toDouble(),
+      dropoffLat: (json['dropoff_latitude'] as num?)?.toDouble() ?? (json['dropoffLat'] as num?)?.toDouble(),
+      dropoffLng: (json['dropoff_longitude'] as num?)?.toDouble() ?? (json['dropoffLng'] as num?)?.toDouble(),
     );
   }
 }

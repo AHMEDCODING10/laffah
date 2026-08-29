@@ -16,13 +16,15 @@ class NewTripRequested implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $trip;
+    public $targetCaptainId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Trip $trip)
+    public function __construct(Trip $trip, $targetCaptainId = null)
     {
         $this->trip = $trip;
+        $this->targetCaptainId = $targetCaptainId;
     }
 
     /**
@@ -32,7 +34,14 @@ class NewTripRequested implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        // Broadcast to public channel so online captains can listen seamlessly
+        if ($this->targetCaptainId) {
+            // Targeted dispatch (Smart Queue)
+            return [
+                new PrivateChannel('captain.' . $this->targetCaptainId),
+            ];
+        }
+
+        // Broadcast to public channel so online captains can listen seamlessly (Legacy)
         return [
             new Channel('trips.available'),
         ];

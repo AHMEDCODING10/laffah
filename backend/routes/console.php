@@ -13,3 +13,9 @@ Schedule::command('captains:auto-offline --minutes=5')
     ->everyMinute()
     ->runInBackground()
     ->withoutOverlapping();
+
+// Dispatch scheduled trips that are due within 15 minutes
+Schedule::command('trips:dispatch-scheduled')
+    ->everyMinute()
+    ->runInBackground()
+    ->withoutOverlapping();

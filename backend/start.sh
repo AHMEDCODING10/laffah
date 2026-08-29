@@ -12,6 +12,14 @@ else
     echo "⚡ [Laffah] Using standard port 80"
 fi
 
+# Configure proxy for Reverb Websockets
+echo "📡 [Laffah] Configuring Apache to proxy Reverb WebSockets..."
+sed -i '/<\/VirtualHost>/i \
+    ProxyPass "/app" "ws://127.0.0.1:8080/app"\n\
+    ProxyPassReverse "/app" "ws://127.0.0.1:8080/app"\n\
+    ProxyPass "/apps" "http://127.0.0.1:8080/apps"\n\
+    ProxyPassReverse "/apps" "http://127.0.0.1:8080/apps"\n' /etc/apache2/sites-available/000-default.conf
+
 # 2. Run Database Migrations & Symlinks
 echo "📦 [Laffah] Running database migrations..."
 php artisan migrate --force || echo "⚠️ Migration warning, continuing..."

@@ -28,6 +28,8 @@ class RideRepositoryImpl implements RideRepository {
     required double expectedPrice,
     List<Map<String, dynamic>>? stops,
     int? promoCodeId,
+    bool isScheduled = false,
+    DateTime? scheduledTime,
   }) async {
     try {
       final response = await remoteDataSource.requestRide(
@@ -41,6 +43,8 @@ class RideRepositoryImpl implements RideRepository {
         expectedPrice: expectedPrice,
         stops: stops,
         promoCodeId: promoCodeId,
+        isScheduled: isScheduled,
+        scheduledTime: scheduledTime,
       );
 
       if (response.success && response.data != null) {

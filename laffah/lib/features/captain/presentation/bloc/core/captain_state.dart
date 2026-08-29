@@ -59,6 +59,10 @@ class IncomingTripRequest extends CaptainState {
   final bool isParcel;
   final String? parcelType;
   final String? size;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? dropoffLat;
+  final double? dropoffLng;
 
   const IncomingTripRequest({
     required this.tripId,
@@ -76,6 +80,10 @@ class IncomingTripRequest extends CaptainState {
     this.isParcel = false,
     this.parcelType,
     this.size,
+    this.pickupLat,
+    this.pickupLng,
+    this.dropoffLat,
+    this.dropoffLng,
   });
 
   @override
@@ -96,7 +104,11 @@ class IncomingTripRequest extends CaptainState {
           duration == other.duration &&
           timeTag == other.timeTag &&
           isParcel == other.isParcel &&
-          parcelType == other.parcelType;
+          parcelType == other.parcelType &&
+          pickupLat == other.pickupLat &&
+          pickupLng == other.pickupLng &&
+          dropoffLat == other.dropoffLat &&
+          dropoffLng == other.dropoffLng;
 
   @override
   int get hashCode =>

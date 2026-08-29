@@ -12,6 +12,11 @@ Broadcast::channel('captain-location.{captainId}', function ($user, $captainId) 
     return true; 
 });
 
+Broadcast::channel('captain.{captainId}', function ($user, $captainId) {
+    // Only the specific captain can listen to their private targeted trip requests
+    return (int) $user->captainProfile?->id === (int) $captainId;
+});
+
 Broadcast::channel('captains-locations', function ($user) {
     // All authenticated users / admins can listen to general map
     return true;

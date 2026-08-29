@@ -69,11 +69,13 @@ class CaptainRepositoryImpl implements CaptainRepository {
   Future<Either<Failure, void>> respondToTripRequest({
     required String tripId,
     required bool accept,
+    bool isParcel = false,
   }) async {
     try {
       final response = await remoteDataSource.respondToTripRequest(
         tripId: tripId,
         accept: accept,
+        isParcel: isParcel,
       );
 
       if (response.success) {

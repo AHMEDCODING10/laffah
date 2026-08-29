@@ -15,6 +15,8 @@ abstract class RideRemoteDataSource {
     required double expectedPrice,
     List<Map<String, dynamic>>? stops,
     int? promoCodeId,
+    bool isScheduled = false,
+    DateTime? scheduledTime,
   });
 
   Future<Map<String, dynamic>> estimateFare({
@@ -59,6 +61,8 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
     required double expectedPrice,
     List<Map<String, dynamic>>? stops,
     int? promoCodeId,
+    bool isScheduled = false,
+    DateTime? scheduledTime,
   }) async {
     final Map<String, dynamic> payload = {
       'type': rideType == 'delivery' ? 'delivery' : 'ride',
@@ -79,6 +83,11 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
 
     if (promoCodeId != null) {
       payload['promo_code_id'] = promoCodeId;
+    }
+    
+    if (isScheduled && scheduledTime != null) {
+      payload['is_scheduled'] = true;
+      payload['scheduled_time'] = scheduledTime.toIso8601String();
     }
 
     final response = await dioClient.dio.post(

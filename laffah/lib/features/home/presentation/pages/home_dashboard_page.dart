@@ -86,6 +86,8 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         setState(() {
           _pickupLatLng = LatLng(pos.latitude, pos.longitude);
         });
+        // Refresh recent destinations with real distances now that we have location
+        _loadRecentDestinations();
       }
     } catch (_) {
       // Fallback remains Sanaa Center
@@ -134,9 +136,31 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
   Future<void> _loadRecentDestinations() async {
     final recent = await HomeLocalDataSource.getRecentDestinations();
+    // Calculate actual distances from current pickup location
+    final List<Map<String, dynamic>> enriched = [];
+    for (final item in recent) {
+      final lat = (item['lat'] as num?)?.toDouble();
+      final lon = (item['lon'] as num?)?.toDouble();
+      String displayDistance = (item['distance'] as String?) ?? '— كم';
+      if (lat != null && lon != null) {
+        final meters = Geolocator.distanceBetween(
+          _pickupLatLng.latitude,
+          _pickupLatLng.longitude,
+          lat,
+          lon,
+        );
+        final km = meters / 1000;
+        if (km < 1.0) {
+          displayDistance = '${(meters).toStringAsFixed(0)} م';
+        } else {
+          displayDistance = '${km.toStringAsFixed(1)} كم';
+        }
+      }
+      enriched.add({...item, 'distance': displayDistance});
+    }
     if (mounted) {
       setState(() {
-        _recentDestinations = recent;
+        _recentDestinations = enriched;
       });
     }
   }
@@ -179,7 +203,9 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
       // Save it as a recent destination
       await HomeLocalDataSource.saveRecentDestination({
         'title': result['name'],
-        'subtitle': 'وجهة تم البحث عنها',
+        'subtitle': result['address'] ?? 'وجهة تم البحث عنها',
+        'lat': result['lat'],
+        'lon': result['lon'],
         'distance': '0 كم',
       });
       _loadRecentDestinations(); // Refresh
@@ -241,6 +267,24 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                 ),
               ),
               backgroundColor: AppColors.danger,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        } else if (state is RideScheduledSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'تم جدولة المشوار بنجاح سيتم إشعارك عند توفر كابتن',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

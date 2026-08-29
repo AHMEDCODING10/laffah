@@ -50,6 +50,7 @@ class ParcelController extends Controller
             'size'             => 'required|string|max:20',
             'notes'            => 'nullable|string|max:500',
             'price'            => 'nullable|numeric',
+            'distance'         => 'nullable|numeric',
         ]);
 
         $size = mb_strtolower(trim($validated['size']));
@@ -59,12 +60,12 @@ class ParcelController extends Controller
         $dropoffLat = (float) ($validated['dropoff_latitude'] ?? 15.3521);
         $dropoffLng = (float) ($validated['dropoff_longitude'] ?? 44.2014);
 
-        $earthRadius = 6371; // km
-        $dLat = deg2rad($dropoffLat - $pickupLat);
-        $dLon = deg2rad($dropoffLng - $pickupLng);
-        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($pickupLat)) * cos(deg2rad($dropoffLat)) * sin($dLon / 2) * sin($dLon / 2);
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        $distanceKm = max(0.1, $earthRadius * $c);
+        $distanceKm = isset($validated['distance']) && is_numeric($validated['distance'])
+            ? (float) $validated['distance']
+            : max(0.1, 6371 * (2 * atan2(
+                sqrt(sin(deg2rad($dropoffLat - $pickupLat) / 2) ** 2 + cos(deg2rad($pickupLat)) * cos(deg2rad($dropoffLat)) * sin(deg2rad($dropoffLng - $pickupLng) / 2) ** 2),
+                sqrt(1 - (sin(deg2rad($dropoffLat - $pickupLat) / 2) ** 2 + cos(deg2rad($pickupLat)) * cos(deg2rad($dropoffLat)) * sin(deg2rad($dropoffLng - $pickupLng) / 2) ** 2))
+            )));
 
         $base = (float) \Illuminate\Support\Facades\Cache::remember('setting_base_fare', 3600, fn() => \App\Models\Setting::where('key', 'base_fare')->value('value') ?? 500);
         $perKm = (float) \Illuminate\Support\Facades\Cache::remember('setting_price_per_km', 3600, fn() => \App\Models\Setting::where('key', 'price_per_km')->value('value') ?? 150);
@@ -106,15 +107,46 @@ class ParcelController extends Controller
             'tracking_code'    => $trackingCode,
         ]);
 
-        // Broadcast to nearby online captains
+        // Broadcast to nearby online captains (Geographic Targeting)
         try {
             $notificationService = app(NotificationService::class);
-            $onlineCaptains = \App\Models\CaptainProfile::where('is_online', true)
-                ->whereNotNull('user_id')
-                ->with('user')
-                ->get();
+            $nearbyCaptainIds = [];
+            
+            try {
+                // Try Redis Geo-Radius first (15km radius)
+                $redisResults = \Illuminate\Support\Facades\Redis::georadius(
+                    'captains_location', 
+                    $parcel->pickup_longitude, 
+                    $parcel->pickup_latitude, 
+                    15, 
+                    'km'
+                );
+                if (!empty($redisResults)) {
+                    $nearbyCaptainIds = $redisResults;
+                }
+            } catch (\Exception $e) {}
+
+            $query = \App\Models\CaptainProfile::where('is_online', true)->whereNotNull('user_id')->with('user');
+            
+            if (!empty($nearbyCaptainIds)) {
+                $query->whereIn('id', $nearbyCaptainIds);
+            }
+
+            $onlineCaptains = $query->get();
 
             foreach ($onlineCaptains as $captain) {
+                // If Redis failed, do a manual distance check fallback
+                if (empty($nearbyCaptainIds)) {
+                    if ($captain->latitude && $captain->longitude) {
+                        $earthRadius = 6371;
+                        $dLat = deg2rad($parcel->pickup_latitude - $captain->latitude);
+                        $dLon = deg2rad($parcel->pickup_longitude - $captain->longitude);
+                        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($captain->latitude)) * cos(deg2rad($parcel->pickup_latitude)) * sin($dLon/2) * sin($dLon/2);
+                        $dist = $earthRadius * (2 * atan2(sqrt($a), sqrt(1-$a)));
+                        if ($dist > 15) continue;
+                    }
+                }
+
                 if ($captain->user) {
                     $notificationService->sendToUser(
                         $captain->user,
@@ -133,7 +165,9 @@ class ParcelController extends Controller
                     );
                 }
             }
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to broadcast parcel: " . $e->getMessage());
+        }
 
         return response()->json([
             'status'  => 'success',
@@ -186,12 +220,49 @@ class ParcelController extends Controller
             return response()->json(['status' => 'error', 'message' => 'الحساب ليس مسجلاً ككابتن.'], 403);
         }
 
-        $parcels = Parcel::where('status', 'pending')
-            ->whereNull('captain_profile_id')
-            ->with('user')
-            ->latest()
-            ->take(15)
-            ->get();
+        // Use DB transaction to prevent race conditions
+        $parcels = DB::transaction(function () {
+            // 1. Auto-expire pending parcels older than 3 minutes
+            $expiredParcels = Parcel::where('status', 'pending')
+                ->whereNull('captain_profile_id')
+                ->where('created_at', '<', now()->subMinutes(3))
+                ->get();
+            
+            if ($expiredParcels->isNotEmpty()) {
+                Parcel::whereIn('id', $expiredParcels->pluck('id'))
+                    ->update([
+                        'status' => 'cancelled',
+                        'notes' => 'انتهت مهلة انتظار الكابتن (3 دقائق)',
+                    ]);
+            }
+
+            // 2. Query only fresh, pending, unassigned parcels
+            return Parcel::where('status', 'pending')
+                ->whereNull('captain_profile_id')
+                ->where('created_at', '>=', now()->subMinutes(3))
+                ->with('user')
+                ->latest()
+                ->take(30) // Get more since we will filter in PHP
+                ->get();
+        });
+
+        // 3. Filter by distance (15km radius)
+        $lat = $request->input('lat') ?? $request->input('latitude') ?? $captainProfile->latitude;
+        $lng = $request->input('lng') ?? $request->input('longitude') ?? $captainProfile->longitude;
+
+        if ($lat && $lng) {
+            $parcels = $parcels->filter(function ($parcel) use ($lat, $lng) {
+                if (!$parcel->pickup_latitude || !$parcel->pickup_longitude) return true;
+                
+                $earthRadius = 6371;
+                $dLat = deg2rad($parcel->pickup_latitude - $lat);
+                $dLon = deg2rad($parcel->pickup_longitude - $lng);
+                $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat)) * cos(deg2rad($parcel->pickup_latitude)) * sin($dLon/2) * sin($dLon/2);
+                $dist = $earthRadius * (2 * atan2(sqrt($a), sqrt(1-$a)));
+                
+                return $dist <= 15.0; 
+            })->values();
+        }
 
         return response()->json([
             'status' => 'success',
@@ -244,7 +315,7 @@ class ParcelController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'الطرد غير موجود.'], 404);
             }
 
-            if ($parcel->status !== 'pending' && $parcel->captain_profile_id && $parcel->captain_profile_id !== $captainProfile->id) {
+            if ($parcel->status !== 'pending') {
                 return response()->json(['status' => 'error', 'message' => 'تم قبول هذا الطرد مسبقاً من كابتن آخر.'], 409);
             }
 
@@ -253,6 +324,10 @@ class ParcelController extends Controller
                 'status'             => 'accepted',
                 'accepted_at'        => now(),
             ]);
+
+            try {
+                event(new \App\Events\ParcelStatusUpdated($parcel));
+            } catch (\Exception $e) {}
 
             // Notify parcel owner
             if ($parcel->user) {
@@ -335,8 +410,9 @@ class ParcelController extends Controller
             } elseif ($status === 'delivered') {
                 $updates['delivered_at'] = now();
 
-                // Deduct 15% platform commission from captain wallet
-                $commission = round($parcel->price * 0.15, 2);
+                // Deduct platform commission from captain wallet (read from settings)
+                $commissionPercent = (float) \Illuminate\Support\Facades\Cache::remember('setting_commission_percent', 3600, fn() => \App\Models\Setting::where('key', 'commission_percent')->value('value') ?? 15);
+                $commission = round($parcel->price * ($commissionPercent / 100), 2);
                 $wallet = Wallet::firstOrCreate(['user_id' => $captainProfile->user_id], ['balance' => 0, 'currency' => 'YER']);
                 $wallet->balance -= $commission;
                 $wallet->save();
@@ -350,6 +426,10 @@ class ParcelController extends Controller
             }
 
             $parcel->update($updates);
+
+            try {
+                event(new \App\Events\ParcelStatusUpdated($parcel));
+            } catch (\Exception $e) {}
 
             // Notify parcel owner of status transition
             if ($parcel->user) {

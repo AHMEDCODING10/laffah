@@ -7,6 +7,7 @@ import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/router/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/glass_box.dart';
+import '../../../../../core/services/echo_service.dart';
 import '../../../domain/entities/parcel_entity.dart';
 
 /// SearchingParcelCaptainOverlay — Modal/Overlay displayed when passenger requests parcel delivery.
@@ -57,9 +58,31 @@ class _SearchingParcelCaptainOverlayState
   }
 
   void _startStatusPolling() {
-    _statusPollingTimer?.cancel();
+    final identifier = widget.parcel.id.isNotEmpty
+        ? widget.parcel.id
+        : (widget.parcel.trackingCode ?? '');
+        
+    if (identifier.isEmpty) return;
+
+    // Use WebSocket for instant real-time updates
+    EchoService().listenToTripStatus(identifier, (data) {
+      if (_isNavigating || !mounted) return;
+      
+      final status = (data['status'] ?? '').toString();
+      if (status == 'accepted' || status == 'picked_up' || status == 'in_transit' || status == 'delivered') {
+        _isNavigating = true;
+        _statusPollingTimer?.cancel();
+        HapticFeedback.heavyImpact();
+
+        if (mounted) {
+           _navigateToTracking(data);
+        }
+      }
+    });
+
+    // Gentle fallback fetch (just once after 10 seconds)
     _statusPollingTimer =
-        Timer.periodic(const Duration(milliseconds: 3500), (_) async {
+        Timer(const Duration(seconds: 10), () async {
       if (_isNavigating || !mounted) return;
 
       try {
@@ -84,8 +107,17 @@ class _SearchingParcelCaptainOverlayState
             HapticFeedback.heavyImpact();
 
             if (mounted) {
-              final captainData = data['captain'] ?? {};
-              final captainUser = captainData is Map ? (captainData['user'] ?? {}) : {};
+               _navigateToTracking(data);
+            }
+          }
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _navigateToTracking(Map<String, dynamic> data) {
+    final captainData = data['captain'] ?? {};
+    final captainUser = captainData is Map ? (captainData['user'] ?? {}) : {};
 
               final updatedParcel = ParcelEntity(
                 id: (data['id'] ?? widget.parcel.id).toString(),
@@ -119,20 +151,14 @@ class _SearchingParcelCaptainOverlayState
                     (data['parcel_type'] ?? widget.parcel.parcelType).toString(),
                 size: (data['size'] ?? widget.parcel.size).toString(),
                 notes: (data['notes'] ?? widget.parcel.notes)?.toString() ?? '',
-                status: status,
-                price: (data['price'] as num?)?.toDouble() ?? widget.parcel.price,
-                captainName: captainUser is Map ? captainUser['name']?.toString() : null,
-                captainPhone: captainUser is Map ? captainUser['phone']?.toString() : null,
-              );
+                status: (data['status'] ?? '').toString(),
+            price: (data['price'] as num?)?.toDouble() ?? widget.parcel.price,
+            captainName: captainUser is Map ? captainUser['name']?.toString() : (data['captain_name']?.toString()),
+            captainPhone: captainUser is Map ? captainUser['phone']?.toString() : (data['captain_phone']?.toString()),
+          );
 
-              Navigator.of(context, rootNavigator: true).pop();
-              context.pushReplacement(LaffahRoutes.passengerParcelTracking,
-                  extra: updatedParcel);
-            }
-          }
-        }
-      } catch (_) {}
-    });
+          Navigator.of(context, rootNavigator: true).pop();
+          context.pushReplacement(LaffahRoutes.passengerParcelTracking, extra: updatedParcel);
   }
 
   @override

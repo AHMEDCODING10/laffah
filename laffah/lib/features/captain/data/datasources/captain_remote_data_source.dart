@@ -24,6 +24,7 @@ abstract class CaptainRemoteDataSource {
   Future<BaseResponseModel<void>> respondToTripRequest({
     required String tripId,
     required bool accept,
+    bool isParcel = false,
   });
 
   Future<BaseResponseModel<void>> updateTripStatus({
@@ -85,10 +86,16 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
   Future<BaseResponseModel<void>> respondToTripRequest({
     required String tripId,
     required bool accept,
+    bool isParcel = false,
   }) async {
-    final endpoint = accept
-        ? ApiEndpoints.respondToTrip(tripId)
-        : '/trips/$tripId/reject';
+    final String endpoint;
+    if (isParcel) {
+      endpoint = accept ? '/parcel/$tripId/accept' : '/parcel/$tripId/reject';
+    } else {
+      endpoint = accept
+          ? ApiEndpoints.respondToTrip(tripId)
+          : '/trips/$tripId/reject';
+    }
     final response = await dioClient.dio.post(
       endpoint,
       data: {

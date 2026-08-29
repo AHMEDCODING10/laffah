@@ -19,6 +19,8 @@ class RequestRideUseCase {
     required double expectedPrice,
     List<Map<String, dynamic>>? stops,
     int? promoCodeId,
+    bool isScheduled = false,
+    DateTime? scheduledTime,
   }) async {
     if (pickupLocation.isEmpty || dropoffLocation.isEmpty) {
       return const Left(ValidationFailure('يرجى تحديد نقطة الانطلاق والوصول'));
@@ -34,6 +36,8 @@ class RequestRideUseCase {
       expectedPrice: expectedPrice,
       stops: stops,
       promoCodeId: promoCodeId,
+      isScheduled: isScheduled,
+      scheduledTime: scheduledTime,
     );
   }
 }

@@ -52,31 +52,31 @@ Route::middleware('auth:api')->group(function () {
 
     // Captain Specific Endpoints
     Route::prefix('captain')->group(function () {
-        Route::post('update-location',  [CaptainController::class, 'updateLocation']);
+        Route::post('update-location',  [CaptainController::class, 'updateLocation'])->middleware('throttle:120,1');
         Route::post('toggle-online',    [CaptainController::class, 'toggleOnlineStatus']);
         Route::post('documents',        [CaptainController::class, 'uploadDocuments']);
         Route::get('bonus',             [CaptainController::class, 'getBonus']);
         Route::get('notifications',     [NotificationController::class, 'index']);
-        Route::get('requests/nearby',   [TripController::class, 'nearbyRequests']);
+        Route::get('requests/nearby',   [TripController::class, 'nearbyRequests'])->middleware('throttle:60,1');
     });
 
     // Parcels Delivery
     Route::prefix('parcel')->group(function () {
-        Route::post('request',          [ParcelController::class, 'requestParcel']);
+        Route::post('request',          [ParcelController::class, 'requestParcel'])->middleware('throttle:10,1');
         Route::get('history',           [ParcelController::class, 'myParcels']);
-        Route::get('requests/nearby',   [ParcelController::class, 'nearbyRequests']);
+        Route::get('requests/nearby',   [ParcelController::class, 'nearbyRequests'])->middleware('throttle:60,1');
         Route::get('{id}/track',        [ParcelController::class, 'trackParcel']);
-        Route::post('{id}/accept',      [ParcelController::class, 'acceptParcel']);
+        Route::post('{id}/accept',      [ParcelController::class, 'acceptParcel'])->middleware('throttle:30,1');
         Route::post('{id}/status',      [ParcelController::class, 'updateStatus']);
     });
 
     // Trips & Rides
     Route::prefix('trips')->group(function () {
-        Route::post('estimate',    [TripController::class, 'estimate']);
-        Route::post('create',      [TripController::class, 'create']);
+        Route::post('estimate',    [TripController::class, 'estimate'])->middleware('throttle:30,1');
+        Route::post('create',      [TripController::class, 'create'])->middleware('throttle:10,1');
         Route::get('history',      [TripController::class, 'history']);
         Route::get('{id}',         [TripController::class, 'show']);
-        Route::post('{id}/accept', [TripController::class, 'accept']);
+        Route::post('{id}/accept', [TripController::class, 'accept'])->middleware('throttle:30,1');
         Route::post('{id}/reject', [TripController::class, 'reject']);
         Route::post('{id}/status', [TripController::class, 'updateStatus']);
         Route::post('{id}/cancel', [TripController::class, 'cancel']);

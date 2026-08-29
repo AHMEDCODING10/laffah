@@ -195,7 +195,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           ).then((_) {
             // Keep captain ONLINE when returning to Home so they can receive new requests immediately!
             if (context.mounted) {
-              context.read<CaptainBloc>().add(const ToggleOnlineStatus(true));
+              context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: true));
               widget.onOnlineChanged(true);
             }
           });

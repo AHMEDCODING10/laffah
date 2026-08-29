@@ -10,10 +10,12 @@ class RespondToTripUseCase {
   Future<Either<Failure, void>> call({
     required String tripId,
     required bool accept,
+    bool isParcel = false,
   }) async {
     return await repository.respondToTripRequest(
       tripId: tripId,
       accept: accept,
+      isParcel: isParcel,
     );
   }
 }
