@@ -157,7 +157,6 @@ class CaptainController extends Controller
                     [
                         'latitude'   => (float) $lat,
                         'longitude'  => (float) $lng,
-                        'is_online'  => $isOnline,
                         'updated_at' => now(),
                     ]
                 );
@@ -167,8 +166,7 @@ class CaptainController extends Controller
             try {
                 \Illuminate\Support\Facades\Redis::zrem('captains_location', $captainProfile->id);
             } catch (\Exception $e) {
-                CaptainLocation::where('captain_profile_id', $captainProfile->id)
-                    ->update(['is_online' => false, 'updated_at' => now()]);
+                // Just catch the exception, we don't have is_online in captain_locations
             }
         }
 
