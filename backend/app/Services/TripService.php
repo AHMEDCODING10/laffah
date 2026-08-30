@@ -121,40 +121,8 @@ class TripService
                 return $trip;
             }
 
-            // Dispatch Smart Queue using Geo-Redis
-            try {
-                // Find captains within 10 km
-                $nearbyCaptainIds = \Illuminate\Support\Facades\Redis::georadius(
-                    'captains_location', 
-                    $data['pickup_longitude'], 
-                    $data['pickup_latitude'], 
-                    10, 
-                    'km', 
-                    ['WITHDIST', 'ASC']
-                );
-
-                if (!empty($nearbyCaptainIds)) {
-                    // Extract just the IDs (georadius returns [["id", "distance"], ...])
-                    $captainIdsOnly = array_map(function($item) {
-                        return $item[0];
-                    }, $nearbyCaptainIds);
-
-                    // Push to Redis List (Queue)
-                    \Illuminate\Support\Facades\Redis::rpush("trip_queue:{$trip->id}", ...$captainIdsOnly);
-                    // Expire the queue after 15 minutes to prevent memory leaks
-                    \Illuminate\Support\Facades\Redis::expire("trip_queue:{$trip->id}", 900);
-
-                    // Start the sequential dispatch job
-                    \App\Jobs\DispatchTripToNextCaptainJob::dispatch($trip->id);
-                } else {
-                    // Fallback to old broadcast if Redis is empty (maybe offline or no redis)
-                    $this->notifyNearbyCaptains($trip);
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Geo-Redis routing failed, falling back to old broadcast: " . $e->getMessage());
-                // Fallback if Redis fails
-                $this->notifyNearbyCaptains($trip);
-            }
+            // Notify all online captains about the new trip
+            $this->notifyNearbyCaptains($trip);
 
             return $trip;
         });
@@ -187,16 +155,7 @@ class TripService
                 throw new Exception("عذراً، تم قبول هذا المشوار بالفعل من قبل كابتن آخر.", 409);
             }
 
-            // Verify Smart Queue authorization
-            try {
-                $offeredCaptainId = \Illuminate\Support\Facades\Redis::get("trip_offer:{$tripId}");
-                if ($offeredCaptainId !== null && (int)$offeredCaptainId !== (int)$captainProfileId) {
-                    throw new Exception("عذراً، هذا المشوار معروض حالياً لكابتن آخر. يرجى الانتظار.", 403);
-                }
-            } catch (\Exception $e) {
-                // Ignore Redis errors or explicitly thrown Exceptions from above
-                if ($e->getCode() === 403) throw $e;
-            }
+
 
             $trip->update([
                 'captain_profile_id' => $captainProfileId,

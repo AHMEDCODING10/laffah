@@ -21,9 +21,9 @@ class RideModel extends RideEntity {
 
   factory RideModel.fromJson(Map<String, dynamic> json) {
     final double parsedPrice = (json['price'] != null)
-        ? (json['price'] as num).toDouble()
+        ? double.tryParse(json['price'].toString()) ?? 0.0
         : (json['estimated_price'] != null)
-            ? (json['estimated_price'] as num).toDouble()
+            ? double.tryParse(json['estimated_price'].toString()) ?? 0.0
             : 0.0;
 
     final String pickup = (json['pickup_address'] ?? json['pickup_location'] ?? json['pickup'] ?? '').toString();
@@ -51,14 +51,14 @@ class RideModel extends RideEntity {
       price: parsedPrice,
       pickupLocation: pickup,
       dropoffLocation: dropoff,
-      pickupLatitude: (json['pickup_latitude'] as num?)?.toDouble(),
-      pickupLongitude: (json['pickup_longitude'] as num?)?.toDouble(),
-      dropoffLatitude: (json['dropoff_latitude'] as num?)?.toDouble(),
-      dropoffLongitude: (json['dropoff_longitude'] as num?)?.toDouble(),
-      distanceKm: (json['distance_km'] as num?)?.toDouble(),
+      pickupLatitude: json['pickup_latitude'] != null ? double.tryParse(json['pickup_latitude'].toString()) : null,
+      pickupLongitude: json['pickup_longitude'] != null ? double.tryParse(json['pickup_longitude'].toString()) : null,
+      dropoffLatitude: json['dropoff_latitude'] != null ? double.tryParse(json['dropoff_latitude'].toString()) : null,
+      dropoffLongitude: json['dropoff_longitude'] != null ? double.tryParse(json['dropoff_longitude'].toString()) : null,
+      distanceKm: json['distance_km'] != null ? double.tryParse(json['distance_km'].toString()) : null,
       captainName: captainName,
       captainPhone: captainPhone,
-      rating: (json['rating'] as num?)?.toDouble(),
+      rating: json['rating'] != null ? double.tryParse(json['rating'].toString()) : null,
       vehicleModel: vehicleModel,
       vehiclePlate: vehiclePlate,
     );

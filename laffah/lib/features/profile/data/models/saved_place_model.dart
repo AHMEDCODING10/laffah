@@ -12,11 +12,11 @@ class SavedPlaceModel extends SavedPlaceEntity {
 
   factory SavedPlaceModel.fromJson(Map<String, dynamic> json) {
     return SavedPlaceModel(
-      id: json['id'].toString(),
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       address: json['address'] ?? '',
-      lat: (json['lat'] ?? 0).toDouble(),
-      lng: (json['lng'] ?? 0).toDouble(),
+      lat: json['lat'] != null ? double.tryParse(json['lat'].toString()) ?? 0.0 : 0.0,
+      lng: json['lng'] != null ? double.tryParse(json['lng'].toString()) ?? 0.0 : 0.0,
       type: json['type'] ?? 'custom',
     );
   }

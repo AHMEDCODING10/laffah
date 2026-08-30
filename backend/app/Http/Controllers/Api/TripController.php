@@ -422,16 +422,6 @@ class TripController extends Controller
         $captainProfileId = $request->user()->captainProfile?->id;
 
         $trips = $trips->filter(function ($trip) use ($lat, $lng, $captainProfileId) {
-            // Check Smart Queue Offer Lock
-            try {
-                $offeredCaptainId = \Illuminate\Support\Facades\Redis::get("trip_offer:{$trip->id}");
-                if ($offeredCaptainId !== null && (int)$offeredCaptainId !== (int)$captainProfileId) {
-                    return false; // Offered to someone else
-                }
-            } catch (\Exception $e) {
-                // Redis is down, fallback to legacy behavior
-            }
-
             if (!$trip->pickup_latitude || !$trip->pickup_longitude) return true;
             $dist = $this->calculateDistance((float)$lat, (float)$lng, (float)$trip->pickup_latitude, (float)$trip->pickup_longitude);
             return $dist <= 30.0; // within 30km radius

@@ -51,33 +51,9 @@ class DispatchScheduledTripsCommand extends Command
             $trip->update(['status' => 'pending']);
 
             try {
-                // Find captains within 10 km
-                $nearbyCaptainIds = Redis::georadius(
-                    'captains_location', 
-                    $trip->pickup_longitude, 
-                    $trip->pickup_latitude, 
-                    15, 
-                    'km', 
-                    ['WITHDIST', 'ASC']
-                );
-
-                if (!empty($nearbyCaptainIds)) {
-                    $captainIdsOnly = array_map(function($item) {
-                        return $item[0];
-                    }, $nearbyCaptainIds);
-
-                    // Push to Redis List (Queue)
-                    Redis::rpush("trip_queue:{$trip->id}", ...$captainIdsOnly);
-                    Redis::expire("trip_queue:{$trip->id}", 900); // 15 mins expiry
-
-                    // Start the sequential dispatch job
-                    \App\Jobs\DispatchTripToNextCaptainJob::dispatch($trip->id);
-                } else {
-                    \App\Jobs\NotifyNearbyCaptainsJob::dispatch($trip);
-                }
-            } catch (\Exception $e) {
-                Log::error("Failed to geo-dispatch scheduled trip {$trip->id}: " . $e->getMessage());
                 \App\Jobs\NotifyNearbyCaptainsJob::dispatch($trip);
+            } catch (\Exception $e) {
+                Log::error("Failed to dispatch scheduled trip {$trip->id}: " . $e->getMessage());
             }
         }
         

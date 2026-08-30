@@ -107,44 +107,22 @@ class ParcelController extends Controller
             'tracking_code'    => $trackingCode,
         ]);
 
-        // Broadcast to nearby online captains (Geographic Targeting)
+        // Broadcast to nearby online captains
         try {
             $notificationService = app(NotificationService::class);
-            $nearbyCaptainIds = [];
-            
-            try {
-                // Try Redis Geo-Radius first (15km radius)
-                $redisResults = \Illuminate\Support\Facades\Redis::georadius(
-                    'captains_location', 
-                    $parcel->pickup_longitude, 
-                    $parcel->pickup_latitude, 
-                    15, 
-                    'km'
-                );
-                if (!empty($redisResults)) {
-                    $nearbyCaptainIds = $redisResults;
-                }
-            } catch (\Exception $e) {}
 
-            $query = \App\Models\CaptainProfile::where('is_online', true)->whereNotNull('user_id')->with('user');
-            
-            if (!empty($nearbyCaptainIds)) {
-                $query->whereIn('id', $nearbyCaptainIds);
-            }
-
-            $onlineCaptains = $query->get();
+            $onlineCaptains = \App\Models\CaptainProfile::where('is_online', true)->whereNotNull('user_id')->with('user')->get();
 
             foreach ($onlineCaptains as $captain) {
                 // If Redis failed, do a manual distance check fallback
-                if (empty($nearbyCaptainIds)) {
-                    if ($captain->latitude && $captain->longitude) {
-                        $earthRadius = 6371;
-                        $dLat = deg2rad($parcel->pickup_latitude - $captain->latitude);
-                        $dLon = deg2rad($parcel->pickup_longitude - $captain->longitude);
-                        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($captain->latitude)) * cos(deg2rad($parcel->pickup_latitude)) * sin($dLon/2) * sin($dLon/2);
-                        $dist = $earthRadius * (2 * atan2(sqrt($a), sqrt(1-$a)));
-                        if ($dist > 15) continue;
-                    }
+                // Distance check — only notify captains within 15km
+                if ($captain->latitude && $captain->longitude) {
+                    $earthRadius = 6371;
+                    $dLat = deg2rad($parcel->pickup_latitude - $captain->latitude);
+                    $dLon = deg2rad($parcel->pickup_longitude - $captain->longitude);
+                    $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($captain->latitude)) * cos(deg2rad($parcel->pickup_latitude)) * sin($dLon/2) * sin($dLon/2);
+                    $dist = $earthRadius * (2 * atan2(sqrt($a), sqrt(1-$a)));
+                    if ($dist > 15) continue;
                 }
 
                 if ($captain->user) {

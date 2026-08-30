@@ -80,7 +80,7 @@ class RetryInterceptor extends Interceptor {
 
     // Retry on temporary server errors (502, 503, 504)
     final statusCode = err.response?.statusCode;
-    if (statusCode != null && statusCode >= 500 && statusCode <= 504) {
+    if (statusCode != null && statusCode >= 502 && statusCode <= 504) {
       return true;
     }
 

@@ -38,8 +38,11 @@ class CaptainRepositoryImpl implements CaptainRepository {
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (e) {
+      if (e.error != null) {
+        return Left(ServerFailure(e.error.toString()));
+      }
       return Left(ServerFailure(
-          'تعذر تحديث الحالة. يرجى التحقق من اتصالك بالإنترنت. $e'));
+          e.response?.data?['message']?.toString() ?? 'تعذر تحديث الحالة. يرجى التحقق من اتصالك بالإنترنت.'));
     } catch (e) {
       return Left(ServerFailure('حدث خطأ غير متوقع: $e'));
     }
