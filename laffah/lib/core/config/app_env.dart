@@ -29,4 +29,7 @@ class AppEnv {
 
   /// LocationIQ Reverse Geocoding Key
   static String get locationIqKey => dotenv.env['LOCATION_IQ_KEY'] ?? '';
+
+  /// Use Reverb instead of Pusher Cloud?
+  static bool get useReverb => dotenv.env['USE_REVERB'] == 'true';
 }

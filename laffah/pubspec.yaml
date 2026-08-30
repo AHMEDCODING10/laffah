@@ -24,7 +24,7 @@ dependencies:
   freezed_annotation: ^2.4.4
   dio: ^5.4.0
   dartz: ^0.10.1
-  flutter_secure_storage: ^9.0.0
+  flutter_secure_storage: ^10.0.0
   get_it: ^7.6.4
   connectivity_plus: ^7.3.1
   cached_network_image: ^3.4.1
@@ -32,7 +32,7 @@ dependencies:
   geolocator: ^13.0.0
   web_socket_channel: ^3.0.1
   flutter_dotenv: ^6.0.1
-  pusher_channels_flutter: ^2.4.0
+  pusher_channels_flutter: ^2.6.0
   laravel_echo: ^1.0.0-beta.1
   flutter_map: ^8.3.1
   flutter_map_cancellable_tile_provider: ^3.1.1
