@@ -67,11 +67,9 @@ class ParcelController extends Controller
                 sqrt(1 - (sin(deg2rad($dropoffLat - $pickupLat) / 2) ** 2 + cos(deg2rad($pickupLat)) * cos(deg2rad($dropoffLat)) * sin(deg2rad($dropoffLng - $pickupLng) / 2) ** 2))
             )));
 
-        $base = (float) \Illuminate\Support\Facades\Cache::remember('setting_base_fare', 3600, fn() => \App\Models\Setting::where('key', 'base_fare')->value('value') ?? 500);
         $perKm = (float) \Illuminate\Support\Facades\Cache::remember('setting_price_per_km', 3600, fn() => \App\Models\Setting::where('key', 'price_per_km')->value('value') ?? 150);
-        $minFare = (float) \Illuminate\Support\Facades\Cache::remember('setting_min_fare', 3600, fn() => \App\Models\Setting::where('key', 'min_fare')->value('value') ?? 800);
 
-        $rawPrice = $base + ($distanceKm * $perKm);
+        $rawPrice = $distanceKm * $perKm;
         
         $multiplier = 1.02; // Small 2%
         if (in_array($size, ['medium', 'متوسط'])) {
@@ -80,7 +78,7 @@ class ParcelController extends Controller
             $multiplier = 1.04; // Large 4%
         }
 
-        $basePrice = (int) ceil(max($rawPrice, $minFare) * $multiplier);
+        $basePrice = (int) ceil($rawPrice * $multiplier);
 
         $finalPrice = isset($validated['price']) && $validated['price'] > 0
             ? (float) $validated['price']

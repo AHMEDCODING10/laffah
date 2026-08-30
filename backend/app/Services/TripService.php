@@ -44,22 +44,12 @@ class TripService
         $stopsCount = isset($data['stops']) && is_array($data['stops']) ? count($data['stops']) : 0;
 
         // --- All pricing pulled exclusively from the settings cache ---
-        $base = (float) Cache::remember('setting_base_fare', self::PRICING_CACHE_TTL,
-            fn() => Setting::where('key', 'base_fare')->value('value') ?? 500);
-
         $perKm = (float) Cache::remember('setting_price_per_km', self::PRICING_CACHE_TTL,
             fn() => Setting::where('key', 'price_per_km')->value('value') ?? 150);
 
-        $minFare = (float) Cache::remember('setting_min_fare', self::PRICING_CACHE_TTL,
-            fn() => Setting::where('key', 'min_fare')->value('value') ?? 800);
-
-        $multiStopFee = (float) Cache::remember('setting_multi_stop_fee', self::PRICING_CACHE_TTL,
-            fn() => Setting::where('key', 'multi_stop_fee')->value('value') ?? 300);
-
-        $rawPrice = $base + ($distanceKm * $perKm) + ($stopsCount * $multiStopFee);
-
-        // Apply minimum fare floor and round UP to nearest YER integer
-        $estimatedPrice = (int) ceil(max($rawPrice, $minFare));
+        // Calculate clean price purely based on exact distance (including decimals/meters) and rate per km
+        $rawPrice = $distanceKm * $perKm;
+        $estimatedPrice = (int) ceil($rawPrice);
 
         return [
             'distance_km'     => round($distanceKm, 2),
@@ -67,10 +57,10 @@ class TripService
             'currency'        => 'YER',
             // Applied rates returned for client-side display/debug
             'applied_rates'   => [
-                'base_fare'      => $base,
+                'base_fare'      => 0.0,
                 'per_km_rate'    => $perKm,
-                'min_fare'       => $minFare,
-                'multi_stop_fee' => $multiStopFee,
+                'min_fare'       => 0.0,
+                'multi_stop_fee' => 0.0,
                 'stops_count'    => $stopsCount,
             ],
         ];
@@ -271,14 +261,10 @@ class TripService
                 $updates['completed_at'] = now();
 
                 // Calculate final price strictly based on exact DB settings and distance
-                $base = (float) Cache::remember('setting_base_fare', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'base_fare')->value('value') ?? 500);
                 $perKm = (float) Cache::remember('setting_price_per_km', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'price_per_km')->value('value') ?? 150);
-                $minFare = (float) Cache::remember('setting_min_fare', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'min_fare')->value('value') ?? 800);
-                $multiStopFee = (float) Cache::remember('setting_multi_stop_fee', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'multi_stop_fee')->value('value') ?? 300);
 
-                $stopsCount = $trip->is_multi_stop ? 1 : 0; // Or better if you have stops count
-                $rawPrice = $base + ($trip->distance_km * $perKm) + ($stopsCount * $multiStopFee);
-                $finalPrice = (int) ceil(max($rawPrice, $minFare));
+                $rawPrice = $trip->distance_km * $perKm;
+                $finalPrice = (int) ceil($rawPrice);
 
                 // Apply promo code discount if any
                 if ($trip->promoCode) {
