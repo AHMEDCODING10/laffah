@@ -204,6 +204,10 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
               backgroundColor: Colors.transparent,
               builder: (ctx) => SearchingParcelCaptainOverlay(
                 parcel: state.parcel,
+                onAccepted: (updatedParcel) {
+                  Navigator.of(ctx, rootNavigator: true).pop();
+                  context.pushReplacement(LaffahRoutes.passengerParcelTracking, extra: updatedParcel);
+                },
                 onCancel: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

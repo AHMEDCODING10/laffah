@@ -45,7 +45,7 @@ class NotificationService
         $this->storeNotification($user, $title, $body, $data['type'] ?? 'general', $data);
 
         // Dispatch FCM push to the queue (NON-BLOCKING)
-        dispatch(new SendPushNotification($user, $title, $body, $data));
+        dispatch(new SendPushNotification($user, $title, $body, $data))->afterResponse();
 
         return true;
     }

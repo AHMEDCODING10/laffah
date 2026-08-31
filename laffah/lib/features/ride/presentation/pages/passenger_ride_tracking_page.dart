@@ -287,10 +287,20 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                 child: BlocBuilder<RideBloc, RideState>(
                   builder: (context, state) {
                     bool isCaptainArrived = state is RideInProgress;
+                    bool isTripStarted = false;
+
                     if (state is RideBookingConfirmed) {
                       final s = state.status.toLowerCase();
                       if (s == 'arrived' || s == 'in_transit' || s == 'started') {
                         isCaptainArrived = true;
+                      }
+                      if (s == 'in_transit' || s == 'started') {
+                        isTripStarted = true;
+                      }
+                    } else if (state is RideInProgress) {
+                      final eta = state.etaToDestination;
+                      if (eta.contains('الطريق') && eta.contains('الوجهة')) {
+                        isTripStarted = true;
                       }
                     }
                     String captainName = 'جاري البحث...';
@@ -324,9 +334,11 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                isCaptainArrived
-                                    ? Icons.directions_car_rounded
-                                    : Icons.radar_rounded,
+                                isTripStarted
+                                    ? Icons.navigation_rounded
+                                    : (isCaptainArrived
+                                        ? Icons.directions_car_rounded
+                                        : Icons.radar_rounded),
                                 color: isCaptainArrived
                                     ? AppColors.success
                                     : AppColors.primary500,
@@ -339,9 +351,11 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    isCaptainArrived
-                                        ? 'الكابتن وصل إلى موقعك!'
-                                        : 'الكابتن في الطريق إليك...',
+                                    isTripStarted
+                                        ? 'الرحلة جارية...'
+                                        : (isCaptainArrived
+                                            ? 'الكابتن وصل إلى موقعك!'
+                                            : 'الكابتن في الطريق إليك...'),
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
@@ -353,9 +367,11 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                     ),
                                   ),
                                   Text(
-                                    isCaptainArrived
-                                        ? 'يرجى التوجه للمركبة'
-                                        : 'يصل خلال دقائق',
+                                    isTripStarted
+                                        ? 'في الطريق إلى الوجهة'
+                                        : (isCaptainArrived
+                                            ? 'يرجى التوجه للمركبة'
+                                            : 'يصل خلال دقائق'),
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',

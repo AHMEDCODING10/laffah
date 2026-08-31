@@ -15,11 +15,13 @@ import '../../../domain/entities/parcel_entity.dart';
 class SearchingParcelCaptainOverlay extends StatefulWidget {
   final ParcelEntity parcel;
   final VoidCallback onCancel;
+  final Function(ParcelEntity) onAccepted;
 
   const SearchingParcelCaptainOverlay({
     super.key,
     required this.parcel,
     required this.onCancel,
+    required this.onAccepted,
   });
 
   @override
@@ -157,8 +159,7 @@ class _SearchingParcelCaptainOverlayState
             captainPhone: captainUser is Map ? captainUser['phone']?.toString() : (data['captain_phone']?.toString()),
           );
 
-          Navigator.of(context, rootNavigator: true).pop();
-          context.pushReplacement(LaffahRoutes.passengerParcelTracking, extra: updatedParcel);
+          widget.onAccepted(updatedParcel);
   }
 
   @override
