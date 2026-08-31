@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/injection_container.dart';
@@ -84,12 +85,30 @@ class _CaptainParcelNavigationPageState
   }
 
   Future<void> _initLiveNavigationRoute() async {
+    LatLng startPoint;
+    LatLng endPoint;
+    
+    if (_currentStep == 0 || _currentStep == 1) {
+       // Route: Captain to Pickup
+       double lat = widget.pickupLat; 
+       double lng = widget.pickupLng;
+       try {
+         final pos = await Geolocator.getCurrentPosition(
+               locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+         lat = pos.latitude;
+         lng = pos.longitude;
+       } catch (_) {}
+       startPoint = LatLng(lat, lng);
+       endPoint = LatLng(widget.pickupLat, widget.pickupLng);
+    } else {
+       // Route: Pickup to Dropoff
+       startPoint = LatLng(widget.pickupLat, widget.pickupLng);
+       endPoint = LatLng(widget.dropoffLat, widget.dropoffLng);
+    }
+
     // Retry up to 3 times with exponential backoff
     for (int attempt = 1; attempt <= 3; attempt++) {
-      final route = await _routingService.getRoute(
-        LatLng(widget.pickupLat, widget.pickupLng),
-        LatLng(widget.dropoffLat, widget.dropoffLng),
-      );
+      final route = await _routingService.getRoute(startPoint, endPoint);
       if (route != null && mounted) {
         setState(() {
           _routePoints = route.points;
@@ -105,10 +124,7 @@ class _CaptainParcelNavigationPageState
     // Fallback: straight-line polyline so map always shows something
     if (mounted && _routePoints.isEmpty) {
       setState(() {
-        _routePoints = [
-          LatLng(widget.pickupLat, widget.pickupLng),
-          LatLng(widget.dropoffLat, widget.dropoffLng),
-        ];
+        _routePoints = [startPoint, endPoint];
       });
     }
   }
@@ -247,6 +263,7 @@ class _CaptainParcelNavigationPageState
       await _updateParcelStatusOnServer('picked_up');
       if (!mounted) return;
       setState(() => _currentStep = 2);
+      _initLiveNavigationRoute();
       messenger.showSnackBar(
         const SnackBar(
           backgroundColor: AppColors.warning,

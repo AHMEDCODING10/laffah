@@ -133,6 +133,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           emit(const CaptainOnline());
           _startLocationTracking(cid);
           _pollNearbyRequests();
+          _startSmartPolling();
 
           // Connect to real Pusher WebSocket to receive live trip requests
           pusherService.connect(
@@ -197,17 +198,23 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           },
         );
       }
-      // Removed _startSmartPolling() DDOS
       _pollNearbyRequests(); // Do one initial fetch just in case
+      _startSmartPolling();
     } else {
-      // Removed _stopSmartPolling()
+      _stopSmartPolling();
       _stopLocationTracking();
       pusherService.disconnect();
       emit(const CaptainOffline());
     }
   }
 
-  // Smart polling DDOS removed.
+  void _startSmartPolling() {
+    _smartPollingTimer?.cancel();
+    _smartPollingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      _pollNearbyRequests();
+    });
+  }
+
   void _stopSmartPolling() {
     _smartPollingTimer?.cancel();
     _smartPollingTimer = null;
@@ -275,8 +282,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     // Reset any existing trip timer
     _tripRequestTimer?.cancel();
 
-    // Start a 10-second timer to auto-dismiss if no action taken
-    _tripRequestTimer = Timer(const Duration(seconds: 10), () {
+    // Start a 15-second timer to auto-dismiss if no action taken
+    _tripRequestTimer = Timer(const Duration(seconds: 15), () {
       if (!isClosed) {
         add(TripNoLongerAvailableReceived(tripId));
       }

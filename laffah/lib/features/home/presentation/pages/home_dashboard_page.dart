@@ -11,6 +11,9 @@ import '../../../../core/widgets/laffah_map_view.dart';
 import '../../../../core/services/routing_service.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_event.dart';
+import '../../../profile/presentation/bloc/profile_state.dart';
 import '../../../ride/presentation/widgets/passenger/searching_captain_overlay.dart';
 import '../../../ride/presentation/widgets/passenger/ride_selection_bottom_sheet.dart';
 import '../../data/datasources/home_local_data_source.dart';
@@ -47,14 +50,15 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
   int _selectedQuickIndex = -1;
 
-  late List<Map<String, dynamic>> _quickDestinations = [];
   late List<Map<String, dynamic>> _recentDestinations = [];
+  bool _isNavigatedToTracking = false;
 
   @override
   void initState() {
     super.initState();
     _loadRecentDestinations();
     _fetchCurrentLocation();
+    context.read<ProfileBloc>().add(GetSavedPlacesEvent());
   }
 
   Future<void> _fetchCurrentLocation() async {
@@ -251,11 +255,11 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    _quickDestinations = HomeLocalDataSource.getQuickDestinations(context);
 
     return BlocConsumer<RideBloc, RideState>(
       listener: (context, state) {
         if (state is RideError) {
+          _isNavigatedToTracking = false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -273,7 +277,10 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               ),
             ),
           );
+        } else if (state is RideInitial || state is RideSearching || (state is RideBookingConfirmed && state.status == 'pending')) {
+          _isNavigatedToTracking = false;
         } else if (state is RideScheduledSuccess) {
+          _isNavigatedToTracking = false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
@@ -291,9 +298,32 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               ),
             ),
           );
+        } else if (state is RideAccepted || (state is RideBookingConfirmed &&
+            (state.status == 'accepted' || state.status == 'arrived' || state.status == 'in_transit' || state.status == 'started'))) {
+          if (!_isNavigatedToTracking) {
+            _isNavigatedToTracking = true;
+            final String cid = (state is RideBookingConfirmed) ? (state.rideId ?? '1') : '1';
+            context.push(
+              LaffahRoutes.passengerRideTracking,
+              extra: {
+                'captainId': cid,
+                'captainName': (state is RideBookingConfirmed) ? state.captainName : (state as RideAccepted).captainName,
+                'captainRating': (state is RideBookingConfirmed) ? state.rating : (state as RideAccepted).captainRating,
+                'vehicleModel': (state is RideBookingConfirmed) ? state.vehicleModel : (state as RideAccepted).vehicleModel,
+                'vehiclePlate': (state is RideBookingConfirmed) ? state.vehiclePlate : (state as RideAccepted).vehiclePlate,
+                'pickupAddress': (state is RideBookingConfirmed) ? state.pickup : _pickupController.text,
+                'dropoffAddress': (state is RideBookingConfirmed) ? state.dropoff : _dropoffController.text,
+                'passengerLat': _pickupLatLng.latitude,
+                'passengerLng': _pickupLatLng.longitude,
+                'dropoffLat': _dropoffLatLng?.latitude,
+                'dropoffLng': _dropoffLatLng?.longitude,
+              },
+            );
+          }
         } else if ((state is RideBookingConfirmed &&
                 state.status.toLowerCase() == 'completed') ||
             state is RideCompleted) {
+          _isNavigatedToTracking = false;
           final tripId = (state is RideBookingConfirmed)
               ? (state.rideId ?? 'TRIP')
               : 'TRIP';
@@ -681,16 +711,64 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                 AppSpacing.h16,
 
                 // Section: "وجهات سريعة"
-                QuickDestinationsSection(
-                  isDark: isDark,
-                  destinations: _quickDestinations,
-                  selectedIndex: _selectedQuickIndex,
-                  onDestinationSelected: (index, dest) {
-                    setState(() {
-                      _selectedQuickIndex = index;
-                      _dropoffController.text = dest['location'] as String;
-                    });
-                    _showRideSelection();
+                BlocBuilder<ProfileBloc, ProfileState>(
+                  builder: (context, profileState) {
+                    List<Map<String, dynamic>> dynamicQuickDestinations = [];
+                    if (profileState is SavedPlacesLoaded && profileState.places.isNotEmpty) {
+                      dynamicQuickDestinations = profileState.places.map((place) {
+                        IconData icon;
+                        Color color;
+                        if (place.type == 'home') {
+                          icon = Icons.home_rounded;
+                          color = AppColors.primary500;
+                        } else if (place.type == 'work') {
+                          icon = Icons.work_rounded;
+                          color = AppColors.info;
+                        } else {
+                          icon = Icons.star_rounded;
+                          color = AppColors.warning;
+                        }
+                        return {
+                          'title': place.name,
+                          'location': place.address,
+                          'icon': icon,
+                          'color': color,
+                          'lat': place.lat,
+                          'lng': place.lng,
+                        };
+                      }).toList();
+                    } else {
+                      // Fallback or empty if not loaded yet
+                      dynamicQuickDestinations = [
+                        {
+                          'title': 'أماكن محفوظة',
+                          'location': 'اضغط للإضافة',
+                          'icon': Icons.bookmark_add_rounded,
+                          'color': AppColors.gray500,
+                        }
+                      ];
+                    }
+                    
+                    return QuickDestinationsSection(
+                      isDark: isDark,
+                      destinations: dynamicQuickDestinations,
+                      selectedIndex: _selectedQuickIndex,
+                      onDestinationSelected: (index, dest) {
+                        setState(() {
+                          _selectedQuickIndex = index;
+                          _dropoffController.text = dest['location'] as String;
+                          if (dest['lat'] != null && dest['lng'] != null) {
+                            _dropoffLatLng = LatLng(dest['lat'] as double, dest['lng'] as double);
+                          }
+                        });
+                        
+                        if (dest['title'] == 'أماكن محفوظة' && dest['lat'] == null) {
+                          context.push(LaffahRoutes.passengerSavedPlaces);
+                        } else {
+                          _showRideSelection();
+                        }
+                      },
+                    );
                   },
                 ),
 

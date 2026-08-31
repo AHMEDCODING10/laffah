@@ -111,8 +111,11 @@ class TripService
                 return $trip;
             }
 
-            // Notify all online captains about the new trip
+            // Notify all online captains about the new trip (FCM)
             $this->notifyNearbyCaptains($trip);
+
+            // Broadcast realtime Pusher WebSocket event
+            event(new \App\Events\NewTripRequested($trip));
 
             return $trip;
         });
@@ -509,7 +512,7 @@ class TripService
     private function notifyNearbyCaptains(Trip $trip): void
     {
         try {
-            \App\Jobs\NotifyNearbyCaptainsJob::dispatch($trip);
+            \App\Jobs\NotifyNearbyCaptainsJob::dispatchSync($trip);
         } catch (Exception $e) {
             Log::error("Failed to dispatch notify nearby captains job for trip #{$trip->id}: " . $e->getMessage());
         }

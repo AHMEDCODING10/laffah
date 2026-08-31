@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/widgets/glass_box.dart';
+import '../../../../../../core/extensions/trip_status_extension.dart';
+import '../../../../../../core/router/app_router.dart';
 import '../rating_and_support_dialog.dart';
 
 /// Helper widget for subtle, calm divider that avoids harsh dark lines
@@ -145,17 +148,20 @@ class ActiveTripCard extends StatelessWidget {
     final isRide = item['isRide'] ?? true;
     final price = (item['price'] ?? item['fare'] ?? item['final_price'] ?? 0) as num;
 
-    return GlassBox(
-      margin: const EdgeInsets.only(bottom: 10),
+    return InkWell(
+      onTap: () => context.push(LaffahRoutes.passengerRideDetails, extra: item),
       borderRadius: BorderRadius.circular(15),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
-      customBorderColor: isDark
-          ? Colors.white.withValues(alpha: 0.07)
-          : AppColors.gray200.withValues(alpha: 0.8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: GlassBox(
+        margin: const EdgeInsets.only(bottom: 10),
+        borderRadius: BorderRadius.circular(15),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+        customBorderColor: isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : AppColors.gray200.withValues(alpha: 0.8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header Row: Type, Status, and Active Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -191,7 +197,7 @@ class ActiveTripCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        item['statusAr'] ?? 'قيد التنفيذ',
+                        item['statusAr'] ?? (item['status']?.toString() ?? '').toArabicStatus(),
                         style: const TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.bold,
@@ -288,7 +294,7 @@ class ActiveTripCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 }
 
@@ -307,16 +313,19 @@ class ScheduledTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassBox(
-      margin: const EdgeInsets.only(bottom: 10),
+    return InkWell(
+      onTap: () => context.push(LaffahRoutes.passengerRideDetails, extra: item),
       borderRadius: BorderRadius.circular(15),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
-      customBorderColor: isDark
-          ? Colors.white.withValues(alpha: 0.07)
-          : AppColors.gray200.withValues(alpha: 0.8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: GlassBox(
+        margin: const EdgeInsets.only(bottom: 10),
+        borderRadius: BorderRadius.circular(15),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+        customBorderColor: isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : AppColors.gray200.withValues(alpha: 0.8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -412,7 +421,7 @@ class ScheduledTripCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 }
 
@@ -433,19 +442,22 @@ class PastTripCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isRide = item['isRide'] ?? true;
     final fare = ((item['fare'] ?? item['price'] ?? 0) as num).toDouble();
-    final statusAr = item['statusAr'] ?? (!isRide ? 'تم التسليم' : 'مكتملة');
+    final statusAr = item['statusAr'] ?? (item['status']?.toString() ?? '').toArabicStatus();
     final titleType = item['type'] ?? (!isRide ? 'إرسال طرد 📦' : 'مشوار رحلة 🛵');
 
-    return GlassBox(
-      margin: const EdgeInsets.only(bottom: 10),
+    return InkWell(
+      onTap: () => context.push(LaffahRoutes.passengerRideDetails, extra: item),
       borderRadius: BorderRadius.circular(15),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
-      customBorderColor: isDark
-          ? Colors.white.withValues(alpha: 0.07)
-          : AppColors.gray200.withValues(alpha: 0.8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: GlassBox(
+        margin: const EdgeInsets.only(bottom: 10),
+        borderRadius: BorderRadius.circular(15),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+        customBorderColor: isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : AppColors.gray200.withValues(alpha: 0.8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Type & Price
           Row(
@@ -626,7 +638,7 @@ class PastTripCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 }
 
@@ -648,16 +660,19 @@ class CancelledTripCard extends StatelessWidget {
     final isRide = item['isRide'] ?? true;
     final titleType = item['type'] ?? (!isRide ? 'إرسال طرد 📦' : 'مشوار رحلة 🛵');
 
-    return GlassBox(
-      margin: const EdgeInsets.only(bottom: 10),
+    return InkWell(
+      onTap: () => context.push(LaffahRoutes.passengerRideDetails, extra: item),
       borderRadius: BorderRadius.circular(15),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
-      customBorderColor: isDark
-          ? Colors.white.withValues(alpha: 0.07)
-          : AppColors.gray200.withValues(alpha: 0.8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: GlassBox(
+        margin: const EdgeInsets.only(bottom: 10),
+        borderRadius: BorderRadius.circular(15),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        customBgColor: isDark ? const Color(0xFF161B26) : Colors.white,
+        customBorderColor: isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : AppColors.gray200.withValues(alpha: 0.8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Calm, clean muted icon and soft badge
           Row(
@@ -811,6 +826,6 @@ class CancelledTripCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 }

@@ -72,7 +72,20 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
 
   double get _insuranceFee => _isInsuranceEnabled ? 300.0 : 0.0;
 
-  double get _totalPrice => _baseFee + _insuranceFee;
+  double get _sizeFee {
+    switch (_selectedSize) {
+      case 'صغير':
+        return 200.0;
+      case 'متوسط':
+        return 300.0;
+      case 'كبير':
+        return 400.0;
+      default:
+        return 200.0;
+    }
+  }
+
+  double get _totalPrice => _baseFee + _insuranceFee + _sizeFee;
 
   Future<void> _pickLocation(bool isPickup) async {
     final result = await Navigator.push(
@@ -334,6 +347,8 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                                 baseFee: _baseFee,
                                 isInsuranceEnabled: _isInsuranceEnabled,
                                 insuranceFee: _insuranceFee,
+                                sizeFee: _sizeFee,
+                                size: _selectedSize,
                                 totalPrice: _totalPrice,
                                 onSubmit: () => _handleSubmit(context),
                               ),

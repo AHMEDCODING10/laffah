@@ -53,12 +53,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
       if (response.success && response.data != null) {
         return Right(response.data!);
       } else {
-        return const Right([]);
+        return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return const Right([]);
-    } catch (_) {
-      return const Right([]);
+    } on DioException catch (e) {
+      return Left(ServerFailure('تعذر جلب الأماكن المحفوظة: $e'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -78,12 +78,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
       if (response.success && response.data != null) {
         return Right(response.data!);
       } else {
-        return Right(place);
+        return Left(ServerFailure(response.message));
       }
-    } on DioException catch (_) {
-      return Right(place);
-    } catch (_) {
-      return Right(place);
+    } on DioException catch (e) {
+      return Left(ServerFailure('تعذر إضافة المكان المحفوظ: $e'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

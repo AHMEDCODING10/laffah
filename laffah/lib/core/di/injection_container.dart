@@ -93,7 +93,7 @@ Future<void> init() async {
   // Web-safe options for FlutterSecureStorage to prevent browser hanging
   sl.registerLazySingleton<FlutterSecureStorage>(
     () => const FlutterSecureStorage(
-      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      aOptions: AndroidOptions(),
       webOptions:
           WebOptions(dbName: 'laffah_secure_store', publicKey: 'laffah_app'),
     ),

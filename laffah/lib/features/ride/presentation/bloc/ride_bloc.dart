@@ -406,7 +406,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     );
   }
 
-  /// Periodic Smart Polling for Ride Status (Removed DDOS - only single fetch as fallback)
+  /// Periodic Smart Polling for Ride Status (Reliable fallback at 10s)
   void _startSmartPolling(
     String rideId,
     RideOption option,
@@ -414,12 +414,14 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     String dropoff,
   ) {
     _stopSmartPolling();
-    // Replaced DDOS timer with a single delayed fetch just to sync initial state.
-    _smartPollingTimer = Timer(const Duration(seconds: 10), () async {
+    _smartPollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
       final res = await trackRideUseCase.fetchRide(rideId);
       res.fold(
         (failure) => null,
         (ride) {
+          if (ride.status == 'completed' || ride.status == 'cancelled') {
+            _stopSmartPolling();
+          }
           add(ActiveRidePolledStatusUpdated(
             status: ride.status,
             captainName: ride.captainName,

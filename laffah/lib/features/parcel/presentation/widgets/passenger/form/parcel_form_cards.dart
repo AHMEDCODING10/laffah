@@ -456,6 +456,8 @@ class ParcelPriceSummaryCard extends StatelessWidget {
   final double baseFee;
   final bool isInsuranceEnabled;
   final double insuranceFee;
+  final double sizeFee;
+  final String size;
   final double totalPrice;
   final VoidCallback onSubmit;
 
@@ -465,6 +467,8 @@ class ParcelPriceSummaryCard extends StatelessWidget {
     required this.baseFee,
     required this.isInsuranceEnabled,
     required this.insuranceFee,
+    required this.sizeFee,
+    required this.size,
     required this.totalPrice,
     required this.onSubmit,
   });
@@ -494,6 +498,29 @@ class ParcelPriceSummaryCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   fontSize: baseFee == 0 ? 11 : 13,
                   color: baseFee == 0 ? AppColors.primary500 : (isDark ? AppColors.white : AppColors.gray900),
+                ),
+              ),
+            ],
+          ),
+          AppSpacing.h8,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'رسوم حجم الطرد ($size):',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 12.5,
+                  color: isDark ? AppColors.gray400 : AppColors.gray600,
+                ),
+              ),
+              Text(
+                '${sizeFee.toStringAsFixed(0)} ريال',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isDark ? AppColors.white : AppColors.gray900,
                 ),
               ),
             ],

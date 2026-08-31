@@ -7,6 +7,9 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/api_endpoints.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_state.dart';
 import 'pin_adjust_map_page.dart';
 
 class LocationSearchPage extends StatefulWidget {
@@ -232,6 +235,77 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                   child: Center(
                       child: CircularProgressIndicator(
                           color: AppColors.primary500)))
+            else if (_searchController.text.isEmpty)
+              Expanded(
+                child: BlocBuilder<ProfileBloc, ProfileState>(
+                  builder: (context, state) {
+                    if (state is SavedPlacesLoaded && state.places.isNotEmpty) {
+                      return ListView.separated(
+                        itemCount: state.places.length,
+                        separatorBuilder: (context, index) => Divider(
+                          color: isDark ? AppColors.gray700 : AppColors.gray200,
+                          height: 1,
+                        ),
+                        itemBuilder: (context, index) {
+                          final place = state.places[index];
+                          IconData icon;
+                          Color color;
+                          if (place.type == 'home') {
+                            icon = Icons.home_rounded;
+                            color = AppColors.primary500;
+                          } else if (place.type == 'work') {
+                            icon = Icons.work_rounded;
+                            color = AppColors.info;
+                          } else {
+                            icon = Icons.star_rounded;
+                            color = AppColors.warning;
+                          }
+                          return ListTile(
+                            leading: Icon(icon, color: color),
+                            title: Text(
+                              place.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? AppColors.white : AppColors.gray900,
+                              ),
+                            ),
+                            subtitle: Text(
+                              place.address,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 12,
+                                color: isDark ? AppColors.gray400 : AppColors.gray600,
+                              ),
+                            ),
+                            onTap: () {
+                              context.pop({
+                                'name': place.address,
+                                'lat': place.lat,
+                                'lon': place.lng,
+                                'type': widget.locationType,
+                              });
+                            },
+                          );
+                        },
+                      );
+                    }
+                    return Center(
+                      child: Text(
+                        'لا توجد أماكن محفوظة',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          color: isDark ? AppColors.gray500 : AppColors.gray400,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              )
             else if (_searchResults.isEmpty &&
                 _searchController.text.isNotEmpty)
               Expanded(

@@ -71,18 +71,21 @@ class ParcelController extends Controller
 
         $rawPrice = $distanceKm * $perKm;
         
-        $multiplier = 1.02; // Small 2%
+        $sizeFee = 200.0;
         if (in_array($size, ['medium', 'متوسط'])) {
-            $multiplier = 1.03; // Medium 3%
+            $sizeFee = 300.0;
         } elseif (in_array($size, ['large', 'كبير'])) {
-            $multiplier = 1.04; // Large 4%
+            $sizeFee = 400.0;
         }
 
-        $basePrice = (int) ceil($rawPrice * $multiplier);
+        $isInsuranceEnabled = false;
+        if (isset($validated['notes']) && str_contains($validated['notes'], 'شامل التأمين')) {
+            $isInsuranceEnabled = true;
+        }
+        $insuranceFee = $isInsuranceEnabled ? 300.0 : 0.0;
 
-        $finalPrice = isset($validated['price']) && $validated['price'] > 0
-            ? (float) $validated['price']
-            : $basePrice;
+        // Secure final price calculation in backend, ignoring user-supplied values to prevent hijacking
+        $finalPrice = (float) ($rawPrice + $sizeFee + $insuranceFee);
 
         $trackingCode = 'LF-P' . strtoupper(bin2hex(random_bytes(3)));
 
@@ -141,6 +144,8 @@ class ParcelController extends Controller
                     );
                 }
             }
+            // Fire realtime Pusher WebSocket event
+            event(new \App\Events\NewParcelRequested($parcel));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Failed to broadcast parcel: " . $e->getMessage());
         }

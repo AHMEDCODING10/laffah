@@ -24,6 +24,7 @@ import '../../features/ride/presentation/pages/trip_history_page.dart';
 import '../../features/ride/presentation/pages/passenger_schedule_ride_page.dart';
 import '../../features/ride/presentation/pages/passenger_ride_tracking_page.dart';
 import '../../features/ride/presentation/pages/passenger_ride_invoice_page.dart';
+import '../../features/ride/presentation/pages/passenger_ride_details_page.dart';
 
 // Captain core features
 import '../../features/captain/presentation/pages/captain_trip_history_page.dart';
@@ -101,6 +102,7 @@ abstract class LaffahRoutes {
   // ──────────────────────────────────────────
   static const String passengerRideTracking = '/passenger/ride/tracking';
   static const String passengerRideInvoice = '/passenger/ride/invoice';
+  static const String passengerRideDetails = '/passenger/ride/details';
   static const String passengerScheduleRide = '/passenger/ride/schedule';
 
   // ──────────────────────────────────────────
@@ -339,7 +341,25 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           final captainId = extra['captainId'] as String?;
-          return PassengerRideTrackingPage(captainId: captainId);
+          final captainLat = (extra['captainLat'] as num?)?.toDouble() ?? 15.3500;
+          final captainLng = (extra['captainLng'] as num?)?.toDouble() ?? 44.2000;
+          final passengerLat = (extra['passengerLat'] as num?)?.toDouble() ?? 15.3421;
+          final passengerLng = (extra['passengerLng'] as num?)?.toDouble() ?? 44.2081;
+          final dropoffLat = (extra['dropoffLat'] as num?)?.toDouble();
+          final dropoffLng = (extra['dropoffLng'] as num?)?.toDouble();
+          final pickupAddress = extra['pickupAddress'] as String? ?? '';
+          final dropoffAddress = extra['dropoffAddress'] as String? ?? '';
+          return PassengerRideTrackingPage(
+            captainId: captainId,
+            captainLat: captainLat,
+            captainLng: captainLng,
+            passengerLat: passengerLat,
+            passengerLng: passengerLng,
+            dropoffLat: dropoffLat,
+            dropoffLng: dropoffLng,
+            pickupAddress: pickupAddress,
+            dropoffAddress: dropoffAddress,
+          );
         },
       ),
 
@@ -372,6 +392,15 @@ class AppRouter {
         name: 'passenger-schedule-ride',
         builder: (BuildContext context, GoRouterState state) =>
             const PassengerScheduleRidePage(),
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.passengerRideDetails,
+        name: 'passenger-ride-details',
+        builder: (BuildContext context, GoRouterState state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return PassengerRideDetailsPage(tripData: extra);
+        },
       ),
 
       // ══════════════════════════════════════════

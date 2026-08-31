@@ -21,6 +21,10 @@ class PassengerRideTrackingPage extends StatefulWidget {
   final double captainLng;
   final double passengerLat;
   final double passengerLng;
+  final double? dropoffLat;
+  final double? dropoffLng;
+  final String pickupAddress;
+  final String dropoffAddress;
 
   const PassengerRideTrackingPage({
     super.key,
@@ -29,6 +33,10 @@ class PassengerRideTrackingPage extends StatefulWidget {
     this.captainLng = 44.2000,
     this.passengerLat = 15.3421,
     this.passengerLng = 44.2081,
+    this.dropoffLat,
+    this.dropoffLng,
+    this.pickupAddress = '',
+    this.dropoffAddress = '',
   });
 
   @override
@@ -112,8 +120,25 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
 
 
   Future<void> _fetchRoute() async {
+    bool inTransit = false;
+    try {
+      final rideState = context.read<RideBloc>().state;
+      if (rideState is RideInProgress) {
+        inTransit = true;
+      } else if (rideState is RideBookingConfirmed) {
+        final s = rideState.status.toLowerCase();
+        if (s == 'in_transit' || s == 'started') {
+          inTransit = true;
+        }
+      }
+    } catch (_) {}
+
+    final dest = (inTransit && widget.dropoffLat != null && widget.dropoffLng != null)
+        ? LatLng(widget.dropoffLat!, widget.dropoffLng!)
+        : _passengerLocation;
+
     final data =
-        await _osrmService.getRoute(_passengerLocation, _captainLocation);
+        await _osrmService.getRoute(dest, _captainLocation);
     if (data != null && mounted) {
       setState(() {
         _routePoints = data.points;
@@ -187,13 +212,16 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                       followCaptain: true,
                       // Real-time animated data
                       captainLocation: _captainLocation,
-                    passengerLocation: _passengerLocation,
-                    captainHeading: _captainHeading,
-                    routePoints: _routePoints.isNotEmpty ? _routePoints : null,
-                  ),
-                );
-              },
-            ),
+                      passengerLocation: _passengerLocation,
+                      dropoffLocation: widget.dropoffLat != null && widget.dropoffLng != null
+                          ? LatLng(widget.dropoffLat!, widget.dropoffLng!)
+                          : null,
+                      captainHeading: _captainHeading,
+                      routePoints: _routePoints.isNotEmpty ? _routePoints : null,
+                    ),
+                  );
+                },
+              ),
 
             // Top App Bar Area (Floating)
             Positioned(
@@ -259,6 +287,12 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                 child: BlocBuilder<RideBloc, RideState>(
                   builder: (context, state) {
                     bool isCaptainArrived = state is RideInProgress;
+                    if (state is RideBookingConfirmed) {
+                      final s = state.status.toLowerCase();
+                      if (s == 'arrived' || s == 'in_transit' || s == 'started') {
+                        isCaptainArrived = true;
+                      }
+                    }
                     String captainName = 'جاري البحث...';
                     String rating = '0.0';
                     String plate = '---';
