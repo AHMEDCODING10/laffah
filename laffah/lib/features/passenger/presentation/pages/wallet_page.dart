@@ -109,8 +109,12 @@ class _WalletView extends StatelessWidget {
               transactions = state.wallet.transactions;
             }
 
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<WalletBloc>().add(GetWalletBalanceEvent());
+              },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
                 AppSpacing.s20,
                 AppSpacing.s20,
                 AppSpacing.s20,
@@ -151,7 +155,7 @@ class _WalletView extends StatelessWidget {
                   for (final tx in transactions)
                     TransactionListTile(isDark: isDark, transaction: tx),
               ],
-            );
+            ));
           },
         ),
       ),

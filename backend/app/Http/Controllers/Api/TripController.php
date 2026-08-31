@@ -385,31 +385,9 @@ class TripController extends Controller
             ]);
         }
 
-        // Use DB transaction to prevent race conditions between expiration and querying
+        // Expiration is now handled by ExpirePendingRequestsCommand (CRON Job)
         $trips = DB::transaction(function () {
-            // 1. Auto-expire pending trips older than 3 minutes that have not been accepted by any captain
-            $expiredTrips = Trip::where('status', 'pending')
-                ->whereNull('captain_profile_id')
-                ->where('created_at', '<', now()->subMinutes(3))
-                ->get();
-            
-            if ($expiredTrips->isNotEmpty()) {
-                Trip::whereIn('id', $expiredTrips->pluck('id'))
-                    ->update([
-                        'status' => 'cancelled',
-                        'cancellation_reason' => 'انتهت مهلة انتظار الكابتن (3 دقائق)',
-                        'cancelled_at' => now(),
-                    ]);
-                
-                foreach ($expiredTrips as $trip) {
-                    $trip->status = 'cancelled';
-                    try {
-                        event(new \App\Events\TripStatusUpdated($trip));
-                    } catch (\Exception $e) {}
-                }
-            }
-
-            // 2. Query only fresh, pending, unassigned trips within the last 3 minutes
+            // Query only fresh, pending, unassigned trips within the last 3 minutes
             $query = Trip::where('status', 'pending')
                 ->whereNull('captain_profile_id')
                 ->where('created_at', '>=', now()->subMinutes(3))
@@ -429,14 +407,7 @@ class TripController extends Controller
 
         $tripData = TripResource::collection($trips)->resolve();
 
-        // Auto-expire old pending parcels older than 3 minutes
-        \App\Models\Parcel::where('status', 'pending')
-            ->whereNull('captain_profile_id')
-            ->where('created_at', '<', now()->subMinutes(3))
-            ->update([
-                'status' => 'cancelled',
-                'updated_at' => now(),
-            ]);
+        // Expiration for parcels is now handled by CRON job as well.
 
         // Also fetch fresh pending parcels within last 3 minutes
         $parcels = \App\Models\Parcel::where('status', 'pending')

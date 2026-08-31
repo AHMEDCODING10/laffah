@@ -23,6 +23,7 @@ class SubmitParcelOrderUseCase {
     required String size,
     required String notes,
     double? price,
+    double? distance,
   }) async {
     return await repository.submitParcelOrder(
       senderName: senderName,
@@ -39,6 +40,7 @@ class SubmitParcelOrderUseCase {
       size: size,
       notes: notes,
       price: price,
+      distance: distance,
     );
   }
 }

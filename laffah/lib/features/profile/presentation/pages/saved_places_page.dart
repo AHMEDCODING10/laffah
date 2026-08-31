@@ -250,24 +250,29 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                     return _buildEmptyState(isDark, context);
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s16,
-                      0,
-                      AppSpacing.s16,
-                      96,
-                    ),
-                    itemCount: _filteredPlaces.length,
-                    itemBuilder: (context, index) {
-                      final place = _filteredPlaces[index];
-                      return SavedPlaceCard(
-                        isDark: isDark,
-                        place: place,
-                        onBookNow: () => _onBookToPlace(place),
-                        onEdit: () => _showAddEditDialog(place),
-                        onDelete: () => _deletePlace(place.id),
-                      );
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<ProfileBloc>().add(GetSavedPlacesEvent());
                     },
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.s16,
+                        0,
+                        AppSpacing.s16,
+                        96,
+                      ),
+                      itemCount: _filteredPlaces.length,
+                      itemBuilder: (context, index) {
+                        final place = _filteredPlaces[index];
+                        return SavedPlaceCard(
+                          isDark: isDark,
+                          place: place,
+                          onBookNow: () => _onBookToPlace(place),
+                          onEdit: () => _showAddEditDialog(place),
+                          onDelete: () => _deletePlace(place.id),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

@@ -72,13 +72,18 @@ class _PromoCodePageState extends State<PromoCodePage> {
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar:
             LaffahAppBar(title: AppLocalizations.of(context)!.pass_promo_codes),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s20,
-            AppSpacing.s20,
-            AppSpacing.s20,
-            100,
-          ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            // Future implementation to fetch latest promos
+            await Future.delayed(const Duration(seconds: 1));
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s20,
+              AppSpacing.s20,
+              AppSpacing.s20,
+              100,
+            ),
           children: [
             // Promo Code Entry Card
             GlassBox(
@@ -188,6 +193,7 @@ class _PromoCodePageState extends State<PromoCodePage> {
               ),
           ],
         ),
+      ),
       ),
     );
   }

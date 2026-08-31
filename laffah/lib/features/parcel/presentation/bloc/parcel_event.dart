@@ -22,6 +22,7 @@ class SubmitParcelEvent extends ParcelEvent {
   final String size;
   final String notes;
   final double? price;
+  final double? distance;
 
   const SubmitParcelEvent({
     required this.senderName,
@@ -38,6 +39,7 @@ class SubmitParcelEvent extends ParcelEvent {
     required this.size,
     required this.notes,
     this.price,
+    this.distance,
   });
 
   @override
@@ -56,6 +58,7 @@ class SubmitParcelEvent extends ParcelEvent {
         size,
         notes,
         price,
+        distance,
       ];
 }
 

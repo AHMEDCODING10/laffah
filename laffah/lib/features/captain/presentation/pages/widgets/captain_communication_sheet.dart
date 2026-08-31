@@ -2,6 +2,7 @@ import '../../../../../l10n/app_localizations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 
@@ -198,20 +199,24 @@ class CaptainCommunicationSheet extends StatelessWidget {
                                 .capt_whatsapp_chat,
                             icon: Icons.chat_rounded,
                             color: const Color(0xFF25D366),
-                            onTap: () {
+                            onTap: () async {
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: const Color(0xFF25D366),
-                                  content: Text(
-                                    'جاري فتح الواتساب لمراسلة $passengerName...',
-                                    style: const TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              );
+                              final cleanPhone = passengerPhone.replaceAll(RegExp(r'[^\d+]'), '');
+                              if (cleanPhone.isEmpty) return;
+                              final Uri whatsappUrl = Uri.parse('whatsapp://send?phone=$cleanPhone');
+                              try {
+                                if (await canLaunchUrl(whatsappUrl)) {
+                                  await launchUrl(whatsappUrl);
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('تطبيق واتساب غير مثبت لديك')),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                debugPrint('Could not launch WhatsApp: $e');
+                              }
                             },
                           ),
                         ),
@@ -225,20 +230,24 @@ class CaptainCommunicationSheet extends StatelessWidget {
                             label: AppLocalizations.of(context)!.capt_sms_chat,
                             icon: Icons.textsms_rounded,
                             color: AppColors.primary500,
-                            onTap: () {
+                            onTap: () async {
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: AppColors.primary500,
-                                  content: Text(
-                                    'جاري فتح تطبيق الرسائل النصية لمراسلة $passengerName...',
-                                    style: const TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              );
+                              final cleanPhone = passengerPhone.replaceAll(RegExp(r'[^\d+]'), '');
+                              if (cleanPhone.isEmpty) return;
+                              final Uri smsUrl = Uri(scheme: 'sms', path: cleanPhone);
+                              try {
+                                if (await canLaunchUrl(smsUrl)) {
+                                  await launchUrl(smsUrl);
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('لا يمكن فتح تطبيق الرسائل')),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                debugPrint('Could not launch SMS: $e');
+                              }
                             },
                           ),
                         ),

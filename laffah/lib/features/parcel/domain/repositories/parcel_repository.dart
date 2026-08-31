@@ -18,6 +18,7 @@ abstract class ParcelRepository {
     required String size,
     required String notes,
     double? price,
+    double? distance,
   });
 
   Future<Either<Failure, ParcelEntity>> trackParcel(String identifier);

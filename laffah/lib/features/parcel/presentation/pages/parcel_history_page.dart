@@ -33,8 +33,12 @@ class ParcelHistoryPage extends StatelessWidget {
             ),
           ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(AppSpacing.s24),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await Future.delayed(const Duration(seconds: 1));
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.s24),
           children: [
             Text(
               'الطرود الحالية',
@@ -80,6 +84,7 @@ class ParcelHistoryPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

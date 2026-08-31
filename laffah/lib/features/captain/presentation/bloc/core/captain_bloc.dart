@@ -382,8 +382,9 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         accuracy: LocationAccuracy.high,
         activityType: ActivityType.automotiveNavigation,
         distanceFilter: 30,
-        pauseLocationUpdatesAutomatically: true,
+        pauseLocationUpdatesAutomatically: false,
         showBackgroundLocationIndicator: true,
+        allowBackgroundLocationUpdates: true,
       );
     } else {
       locationSettings = const LocationSettings(

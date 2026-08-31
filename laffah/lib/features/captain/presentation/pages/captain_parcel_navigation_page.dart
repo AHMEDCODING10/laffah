@@ -139,10 +139,22 @@ class _CaptainParcelNavigationPageState
 
   Future<void> _makePhoneCall(String phone) async {
     HapticFeedback.heavyImpact();
-    final cleanPhone = phone.isNotEmpty ? phone : '770000000';
-    final Uri url = Uri.parse('tel:$cleanPhone');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    if (cleanPhone.isEmpty) return;
+    
+    final Uri url = Uri(scheme: 'tel', path: cleanPhone);
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('لا يمكن فتح تطبيق الاتصال')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error launching call: $e');
     }
   }
 
@@ -191,17 +203,7 @@ class _CaptainParcelNavigationPageState
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    backgroundColor: AppColors.danger,
-                    content: Text(
-                      'تم إرسال بلاغ وإحداثيات الموقع الحالي لفريق طوارئ لَفَّة في صنعاء!',
-                      style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                );
+                _makePhoneCall('199');
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.danger,

@@ -443,18 +443,23 @@ class ParcelController extends Controller
                         'body'  => "طردك رقم #{$parcel->tracking_code} أصبح الآن في حالة: {$status}"
                     ];
 
-                    $notificationService = app(NotificationService::class);
-                    $notificationService->sendToUser(
-                        $parcel->user,
-                        $msg['title'],
-                        $msg['body'],
-                        [
-                            'type' => 'parcel',
-                            'parcel_id' => (string) $parcel->id,
-                            'status' => $status,
-                            'tracking_code' => (string) $parcel->tracking_code,
-                        ]
-                    );
+                    // Only send FCM for high-priority statuses to avoid spamming the user
+                    $shouldSendFcm = in_array($status, ['delivered', 'cancelled']);
+
+                    if ($shouldSendFcm) {
+                        $notificationService = app(NotificationService::class);
+                        $notificationService->sendToUser(
+                            $parcel->user,
+                            $msg['title'],
+                            $msg['body'],
+                            [
+                                'type' => 'parcel',
+                                'parcel_id' => (string) $parcel->id,
+                                'status' => $status,
+                                'tracking_code' => (string) $parcel->tracking_code,
+                            ]
+                        );
+                    }
 
                     // If delivered, notify captain of earnings
                     if ($status === 'delivered') {

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -122,6 +123,27 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     }
   }
 
+  Future<void> _makePhoneCall(String phone) async {
+    HapticFeedback.heavyImpact();
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    if (cleanPhone.isEmpty) return;
+    
+    final Uri url = Uri(scheme: 'tel', path: cleanPhone);
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('لا يمكن فتح تطبيق الاتصال')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error launching call: $e');
+    }
+  }
+
   void _showSOSEmergencyDialog(BuildContext context, bool isDark) {
     HapticFeedback.heavyImpact();
     showDialog(
@@ -167,17 +189,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    backgroundColor: AppColors.danger,
-                    content: Text(
-                      'تم إرسال بلاغ وإحداثيات الموقع الحالي لفريق طوارئ لَفَّة في صنعاء!',
-                      style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                );
+                _makePhoneCall('199');
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.danger,
@@ -482,21 +494,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                             // Direct Call Phone Action
                             _buildCircleCallAction(
                               Icons.phone_in_talk_rounded,
-                              () {
-                                HapticFeedback.mediumImpact();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: AppColors.primary500,
-                                    content: Text(
-                                      'جاري الاتصال بالراكب (${widget.passengerPhone})...',
-                                      style: const TextStyle(
-                                        fontFamily: 'IBM Plex Sans Arabic',
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
+                              () => _makePhoneCall(widget.passengerPhone),
                               isDark,
                             ),
                           ],

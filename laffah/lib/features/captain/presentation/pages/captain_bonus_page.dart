@@ -57,7 +57,11 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
             final bonus = state.bonusAmount;
             final progress = completed / target;
 
-            return SingleChildScrollView(
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<CaptainBloc>().add(const FetchBonusData());
+              },
+              child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSpacing.s20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -184,6 +188,7 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
                   ),
                 ],
               ),
+            ),
             );
           },
         ),

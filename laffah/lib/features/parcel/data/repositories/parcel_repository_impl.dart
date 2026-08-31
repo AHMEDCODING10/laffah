@@ -26,6 +26,7 @@ class ParcelRepositoryImpl implements ParcelRepository {
     required String size,
     required String notes,
     double? price,
+    double? distance,
   }) async {
     try {
       final response = await remoteDataSource.submitParcelOrder(
@@ -43,6 +44,7 @@ class ParcelRepositoryImpl implements ParcelRepository {
         size: size,
         notes: notes,
         price: price,
+        distance: distance,
       );
 
       if (response.success && response.data != null) {

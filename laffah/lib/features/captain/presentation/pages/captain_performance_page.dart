@@ -6,6 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_state.dart';
+import '../../../profile/presentation/bloc/profile_event.dart';
 
 /// CaptainPerformancePage — A dashboard for Captains to view their rating,
 /// acceptance rate, cancellation rate, and overall performance metrics.
@@ -50,12 +51,16 @@ class CaptainPerformancePage extends StatelessWidget {
             if (state is ProfileLoaded) {
               // rating from profile
             }
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.s24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Rating Overview
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<ProfileBloc>().add(GetProfileEvent());
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.s24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Rating Overview
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.s24),
                     decoration: BoxDecoration(
@@ -193,6 +198,7 @@ class CaptainPerformancePage extends StatelessWidget {
                     isDark: isDark,
                   ),
                 ],
+              ),
               ),
             );
           },

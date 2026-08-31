@@ -35,6 +35,7 @@ class ParcelBloc extends Bloc<ParcelEvent, ParcelState> {
       size: event.size,
       notes: event.notes,
       price: event.price,
+      distance: event.distance,
     );
 
     result.fold(

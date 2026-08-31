@@ -71,6 +71,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
   }
 
   double _baseFee = 0.0;
+  double _distance = 0.0;
 
   double get _insuranceFee => _isInsuranceEnabled ? 300.0 : 0.0;
 
@@ -185,6 +186,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
             size: _selectedSize,
             notes: notes,
             price: _totalPrice,
+            distance: _distance,
           ),
         );
   }
@@ -240,6 +242,7 @@ class _PassengerParcelSendPageState extends State<PassengerParcelSendPage> {
                 if (rideState is RideOptionsLoaded) {
                   setState(() {
                     _baseFee = rideState.fare;
+                    _distance = rideState.distance;
                   });
                 }
               },

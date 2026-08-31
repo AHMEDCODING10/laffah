@@ -19,6 +19,7 @@ abstract class ParcelRemoteDataSource {
     required String size,
     required String notes,
     double? price,
+    double? distance,
   });
   Future<BaseResponseModel<ParcelModel>> trackParcel(String identifier);
 }
@@ -54,6 +55,7 @@ class ParcelRemoteDataSourceImpl implements ParcelRemoteDataSource {
     required String size,
     required String notes,
     double? price,
+    double? distance,
   }) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.submitParcel,
@@ -72,6 +74,7 @@ class ParcelRemoteDataSourceImpl implements ParcelRemoteDataSource {
         'size': size,
         'notes': notes,
         if (price != null) 'price': price,
+        if (distance != null) 'distance': distance,
       },
     );
     return BaseResponseModel.fromJson(

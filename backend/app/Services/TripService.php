@@ -187,23 +187,6 @@ class TripService
                 );
             }
 
-            // Send notification to Captain
-            if ($trip->captain && $trip->captain->user) {
-                $pName = $trip->passenger?->name ?? 'الراكب';
-                $price = number_format($trip->estimated_price ?? $trip->final_price ?? 0);
-                $this->notificationService->sendToUser(
-                    $trip->captain->user,
-                    'تم قبول المشوار بنجاح 🛵',
-                    "مشوار جديد للراكب {$pName} بقيمة {$price} ر.ي. من {$trip->pickup_address} إلى {$trip->dropoff_address}.",
-                    [
-                        'type' => 'trip_accepted',
-                        'status' => 'accepted',
-                        'trip_id' => (string) $trip->id,
-                        'passenger_name' => $pName,
-                    ]
-                );
-            }
-
             return $trip;
         });
     }
@@ -324,39 +307,7 @@ class TripService
 
             // Send FCM notifications based on status
             if ($trip->passenger) {
-                $captainName = $trip->captain?->user?->name ?? 'الكابتن';
-                $captainPhone = $trip->captain?->user?->phone ?? '';
-                $vehicleModel = $trip->captain?->vehicle_model ?? 'دراجة نارية';
-                $vehiclePlate = $trip->captain?->plate_number ?? '';
-
-                if ($status === 'arrived') {
-                    $this->notificationService->sendToUser(
-                        $trip->passenger,
-                        'وصل الكابتن! 📍',
-                        "الكابتن {$captainName} وصل إلى موقع الانطلاق وينتظرك الآن.",
-                        [
-                            'type' => 'trip_arrived',
-                            'status' => 'arrived',
-                            'trip_id' => (string) $trip->id,
-                            'captain_name' => $captainName,
-                            'captain_phone' => $captainPhone,
-                            'vehicle_model' => $vehicleModel,
-                            'vehicle_plate' => $vehiclePlate,
-                        ]
-                    );
-                } elseif ($status === 'in_transit') {
-                    $this->notificationService->sendToUser(
-                        $trip->passenger,
-                        'بدأت الرحلة 🚀',
-                        'نتمنى لك رحلة آمنة ومريحة مع لَفَّة.',
-                        [
-                            'type' => 'trip_started',
-                            'status' => 'in_transit',
-                            'trip_id' => (string) $trip->id,
-                            'captain_name' => $captainName,
-                        ]
-                    );
-                } elseif ($status === 'completed') {
+                if ($status === 'completed') {
                     $this->notificationService->sendToUser(
                         $trip->passenger,
                         'اكتمل المشوار بنجاح 🎉',

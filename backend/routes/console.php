@@ -19,3 +19,9 @@ Schedule::command('trips:dispatch-scheduled')
     ->everyMinute()
     ->runInBackground()
     ->withoutOverlapping();
+
+// Expire pending requests (trips/parcels) that are older than 3 minutes
+Schedule::command('requests:expire-pending')
+    ->everyMinute()
+    ->runInBackground()
+    ->withoutOverlapping();

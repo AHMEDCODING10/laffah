@@ -33,6 +33,8 @@ class _SearchingParcelCaptainOverlayState
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   Timer? _statusPollingTimer;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 180; // 3 minutes
   bool _isNavigating = false;
 
   @override
@@ -47,11 +49,26 @@ class _SearchingParcelCaptainOverlayState
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_remainingSeconds > 0) {
+        setState(() {
+          _remainingSeconds--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+
     _startStatusPolling();
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _statusPollingTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
@@ -251,7 +268,26 @@ class _SearchingParcelCaptainOverlayState
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 12),
+            // 3-Minute Timeout Timer
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primary500.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primary500.withValues(alpha: 0.2)),
+              ),
+              child: Text(
+                '${(_remainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(_remainingSeconds % 60).toString().padLeft(2, '0')}',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : AppColors.primary500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               'يتم الآن إرسال طلبك إلى الكباتن المتواجدين بالقرب منك',
               style: TextStyle(

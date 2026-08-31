@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -52,6 +53,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
+  Timer? _countdownTimer;
+  int _remainingSeconds = 180; // 3 minutes
+
   // Local state flag to simulate switching to Captain Found state for demo/testing
   final bool _simulatedFound = false;
 
@@ -66,11 +70,26 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
     _pulseAnimation = Tween<double>(begin: 0.85, end: 1.25).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_remainingSeconds > 0) {
+        setState(() {
+          _remainingSeconds--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -470,6 +489,25 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                   color: isDark
                                       ? AppColors.gray400
                                       : AppColors.gray600,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // 3-Minute Timeout Timer
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary500.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: AppColors.primary500.withValues(alpha: 0.2)),
+                                ),
+                                child: Text(
+                                  '${(_remainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(_remainingSeconds % 60).toString().padLeft(2, '0')}',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? Colors.white : AppColors.primary500,
+                                  ),
                                 ),
                               ),
                             ],

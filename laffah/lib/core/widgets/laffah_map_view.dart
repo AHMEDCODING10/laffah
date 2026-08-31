@@ -190,17 +190,29 @@ class _LaffahMapViewState extends State<LaffahMapView>
 
     if (widget.followCaptain && widget.captainLocation != null) {
       if (widget.passengerLocation != null) {
-        // Fit both in view during trip
-        final bounds = LatLngBounds.fromPoints([
-          widget.captainLocation!,
-          widget.passengerLocation!,
-        ]);
-        _mapController.fitCamera(
-          CameraFit.bounds(
-            bounds: bounds,
-            padding: const EdgeInsets.fromLTRB(50, 150, 50, 200),
-          ),
-        );
+        // Prevent math error when bounds are identical or extremely close
+        final distance = const Distance().as(
+            LengthUnit.Meter, widget.captainLocation!, widget.passengerLocation!);
+
+        if (distance < 20) {
+          // Less than 20 meters apart -> Just center and zoom in
+          _mapController.move(
+            widget.captainLocation!,
+            16.5,
+          );
+        } else {
+          // Fit both in view during trip safely
+          final bounds = LatLngBounds.fromPoints([
+            widget.captainLocation!,
+            widget.passengerLocation!,
+          ]);
+          _mapController.fitCamera(
+            CameraFit.bounds(
+              bounds: bounds,
+              padding: const EdgeInsets.fromLTRB(50, 150, 50, 200),
+            ),
+          );
+        }
       } else if (widget.captainLocation != old.captainLocation) {
         // Pan only — preserve current zoom
         _mapController.move(

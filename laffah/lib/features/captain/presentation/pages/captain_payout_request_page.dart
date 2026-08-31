@@ -221,17 +221,22 @@ class _CaptainPayoutRequestPageState extends State<CaptainPayoutRequestPage> {
               ),
             ),
             body: SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
-                children: [
-                  _buildBalanceDashboard(isDark),
-                  AppSpacing.h24,
-                  _buildPayoutFormSection(isDark),
-                  AppSpacing.h24,
-                  _buildTransactionsLogSection(isDark),
-                  AppSpacing.h32,
-                ],
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await Future.delayed(const Duration(seconds: 1));
+                },
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
+                  children: [
+                    _buildBalanceDashboard(isDark),
+                    AppSpacing.h24,
+                    _buildPayoutFormSection(isDark),
+                    AppSpacing.h24,
+                    _buildTransactionsLogSection(isDark),
+                    AppSpacing.h32,
+                  ],
+                ),
               ),
             ),
           );
