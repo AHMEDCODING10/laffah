@@ -280,16 +280,16 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.backgroundDark : AppColors.white,
                   borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(30)),
+                      const BorderRadius.vertical(top: Radius.circular(28)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, -5),
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      spreadRadius: 2,
+                      offset: const Offset(0, -6),
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(AppSpacing.s24),
                 child: BlocBuilder<RideBloc, RideState>(
                   builder: (context, state) {
                     bool isCaptainArrived = state is RideInProgress;
@@ -323,237 +323,344 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                       plate = state.vehiclePlate;
                     }
 
+                    // Determine step index for progress: 0=on the way, 1=arrived, 2=trip started
+                    final int progressStep = isTripStarted ? 2 : (isCaptainArrived ? 1 : 0);
+                    final Color activeColor = isTripStarted
+                        ? AppColors.success
+                        : (isCaptainArrived ? AppColors.primary700 : AppColors.primary500);
+
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Status Indicator
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: isCaptainArrived
-                                    ? AppColors.success.withValues(alpha: 0.1)
-                                    : AppColors.primary500
-                                        .withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isTripStarted
-                                    ? Icons.navigation_rounded
-                                    : (isCaptainArrived
-                                        ? Icons.directions_car_rounded
-                                        : Icons.radar_rounded),
-                                color: isCaptainArrived
-                                    ? AppColors.success
-                                    : AppColors.primary500,
-                                size: 24,
-                              ),
+                        // ── Drag Handle ──
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12, bottom: 6),
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.gray700 : AppColors.gray300,
+                              borderRadius: BorderRadius.circular(2),
                             ),
-                            AppSpacing.w12,
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isTripStarted
-                                        ? 'الرحلة جارية...'
-                                        : (isCaptainArrived
-                                            ? 'الكابتن وصل إلى موقعك!'
-                                            : 'الكابتن في الطريق إليك...'),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 16,
-                                      color: isDark
-                                          ? AppColors.white
-                                          : AppColors.gray900,
-                                    ),
-                                  ),
-                                  Text(
-                                    isTripStarted
-                                        ? 'في الطريق إلى الوجهة'
-                                        : (isCaptainArrived
-                                            ? 'يرجى التوجه للمركبة'
-                                            : 'يصل خلال دقائق'),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontSize: 13,
-                                      color: isDark
-                                          ? AppColors.gray400
-                                          : AppColors.gray600,
-                                    ),
-                                  ),
+                          ),
+                        ),
+
+                        // ── Progress Steps ──
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          child: Row(
+                            children: [
+                              _buildProgressDot(0, progressStep, activeColor, isDark),
+                              Expanded(child: _buildProgressLine(0, progressStep, activeColor, isDark)),
+                              _buildProgressDot(1, progressStep, activeColor, isDark),
+                              Expanded(child: _buildProgressLine(1, progressStep, activeColor, isDark)),
+                              _buildProgressDot(2, progressStep, activeColor, isDark),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('في الطريق', style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic', fontSize: 10,
+                                fontWeight: progressStep == 0 ? FontWeight.bold : FontWeight.normal,
+                                color: progressStep >= 0 ? activeColor : (isDark ? AppColors.gray500 : AppColors.gray400),
+                              )),
+                              Text('وصل', style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic', fontSize: 10,
+                                fontWeight: progressStep == 1 ? FontWeight.bold : FontWeight.normal,
+                                color: progressStep >= 1 ? activeColor : (isDark ? AppColors.gray500 : AppColors.gray400),
+                              )),
+                              Text('الرحلة جارية', style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic', fontSize: 10,
+                                fontWeight: progressStep == 2 ? FontWeight.bold : FontWeight.normal,
+                                color: progressStep >= 2 ? activeColor : (isDark ? AppColors.gray500 : AppColors.gray400),
+                              )),
+                            ],
+                          ),
+                        ),
+
+                        AppSpacing.h16,
+
+                        // ── Status Banner ──
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  activeColor.withValues(alpha: 0.08),
+                                  activeColor.withValues(alpha: 0.03),
                                 ],
                               ),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: activeColor.withValues(alpha: 0.15)),
                             ),
-                          ],
-                        ),
-                        const Padding(
-                          padding:
-                              EdgeInsets.symmetric(vertical: AppSpacing.s16),
-                          child: Divider(height: 1),
-                        ),
-                        // Captain Info
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 25,
-                              backgroundColor:
-                                  AppColors.primary500.withValues(alpha: 0.12),
-                              child: const Icon(
-                                Icons.person_rounded,
-                                color: AppColors.primary500,
-                                size: 28,
-                              ),
-                            ),
-                            AppSpacing.w12,
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    captainName,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: isDark
-                                          ? AppColors.white
-                                          : AppColors.gray900,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.star_rounded,
-                                          color: AppColors.warning, size: 14),
-                                      Text(
-                                        ' $rating',
-                                        style: const TextStyle(
-                                            fontFamily: 'IBM Plex Sans Arabic',
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: activeColor.withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: activeColor.withValues(alpha: 0.25),
+                                        blurRadius: 12,
+                                        spreadRadius: 1,
                                       ),
-                                      AppSpacing.w8,
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.gray200,
-                                          borderRadius:
-                                              BorderRadius.circular(4),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    isTripStarted
+                                        ? Icons.navigation_rounded
+                                        : (isCaptainArrived
+                                            ? Icons.directions_car_rounded
+                                            : Icons.radar_rounded),
+                                    color: activeColor,
+                                    size: 22,
+                                  ),
+                                ),
+                                AppSpacing.w12,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isTripStarted
+                                            ? 'الرحلة جارية...'
+                                            : (isCaptainArrived
+                                                ? 'الكابتن وصل إلى موقعك!'
+                                                : 'الكابتن في الطريق إليك...'),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'IBM Plex Sans Arabic',
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15,
+                                          color: isDark
+                                              ? AppColors.white
+                                              : AppColors.gray900,
                                         ),
-                                        child: Text(
-                                          plate,
-                                          style: const TextStyle(
-                                              fontFamily: 'monospace',
-                                              fontSize: 10,
-                                              color: AppColors.gray800),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        isTripStarted
+                                            ? 'في الطريق إلى الوجهة'
+                                            : (isCaptainArrived
+                                                ? 'يرجى التوجه للمركبة'
+                                                : 'يصل خلال دقائق'),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'IBM Plex Sans Arabic',
+                                          fontSize: 12,
+                                          color: isDark
+                                              ? AppColors.gray400
+                                              : AppColors.gray600,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ),
-                            // Action Buttons
-                            Row(
-                              children: [
-                                _buildCircleButton(Icons.message_rounded,
-                                    AppColors.primary500, () async {
-                                  final Uri smsUri = Uri(
-                                    scheme: 'sms',
-                                    path: '+967700000000',
-                                  );
-                                  if (await canLaunchUrl(smsUri)) {
-                                    await launchUrl(smsUri);
-                                  }
-                                }),
-                                AppSpacing.w12,
-                                _buildCircleButton(Icons.call_rounded,
-                                    AppColors.success, () async {
-                                  final Uri telUri = Uri(
-                                    scheme: 'tel',
-                                    path: '+967700000000',
-                                  );
-                                  if (await canLaunchUrl(telUri)) {
-                                    await launchUrl(telUri);
-                                  }
-                                }),
+                                ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
-                        AppSpacing.h24,
-                        // Emergency & Cancel
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            TextButton.icon(
-                              onPressed: () {
-                                context.read<RideBloc>().add(
-                                    const CancelRideRequested(
-                                        reason: 'إلغاء من قبل الراكب'));
-                                context.pop();
-                              },
-                              icon: const Icon(Icons.cancel_outlined,
-                                  color: AppColors.danger),
-                              label: const Text(
-                                'إلغاء الرحلة',
-                                style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    color: AppColors.danger,
-                                    fontWeight: FontWeight.bold),
-                              ),
+
+                        AppSpacing.h16,
+
+                        // ── Captain Info Section ──
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.surfaceDark
+                                  : AppColors.gray50,
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            TextButton.icon(
-                              onPressed: () async {
-                                final l10n = AppLocalizations.of(context)!;
-                                final String shareText =
-                                    l10n.ride_track_share_message;
-                                await Clipboard.setData(
-                                    ClipboardData(text: shareText));
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      backgroundColor: AppColors.primary500,
-                                      content: Text(
-                                        l10n.ride_track_share_copied,
-                                        style: const TextStyle(
-                                            fontFamily: 'IBM Plex Sans Arabic'),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: const BoxDecoration(
+                                    gradient: AppColors.primaryGradient,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.person_rounded,
+                                    color: AppColors.white,
+                                    size: 26,
+                                  ),
+                                ),
+                                AppSpacing.w12,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        captainName,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'IBM Plex Sans Arabic',
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: isDark
+                                              ? AppColors.white
+                                              : AppColors.gray900,
+                                        ),
                                       ),
-                                      action: SnackBarAction(
-                                        label: l10n.common_whatsapp,
-                                        textColor: AppColors.white,
-                                        onPressed: () async {
-                                          final Uri waUri = Uri.parse(
-                                              'https://wa.me/?text=${Uri.encodeComponent(shareText)}');
-                                          if (await canLaunchUrl(waUri)) {
-                                            await launchUrl(waUri,
-                                                mode: LaunchMode
-                                                    .externalApplication);
-                                          }
-                                        },
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.warning.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.star_rounded, color: AppColors.warning, size: 14),
+                                                const SizedBox(width: 2),
+                                                Text(
+                                                  rating,
+                                                  style: TextStyle(
+                                                    fontFamily: 'IBM Plex Sans Arabic',
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isDark ? AppColors.white : AppColors.gray800,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          AppSpacing.w8,
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: isDark ? AppColors.gray800 : AppColors.gray200,
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              plate,
+                                              style: TextStyle(
+                                                fontFamily: 'monospace',
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark ? AppColors.gray300 : AppColors.gray700,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ],
+                                  ),
+                                ),
+                                // Action Buttons
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildActionButton(Icons.message_rounded, AppColors.primary500, isDark, () async {
+                                      final Uri smsUri = Uri(scheme: 'sms', path: '+967700000000');
+                                      if (await canLaunchUrl(smsUri)) await launchUrl(smsUri);
+                                    }),
+                                    const SizedBox(width: 10),
+                                    _buildActionButton(Icons.call_rounded, AppColors.success, isDark, () async {
+                                      final Uri telUri = Uri(scheme: 'tel', path: '+967700000000');
+                                      if (await canLaunchUrl(telUri)) await launchUrl(telUri);
+                                    }),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // ── Bottom Actions ──
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    context.read<RideBloc>().add(
+                                        const CancelRideRequested(
+                                            reason: 'إلغاء من قبل الراكب'));
+                                    context.pop();
+                                  },
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  label: const Text(
+                                    'إلغاء الرحلة',
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
                                     ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.shield_outlined,
-                                  color: AppColors.primary500),
-                              label: const Text(
-                                'شارك مسار الرحلة',
-                                style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    color: AppColors.primary500,
-                                    fontWeight: FontWeight.bold),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.danger,
+                                    side: const BorderSide(color: AppColors.danger, width: 1.2),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final l10n = AppLocalizations.of(context)!;
+                                    final String shareText = l10n.ride_track_share_message;
+                                    await Clipboard.setData(ClipboardData(text: shareText));
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          backgroundColor: AppColors.primary500,
+                                          content: Text(
+                                            l10n.ride_track_share_copied,
+                                            style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+                                          ),
+                                          action: SnackBarAction(
+                                            label: l10n.common_whatsapp,
+                                            textColor: AppColors.white,
+                                            onPressed: () async {
+                                              final Uri waUri = Uri.parse(
+                                                  'https://wa.me/?text=${Uri.encodeComponent(shareText)}');
+                                              if (await canLaunchUrl(waUri)) {
+                                                await launchUrl(waUri, mode: LaunchMode.externalApplication);
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(Icons.shield_outlined, size: 18),
+                                  label: const Text(
+                                    'شارك مسار الرحلة',
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.primary500,
+                                    side: const BorderSide(color: AppColors.primary500, width: 1.2),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     );
@@ -568,16 +675,49 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
   );
 }
 
-  Widget _buildCircleButton(IconData icon, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
+  Widget _buildProgressDot(int step, int currentStep, Color activeColor, bool isDark) {
+    final bool isActive = currentStep >= step;
+    final bool isCurrent = currentStep == step;
+    return Container(
+      width: isCurrent ? 14 : 10,
+      height: isCurrent ? 14 : 10,
+      decoration: BoxDecoration(
+        color: isActive ? activeColor : (isDark ? AppColors.gray700 : AppColors.gray300),
+        shape: BoxShape.circle,
+        boxShadow: isCurrent
+            ? [BoxShadow(color: activeColor.withValues(alpha: 0.4), blurRadius: 6, spreadRadius: 1)]
+            : [],
+      ),
+    );
+  }
+
+  Widget _buildProgressLine(int step, int currentStep, Color activeColor, bool isDark) {
+    final bool isActive = currentStep > step;
+    return Container(
+      height: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: isActive ? activeColor : (isDark ? AppColors.gray700 : AppColors.gray300),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, Color color, bool isDark, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
+          ),
+          child: Icon(icon, color: color, size: 20),
         ),
-        child: Icon(icon, color: color, size: 20),
       ),
     );
   }

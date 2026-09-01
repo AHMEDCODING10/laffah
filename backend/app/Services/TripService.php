@@ -111,11 +111,11 @@ class TripService
                 return $trip;
             }
 
+            // Broadcast realtime Pusher WebSocket event first for zero delay
+            event(new \App\Events\NewTripRequested($trip));
+
             // Notify all online captains about the new trip (FCM)
             $this->notifyNearbyCaptains($trip);
-
-            // Broadcast realtime Pusher WebSocket event
-            event(new \App\Events\NewTripRequested($trip));
 
             return $trip;
         });
