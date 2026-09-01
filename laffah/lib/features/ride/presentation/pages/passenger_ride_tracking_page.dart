@@ -481,7 +481,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                 Container(
                                   width: 50,
                                   height: 50,
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     gradient: AppColors.primaryGradient,
                                     shape: BoxShape.circle,
                                   ),
