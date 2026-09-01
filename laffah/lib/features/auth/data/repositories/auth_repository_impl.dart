@@ -44,8 +44,11 @@ class AuthRepositoryImpl implements AuthRepository {
         return Left(
             ValidationFailure((e.error as LaravelValidationException).message));
       }
-      return Left(ServerFailure(
-          e.response?.data?['message']?.toString() ?? 'Invalid credentials'));
+      final errorMsg = e.response?.data?['message']?.toString();
+      if (errorMsg == 'Invalid credentials') {
+        return const Left(ServerFailure('بيانات الدخول غير صحيحة، يرجى التأكد من رقم الهاتف وكلمة المرور.'));
+      }
+      return Left(ServerFailure(errorMsg ?? 'فشل تسجيل الدخول، يرجى المحاولة لاحقاً.'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -84,7 +87,10 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
 
-      return const Left(ServerFailure('حدث خطأ أثناء الاتصال بالخادم'));
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        return const Left(ServerFailure('انتهى وقت الاتصال بالخادم. يرجى التأكد من جودة الإنترنت أو المحاولة لاحقاً.'));
+      }
+      return const Left(ServerFailure('تعذر الاتصال بالخادم، يرجى التأكد من اتصالك بالإنترنت.'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -132,7 +138,10 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
 
-      return const Left(ServerFailure('حدث خطأ أثناء الاتصال بالخادم'));
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        return const Left(ServerFailure('انتهى وقت الاتصال بالخادم. يرجى التأكد من جودة الإنترنت أو المحاولة لاحقاً.'));
+      }
+      return const Left(ServerFailure('تعذر الاتصال بالخادم، يرجى التأكد من اتصالك بالإنترنت.'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
