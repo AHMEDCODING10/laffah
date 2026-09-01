@@ -101,6 +101,8 @@ class RideBookingConfirmed extends RideState {
   final double rating;
   final String status;
   final String? rideId;
+  final String? distance;
+  final String? duration;
 
   const RideBookingConfirmed({
     required this.pickup,
@@ -113,6 +115,8 @@ class RideBookingConfirmed extends RideState {
     required this.rating,
     required this.status,
     this.rideId,
+    this.distance,
+    this.duration,
   });
 
   RideBookingConfirmed copyWith({
@@ -126,6 +130,8 @@ class RideBookingConfirmed extends RideState {
     double? rating,
     String? status,
     String? rideId,
+    String? distance,
+    String? duration,
   }) {
     return RideBookingConfirmed(
       pickup: pickup ?? this.pickup,
@@ -138,6 +144,8 @@ class RideBookingConfirmed extends RideState {
       rating: rating ?? this.rating,
       status: status ?? this.status,
       rideId: rideId ?? this.rideId,
+      distance: distance ?? this.distance,
+      duration: duration ?? this.duration,
     );
   }
 
@@ -153,6 +161,8 @@ class RideBookingConfirmed extends RideState {
         rating,
         status,
         rideId,
+        distance,
+        duration,
       ];
 }
 

@@ -19,7 +19,7 @@ abstract class RideRepository {
   });
 
   Future<Either<Failure, RideEntity>> trackRide(String rideId);
-  Future<Either<Failure, void>> cancelRide(String rideId);
+  Future<Either<Failure, void>> cancelRide(String rideId, {bool isParcel = false});
 
   /// Fetches all trips for the current authenticated user (passenger or captain)
   Future<Either<Failure, List<Map<String, dynamic>>>> getTripHistory();

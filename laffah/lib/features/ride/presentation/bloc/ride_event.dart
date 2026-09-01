@@ -130,12 +130,13 @@ class SubmitParcelOrder extends RideEvent {
 
 class CancelRideRequested extends RideEvent {
   final String? reason;
-  final String? tripId; // For cancelling a specific trip by ID from history
+  final String? tripId;
+  final bool isParcel;
 
-  const CancelRideRequested({this.reason, this.tripId});
+  const CancelRideRequested({this.reason, this.tripId, this.isParcel = false});
 
   @override
-  List<Object?> get props => [reason, tripId];
+  List<Object?> get props => [reason, tripId, isParcel];
 }
 
 /// Load trip history from the backend
@@ -202,7 +203,9 @@ class ActiveRidePolledStatusUpdated extends RideEvent {
   final RideOption option;
   final String pickup;
   final String dropoff;
-  final double? backendFare; // Authoritative fare from backend API
+  final double? backendFare;
+  final String? distance;
+  final String? duration; // Authoritative fare from backend API
 
   const ActiveRidePolledStatusUpdated({
     required this.status,
@@ -216,6 +219,8 @@ class ActiveRidePolledStatusUpdated extends RideEvent {
     required this.pickup,
     required this.dropoff,
     this.backendFare,
+    this.distance,
+    this.duration,
   });
 
   @override
@@ -231,6 +236,8 @@ class ActiveRidePolledStatusUpdated extends RideEvent {
         pickup,
         dropoff,
         backendFare,
+        distance,
+        duration,
       ];
 }
 
@@ -251,11 +258,12 @@ class RateTripRequested extends RideEvent {
 
 class DeleteTripFromHistory extends RideEvent {
   final String tripId;
+  final bool isParcel;
 
-  const DeleteTripFromHistory(this.tripId);
+  const DeleteTripFromHistory(this.tripId, {this.isParcel = false});
 
   @override
-  List<Object?> get props => [tripId];
+  List<Object?> get props => [tripId, isParcel];
 }
 
 

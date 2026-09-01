@@ -80,13 +80,15 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
       }
     });
 
-    // 2. Gentle fallback fetch (single delayed fetch) instead of aggressive DDOS polling
+    // 2. Robust fallback fetch (polls every 10 seconds) instead of aggressive DDOS polling
     _refreshTimer?.cancel();
-    _refreshTimer = Timer(const Duration(seconds: 10), () {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
         context
             .read<ParcelBloc>()
             .add(TrackParcelEvent(identifier: _targetIdentifier));
+      } else {
+        timer.cancel();
       }
     });
   }

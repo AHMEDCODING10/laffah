@@ -17,6 +17,8 @@ class RideModel extends RideEntity {
     super.rating,
     super.vehicleModel,
     super.vehiclePlate,
+    super.distanceString,
+    super.durationString,
   });
 
   factory RideModel.fromJson(Map<String, dynamic> json) {
@@ -61,6 +63,8 @@ class RideModel extends RideEntity {
       rating: json['rating'] != null ? double.tryParse(json['rating'].toString()) : null,
       vehicleModel: vehicleModel,
       vehiclePlate: vehiclePlate,
+      distanceString: json['distance']?.toString(),
+      durationString: json['duration']?.toString(),
     );
   }
 

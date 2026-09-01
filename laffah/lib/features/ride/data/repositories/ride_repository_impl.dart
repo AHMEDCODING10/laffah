@@ -80,9 +80,9 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
-  Future<Either<Failure, void>> cancelRide(String rideId) async {
+  Future<Either<Failure, void>> cancelRide(String rideId, {bool isParcel = false}) async {
     try {
-      final response = await remoteDataSource.cancelRide(rideId);
+      final response = await remoteDataSource.cancelRide(rideId, isParcel: isParcel);
       if (response.success) {
         return const Right(null);
       } else {

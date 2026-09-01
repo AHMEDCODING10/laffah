@@ -97,10 +97,13 @@ class _SearchingParcelCaptainOverlayState
       }
     });
 
-    // Gentle fallback fetch (just once after 10 seconds)
+    // Robust fallback fetch (polls every 10 seconds)
     _statusPollingTimer =
-        Timer(const Duration(seconds: 10), () async {
-      if (_isNavigating || !mounted) return;
+        Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (_isNavigating || !mounted) {
+        timer.cancel();
+        return;
+      }
 
       try {
         final dioClient = di.sl<DioClient>();
@@ -120,7 +123,7 @@ class _SearchingParcelCaptainOverlayState
               status == 'in_transit' ||
               status == 'delivered') {
             _isNavigating = true;
-            _statusPollingTimer?.cancel();
+            timer.cancel(); // Stop polling
             HapticFeedback.heavyImpact();
 
             if (mounted) {

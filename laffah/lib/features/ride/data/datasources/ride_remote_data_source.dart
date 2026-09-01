@@ -28,7 +28,7 @@ abstract class RideRemoteDataSource {
   });
 
   Future<BaseResponseModel<RideModel>> trackRide(String rideId);
-  Future<BaseResponseModel<void>> cancelRide(String rideId);
+  Future<BaseResponseModel<void>> cancelRide(String rideId, {bool isParcel = false});
 
   /// Returns the raw list of trip maps from the backend
   Future<List<Map<String, dynamic>>> getTripHistory();
@@ -41,7 +41,7 @@ abstract class RideRemoteDataSource {
   });
 
   /// Deletes a trip from the backend server
-  Future<void> deleteTrip(String tripId);
+  Future<void> deleteTrip(String tripId, {bool isParcel = false});
 }
 
 class RideRemoteDataSourceImpl implements RideRemoteDataSource {
@@ -137,11 +137,12 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
   }
 
   @override
-  Future<BaseResponseModel<void>> cancelRide(String rideId) async {
+  Future<BaseResponseModel<void>> cancelRide(String rideId, {bool isParcel = false}) async {
     final response = await dioClient.dio.post(
       ApiEndpoints.cancelRide(rideId),
       data: {
         'reason': 'إلغاء من قبل الراكب',
+        if (isParcel) 'type': 'parcel',
       },
     );
     return BaseResponseModel.fromJson(response.data, (data) {});
@@ -175,8 +176,9 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
   }
 
   @override
-  Future<void> deleteTrip(String tripId) async {
-    await dioClient.dio.delete('/trips/$tripId');
+  Future<void> deleteTrip(String tripId, {bool isParcel = false}) async {
+    final queryParams = isParcel ? '?type=parcel' : '';
+    await dioClient.dio.delete('/trips/$tripId$queryParams');
   }
 }
 

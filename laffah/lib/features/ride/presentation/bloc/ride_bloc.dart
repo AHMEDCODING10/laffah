@@ -155,13 +155,16 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     Emitter<RideState> emit,
   ) async {
     try {
-      await remoteDataSource.deleteTrip(event.tripId);
+      await remoteDataSource.deleteTrip(event.tripId, isParcel: event.isParcel);
     } catch (_) {}
 
     if (state is TripHistoryLoaded) {
       final currentList = (state as TripHistoryLoaded).trips;
       final updatedList = currentList
-          .where((t) => t['id']?.toString() != event.tripId.toString())
+          .where((t) {
+            final itemIsParcel = (t['isParcel'] == true || t['is_parcel'] == true || t['type'] == 'parcel' || t['type'] == 'delivery');
+            return !(t['id']?.toString() == event.tripId.toString() && itemIsParcel == event.isParcel);
+          })
           .toList();
       emit(TripHistoryLoaded(updatedList));
     }
@@ -398,6 +401,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           rating: rideEntity.rating ?? 5.0,
           status: rideEntity.status,
           rideId: rideEntity.id,
+          distance: rideEntity.distanceString,
+          duration: rideEntity.durationString,
         ));
 
         // Start Periodic Smart Polling to detect when Captain accepts
@@ -434,6 +439,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
             pickup: ride.pickupLocation.isNotEmpty ? ride.pickupLocation : pickup,
             dropoff: ride.dropoffLocation.isNotEmpty ? ride.dropoffLocation : dropoff,
             backendFare: ride.price > 0 ? ride.price : null,
+            distance: ride.distanceString,
+            duration: ride.durationString,
           ));
         },
       );
@@ -490,6 +497,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         rating: event.rating,
         status: s,
         rideId: event.rideId,
+        distance: event.distance,
+        duration: event.duration,
       ));
     } else if (s == 'completed') {
       _stopSmartPolling();
@@ -511,6 +520,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         rating: event.rating,
         status: 'completed',
         rideId: event.rideId,
+        distance: event.distance,
+        duration: event.duration,
       ));
     } else if (s == 'cancelled') {
       _stopSmartPolling();
@@ -601,14 +612,15 @@ class RideBloc extends Bloc<RideEvent, RideState> {
             : null);
 
     if (targetTripId != null && targetTripId.isNotEmpty) {
-      await cancelRideUseCase(targetTripId);
+      await cancelRideUseCase(targetTripId, isParcel: event.isParcel);
     }
 
     if (state is TripHistoryLoaded) {
       final currentList = (state as TripHistoryLoaded).trips;
       final nowStr = DateTime.now().toIso8601String();
       final updatedList = currentList.map((t) {
-        if (t['id']?.toString() == targetTripId?.toString()) {
+        final itemIsParcel = (t['isParcel'] == true || t['is_parcel'] == true || t['type'] == 'parcel' || t['type'] == 'delivery');
+        if (t['id']?.toString() == targetTripId?.toString() && itemIsParcel == event.isParcel) {
           final updated = Map<String, dynamic>.from(t);
           updated['status'] = 'cancelled';
           updated['cancelled_at'] = nowStr;
@@ -689,6 +701,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
               ? (data['captain_rating'] as num).toDouble()
               : 5.0,
           status: 'accepted',
+          distance: data['distance']?.toString(),
+          duration: data['duration']?.toString(),
         ));
       } else {
         emit(RideAccepted(
@@ -724,7 +738,11 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       }
       if (state is RideBookingConfirmed) {
         final s = state as RideBookingConfirmed;
-        emit(s.copyWith(status: 'completed'));
+        emit(s.copyWith(
+          status: 'completed',
+          distance: data['distance']?.toString(),
+          duration: data['duration']?.toString(),
+        ));
       } else {
         emit(const RideCompleted());
       }

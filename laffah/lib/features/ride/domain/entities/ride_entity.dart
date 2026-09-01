@@ -16,6 +16,8 @@ class RideEntity extends Equatable {
   final double? rating;
   final String? vehicleModel;
   final String? vehiclePlate;
+  final String? distanceString;
+  final String? durationString;
 
   const RideEntity({
     required this.id,
@@ -33,6 +35,8 @@ class RideEntity extends Equatable {
     this.rating,
     this.vehicleModel,
     this.vehiclePlate,
+    this.distanceString,
+    this.durationString,
   });
 
   @override
@@ -52,6 +56,8 @@ class RideEntity extends Equatable {
         rating,
         vehicleModel,
         vehiclePlate,
+        distanceString,
+        durationString,
       ];
 }
 

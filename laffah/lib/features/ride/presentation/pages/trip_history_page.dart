@@ -277,7 +277,7 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
   }
 
   Future<void> _showCancelConfirmationDialog(
-      BuildContext context, String tripId) async {
+      BuildContext context, String tripId, bool isParcel) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final shouldCancel = await showDialog<bool>(
       context: context,
@@ -372,7 +372,7 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
     );
 
     if (shouldCancel == true && context.mounted) {
-      context.read<RideBloc>().add(CancelRideRequested(tripId: tripId));
+      context.read<RideBloc>().add(CancelRideRequested(tripId: tripId, isParcel: isParcel));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
@@ -398,8 +398,8 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
     }
   }
 
-  void _handleDirectDelete(BuildContext context, String tripId) {
-    context.read<RideBloc>().add(DeleteTripFromHistory(tripId));
+  void _handleDirectDelete(BuildContext context, String tripId, bool isParcel) {
+    context.read<RideBloc>().add(DeleteTripFromHistory(tripId, isParcel: isParcel));
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -452,21 +452,21 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
               item: item,
               isDark: isDark,
               onDelete: () =>
-                  _handleDirectDelete(context, item['id'] as String),
+                  _handleDirectDelete(context, item['id'] as String, item['isParcel'] == true),
             );
           } else if (status == 'completed' || status == 'delivered') {
             return PastTripCard(
               item: item,
               isDark: isDark,
               onDelete: () =>
-                  _handleDirectDelete(context, item['id'] as String),
+                  _handleDirectDelete(context, item['id'] as String, item['isParcel'] == true),
             );
           } else if (status == 'scheduled') {
             return ScheduledTripCard(
               item: item,
               isDark: isDark,
               onCancel: () =>
-                  _showCancelConfirmationDialog(context, item['id'] as String),
+                  _showCancelConfirmationDialog(context, item['id'] as String, item['isParcel'] == true),
             );
           } else {
             // Active / in_transit / arrived / pending / accepted
@@ -474,7 +474,7 @@ class __TripHistoryViewState extends State<_TripHistoryView> {
               item: item,
               isDark: isDark,
               onCancel: () =>
-                  _showCancelConfirmationDialog(context, item['id'] as String),
+                  _showCancelConfirmationDialog(context, item['id'] as String, item['isParcel'] == true),
             );
           }
         },

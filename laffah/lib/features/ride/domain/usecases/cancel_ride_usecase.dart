@@ -7,7 +7,7 @@ class CancelRideUseCase {
 
   CancelRideUseCase(this.repository);
 
-  Future<Either<Failure, void>> call(String rideId) async {
-    return await repository.cancelRide(rideId);
+  Future<Either<Failure, void>> call(String rideId, {bool isParcel = false}) {
+    return repository.cancelRide(rideId, isParcel: isParcel);
   }
 }

@@ -177,6 +177,12 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
               ? state.dropoff
               : 'شارع الزبيري';
           final rating = (state is RideBookingConfirmed) ? state.rating : 5.0;
+          final distance = (state is RideBookingConfirmed && state.distance != null) 
+              ? state.distance 
+              : 'غير محدد';
+          final duration = (state is RideBookingConfirmed && state.duration != null) 
+              ? state.duration 
+              : 'غير محدد';
 
           context.pushReplacement(
             LaffahRoutes.passengerRideInvoice,
@@ -190,8 +196,8 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
               'pickup': pickup,
               'dropoff': dropoff,
               'rating': rating,
-              'distance': '6.3 كم',
-              'duration': '7 دقيقة',
+              'distance': distance,
+              'duration': duration,
               'paymentMethod': 'نقداً (Cash)',
             },
           );
