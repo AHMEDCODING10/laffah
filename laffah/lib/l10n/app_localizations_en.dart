@@ -1224,10 +1224,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String capt_wallet_payout_success(
-    String amount,
-    String method,
-    String accountNumber,
-  ) {
+      String amount, String method, String accountNumber) {
     return 'Payout request for $amount YER via $method to account ($accountNumber) sent successfully!';
   }
 

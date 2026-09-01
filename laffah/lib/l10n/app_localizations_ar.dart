@@ -1203,10 +1203,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String capt_wallet_payout_success(
-    String amount,
-    String method,
-    String accountNumber,
-  ) {
+      String amount, String method, String accountNumber) {
     return 'تم إرسال طلب تحويل $amount ر.ي عبر $method إلى الحساب ($accountNumber) بنجاح!';
   }
 
