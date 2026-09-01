@@ -190,6 +190,36 @@ class TripController extends Controller
     {
         try {
             $reason = $request->input('reason', 'تم الإلغاء');
+            $type = $request->input('type', 'trip');
+
+            if ($type === 'parcel') {
+                $parcel = \App\Models\Parcel::findOrFail($id);
+                $user = $request->user();
+                
+                // Verify ownership or captaincy
+                $isPassenger = $parcel->user_id === $user->id;
+                $isAssignedCaptain = $user->captainProfile && $parcel->captain_profile_id === $user->captainProfile->id;
+                
+                if (!$isPassenger && !$isAssignedCaptain) {
+                    throw new \Exception("غير مصرح لك بإلغاء هذا الطرد.", 403);
+                }
+
+                if ($parcel->status === 'delivered' || $parcel->status === 'cancelled') {
+                    throw new \Exception("لا يمكن إلغاء طرد مكتمل أو ملغي مسبقاً.", 400);
+                }
+
+                $parcel->update([
+                    'status' => 'cancelled',
+                    'cancellation_reason' => $reason,
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'تم إلغاء الطرد بنجاح.',
+                    'data' => $parcel
+                ]);
+            }
+
             $trip = $this->tripService->cancelTrip($id, $request->user(), $reason);
             return response()->json([
                 'status' => 'success',
@@ -487,40 +517,43 @@ class TripController extends Controller
     {
         try {
             $user = $request->user();
-            $trip = Trip::where('id', $id)
-                ->where(function ($q) use ($user) {
-                    $q->where('user_id', $user->id);
-                    if ($user->captainProfile) {
-                        $q->orWhere('captain_profile_id', $user->captainProfile->id);
-                    }
-                })
-                ->first();
+            $type = $request->query('type', 'trip');
 
-            if ($trip) {
-                $trip->stops()->delete();
-                $trip->delete();
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'تم حذف الرحلة بنجاح.'
-                ]);
-            }
+            if ($type === 'parcel') {
+                $parcel = \App\Models\Parcel::where('id', $id)
+                    ->where(function ($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                        if ($user->captainProfile) {
+                            $q->orWhere('captain_profile_id', $user->captainProfile->id);
+                        }
+                    })
+                    ->first();
 
-            // Check if it is a parcel
-            $parcel = \App\Models\Parcel::where('id', $id)
-                ->where(function ($q) use ($user) {
-                    $q->where('user_id', $user->id);
-                    if ($user->captainProfile) {
-                        $q->orWhere('captain_profile_id', $user->captainProfile->id);
-                    }
-                })
-                ->first();
+                if ($parcel) {
+                    $parcel->delete();
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'تم حذف سجل الطرد بنجاح.'
+                    ]);
+                }
+            } else {
+                $trip = Trip::where('id', $id)
+                    ->where(function ($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                        if ($user->captainProfile) {
+                            $q->orWhere('captain_profile_id', $user->captainProfile->id);
+                        }
+                    })
+                    ->first();
 
-            if ($parcel) {
-                $parcel->delete();
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'تم حذف سجل الطرد بنجاح.'
-                ]);
+                if ($trip) {
+                    $trip->stops()->delete();
+                    $trip->delete();
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'تم حذف الرحلة بنجاح.'
+                    ]);
+                }
             }
 
             return response()->json([
