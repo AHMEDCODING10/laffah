@@ -12,6 +12,7 @@ import '../../../../core/widgets/glass_box.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/routing_service.dart';
+import '../../../../core/services/echo_service.dart';
 import '../bloc/core/captain_bloc.dart';
 import '../bloc/core/captain_event.dart';
 import 'captain_trip_invoice_widget.dart';
@@ -62,12 +63,107 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   int _currentStep = 0;
 
   final RoutingService _routingService = RoutingService();
+  final EchoService _echoService = EchoService();
   List<LatLng> _routePoints = [];
+  bool _isCancellationHandled = false;
 
   @override
   void initState() {
     super.initState();
     _initLiveNavigationRoute();
+    _listenForTripCancellation();
+  }
+
+  @override
+  void dispose() {
+    _echoService.stopListeningToTripStatus(widget.tripId);
+    super.dispose();
+  }
+
+  /// Listen for trip cancellation from passenger via WebSocket
+  void _listenForTripCancellation() {
+    _echoService.init().then((_) {
+      _echoService.listenToTripStatus(widget.tripId, (data) {
+        if (!mounted || _isCancellationHandled) return;
+        final status = data['status']?.toString();
+        if (status == 'cancelled') {
+          _isCancellationHandled = true;
+          _showTripCancelledDialog();
+        }
+      });
+    });
+  }
+
+  /// Show a clear dialog informing captain that the passenger cancelled the trip
+  void _showTripCancelledDialog() {
+    if (!mounted) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    HapticFeedback.heavyImpact();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          icon: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.cancel_rounded, color: AppColors.danger, size: 40),
+          ),
+          title: const Text(
+            'تم إلغاء الرحلة',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: AppColors.danger,
+            ),
+          ),
+          content: const Text(
+            'قام الراكب بإلغاء هذه الرحلة. سيتم إعادتك إلى الشاشة الرئيسية لاستقبال طلبات جديدة.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 14,
+              height: 1.6,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  if (mounted) {
+                    _safePop(context);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary500,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: const Text(
+                  'حسناً، فهمت',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _initLiveNavigationRoute() async {
