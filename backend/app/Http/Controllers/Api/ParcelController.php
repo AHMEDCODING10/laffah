@@ -108,7 +108,14 @@ class ParcelController extends Controller
             'tracking_code'    => $trackingCode,
         ]);
 
-        // Broadcast to nearby online captains
+        // Broadcast realtime Pusher WebSocket event first for zero delay
+        try {
+            event(new \App\Events\NewParcelRequested($parcel));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to broadcast parcel websocket: " . $e->getMessage());
+        }
+
+        // Broadcast to nearby online captains (FCM)
         try {
             $notificationService = app(NotificationService::class);
 
@@ -144,10 +151,8 @@ class ParcelController extends Controller
                     );
                 }
             }
-            // Fire realtime Pusher WebSocket event
-            event(new \App\Events\NewParcelRequested($parcel));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Failed to broadcast parcel: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error("Failed to broadcast parcel FCM: " . $e->getMessage());
         }
 
         return response()->json([
