@@ -518,6 +518,7 @@ class AppRouter {
             dropoffLat: (extra['dropoffLat'] as num?)?.toDouble() ?? 15.3521,
             dropoffLng: (extra['dropoffLng'] as num?)?.toDouble() ?? 44.2014,
             paymentMethod: extra['paymentMethod'] as String? ?? 'cash',
+            status: extra['status'] as String? ?? 'pending',
           );
         },
       ),
@@ -546,6 +547,7 @@ class AppRouter {
             pickupLng: (extra['pickupLng'] as num?)?.toDouble() ?? 44.1910,
             dropoffLat: (extra['dropoffLat'] as num?)?.toDouble() ?? 15.3521,
             dropoffLng: (extra['dropoffLng'] as num?)?.toDouble() ?? 44.2014,
+            status: extra['status'] as String? ?? 'pending',
           );
         },
       ),

@@ -44,6 +44,7 @@ class CaptainParcelNavigationPage extends StatefulWidget {
   final double pickupLng;
   final double dropoffLat;
   final double dropoffLng;
+  final String status; // Added status parameter
 
   const CaptainParcelNavigationPage({
     super.key,
@@ -64,6 +65,7 @@ class CaptainParcelNavigationPage extends StatefulWidget {
     this.pickupLng = 44.1910,
     this.dropoffLat = 15.3521,
     this.dropoffLng = 44.2014,
+    this.status = 'pending', // Default
   });
 
   @override
@@ -81,7 +83,32 @@ class _CaptainParcelNavigationPageState
   @override
   void initState() {
     super.initState();
+    _initializeStepFromStatus();
     _initLiveNavigationRoute();
+  }
+
+  void _initializeStepFromStatus() {
+    switch (widget.status.toLowerCase()) {
+      case 'pending':
+      case 'accepted':
+        _currentStep = 0; // heading to pickup
+        break;
+      case 'arrived_at_pickup':
+      case 'arrived':
+        _currentStep = 1; // at pickup
+        break;
+      case 'picked_up':
+        _currentStep = 2; // heading to dropoff
+        break;
+      case 'in_transit':
+        _currentStep = 3; // at dropoff
+        break;
+      case 'delivered':
+        _currentStep = 4; // done
+        break;
+      default:
+        _currentStep = 0;
+    }
   }
 
   Future<void> _initLiveNavigationRoute() async {
@@ -144,19 +171,16 @@ class _CaptainParcelNavigationPageState
     
     final Uri url = Uri(scheme: 'tel', path: cleanPhone);
     try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('لا يمكن فتح تطبيق الاتصال')),
-          );
-        }
-      }
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     } catch (e) {
-      debugPrint('Error launching call: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('لا يمكن فتح تطبيق الاتصال')),
+        );
+      }
     }
   }
+
 
   void _showSOSEmergencyDialog(BuildContext context, bool isDark) {
     HapticFeedback.heavyImpact();
@@ -941,6 +965,12 @@ class _CaptainParcelNavigationPageState
                 (pickup.longitude + dropoff.longitude) / 2,
               ));
 
+    // 🟠 Step 0-1 = heading to pickup (orange)
+    // 🟢 Step 2 = heading to delivery (green)
+    final routeColor = _currentStep < 2
+        ? const Color(0xFFFF9800) // Orange
+        : const Color(0xFF4CAF50); // Green
+
     return LaffahMapView(
       isDark: isDark,
       initialCenter: destination,
@@ -948,6 +978,7 @@ class _CaptainParcelNavigationPageState
       dropoffLocation: dropoff,
       captainLocation: currentCaptainPos,
       routePoints: _routePoints.isNotEmpty ? _routePoints : null,
+      routeColor: routeColor,
       followCaptain: true,
       showDefaultMockData: false,
     );

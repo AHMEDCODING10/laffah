@@ -203,19 +203,16 @@ class CaptainCommunicationSheet extends StatelessWidget {
                               Navigator.pop(context);
                               final cleanPhone = passengerPhone.replaceAll(RegExp(r'[^\d+]'), '');
                               if (cleanPhone.isEmpty) return;
-                              final Uri whatsappUrl = Uri.parse('whatsapp://send?phone=$cleanPhone');
+                              final waPhone = cleanPhone.startsWith('+') ? cleanPhone.substring(1) : cleanPhone;
+                              final Uri whatsappUrl = Uri.parse('https://wa.me/$waPhone');
                               try {
-                                if (await canLaunchUrl(whatsappUrl)) {
-                                  await launchUrl(whatsappUrl);
-                                } else {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('تطبيق واتساب غير مثبت لديك')),
-                                    );
-                                  }
-                                }
+                                await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
                               } catch (e) {
-                                debugPrint('Could not launch WhatsApp: $e');
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('تعذر فتح تطبيق واتساب. تأكد من تثبيته.')),
+                                  );
+                                }
                               }
                             },
                           ),
@@ -236,17 +233,13 @@ class CaptainCommunicationSheet extends StatelessWidget {
                               if (cleanPhone.isEmpty) return;
                               final Uri smsUrl = Uri(scheme: 'sms', path: cleanPhone);
                               try {
-                                if (await canLaunchUrl(smsUrl)) {
-                                  await launchUrl(smsUrl);
-                                } else {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('لا يمكن فتح تطبيق الرسائل')),
-                                    );
-                                  }
-                                }
+                                await launchUrl(smsUrl, mode: LaunchMode.externalApplication);
                               } catch (e) {
-                                debugPrint('Could not launch SMS: $e');
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('لا يمكن فتح تطبيق الرسائل')),
+                                  );
+                                }
                               }
                             },
                           ),

@@ -213,6 +213,22 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
               // Map View
               BlocBuilder<RideBloc, RideState>(
                 builder: (context, state) {
+                  // Determine trip phase for route color
+                  bool inTransit = false;
+                  if (state is RideInProgress) {
+                    inTransit = true;
+                  } else if (state is RideBookingConfirmed) {
+                    final s = state.status.toLowerCase();
+                    if (s == 'in_transit' || s == 'started') {
+                      inTransit = true;
+                    }
+                  }
+                  // 🟠 Orange = captain heading to passenger
+                  // 🟢 Green = trip started, heading to destination
+                  final routeColor = inTransit
+                      ? const Color(0xFF4CAF50) // Green
+                      : const Color(0xFFFF9800); // Orange
+
                   return Positioned.fill(
                     child: LaffahMapView(
                       isDark: isDark,
@@ -226,6 +242,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                           : null,
                       captainHeading: _captainHeading,
                       routePoints: _routePoints.isNotEmpty ? _routePoints : null,
+                      routeColor: routeColor,
                     ),
                   );
                 },

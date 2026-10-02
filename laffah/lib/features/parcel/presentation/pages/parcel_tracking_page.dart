@@ -115,12 +115,34 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
 
   Future<void> _makePhoneCall(String phone) async {
     if (phone.isEmpty) return;
-    final Uri launchUri = Uri(scheme: 'tel', path: phone);
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri launchUri = Uri(scheme: 'tel', path: cleanPhone);
     try {
-      if (await canLaunchUrl(launchUri)) {
-        await launchUrl(launchUri);
+      await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر فتح تطبيق الاتصال')),
+        );
       }
-    } catch (_) {}
+    }
+  }
+
+  Future<void> _openWhatsApp(String phone) async {
+    if (phone.isEmpty) return;
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    // WhatsApp requires the number with country code but without '+' or '00'
+    final waPhone = cleanPhone.startsWith('+') ? cleanPhone.substring(1) : cleanPhone;
+    final Uri waUri = Uri.parse('https://wa.me/$waPhone');
+    try {
+      await launchUrl(waUri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر فتح تطبيق واتساب. تأكد من تثبيته.')),
+        );
+      }
+    }
   }
 
   @override
@@ -466,14 +488,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.chat_bubble_outline_rounded,
                       size: 18, color: AppColors.primary500),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('جاري فتح المحادثة مع الكابتن...',
-                            style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
-                      ),
-                    );
-                  },
+                  onPressed: () => _openWhatsApp(captainPhone),
                 ),
               ),
             ],
@@ -735,6 +750,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
                     passengerLocation: pickup,
                     dropoffLocation: dropoff,
                     captainLocation: captainLoc,
+                    routeColor: const Color(0xFFFF9800), // Orange - heading to pickup
                     showDefaultMockData: false,
                   ),
                   // Floating ETA Badge

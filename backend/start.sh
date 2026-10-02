@@ -44,10 +44,10 @@ if [ "$ENABLE_REVERB" != "false" ]; then
     nohup php artisan reverb:start --host=0.0.0.0 --port=8080 > /var/www/html/storage/logs/reverb.log 2>&1 &
 fi
 
-# 6. Launch Queue Worker in Background
+# 6. Launch Queue Worker in Background with Auto-Restart (Self-Healing)
 if [ "$ENABLE_QUEUE" != "false" ]; then
-    echo "⏳ [Laffah] Starting Queue Worker..."
-    nohup php artisan queue:work --sleep=3 --tries=3 > /var/www/html/storage/logs/queue.log 2>&1 &
+    echo "⏳ [Laffah] Starting Queue Worker with Auto-Restart..."
+    nohup bash -c 'while true; do php artisan queue:work --sleep=3 --tries=3; echo "Queue crashed. Restarting in 5s..."; sleep 5; done' > /var/www/html/storage/logs/queue.log 2>&1 &
 fi
 
 echo "✅ [Laffah] Startup completed successfully. Launching Web Server..."

@@ -453,8 +453,8 @@ class ParcelController extends Controller
                         'body'  => "طردك رقم #{$parcel->tracking_code} أصبح الآن في حالة: {$status}"
                     ];
 
-                    // Only send FCM for high-priority statuses to avoid spamming the user
-                    $shouldSendFcm = in_array($status, ['delivered', 'cancelled']);
+                    // Send FCM for all parcel status updates to ensure passenger is kept informed
+                    $shouldSendFcm = in_array($status, ['arrived_at_pickup', 'picked_up', 'in_transit', 'delivered', 'cancelled']);
 
                     if ($shouldSendFcm) {
                         $notificationService = app(NotificationService::class);

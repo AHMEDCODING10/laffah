@@ -37,6 +37,7 @@ class CaptainNavigationPage extends StatefulWidget {
   final double dropoffLat;
   final double dropoffLng;
   final String paymentMethod;
+  final String status;
 
   const CaptainNavigationPage({
     super.key,
@@ -54,6 +55,7 @@ class CaptainNavigationPage extends StatefulWidget {
     this.dropoffLat = 15.3521,
     this.dropoffLng = 44.2014,
     this.paymentMethod = 'cash',
+    this.status = 'pending',
   });
 
   @override
@@ -72,8 +74,32 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   @override
   void initState() {
     super.initState();
+    _initializeStepFromStatus();
     _initLiveNavigationRoute();
     _listenForTripCancellation();
+  }
+
+  void _initializeStepFromStatus() {
+    switch (widget.status.toLowerCase()) {
+      case 'pending':
+      case 'accepted':
+        _currentStep = 0;
+        break;
+      case 'arrived':
+        _currentStep = 1;
+        break;
+      case 'started':
+      case 'in_progress':
+      case 'in_transit':
+        _currentStep = 2;
+        break;
+      case 'completed':
+      case 'delivered':
+        _currentStep = 3;
+        break;
+      default:
+        _currentStep = 0;
+    }
   }
 
   @override
@@ -977,6 +1003,12 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                 (pickup.longitude + dropoff.longitude) / 2,
               ));
 
+    // 🟠 Step 0-1 = heading to passenger (orange)
+    // 🟢 Step 2 = heading to destination (green)
+    final routeColor = _currentStep < 2
+        ? const Color(0xFFFF9800) // Orange
+        : const Color(0xFF4CAF50); // Green
+
     return LaffahMapView(
       isDark: isDark,
       initialCenter: destination,
@@ -984,6 +1016,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       dropoffLocation: dropoff,
       captainLocation: currentCaptainPos,
       routePoints: _routePoints.isNotEmpty ? _routePoints : null,
+      routeColor: routeColor,
       followCaptain: true,
       showDefaultMockData: false,
     );

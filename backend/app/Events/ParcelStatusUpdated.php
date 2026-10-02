@@ -30,9 +30,15 @@ class ParcelStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
      */
     public function broadcastOn(): array
     {
-        return [
+        $channels = [
             new \Illuminate\Broadcasting\PrivateChannel('trip.' . $this->parcel->id),
         ];
+
+        if (!empty($this->parcel->tracking_code)) {
+            $channels[] = new \Illuminate\Broadcasting\PrivateChannel('trip.' . $this->parcel->tracking_code);
+        }
+
+        return $channels;
     }
 
     /**

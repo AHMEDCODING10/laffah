@@ -28,6 +28,7 @@ class LaffahMapView extends StatefulWidget {
   final double captainHeading;
   final LatLng? passengerLocation;
   final List<LatLng>? routePoints;
+  final Color? routeColor;
   final LatLng? dropoffLocation;
   final bool followCaptain;
   final bool showDefaultMockData;
@@ -45,6 +46,7 @@ class LaffahMapView extends StatefulWidget {
     this.captainHeading = 0.0,
     this.passengerLocation,
     this.routePoints,
+    this.routeColor,
     this.dropoffLocation,
     this.followCaptain = false,
     this.showDefaultMockData = true,
@@ -251,11 +253,8 @@ class _LaffahMapViewState extends State<LaffahMapView>
   String get _tileUrl => getTileUrl(isDark: widget.isDark);
 
   static String getTileUrl({required bool isDark}) {
-    // High-performance, crystal-clear, keyless vector-raster tiles via CartoCDN
-    if (isDark) {
-      return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
-    }
-    return 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
+    // OpenStreetMap standard tiles (free, no API key required)
+    return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   }
 
   LatLng get _initialCenter =>
@@ -495,10 +494,10 @@ class _LaffahMapViewState extends State<LaffahMapView>
         strokeCap: StrokeCap.round,
         strokeJoin: StrokeJoin.round,
       ),
-      // Main orange route line
+      // Main route line (color changes based on trip phase)
       Polyline(
         points: points,
-        color: AppColors.primary500,
+        color: widget.routeColor ?? AppColors.primary500,
         strokeWidth: 5.5,
         strokeCap: StrokeCap.round,
         strokeJoin: StrokeJoin.round,

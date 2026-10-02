@@ -125,6 +125,7 @@ class _PassengerRideDetailsPageState extends State<PassengerRideDetailsPage> {
                         passengerLocation: LatLng(pickupLat, pickupLng),
                         dropoffLocation: LatLng(dropoffLat, dropoffLng),
                         routePoints: _routePoints.isNotEmpty ? _routePoints : null,
+                        routeColor: const Color(0xFF4CAF50), // Green - trip route
                       ),
                     ),
                     if (_isLoadingRoute)
