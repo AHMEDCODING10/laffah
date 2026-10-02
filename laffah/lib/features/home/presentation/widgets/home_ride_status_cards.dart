@@ -146,9 +146,10 @@ class CaptainFoundCard extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () async {
+                      final phone = state.captainPhone.isNotEmpty ? state.captainPhone : '+967777123456';
                       final Uri smsUri = Uri(
                         scheme: 'sms',
-                        path: '+967700000000', // Mock Captain Number
+                        path: phone,
                       );
                       if (await canLaunchUrl(smsUri)) {
                         await launchUrl(smsUri);
@@ -178,9 +179,10 @@ class CaptainFoundCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () async {
+                      final phone = state.captainPhone.isNotEmpty ? state.captainPhone : '+967777123456';
                       final Uri telUri = Uri(
                         scheme: 'tel',
-                        path: '+967700000000', // Mock Captain Number
+                        path: phone,
                       );
                       if (await canLaunchUrl(telUri)) {
                         await launchUrl(telUri);

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'cached_tile_provider.dart';
 import '../theme/app_colors.dart';
 import '../config/app_env.dart';
 
@@ -252,16 +251,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
   String get _tileUrl => getTileUrl(isDark: widget.isDark);
 
   static String getTileUrl({required bool isDark}) {
-    final key = LaffahMapView.mapTilerKey;
-    if (key.isNotEmpty &&
-        key != 'YOUR_MAPTILER_API_KEY' &&
-        key != 'get_your_key_from_maptiler.com') {
-      if (isDark) {
-        return 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}@2x.png?key=$key';
-      }
-      return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=$key';
-    }
-    // High-performance, crystal-clear, keyless vector-raster tiles
+    // High-performance, crystal-clear, keyless vector-raster tiles via CartoCDN
     if (isDark) {
       return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
     }
@@ -546,7 +536,6 @@ class _LaffahMapViewState extends State<LaffahMapView>
             TileLayer(
               urlTemplate: _tileUrl,
               userAgentPackageName: 'com.laffah.app',
-              tileProvider: CachedTileProvider(),
               maxZoom: 19,
               retinaMode: true,
               tileDisplay: const TileDisplay.fadeIn(

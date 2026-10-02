@@ -34,8 +34,8 @@ class TripStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
     public function broadcastOn(): array
     {
         return [
-            new Channel('trip.' . $this->trip->id),
-            new Channel('trips.available'),
+            new \Illuminate\Broadcasting\PrivateChannel('trip.' . $this->trip->id),
+            new \Illuminate\Broadcasting\PrivateChannel('trips.available'),
         ];
     }
 
@@ -55,6 +55,8 @@ class TripStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
         return [
             'id' => (string) $this->trip->id,
             'trip_id' => (string) $this->trip->id,
+            'type' => 'trip_' . $this->trip->status,
+            'event_type' => 'trip_' . $this->trip->status,
             'status' => $this->trip->status,
             'is_available' => $this->trip->status === 'pending' && is_null($this->trip->captain_profile_id),
             'captain_name' => $this->trip->captain?->user?->name ?? 'الكابتن',
@@ -62,6 +64,7 @@ class TripStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
             'vehicle_model' => $this->trip->captain?->vehicle_model ?? 'دراجة نارية',
             'vehicle_plate' => $this->trip->captain?->plate_number ?? '',
             'rating' => (float) ($this->trip->rating_by_user ?? 5.0),
+            'payment_method' => $this->trip->payment_method,
             'trip' => (new \App\Http\Resources\TripResource($this->trip))->resolve(),
         ];
     }

@@ -8,8 +8,15 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('captain-location.{captainId}', function ($user, $captainId) {
-    // Both passengers and the specific captain should be able to listen
-    return true; 
+    // Only the specific captain, an admin, or a passenger with an active trip with this captain can listen
+    $isSameCaptain = (int) $user->captainProfile?->id === (int) $captainId;
+    $isAdmin = $user->hasRole('admin');
+    $hasActiveTrip = \App\Models\Trip::where('user_id', $user->id)
+        ->where('captain_profile_id', $captainId)
+        ->whereIn('status', ['accepted', 'arrived', 'in_transit'])
+        ->exists();
+
+    return $isSameCaptain || $isAdmin || $hasActiveTrip;
 });
 
 Broadcast::channel('captain.{captainId}', function ($user, $captainId) {

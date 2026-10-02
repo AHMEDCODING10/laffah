@@ -15,6 +15,7 @@ class Trip extends Model
         'promo_code_id',
         'status',
         'type',
+        'payment_method',
         'is_multi_stop',
         'pickup_address',
         'pickup_latitude',

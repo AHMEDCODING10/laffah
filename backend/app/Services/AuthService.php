@@ -128,20 +128,31 @@ class AuthService
             throw new Exception('رقم الهاتف غير مسجل لدينا.', 404);
         }
 
-        // Generate 4-digit code
-        $code = rand(1000, 9999);
+        // Generate 6-digit code (1,000,000 possibilities instead of 10,000)
+        $code = rand(100000, 999999);
         
-        // Save to cache for 15 minutes
-        Cache::put('reset_code_' . $phone, $code, now()->addMinutes(15));
+        // Save to cache for 10 minutes
+        Cache::put('reset_code_' . $phone, $code, now()->addMinutes(10));
+        // Reset attempt counter
+        Cache::put('reset_attempts_' . $phone, 0, now()->addMinutes(10));
 
         return $code;
     }
 
     public function verifyResetCode(string $phone, string $code)
     {
+        // Check attempt limit (max 5 wrong attempts)
+        $attempts = (int) Cache::get('reset_attempts_' . $phone, 0);
+        if ($attempts >= 5) {
+            Cache::forget('reset_code_' . $phone);
+            Cache::forget('reset_attempts_' . $phone);
+            throw new Exception('تم تجاوز عدد المحاولات المسموحة. أعد طلب رمز جديد.', 429);
+        }
+
         $cachedCode = Cache::get('reset_code_' . $phone);
         
-        if (!$cachedCode || $cachedCode != $code) {
+        if (!$cachedCode || (string) $cachedCode !== (string) $code) {
+            Cache::increment('reset_attempts_' . $phone);
             throw new Exception('الرمز غير صحيح أو منتهي الصلاحية.', 400);
         }
 

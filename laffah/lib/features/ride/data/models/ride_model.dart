@@ -19,6 +19,7 @@ class RideModel extends RideEntity {
     super.vehiclePlate,
     super.distanceString,
     super.durationString,
+    super.paymentMethod,
   });
 
   factory RideModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +66,7 @@ class RideModel extends RideEntity {
       vehiclePlate: vehiclePlate,
       distanceString: json['distance']?.toString(),
       durationString: json['duration']?.toString(),
+      paymentMethod: json['payment_method']?.toString(),
     );
   }
 
@@ -86,6 +88,7 @@ class RideModel extends RideEntity {
       'rating': rating,
       'vehicle_model': vehicleModel,
       'vehicle_plate': vehiclePlate,
+      'payment_method': paymentMethod,
     };
   }
 }

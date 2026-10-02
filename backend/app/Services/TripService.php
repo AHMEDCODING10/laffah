@@ -51,10 +51,22 @@ class TripService
         $rawPrice = $distanceKm * $perKm;
         $estimatedPrice = (int) ceil($rawPrice);
 
+        $radiusKm = 7; // Search radius
+        $lat = (float) $data['pickup_latitude'];
+        $lng = (float) $data['pickup_longitude'];
+        $haversine = "(6371 * acos(cos(radians($lat)) * cos(radians(latitude)) * cos(radians(longitude) - radians($lng)) + sin(radians($lat)) * sin(radians(latitude))))";
+
+        $nearbyCaptainsCount = \Illuminate\Support\Facades\DB::table('captain_locations')
+            ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
+            ->where('captain_profiles.is_online', true)
+            ->whereRaw("$haversine <= ?", [$radiusKm])
+            ->count();
+
         return [
             'distance_km'     => round($distanceKm, 2),
             'estimated_price' => $estimatedPrice,
             'currency'        => 'YER',
+            'nearby_captains' => $nearbyCaptainsCount,
             // Applied rates returned for client-side display/debug
             'applied_rates'   => [
                 'base_fare'      => 0.0,
@@ -73,11 +85,22 @@ class TripService
     {
         return DB::transaction(function () use ($userId, $data) {
             $estimate = $this->estimate($data);
+            
+            $paymentMethod = $data['payment_method'] ?? 'cash';
+            
+            // If payment method is wallet, check balance
+            if ($paymentMethod === 'wallet') {
+                $wallet = \App\Models\Wallet::where('user_id', $userId)->first();
+                if (!$wallet || $wallet->balance < $estimate['estimated_price']) {
+                    throw new \Exception("رصيد المحفظة غير كافٍ. يرجى الشحن أو اختيار الدفع نقداً.", 402);
+                }
+            }
 
             $trip = Trip::create([
                 'user_id' => $userId,
                 'promo_code_id' => $data['promo_code_id'] ?? null,
                 'type' => $data['type'] ?? 'ride',
+                'payment_method' => $paymentMethod,
                 'is_multi_stop' => isset($data['stops']) && count($data['stops']) > 0,
                 'pickup_address' => $data['pickup_address'],
                 'pickup_latitude' => $data['pickup_latitude'],
@@ -198,7 +221,10 @@ class TripService
     public function rejectTrip($tripId, $captainProfileId)
     {
         $trip = Trip::find($tripId);
-        if (!$trip) return;
+        if (!$trip || $trip->status !== 'pending') return;
+        
+        $captain = CaptainProfile::find($captainProfileId);
+        if (!$captain) return;
         
         // Broadcast that this captain rejected it so it doesn't stay stuck for them
         // Alternatively, this could just remove it from their nearby pool in Cache
@@ -274,25 +300,62 @@ class TripService
                 $updates['commission_amount'] = (int) ceil($finalPrice * ($commissionPercent / 100));
                 $updates['captain_earnings'] = (int) max(0, floor($finalPrice - $updates['commission_amount']));
 
-                // Deduct commission from Captain's wallet
-                if ($trip->captain && $trip->captain->user_id) {
-                    $captainUserId = $trip->captain->user_id;
-
-                    $wallet = Wallet::firstOrCreate(
-                        ['user_id' => $captainUserId],
+                // Handle Payments
+                if ($trip->payment_method === 'wallet') {
+                    // 1. Deduct full price from passenger's wallet
+                    $passengerWallet = Wallet::firstOrCreate(
+                        ['user_id' => $trip->user_id],
                         ['balance' => 0, 'currency' => 'YER']
                     );
+                    $passengerWallet->balance -= $finalPrice;
+                    $passengerWallet->save();
 
-                    $wallet->balance -= $updates['commission_amount'];
-                    $wallet->save();
-
-                    if ($updates['commission_amount'] > 0) {
+                    if ($finalPrice > 0) {
                         Transaction::create([
-                            'wallet_id' => $wallet->id,
+                            'wallet_id' => $passengerWallet->id,
                             'type' => 'withdrawal',
-                            'amount' => $updates['commission_amount'],
-                            'description' => "عمولة لَفَّة عن المشوار رقم #{$trip->id}"
+                            'amount' => $finalPrice,
+                            'description' => "دفع قيمة المشوار رقم #{$trip->id}"
                         ]);
+                    }
+
+                    // 2. Add net earnings to Captain's wallet
+                    if ($trip->captain && $trip->captain->user_id) {
+                        $captainWallet = Wallet::firstOrCreate(
+                            ['user_id' => $trip->captain->user_id],
+                            ['balance' => 0, 'currency' => 'YER']
+                        );
+                        $captainWallet->balance += $updates['captain_earnings'];
+                        $captainWallet->save();
+
+                        if ($updates['captain_earnings'] > 0) {
+                            Transaction::create([
+                                'wallet_id' => $captainWallet->id,
+                                'type' => 'deposit',
+                                'amount' => $updates['captain_earnings'],
+                                'description' => "أرباح المشوار رقم #{$trip->id} (محفظة)"
+                            ]);
+                        }
+                    }
+                } else {
+                    // Default Cash flow: Captain took the cash, we just deduct commission
+                    if ($trip->captain && $trip->captain->user_id) {
+                        $captainWallet = Wallet::firstOrCreate(
+                            ['user_id' => $trip->captain->user_id],
+                            ['balance' => 0, 'currency' => 'YER']
+                        );
+
+                        $captainWallet->balance -= $updates['commission_amount'];
+                        $captainWallet->save();
+
+                        if ($updates['commission_amount'] > 0) {
+                            Transaction::create([
+                                'wallet_id' => $captainWallet->id,
+                                'type' => 'withdrawal',
+                                'amount' => $updates['commission_amount'],
+                                'description' => "عمولة لَفَّة عن المشوار رقم #{$trip->id} (نقداً)"
+                            ]);
+                        }
                     }
                 }
             }
@@ -479,12 +542,7 @@ class TripService
         }
 
         // Fallback to Haversine straight-line distance if OSRM fails
-        $earthRadius = 6371; // km
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
-        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        $straightLineDist = $earthRadius * $c;
+        $straightLineDist = \App\Helpers\GeoHelper::haversineDistance($lat1, $lon1, $lat2, $lon2);
 
         $roadDist = $straightLineDist * 1.4;
 

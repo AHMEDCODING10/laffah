@@ -52,6 +52,7 @@ class ConfirmUnifiedBooking extends RideEvent {
   final int duration;
   final bool isScheduled; // For Scheduled Rides
   final DateTime? scheduledTime;
+  final String paymentMethod;
 
   const ConfirmUnifiedBooking({
     required this.pickup,
@@ -67,6 +68,7 @@ class ConfirmUnifiedBooking extends RideEvent {
     required this.duration,
     this.isScheduled = false,
     this.scheduledTime,
+    this.paymentMethod = 'cash',
   });
 
   @override
@@ -84,6 +86,7 @@ class ConfirmUnifiedBooking extends RideEvent {
         duration,
         isScheduled,
         scheduledTime,
+        paymentMethod,
       ];
 }
 
@@ -95,6 +98,7 @@ class ConfirmBooking extends RideEvent {
   final double? dropoffLatitude;
   final double? dropoffLongitude;
   final String rideType;
+  final String paymentMethod;
 
   const ConfirmBooking({
     required this.pickup,
@@ -104,6 +108,7 @@ class ConfirmBooking extends RideEvent {
     this.dropoffLatitude,
     this.dropoffLongitude,
     required this.rideType,
+    this.paymentMethod = 'cash',
   });
 
   @override
@@ -115,6 +120,7 @@ class ConfirmBooking extends RideEvent {
         dropoffLatitude,
         dropoffLongitude,
         rideType,
+        paymentMethod,
       ];
 }
 

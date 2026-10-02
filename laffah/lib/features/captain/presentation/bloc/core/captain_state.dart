@@ -63,6 +63,7 @@ class IncomingTripRequest extends CaptainState {
   final double? pickupLng;
   final double? dropoffLat;
   final double? dropoffLng;
+  final String paymentMethod;
 
   const IncomingTripRequest({
     required this.tripId,
@@ -84,6 +85,7 @@ class IncomingTripRequest extends CaptainState {
     this.pickupLng,
     this.dropoffLat,
     this.dropoffLng,
+    this.paymentMethod = 'cash',
   });
 
   @override
@@ -108,7 +110,8 @@ class IncomingTripRequest extends CaptainState {
           pickupLat == other.pickupLat &&
           pickupLng == other.pickupLng &&
           dropoffLat == other.dropoffLat &&
-          dropoffLng == other.dropoffLng;
+          dropoffLng == other.dropoffLng &&
+          paymentMethod == other.paymentMethod;
 
   @override
   int get hashCode =>
@@ -149,6 +152,7 @@ class TripAccepted extends CaptainState {
   final String? parcelType;
   final String? size;
   final String? trackingCode;
+  final String paymentMethod;
 
   const TripAccepted({
     required this.tripId,
@@ -168,6 +172,7 @@ class TripAccepted extends CaptainState {
     this.parcelType,
     this.size,
     this.trackingCode,
+    this.paymentMethod = 'cash',
   });
 
   TripAccepted copyWith({

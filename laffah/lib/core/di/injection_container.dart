@@ -100,7 +100,7 @@ Future<void> init() async {
   );
 
   sl.registerLazySingleton<SecureStorageService>(
-    () => SecureStorageService(sl()),
+    () => SecureStorageService(sl(), sl()),
   );
 
   // Preload cached auth token into DioClient to ensure instant auth synchronization
@@ -294,5 +294,5 @@ Future<void> init() async {
   // ==========================
   // Profile Feature
   // ==========================
-  sl.registerLazySingleton(() => ProfileBloc(repository: sl()));
+  sl.registerFactory(() => ProfileBloc(repository: sl()));
 }

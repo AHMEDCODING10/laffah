@@ -10,6 +10,8 @@
 *.p12
 *.keystore
 firebase-credentials.json
+laffah-app-*.json
+google-services*.json
 
 # Dependencies & Build artifacts
 node_modules/

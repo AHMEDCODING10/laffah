@@ -307,70 +307,7 @@ class TripController extends Controller
         $tripData = TripResource::collection($trips)->resolve();
 
         $parcelData = $parcels->map(function ($p) {
-            $dist = (float) ($p->distance_km ?? 2.5);
-            $estDuration = max(1, (int) round($dist * 2.5));
-            $price = (float) $p->price;
-            $code = $p->tracking_code ?? $p->id;
-
-            return [
-                'id' => (string) $p->id,
-                'status' => $p->status,
-                'type' => 'delivery',
-                'isParcel' => true,
-                'is_parcel' => true,
-                'title' => "توصيل طرد #{$code} 📦",
-                'description' => ($p->pickup_address ?? 'صنعاء') . ' ← ' . ($p->dropoff_address ?? 'صنعاء'),
-                'parcel_type' => $p->parcel_type ?? 'طرد',
-                'size' => $p->size ?? 'متوسط',
-                'tracking_code' => $p->tracking_code,
-                'notes' => $p->notes ?? '',
-
-                'price' => $price,
-                'estimated_price' => $price,
-                'final_price' => $price,
-                'grossFare' => $price,
-                'distance_km' => $dist,
-                'distance' => number_format($dist, 1) . ' كم',
-                'eta' => "~{$estDuration} دقيقة",
-                'duration' => "{$estDuration} د",
-                'timeTag' => $p->created_at ? $p->created_at->diffForHumans() : 'الآن',
-                'created_at' => $p->created_at ? $p->created_at->toISOString() : null,
-                'updated_at' => $p->updated_at ? $p->updated_at->toISOString() : null,
-                'currency' => 'YER',
-
-                'pickup' => $p->pickup_address ?? 'موقع الاستلام',
-                'pickup_address' => $p->pickup_address ?? 'موقع الاستلام',
-                'pickup_location' => $p->pickup_address ?? 'موقع الاستلام',
-                'pickup_latitude' => (float) ($p->pickup_latitude ?? 15.3694),
-                'pickup_longitude' => (float) ($p->pickup_longitude ?? 44.1910),
-
-                'dropoff' => $p->dropoff_address ?? 'موقع التسليم',
-                'dropoff_address' => $p->dropoff_address ?? 'موقع التسليم',
-                'dropoff_location' => $p->dropoff_address ?? 'موقع التسليم',
-                'dropoff_latitude' => (float) ($p->dropoff_latitude ?? 15.3521),
-                'dropoff_longitude' => (float) ($p->dropoff_longitude ?? 44.2014),
-
-                'passengerName' => $p->sender_name ?? $p->user?->name ?? 'المرسل',
-                'passengerPhone' => $p->sender_phone ?? $p->user?->phone ?? '',
-                'passengerRating' => 5.0,
-                'captainName' => $p->captain?->user?->name,
-                'captainPhone' => $p->captain?->user?->phone,
-                'captainRating' => (float) ($p->captain?->rating ?? 5.0),
-                'captain' => $p->captain ? [
-                    'id' => $p->captain->id,
-                    'name' => $p->captain->user?->name ?? 'الكابتن',
-                    'phone' => $p->captain->user?->phone,
-                    'vehicle_model' => $p->captain->vehicle_model ?? 'دراجة نارية',
-                    'plate_number' => $p->captain->plate_number ?? '',
-                    'rating' => (float) ($p->captain->rating ?? 5.0),
-                    'user' => [
-                        'id' => $p->captain->user?->id,
-                        'name' => $p->captain->user?->name ?? 'الكابتن',
-                        'phone' => $p->captain->user?->phone,
-                    ],
-                ] : null,
-                'stops' => [],
-            ];
+            return $this->formatParcelForApp($p);
         })->toArray();
 
         $merged = collect($tripData)->concat($parcelData)->sortByDesc('created_at')->values();
@@ -431,7 +368,7 @@ class TripController extends Controller
 
         $trips = $trips->filter(function ($trip) use ($lat, $lng, $captainProfileId) {
             if (!$trip->pickup_latitude || !$trip->pickup_longitude) return true;
-            $dist = $this->calculateDistance((float)$lat, (float)$lng, (float)$trip->pickup_latitude, (float)$trip->pickup_longitude);
+            $dist = \App\Helpers\GeoHelper::haversineDistance((float)$lat, (float)$lng, (float)$trip->pickup_latitude, (float)$trip->pickup_longitude);
             return $dist <= 30.0; // within 30km radius
         })->values();
 
@@ -449,50 +386,7 @@ class TripController extends Controller
             ->get();
 
         $parcelData = $parcels->map(function ($p) {
-            return [
-                'id' => (string) $p->id,
-                'status' => 'pending',
-                'type' => 'delivery',
-                'isParcel' => true,
-                'title' => 'طلب توصيل طرد 📦',
-                'description' => ($p->pickup_address ?? 'صنعاء') . ' ← ' . ($p->dropoff_address ?? 'صنعاء'),
-                'price' => (float) $p->price,
-                'estimated_price' => (float) $p->price,
-                'final_price' => (float) $p->price,
-                'grossFare' => (float) $p->price,
-                'distance_km' => 2.5,
-                'distance' => '2.5 كم',
-                'eta' => '~6 دقائق',
-                'duration' => '6 د',
-                'timeTag' => $p->created_at ? $p->created_at->diffForHumans() : 'الآن',
-                'currency' => 'YER',
-                'pickup' => $p->pickup_address ?? 'موقع الاستلام',
-                'pickup_address' => $p->pickup_address ?? 'موقع الاستلام',
-                'pickup_location' => $p->pickup_address ?? 'موقع الاستلام',
-                'pickup_latitude' => (float) ($p->pickup_latitude ?? 15.3694),
-                'pickup_longitude' => (float) ($p->pickup_longitude ?? 44.1910),
-                'dropoff' => $p->dropoff_address ?? 'موقع التسليم',
-                'dropoff_address' => $p->dropoff_address ?? 'موقع التسليم',
-                'dropoff_location' => $p->dropoff_address ?? 'موقع التسليم',
-                'dropoff_latitude' => (float) ($p->dropoff_latitude ?? 15.3521),
-                'dropoff_longitude' => (float) ($p->dropoff_longitude ?? 44.2014),
-                'passengerName' => $p->sender_name ?? $p->user?->name ?? 'المرسل',
-                'passengerPhone' => $p->sender_phone ?? $p->user?->phone ?? '',
-                'sender_name' => $p->sender_name ?? $p->user?->name ?? 'المرسل',
-                'sender_phone' => $p->sender_phone ?? $p->user?->phone ?? '',
-                'receiverName' => $p->receiver_name ?? 'المستلم',
-                'receiverPhone' => $p->receiver_phone ?? '',
-                'receiver_name' => $p->receiver_name ?? 'المستلم',
-                'receiver_phone' => $p->receiver_phone ?? '',
-                'trackingCode' => $p->tracking_code ?? ('LF-P' . $p->id),
-                'tracking_code' => $p->tracking_code ?? ('LF-P' . $p->id),
-                'parcelType' => $p->parcel_type ?? 'طرد',
-                'parcel_type' => $p->parcel_type ?? 'طرد',
-                'size' => $p->size ?? 'متوسط',
-                'passengerRating' => 5.0,
-                'notes' => $p->notes ?? "طرد ({$p->size})",
-                'stops' => [],
-            ];
+            return $this->formatParcelForApp($p);
         })->toArray();
 
         $allRequests = array_merge($tripData, $parcelData);
@@ -503,14 +397,81 @@ class TripController extends Controller
         ]);
     }
 
-    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    private function formatParcelForApp($p)
     {
-        $earthRadius = 6371; // km
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
-        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        return $earthRadius * $c;
+        $dist = (float) ($p->distance_km ?? 2.5);
+        $estDuration = max(1, (int) round($dist * 2.5));
+        $price = (float) $p->price;
+        $code = $p->tracking_code ?? $p->id;
+
+        return [
+            'id' => (string) $p->id,
+            'status' => $p->status,
+            'type' => 'delivery',
+            'isParcel' => true,
+            'is_parcel' => true,
+            'title' => "توصيل طرد #{$code} 📦",
+            'description' => ($p->pickup_address ?? 'صنعاء') . ' ← ' . ($p->dropoff_address ?? 'صنعاء'),
+            'parcel_type' => $p->parcel_type ?? 'طرد',
+            'size' => $p->size ?? 'متوسط',
+            'tracking_code' => $p->tracking_code ?? ('LF-P' . $p->id),
+            'trackingCode' => $p->tracking_code ?? ('LF-P' . $p->id),
+            'parcelType' => $p->parcel_type ?? 'طرد',
+            'notes' => $p->notes ?? '',
+
+            'price' => $price,
+            'estimated_price' => $price,
+            'final_price' => $price,
+            'grossFare' => $price,
+            'distance_km' => $dist,
+            'distance' => number_format($dist, 1) . ' كم',
+            'eta' => "~{$estDuration} دقيقة",
+            'duration' => "{$estDuration} د",
+            'timeTag' => $p->created_at ? $p->created_at->diffForHumans() : 'الآن',
+            'created_at' => $p->created_at ? $p->created_at->toISOString() : null,
+            'updated_at' => $p->updated_at ? $p->updated_at->toISOString() : null,
+            'currency' => 'YER',
+
+            'pickup' => $p->pickup_address ?? 'موقع الاستلام',
+            'pickup_address' => $p->pickup_address ?? 'موقع الاستلام',
+            'pickup_location' => $p->pickup_address ?? 'موقع الاستلام',
+            'pickup_latitude' => (float) ($p->pickup_latitude ?? 15.3694),
+            'pickup_longitude' => (float) ($p->pickup_longitude ?? 44.1910),
+
+            'dropoff' => $p->dropoff_address ?? 'موقع التسليم',
+            'dropoff_address' => $p->dropoff_address ?? 'موقع التسليم',
+            'dropoff_location' => $p->dropoff_address ?? 'موقع التسليم',
+            'dropoff_latitude' => (float) ($p->dropoff_latitude ?? 15.3521),
+            'dropoff_longitude' => (float) ($p->dropoff_longitude ?? 44.2014),
+
+            'passengerName' => $p->sender_name ?? $p->user?->name ?? 'المرسل',
+            'passengerPhone' => $p->sender_phone ?? $p->user?->phone ?? '',
+            'sender_name' => $p->sender_name ?? $p->user?->name ?? 'المرسل',
+            'sender_phone' => $p->sender_phone ?? $p->user?->phone ?? '',
+            'receiverName' => $p->receiver_name ?? 'المستلم',
+            'receiverPhone' => $p->receiver_phone ?? '',
+            'receiver_name' => $p->receiver_name ?? 'المستلم',
+            'receiver_phone' => $p->receiver_phone ?? '',
+            
+            'passengerRating' => 5.0,
+            'captainName' => $p->captain?->user?->name,
+            'captainPhone' => $p->captain?->user?->phone,
+            'captainRating' => (float) ($p->captain?->rating ?? 5.0),
+            'captain' => $p->captain ? [
+                'id' => $p->captain->id,
+                'name' => $p->captain->user?->name ?? 'الكابتن',
+                'phone' => $p->captain->user?->phone,
+                'vehicle_model' => $p->captain->vehicle_model ?? 'دراجة نارية',
+                'plate_number' => $p->captain->plate_number ?? '',
+                'rating' => (float) ($p->captain->rating ?? 5.0),
+                'user' => [
+                    'id' => $p->captain->user?->id,
+                    'name' => $p->captain->user?->name ?? 'الكابتن',
+                    'phone' => $p->captain->user?->phone,
+                ],
+            ] : null,
+            'stops' => [],
+        ];
     }
 
     public function destroy(Request $request, $id)

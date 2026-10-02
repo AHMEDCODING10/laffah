@@ -161,7 +161,7 @@ class AuthController extends Controller
         
         try {
             $code = $this->authService->forgotPassword($request->phone);
-            Log::info("Password reset OTP generated for phone {$request->phone}: {$code}");
+            Log::info("Password reset OTP generated for phone {$request->phone}");
             return response()->json([
                 'status' => 'success',
                 'message' => __('messages.msg_6') ?: 'تم إرسال رمز استعادة كلمة المرور بنجاح.',

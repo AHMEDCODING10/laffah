@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 import '../../../../core/router/app_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// CaptainParcelDetailsPage — Detailed view for Captains before accepting
 /// or during a parcel delivery. Shows pickup/drop-off points, parcel type,
@@ -391,7 +391,7 @@ class CaptainParcelDetailsPage extends StatelessWidget {
             onPressed: () async {
               final Uri telUri = Uri(
                 scheme: 'tel',
-                path: '+967700000000', // Mock Customer Number
+                path: phone.isNotEmpty ? phone : '+967777123456', 
               );
               if (await canLaunchUrl(telUri)) {
                 await launchUrl(telUri);

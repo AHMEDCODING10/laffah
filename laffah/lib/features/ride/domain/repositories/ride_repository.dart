@@ -16,6 +16,7 @@ abstract class RideRepository {
     int? promoCodeId,
     bool isScheduled = false,
     DateTime? scheduledTime,
+    String paymentMethod = 'cash',
   });
 
   Future<Either<Failure, RideEntity>> trackRide(String rideId);

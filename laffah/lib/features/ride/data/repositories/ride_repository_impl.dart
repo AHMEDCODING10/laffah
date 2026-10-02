@@ -30,6 +30,7 @@ class RideRepositoryImpl implements RideRepository {
     int? promoCodeId,
     bool isScheduled = false,
     DateTime? scheduledTime,
+    String paymentMethod = 'cash',
   }) async {
     try {
       final response = await remoteDataSource.requestRide(
@@ -45,6 +46,7 @@ class RideRepositoryImpl implements RideRepository {
         promoCodeId: promoCodeId,
         isScheduled: isScheduled,
         scheduledTime: scheduledTime,
+        paymentMethod: paymentMethod,
       );
 
       if (response.success && response.data != null) {

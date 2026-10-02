@@ -24,6 +24,7 @@ class TripResource extends JsonResource
             'id' => (string) $this->id,
             'status' => $this->status,
             'type' => $this->type ?? 'ride',
+            'payment_method' => $this->payment_method ?? 'cash',
             'isParcel' => ($this->type === 'delivery'),
             'title' => $this->type === 'delivery' 
                 ? 'طلب توصيل طرد 📦' 

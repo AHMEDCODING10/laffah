@@ -17,6 +17,7 @@ abstract class RideRemoteDataSource {
     int? promoCodeId,
     bool isScheduled = false,
     DateTime? scheduledTime,
+    String paymentMethod = 'cash',
   });
 
   Future<Map<String, dynamic>> estimateFare({
@@ -63,6 +64,7 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
     int? promoCodeId,
     bool isScheduled = false,
     DateTime? scheduledTime,
+    String paymentMethod = 'cash',
   }) async {
     final Map<String, dynamic> payload = {
       'type': rideType == 'delivery' ? 'delivery' : 'ride',
@@ -75,6 +77,7 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
       'dropoff_latitude': dropoffLatitude ?? 15.3521,
       'dropoff_longitude': dropoffLongitude ?? 44.2014,
       'expected_price': expectedPrice,
+      'payment_method': paymentMethod,
     };
 
     if (stops != null && stops.isNotEmpty) {

@@ -224,6 +224,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     final int estimatedPrice = (result['estimated_price'] as num?)?.toInt() ?? 0;
     final double distanceKm = (result['distance_km'] as num?)?.toDouble() ?? 0.0;
     final int durationMin = ((distanceKm / 25.0) * 60).ceil().clamp(3, 120);
+    final int nearbyCaptains = (result['nearby_captains'] as num?)?.toInt() ?? 0;
 
     emit(RideOptionsLoaded(
       pickup: event.pickup,
@@ -242,6 +243,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       distance: distanceKm,
       duration: durationMin,
       fare: estimatedPrice.toDouble(),
+      nearbyCaptainsCount: nearbyCaptains,
     ));
   }
 
@@ -259,6 +261,11 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
     );
 
+    int nearbyCaptains = 0;
+    if (state is RideOptionsLoaded) {
+      nearbyCaptains = (state as RideOptionsLoaded).nearbyCaptainsCount;
+    }
+
     // 1. Instantly emit Searching / Pending state so user immediately sees the Searching Radar
     emit(RideBookingConfirmed(
       pickup: event.pickup,
@@ -270,6 +277,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       vehiclePlate: '',
       rating: 5.0,
       status: 'pending',
+      nearbyCaptainsCount: nearbyCaptains,
     ));
 
     final result = await requestRideUseCase(
@@ -284,6 +292,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       stops: event.stops,
       isScheduled: event.isScheduled,
       scheduledTime: event.scheduledTime,
+      paymentMethod: event.paymentMethod,
     );
 
     result.fold(
@@ -379,6 +388,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       dropoffLongitude: event.dropoffLongitude,
       rideType: event.rideType,
       expectedPrice: calculatedPrice,
+      paymentMethod: event.paymentMethod,
     );
 
     result.fold(
@@ -643,7 +653,9 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     final stepStr = event.step.toString();
     if (stepStr == 'found' || stepStr == '1') {
       emit(const RideAccepted(
+        tripId: 'LF-8492',
         captainName: 'أحمد محمد',
+        captainPhone: '+967 777 000 000',
         vehicleModel: 'تويوتا كورولا • أبيض',
         vehiclePlate: '77213',
         captainRating: 4.9,
@@ -706,7 +718,9 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         ));
       } else {
         emit(RideAccepted(
+          tripId: (data['trip_id'] ?? data['id'] ?? '').toString(),
           captainName: data['captain_name']?.toString() ?? 'كابتن لَفَّة',
+          captainPhone: data['captain_phone']?.toString() ?? '',
           vehicleModel: data['vehicle_model']?.toString() ?? 'دراجة نارية',
           vehiclePlate: data['plate_number']?.toString() ?? '---',
           captainRating: (data['captain_rating'] is num)

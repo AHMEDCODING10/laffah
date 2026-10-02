@@ -191,6 +191,7 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
               'pickupLng': state.routePoints.isNotEmpty ? state.routePoints.first.longitude : 44.1852,
               'dropoffLat': state.routePoints.isNotEmpty ? state.routePoints.last.latitude : 15.3521,
               'dropoffLng': state.routePoints.isNotEmpty ? state.routePoints.last.longitude : 44.2014,
+              'paymentMethod': state.paymentMethod,
             },
           ).then((_) {
             // Keep captain ONLINE when returning to Home so they can receive new requests immediately!

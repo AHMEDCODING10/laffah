@@ -31,7 +31,7 @@ class ParcelStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
     public function broadcastOn(): array
     {
         return [
-            new Channel('trip.' . $this->parcel->id),
+            new \Illuminate\Broadcasting\PrivateChannel('trip.' . $this->parcel->id),
         ];
     }
 
@@ -52,6 +52,8 @@ class ParcelStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
         return [
             'id' => (string) $this->parcel->id,
             'trip_id' => (string) $this->parcel->id,
+            'type' => 'trip_' . $this->parcel->status,
+            'event_type' => 'trip_' . $this->parcel->status,
             'status' => $this->parcel->status,
             'captain_name' => $this->parcel->captain?->user?->name ?? 'الكابتن',
             'captain_phone' => $this->parcel->captain?->user?->phone ?? '',

@@ -7,6 +7,7 @@ import '../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/firebase_notification_service.dart';
 
 /// AuthBloc — Clean Architecture auth state management.
 /// Handles Login (phone + password), Register Passenger, Register Captain, Logout.
@@ -61,7 +62,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (userEntity) => emit(AuthSuccess(role: userEntity.role)),
+      (userEntity) {
+        FirebaseNotificationService().syncTokenWithBackend();
+        emit(AuthSuccess(role: userEntity.role));
+      },
     );
   }
 
@@ -80,7 +84,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (userEntity) => emit(const AuthSuccess(role: 'passenger')),
+      (userEntity) {
+        FirebaseNotificationService().syncTokenWithBackend();
+        emit(const AuthSuccess(role: 'passenger'));
+      },
     );
   }
 
@@ -103,7 +110,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (userEntity) => emit(const AuthSuccess(role: 'captain')),
+      (userEntity) {
+        FirebaseNotificationService().syncTokenWithBackend();
+        emit(const AuthSuccess(role: 'captain'));
+      },
     );
   }
 

@@ -18,6 +18,8 @@ class SearchingCaptainOverlay extends StatefulWidget {
   final String? pickup;
   final String? dropoff;
   final String? vehicleTier;
+  final String? paymentMethod;
+  final int? nearbyCaptainsCount;
   final double? price;
   final String? captainName;
   final String? captainPhone;
@@ -33,6 +35,8 @@ class SearchingCaptainOverlay extends StatefulWidget {
     this.pickup,
     this.dropoff,
     this.vehicleTier,
+    this.paymentMethod = 'نقداً',
+    this.nearbyCaptainsCount,
     this.price,
     this.captainName,
     this.captainPhone,
@@ -163,7 +167,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                 Icons.payments_rounded,
                 AppColors.primary500,
                 'إجمالي التكلفة وطريقة الدفع',
-                '$priceStr • لَفّة بريميوم (نقداً)',
+                '$priceStr • (${widget.paymentMethod})',
               ),
               AppSpacing.h24,
               SizedBox(
@@ -568,9 +572,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                                   : AppColors.gray600,
                                             ),
                                           ),
-                                          const Text(
-                                            '8 كباتن',
-                                            style: TextStyle(
+                                          Text(
+                                            '${widget.nearbyCaptainsCount ?? 8} كباتن',
+                                            style: const TextStyle(
                                               fontFamily:
                                                   'IBM Plex Sans Arabic',
                                               fontSize: 13,
@@ -637,9 +641,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                                   : AppColors.gray600,
                                             ),
                                           ),
-                                          const Text(
-                                            '5 دقائق',
-                                            style: TextStyle(
+                                          Text(
+                                            widget.eta ?? '5 دقائق',
+                                            style: const TextStyle(
                                               fontFamily:
                                                   'IBM Plex Sans Arabic',
                                               fontSize: 13,
@@ -681,7 +685,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                   ),
                                   AppSpacing.w8,
                                   Text(
-                                    'طريقة الدفع: لَفّة بريميوم',
+                                    'طريقة الدفع: ${widget.paymentMethod}',
                                     style: TextStyle(
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       fontSize: 12,
@@ -1035,7 +1039,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                   ),
                                 ),
                                 Text(
-                                  'طريقة الدفع: لَفّة بريميوم (نقداً)',
+                                  'طريقة الدفع: ${widget.paymentMethod}',
                                   style: TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontSize: 11,

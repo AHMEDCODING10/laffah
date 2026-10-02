@@ -647,6 +647,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                             computedEta + (_additionalDropoffs.length * 10),
                         isScheduled: _isScheduled,
                         scheduledTime: _scheduledTime,
+                        paymentMethod: _paymentMode,
                       ));
                   Navigator.pop(context);
                 },

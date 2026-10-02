@@ -21,6 +21,7 @@ class RequestRideUseCase {
     int? promoCodeId,
     bool isScheduled = false,
     DateTime? scheduledTime,
+    String paymentMethod = 'cash',
   }) async {
     if (pickupLocation.isEmpty || dropoffLocation.isEmpty) {
       return const Left(ValidationFailure('يرجى تحديد نقطة الانطلاق والوصول'));
@@ -38,6 +39,7 @@ class RequestRideUseCase {
       promoCodeId: promoCodeId,
       isScheduled: isScheduled,
       scheduledTime: scheduledTime,
+      paymentMethod: paymentMethod,
     );
   }
 }

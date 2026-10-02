@@ -31,14 +31,18 @@ class RideSearching extends RideState {
 }
 
 class RideAccepted extends RideState {
+  final String tripId;
   final String captainName;
+  final String captainPhone;
   final String vehicleModel;
   final String vehiclePlate;
   final double captainRating;
   final String eta;
 
   const RideAccepted({
+    this.tripId = '',
     required this.captainName,
+    this.captainPhone = '',
     required this.vehicleModel,
     required this.vehiclePlate,
     required this.captainRating,
@@ -47,7 +51,9 @@ class RideAccepted extends RideState {
 
   @override
   List<Object?> get props => [
+        tripId,
         captainName,
+        captainPhone,
         vehicleModel,
         vehiclePlate,
         captainRating,
@@ -75,6 +81,7 @@ class RideOptionsLoaded extends RideState {
   final double distance;
   final int duration;
   final double fare;
+  final int nearbyCaptainsCount;
 
   const RideOptionsLoaded({
     required this.pickup,
@@ -83,11 +90,12 @@ class RideOptionsLoaded extends RideState {
     required this.distance,
     required this.duration,
     required this.fare,
+    this.nearbyCaptainsCount = 0,
   });
 
   @override
   List<Object?> get props =>
-      [pickup, dropoff, options, distance, duration, fare];
+      [pickup, dropoff, options, distance, duration, fare, nearbyCaptainsCount];
 }
 
 class RideBookingConfirmed extends RideState {
@@ -103,6 +111,8 @@ class RideBookingConfirmed extends RideState {
   final String? rideId;
   final String? distance;
   final String? duration;
+  final String? paymentMethod;
+  final int nearbyCaptainsCount;
 
   const RideBookingConfirmed({
     required this.pickup,
@@ -117,6 +127,8 @@ class RideBookingConfirmed extends RideState {
     this.rideId,
     this.distance,
     this.duration,
+    this.paymentMethod,
+    this.nearbyCaptainsCount = 0,
   });
 
   RideBookingConfirmed copyWith({
@@ -132,6 +144,8 @@ class RideBookingConfirmed extends RideState {
     String? rideId,
     String? distance,
     String? duration,
+    String? paymentMethod,
+    int? nearbyCaptainsCount,
   }) {
     return RideBookingConfirmed(
       pickup: pickup ?? this.pickup,
@@ -146,6 +160,8 @@ class RideBookingConfirmed extends RideState {
       rideId: rideId ?? this.rideId,
       distance: distance ?? this.distance,
       duration: duration ?? this.duration,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      nearbyCaptainsCount: nearbyCaptainsCount ?? this.nearbyCaptainsCount,
     );
   }
 
@@ -163,6 +179,8 @@ class RideBookingConfirmed extends RideState {
         rideId,
         distance,
         duration,
+        paymentMethod,
+        nearbyCaptainsCount,
       ];
 }
 

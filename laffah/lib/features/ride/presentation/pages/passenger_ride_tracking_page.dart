@@ -198,7 +198,9 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
               'rating': rating,
               'distance': distance,
               'duration': duration,
-              'paymentMethod': 'نقداً (Cash)',
+              'paymentMethod': (state is RideBookingConfirmed && state.paymentMethod == 'wallet')
+                  ? AppLocalizations.of(context)!.pass_ride_wallet
+                  : AppLocalizations.of(context)!.pass_ride_cash,
             },
           );
         }
@@ -312,15 +314,21 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                     String captainName = 'جاري البحث...';
                     String rating = '0.0';
                     String plate = '---';
+                    String captainPhone = '';
+                    String tripId = 'LF-8492'; // Fallback dummy if not found
 
                     if (state is RideAccepted) {
                       captainName = state.captainName;
                       rating = state.captainRating.toString();
                       plate = state.vehiclePlate;
+                      captainPhone = state.captainPhone;
+                      tripId = state.tripId.isNotEmpty ? state.tripId : tripId;
                     } else if (state is RideBookingConfirmed) {
                       captainName = state.captainName;
                       rating = state.rating.toString();
                       plate = state.vehiclePlate;
+                      captainPhone = state.captainPhone; // Use actual phone
+                      tripId = state.rideId ?? tripId;
                     }
 
                     // Determine step index for progress: 0=on the way, 1=arrived, 2=trip started
@@ -567,12 +575,12 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildActionButton(Icons.message_rounded, AppColors.primary500, isDark, () async {
-                                      final Uri smsUri = Uri(scheme: 'sms', path: '+967700000000');
+                                      final Uri smsUri = Uri(scheme: 'sms', path: captainPhone.isNotEmpty ? captainPhone : '+967700000000');
                                       if (await canLaunchUrl(smsUri)) await launchUrl(smsUri);
                                     }),
                                     const SizedBox(width: 10),
                                     _buildActionButton(Icons.call_rounded, AppColors.success, isDark, () async {
-                                      final Uri telUri = Uri(scheme: 'tel', path: '+967700000000');
+                                      final Uri telUri = Uri(scheme: 'tel', path: captainPhone.isNotEmpty ? captainPhone : '+967700000000');
                                       if (await canLaunchUrl(telUri)) await launchUrl(telUri);
                                     }),
                                   ],
@@ -617,7 +625,8 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                 child: OutlinedButton.icon(
                                   onPressed: () async {
                                     final l10n = AppLocalizations.of(context)!;
-                                    final String shareText = l10n.ride_track_share_message;
+                                    // Replace the hardcoded dummy ID from the localization string with the actual tripId
+                                    final String shareText = l10n.ride_track_share_message.replaceAll('LF-8492', tripId);
                                     await Clipboard.setData(ClipboardData(text: shareText));
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(

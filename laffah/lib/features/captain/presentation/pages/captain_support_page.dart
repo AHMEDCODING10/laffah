@@ -77,8 +77,7 @@ class CaptainSupportPage extends StatelessWidget {
                   ),
                   AppSpacing.h20,
                   ElevatedButton.icon(
-                    onPressed: () => _launchUrl(
-                        'https://wa.me/967777123456'), // WhatsApp mock link
+                    onPressed: () => _launchUrl('https://wa.me/967770291452'),
                     icon:
                         const Icon(Icons.chat_rounded, color: AppColors.white),
                     label: const Text(
@@ -98,7 +97,7 @@ class CaptainSupportPage extends StatelessWidget {
                   ),
                   AppSpacing.h12,
                   OutlinedButton.icon(
-                    onPressed: () => _launchUrl('tel:+967777123456'),
+                    onPressed: () => _launchUrl('tel:+967770291452'),
                     icon: const Icon(Icons.call_rounded,
                         color: AppColors.primary500),
                     label: const Text(

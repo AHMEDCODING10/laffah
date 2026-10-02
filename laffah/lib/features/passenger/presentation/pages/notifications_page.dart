@@ -72,7 +72,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<void> _markAsRead(String id) async {
     try {
       final dioClient = di.sl<DioClient>();
-      await dioClient.dio.post(ApiEndpoints.markNotificationAsRead(id));
+      await dioClient.dio.post(ApiEndpoints.notificationMarkRead(id));
       // Update local state directly for instant feedback
       setState(() {
         final index = _notifications.indexWhere((n) => n.id == id);
@@ -99,7 +99,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     try {
       HapticFeedback.lightImpact();
       final dioClient = di.sl<DioClient>();
-      await dioClient.dio.post(ApiEndpoints.markAllNotificationsAsRead);
+      await dioClient.dio.post(ApiEndpoints.notificationsReadAll);
       setState(() {
         _notifications = _notifications.map((n) => NotificationItemModel(
           id: n.id,
@@ -161,7 +161,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     try {
       final dioClient = di.sl<DioClient>();
-      await dioClient.dio.delete(ApiEndpoints.deleteNotification(item.id));
+      await dioClient.dio.delete(ApiEndpoints.notificationDelete(item.id));
     } catch (e) {
       debugPrint("⚠️ [NotificationsPage] Error deleting notification from API: $e");
     }
@@ -234,7 +234,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     try {
       final dioClient = di.sl<DioClient>();
-      await dioClient.dio.delete(ApiEndpoints.clearAllNotifications);
+      await dioClient.dio.delete(ApiEndpoints.notificationsClearAll);
     } catch (e) {
       debugPrint("⚠️ [NotificationsPage] Error clearing all notifications: $e");
       if (mounted) {

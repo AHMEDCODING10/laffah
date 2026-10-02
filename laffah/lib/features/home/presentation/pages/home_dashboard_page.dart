@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../l10n/app_localizations.dart';
 
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/router/app_router.dart';
@@ -363,7 +364,9 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               'rating': rating,
               'distance': '6.3 كم',
               'duration': '7 دقيقة',
-              'paymentMethod': 'نقداً (Cash)',
+              'paymentMethod': (state is RideBookingConfirmed && state.paymentMethod == 'wallet') 
+                  ? AppLocalizations.of(context)!.pass_ride_wallet 
+                  : AppLocalizations.of(context)!.pass_ride_cash,
             },
           );
         }
@@ -622,6 +625,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                             ? _dropoffController.text.trim()
                             : null,
                         price: state.price,
+                        nearbyCaptainsCount: (DateTime.now().minute % 6) + 3,
                         onCancel: () {
                           context
                               .read<RideBloc>()
@@ -640,6 +644,8 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                             : _dropoffController.text.trim(),
                         price: state.selectedOption.basePrice,
                         vehicleTier: state.selectedOption.titleAr,
+                        eta: '${state.selectedOption.etaMinutes} دقائق',
+                        nearbyCaptainsCount: state.nearbyCaptainsCount,
                         onCancel: () {
                           context
                               .read<RideBloc>()

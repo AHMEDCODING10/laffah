@@ -36,6 +36,7 @@ class CaptainNavigationPage extends StatefulWidget {
   final double pickupLng;
   final double dropoffLat;
   final double dropoffLng;
+  final String paymentMethod;
 
   const CaptainNavigationPage({
     super.key,
@@ -52,6 +53,7 @@ class CaptainNavigationPage extends StatefulWidget {
     this.pickupLng = 44.1910,
     this.dropoffLat = 15.3521,
     this.dropoffLng = 44.2014,
+    this.paymentMethod = 'cash',
   });
 
   @override
@@ -315,6 +317,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
         duration: widget.duration,
         pickup: widget.pickup,
         dropoff: widget.dropoff,
+        paymentMethod: widget.paymentMethod == 'wallet' ? 'محفظة' : 'نقداً',
         onFinish: () {
           context
               .read<CaptainBloc>()
@@ -556,9 +559,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                       isDark ? Colors.white : AppColors.gray900,
                                 ),
                               ),
-                              const Text(
-                                'طريقة الدفع: نقداً / محفظة',
-                                style: TextStyle(
+                              Text(
+                                'طريقة الدفع: ${widget.paymentMethod == 'wallet' ? 'محفظة' : 'نقداً'}',
+                                style: const TextStyle(
                                   fontSize: 10.5,
                                   color: AppColors.gray500,
                                   fontWeight: FontWeight.bold,

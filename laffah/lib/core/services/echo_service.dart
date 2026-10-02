@@ -83,27 +83,8 @@ class EchoService {
     final data = _parseEventData(event.data);
     if (data.isEmpty) return;
 
-    if (channelName == 'trips.available' || channelName.startsWith('captain.')) {
-      // Must contain a valid trip ID or payload
-      if (data['id'] == null && data['trip_id'] == null && data['tripId'] == null) {
-        return;
-      }
-      final listeners = _tripAvailableListeners[channelName] ?? _tripAvailableListeners['trips.available'] ?? [];
-      for (final callback in List.from(listeners)) {
-        try {
-          callback(data);
-        } catch (_) {}
-      }
-    } else if (channelName.startsWith('trip.')) {
-      final tripId = channelName.replaceFirst('trip.', '');
-      final listeners = _tripStatusListeners[tripId] ?? [];
-      for (final callback in List.from(listeners)) {
-        try {
-          callback(data);
-        } catch (_) {}
-      }
-    } else if (channelName.startsWith('captain-location.')) {
-      final captainId = channelName.replaceFirst('captain-location.', '');
+    if (channelName.startsWith('private-captain-location.')) {
+      final captainId = channelName.replaceFirst('private-captain-location.', '');
       final listeners = _captainLocationListeners[captainId] ?? [];
       final lat = (data['latitude'] as num?)?.toDouble();
       final lng = (data['longitude'] as num?)?.toDouble();
@@ -114,6 +95,25 @@ class EchoService {
             callback(lat, lng, heading);
           } catch (_) {}
         }
+      }
+    } else if (channelName == 'private-trips.available' || channelName.startsWith('private-captain.')) {
+      // Must contain a valid trip ID or payload
+      if (data['id'] == null && data['trip_id'] == null && data['tripId'] == null) {
+        return;
+      }
+      final listeners = _tripAvailableListeners[channelName] ?? _tripAvailableListeners['private-trips.available'] ?? [];
+      for (final callback in List.from(listeners)) {
+        try {
+          callback(data);
+        } catch (_) {}
+      }
+    } else if (channelName.startsWith('private-trip.')) {
+      final tripId = channelName.replaceFirst('private-trip.', '');
+      final listeners = _tripStatusListeners[tripId] ?? [];
+      for (final callback in List.from(listeners)) {
+        try {
+          callback(data);
+        } catch (_) {}
       }
     }
   }
@@ -133,8 +133,8 @@ class EchoService {
       final pusher = _pusher;
       if (pusher == null) return;
 
-      _tripAvailableListeners.putIfAbsent('trips.available', () => []);
-      _tripAvailableListeners['trips.available']!.add((data) {
+      _tripAvailableListeners.putIfAbsent('private-trips.available', () => []);
+      _tripAvailableListeners['private-trips.available']!.add((data) {
         final eventType = data['event_type'] ?? data['type'];
         if (eventType == 'trip_cancelled' || eventType == 'trip_accepted' || eventType == 'trip_no_longer_available') {
           onTripNoLongerAvailable?.call(data);
@@ -143,16 +143,16 @@ class EchoService {
         }
       });
 
-      await pusher.subscribe(channelName: 'trips.available');
-      debugPrint("📡 [EchoService] Subscribed to channel: trips.available");
+      await pusher.subscribe(channelName: 'private-trips.available');
+      debugPrint("📡 [EchoService] Subscribed to channel: private-trips.available");
 
       // Also subscribe to the targeted Smart Queue private channel
       final captainProfileId = _currentCaptainId; 
       if (captainProfileId.isNotEmpty) {
-          await pusher.subscribe(channelName: 'captain.$captainProfileId');
-          debugPrint("📡 [EchoService] Subscribed to targeted channel: captain.$captainProfileId");
-          _tripAvailableListeners.putIfAbsent('captain.$captainProfileId', () => []);
-          _tripAvailableListeners['captain.$captainProfileId']!.add((data) {
+          await pusher.subscribe(channelName: 'private-captain.$captainProfileId');
+          debugPrint("📡 [EchoService] Subscribed to targeted channel: private-captain.$captainProfileId");
+          _tripAvailableListeners.putIfAbsent('private-captain.$captainProfileId', () => []);
+          _tripAvailableListeners['private-captain.$captainProfileId']!.add((data) {
              onNewTrip(data);
           });
       }
@@ -165,12 +165,12 @@ class EchoService {
     final pusher = _pusher;
     if (pusher == null) return;
     try {
-      _tripAvailableListeners.remove('trips.available');
-      await pusher.unsubscribe(channelName: 'trips.available');
+      _tripAvailableListeners.remove('private-trips.available');
+      await pusher.unsubscribe(channelName: 'private-trips.available');
       
       if (_currentCaptainId.isNotEmpty) {
-          _tripAvailableListeners.remove('captain.$_currentCaptainId');
-          await pusher.unsubscribe(channelName: 'captain.$_currentCaptainId');
+          _tripAvailableListeners.remove('private-captain.$_currentCaptainId');
+          await pusher.unsubscribe(channelName: 'private-captain.$_currentCaptainId');
       }
       debugPrint("🔌 [EchoService] Left trip channels");
     } catch (e) {
@@ -189,8 +189,8 @@ class EchoService {
       _tripStatusListeners.putIfAbsent(tripId, () => []);
       _tripStatusListeners[tripId]!.add(onStatusUpdated);
 
-      await pusher.subscribe(channelName: 'trip.$tripId');
-      debugPrint("📡 [EchoService] Subscribed to channel: trip.$tripId");
+      await pusher.subscribe(channelName: 'private-trip.$tripId');
+      debugPrint("📡 [EchoService] Subscribed to channel: private-trip.$tripId");
     } catch (e) {
       debugPrint("⚠️ [EchoService] listenToTripStatus: $e");
     }
@@ -201,10 +201,10 @@ class EchoService {
     if (pusher == null) return;
     try {
       _tripStatusListeners.remove(tripId);
-      await pusher.unsubscribe(channelName: 'trip.$tripId');
-      debugPrint("🔌 [EchoService] Left channel: trip.$tripId");
+      await pusher.unsubscribe(channelName: 'private-trip.$tripId');
+      debugPrint("🔌 [EchoService] Left channel: private-trip.$tripId");
     } catch (e) {
-      debugPrint("⚠️ [EchoService] Error leaving trip.$tripId: $e");
+      debugPrint("⚠️ [EchoService] Error leaving private-trip.$tripId: $e");
     }
   }
 
@@ -219,8 +219,8 @@ class EchoService {
       _captainLocationListeners.putIfAbsent(captainId, () => []);
       _captainLocationListeners[captainId]!.add(onLocationUpdated);
 
-      await pusher.subscribe(channelName: 'captain-location.$captainId');
-      debugPrint("📡 [EchoService] Subscribed to channel: captain-location.$captainId");
+      await pusher.subscribe(channelName: 'private-captain-location.$captainId');
+      debugPrint("📡 [EchoService] Subscribed to channel: private-captain-location.$captainId");
     } catch (e) {
       debugPrint("⚠️ [EchoService] listenToCaptainLocation: $e");
     }
@@ -231,10 +231,10 @@ class EchoService {
     if (pusher == null) return;
     try {
       _captainLocationListeners.remove(captainId);
-      await pusher.unsubscribe(channelName: 'captain-location.$captainId');
-      debugPrint("🔌 [EchoService] Left channel: captain-location.$captainId");
+      await pusher.unsubscribe(channelName: 'private-captain-location.$captainId');
+      debugPrint("🔌 [EchoService] Left channel: private-captain-location.$captainId");
     } catch (e) {
-      debugPrint("⚠️ [EchoService] Error leaving captain-location.$captainId: $e");
+      debugPrint("⚠️ [EchoService] Error leaving private-captain-location.$captainId: $e");
     }
   }
 

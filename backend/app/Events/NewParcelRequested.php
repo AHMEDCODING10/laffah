@@ -33,7 +33,7 @@ class NewParcelRequested implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('trips.available'),
+            new \Illuminate\Broadcasting\PrivateChannel('trips.available'),
         ];
     }
 
@@ -55,6 +55,8 @@ class NewParcelRequested implements ShouldBroadcast
         return [
             'id' => (string) $this->parcel->id,
             'trip_id' => (string) $this->parcel->id,
+            'type' => 'trip_new',
+            'event_type' => 'trip_new',
             'passenger_name' => $this->parcel->sender_name ?? 'المرسل',
             'passenger_phone' => $this->parcel->sender_phone ?? '',
             'passenger_rating' => 5.0,

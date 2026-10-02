@@ -62,10 +62,7 @@ class ParcelController extends Controller
 
         $distanceKm = isset($validated['distance']) && is_numeric($validated['distance'])
             ? (float) $validated['distance']
-            : max(0.1, 6371 * (2 * atan2(
-                sqrt(sin(deg2rad($dropoffLat - $pickupLat) / 2) ** 2 + cos(deg2rad($pickupLat)) * cos(deg2rad($dropoffLat)) * sin(deg2rad($dropoffLng - $pickupLng) / 2) ** 2),
-                sqrt(1 - (sin(deg2rad($dropoffLat - $pickupLat) / 2) ** 2 + cos(deg2rad($pickupLat)) * cos(deg2rad($dropoffLat)) * sin(deg2rad($dropoffLng - $pickupLng) / 2) ** 2))
-            )));
+            : max(0.1, \App\Helpers\GeoHelper::haversineDistance($pickupLat, $pickupLng, $dropoffLat, $dropoffLng));
 
         $perKm = (float) \Illuminate\Support\Facades\Cache::remember('setting_price_per_km', 3600, fn() => \App\Models\Setting::where('key', 'price_per_km')->value('value') ?? 150);
 
@@ -240,11 +237,7 @@ class ParcelController extends Controller
             $parcels = $parcels->filter(function ($parcel) use ($lat, $lng) {
                 if (!$parcel->pickup_latitude || !$parcel->pickup_longitude) return true;
                 
-                $earthRadius = 6371;
-                $dLat = deg2rad($parcel->pickup_latitude - $lat);
-                $dLon = deg2rad($parcel->pickup_longitude - $lng);
-                $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat)) * cos(deg2rad($parcel->pickup_latitude)) * sin($dLon/2) * sin($dLon/2);
-                $dist = $earthRadius * (2 * atan2(sqrt($a), sqrt(1-$a)));
+                $dist = \App\Helpers\GeoHelper::haversineDistance($parcel->pickup_latitude, $parcel->pickup_longitude, $lat, $lng);
                 
                 return $dist <= 15.0; 
             })->values();
@@ -261,15 +254,27 @@ class ParcelController extends Controller
      */
     public function trackParcel(Request $request, $id)
     {
-        $parcel = Parcel::where('id', $id)
-            ->orWhere('tracking_code', $id)
+        $user = $request->user();
+        
+        $parcel = Parcel::where(function ($q) use ($id) {
+                $q->where('id', $id)
+                  ->orWhere('tracking_code', $id);
+            })
+            ->where(function ($q) use ($user) {
+                // Must be the owner or the assigned captain
+                $q->where('user_id', $user->id);
+                
+                if ($user->captainProfile) {
+                    $q->orWhere('captain_profile_id', $user->captainProfile->id);
+                }
+            })
             ->with(['captain.user', 'user'])
             ->first();
 
         if (!$parcel) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'لم يتم العثور على الطرد المطلوب.',
+                'message' => 'لم يتم العثور على الطرد المطلوب أو ليس لديك صلاحية الوصول إليه.',
             ], 404);
         }
 

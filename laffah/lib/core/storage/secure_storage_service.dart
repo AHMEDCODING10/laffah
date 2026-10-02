@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SecureStorageService {
@@ -5,43 +6,44 @@ class SecureStorageService {
   static const _roleKey = 'user_role';
   static const _userIdKey = 'user_id';
 
-  final SharedPreferences _storage;
+  final FlutterSecureStorage _secureStorage;
+  final SharedPreferences _prefs;
 
-  SecureStorageService(this._storage);
+  SecureStorageService(this._secureStorage, this._prefs);
 
-  // ─── Token ───
+  // ─── Token (Encrypted via Android Keystore / iOS Keychain) ───
   Future<void> saveToken(String token) async {
-    await _storage.setString(_tokenKey, token);
-    await _storage.setString('sanctum_token', token);
+    await _secureStorage.write(key: _tokenKey, value: token);
   }
 
   Future<String?> getToken() async {
-    return _storage.getString(_tokenKey) ??
-        _storage.getString('sanctum_token');
+    return await _secureStorage.read(key: _tokenKey);
   }
 
   Future<void> clearToken() async {
-    await _storage.remove(_tokenKey);
-    await _storage.remove('sanctum_token');
+    await _secureStorage.delete(key: _tokenKey);
   }
 
-  // ─── Role ───
+  // ─── Role (non-sensitive, SharedPreferences for speed) ───
   Future<void> saveRole(String role) async =>
-      await _storage.setString(_roleKey, role);
+      await _prefs.setString(_roleKey, role);
 
-  Future<String?> getRole() async => _storage.getString(_roleKey);
+  Future<String?> getRole() async => _prefs.getString(_roleKey);
 
-  Future<void> clearRole() async => await _storage.remove(_roleKey);
+  Future<void> clearRole() async => await _prefs.remove(_roleKey);
 
-  // ─── User ID ───
+  // ─── User ID (non-sensitive) ───
   Future<void> saveUserId(String id) async =>
-      await _storage.setString(_userIdKey, id);
+      await _prefs.setString(_userIdKey, id);
 
-  Future<String?> getUserId() async => _storage.getString(_userIdKey);
+  Future<String?> getUserId() async => _prefs.getString(_userIdKey);
 
   // ─── Session ───
   Future<bool> hasActiveSession() async =>
-      _storage.getString(_tokenKey) != null;
+      await _secureStorage.read(key: _tokenKey) != null;
 
-  Future<void> clearAll() async => await _storage.clear();
+  Future<void> clearAll() async {
+    await _secureStorage.deleteAll();
+    await _prefs.clear();
+  }
 }

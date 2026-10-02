@@ -43,7 +43,7 @@ class NewTripRequested implements ShouldBroadcast
 
         // Broadcast to public channel so online captains can listen seamlessly (Legacy)
         return [
-            new Channel('trips.available'),
+            new \Illuminate\Broadcasting\PrivateChannel('trips.available'),
         ];
     }
 
@@ -65,6 +65,8 @@ class NewTripRequested implements ShouldBroadcast
         return [
             'id' => (string) $this->trip->id,
             'trip_id' => (string) $this->trip->id,
+            'type' => 'trip_new',
+            'event_type' => 'trip_new',
             'passenger_name' => $this->trip->passenger?->name ?? 'الراكب',
             'passenger_phone' => $this->trip->passenger?->phone ?? '',
             'passenger_rating' => (float) ($this->trip->passenger?->rating ?? 5.0),
@@ -75,6 +77,7 @@ class NewTripRequested implements ShouldBroadcast
             'distance' => $this->trip->distance_km ? ($this->trip->distance_km . ' كم') : '2.5 كم',
             'duration' => '5 د',
             'timeTag' => 'الآن',
+            'payment_method' => $this->trip->payment_method,
             'trip' => (new \App\Http\Resources\TripResource($this->trip))->resolve(),
         ];
     }

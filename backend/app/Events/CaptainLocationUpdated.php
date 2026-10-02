@@ -43,8 +43,8 @@ class CaptainLocationUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new Channel('captain-location.' . $this->captainId),
-            new Channel('captains-locations'),
+            new \Illuminate\Broadcasting\PrivateChannel('captain-location.' . $this->captainId),
+            new \Illuminate\Broadcasting\PrivateChannel('captains-locations'),
         ];
     }
 

@@ -357,6 +357,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       pickupLng: d['pickupLng'] != null ? (d['pickupLng'] as num).toDouble() : null,
       dropoffLat: d['dropoffLat'] != null ? (d['dropoffLat'] as num).toDouble() : null,
       dropoffLng: d['dropoffLng'] != null ? (d['dropoffLng'] as num).toDouble() : null,
+      paymentMethod: (d['payment_method'] ?? d['paymentMethod'] ?? 'cash').toString(),
     ));
   }
 
@@ -504,6 +505,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             parcelType: currentState.parcelType,
             size: currentState.size,
             trackingCode: currentState.tripId,
+            paymentMethod: currentState.paymentMethod,
           ));
         },
       );
