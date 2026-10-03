@@ -78,10 +78,7 @@ services:
       - key: ENABLE_QUEUE
         value: "true"
       - key: WHATSAPP_SERVER_URL
-        fromService:
-          name: laffah-whatsapp
-          type: web
-          property: url
+        value: "https://laffah-whatsapp.onrender.com"
 
   # Laffah WhatsApp OTP Microservice
   - type: web
