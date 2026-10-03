@@ -119,7 +119,15 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
   }
 
 
+  DateTime _lastRouteFetch = DateTime.now().subtract(const Duration(minutes: 1));
+
   Future<void> _fetchRoute() async {
+    // Throttle OSRM calls to every 15 seconds to prevent API bans
+    if (DateTime.now().difference(_lastRouteFetch).inSeconds < 15) {
+      return;
+    }
+    _lastRouteFetch = DateTime.now();
+
     bool inTransit = false;
     try {
       final rideState = context.read<RideBloc>().state;
@@ -137,8 +145,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
         ? LatLng(widget.dropoffLat!, widget.dropoffLng!)
         : _passengerLocation;
 
-    final data =
-        await _osrmService.getRoute(dest, _captainLocation);
+    final data = await _osrmService.getRoute(dest, _captainLocation);
     if (data != null && mounted) {
       setState(() {
         _routePoints = data.points;
