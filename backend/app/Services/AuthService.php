@@ -128,13 +128,32 @@ class AuthService
             throw new Exception('رقم الهاتف غير مسجل لدينا.', 404);
         }
 
-        // Generate 6-digit code (1,000,000 possibilities instead of 10,000)
+        // Generate 6-digit code
         $code = rand(100000, 999999);
         
         // Save to cache for 10 minutes
         Cache::put('reset_code_' . $phone, $code, now()->addMinutes(10));
         // Reset attempt counter
         Cache::put('reset_attempts_' . $phone, 0, now()->addMinutes(10));
+
+        // Format phone number for WhatsApp (must include country code without '+')
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        if (strlen($cleanPhone) == 9) {
+            $cleanPhone = '967' . $cleanPhone;
+        }
+
+        // Send OTP via Local Baileys Node.js Microservice
+        try {
+            $message = "أهلاً بك في تطبيق لَفّة 🚕!\nرمز التحقق الخاص بك هو: *$code*\nلا تشارك هذا الرمز مع أحد.";
+            
+            $whatsappServerUrl = env('WHATSAPP_SERVER_URL', 'http://localhost:3000');
+            \Illuminate\Support\Facades\Http::post("{$whatsappServerUrl}/send-message", [
+                'phone' => $cleanPhone,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Local WhatsApp OTP Failed: " . $e->getMessage());
+        }
 
         return $code;
     }

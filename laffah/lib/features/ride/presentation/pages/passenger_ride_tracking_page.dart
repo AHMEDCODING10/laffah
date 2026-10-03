@@ -649,6 +649,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           backgroundColor: AppColors.primary500,
+                                          duration: const Duration(seconds: 3),
                                           content: Text(
                                             l10n.ride_track_share_copied,
                                             style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
@@ -659,8 +660,10 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                             onPressed: () async {
                                               final Uri waUri = Uri.parse(
                                                   'https://wa.me/?text=${Uri.encodeComponent(shareText)}');
-                                              if (await canLaunchUrl(waUri)) {
+                                              try {
                                                 await launchUrl(waUri, mode: LaunchMode.externalApplication);
+                                              } catch (e) {
+                                                // ignore
                                               }
                                             },
                                           ),

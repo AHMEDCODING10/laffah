@@ -10,7 +10,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/widgets/cached_tile_provider.dart';
 
-import '../../../../core/config/app_env.dart';
+import '../../../../core/widgets/laffah_map_view.dart';
 
 class PinAdjustMapPage extends StatefulWidget {
   final LatLng initialPosition;
@@ -35,7 +35,6 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
   Timer? _debounce;
   final Dio _dio = Dio();
 
-  static String get _mapTilerKey => AppEnv.mapTilerKey;
 
   @override
   void initState() {
@@ -116,12 +115,7 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
     final title = widget.locationType == 'pickup'
         ? 'حدد نقطة الانطلاق بدقة'
         : 'حدد وجهتك بدقة';
-    final tileUrl = (_mapTilerKey.isNotEmpty &&
-            _mapTilerKey != 'YOUR_MAPTILER_API_KEY')
-        ? (isDark
-            ? 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=$_mapTilerKey'
-            : 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=$_mapTilerKey')
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    final tileUrl = LaffahMapView.getTileUrl(isDark: isDark);
 
     return Scaffold(
       body: Stack(
@@ -141,6 +135,7 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
                 urlTemplate: tileUrl,
                 userAgentPackageName: 'com.laffah.app',
                 maxZoom: 19,
+                retinaMode: true,
                 tileProvider: CachedTileProvider(),
               ),
               RichAttributionWidget(

@@ -49,5 +49,17 @@
 	<string>This app requires access to your location to show it on the map.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app requires access to your location to track your trips.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app requires background location tracking to notify passengers of your arrival accurately.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera so you can upload your profile photo and captain documents.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to your photo library to select a profile picture or required documents.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

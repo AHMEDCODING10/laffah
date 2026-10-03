@@ -28,7 +28,6 @@ class LaffahMapView extends StatefulWidget {
   final double captainHeading;
   final LatLng? passengerLocation;
   final List<LatLng>? routePoints;
-  final Color? routeColor;
   final LatLng? dropoffLocation;
   final bool followCaptain;
   final bool showDefaultMockData;
@@ -46,29 +45,11 @@ class LaffahMapView extends StatefulWidget {
     this.captainHeading = 0.0,
     this.passengerLocation,
     this.routePoints,
-    this.routeColor,
     this.dropoffLocation,
     this.followCaptain = false,
     this.showDefaultMockData = true,
     this.onMarkerTap,
   });
-
-  static String getTileUrl({required bool isDark}) {
-    final key = mapTilerKey;
-    if (key.isNotEmpty &&
-        key != 'YOUR_MAPTILER_API_KEY' &&
-        key != 'get_your_key_from_maptiler.com') {
-      if (isDark) {
-        return 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}@2x.png?key=$key';
-      }
-      return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=$key';
-    }
-    // High-performance, crystal-clear, keyless vector-raster tiles
-    if (isDark) {
-      return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
-    }
-    return 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
-  }
 
   @override
   State<LaffahMapView> createState() => _LaffahMapViewState();
@@ -208,29 +189,17 @@ class _LaffahMapViewState extends State<LaffahMapView>
 
     if (widget.followCaptain && widget.captainLocation != null) {
       if (widget.passengerLocation != null) {
-        // Prevent math error when bounds are identical or extremely close
-        final distance = const Distance().as(
-            LengthUnit.Meter, widget.captainLocation!, widget.passengerLocation!);
-
-        if (distance < 20) {
-          // Less than 20 meters apart -> Just center and zoom in
-          _mapController.move(
-            widget.captainLocation!,
-            16.5,
-          );
-        } else {
-          // Fit both in view during trip safely
-          final bounds = LatLngBounds.fromPoints([
-            widget.captainLocation!,
-            widget.passengerLocation!,
-          ]);
-          _mapController.fitCamera(
-            CameraFit.bounds(
-              bounds: bounds,
-              padding: const EdgeInsets.fromLTRB(50, 150, 50, 200),
-            ),
-          );
-        }
+        // Fit both in view during trip
+        final bounds = LatLngBounds.fromPoints([
+          widget.captainLocation!,
+          widget.passengerLocation!,
+        ]);
+        _mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: bounds,
+            padding: const EdgeInsets.fromLTRB(50, 150, 50, 200),
+          ),
+        );
       } else if (widget.captainLocation != old.captainLocation) {
         // Pan only — preserve current zoom
         _mapController.move(
@@ -267,9 +236,24 @@ class _LaffahMapViewState extends State<LaffahMapView>
   }
 
   // ── Tile URL — HiDPI @2x tiles for sharper quality ───────────────────────
-  String get _tileUrl => LaffahMapView.getTileUrl(isDark: widget.isDark);
+  String get _tileUrl => getTileUrl(isDark: widget.isDark);
 
-
+  static String getTileUrl({required bool isDark}) {
+    final key = LaffahMapView.mapTilerKey;
+    if (key.isNotEmpty &&
+        key != 'YOUR_MAPTILER_API_KEY' &&
+        key != 'get_your_key_from_maptiler.com') {
+      if (isDark) {
+        return 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}@2x.png?key=$key';
+      }
+      return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=$key';
+    }
+    // High-performance, crystal-clear, keyless vector-raster tiles
+    if (isDark) {
+      return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
+    }
+    return 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
+  }
 
   LatLng get _initialCenter =>
       widget.captainLocation ??
@@ -508,10 +492,10 @@ class _LaffahMapViewState extends State<LaffahMapView>
         strokeCap: StrokeCap.round,
         strokeJoin: StrokeJoin.round,
       ),
-      // Main route line (color changes based on trip phase)
+      // Main orange route line
       Polyline(
         points: points,
-        color: widget.routeColor ?? AppColors.primary500,
+        color: AppColors.primary500,
         strokeWidth: 5.5,
         strokeCap: StrokeCap.round,
         strokeJoin: StrokeJoin.round,
