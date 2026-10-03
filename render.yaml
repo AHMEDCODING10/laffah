@@ -32,27 +32,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: laffah-database
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: laffah-database
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: laffah-database
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: laffah-database
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: laffah-database
-          property: password
+        value: mysql
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE
@@ -89,11 +69,3 @@ services:
     region: frankfurt
     buildCommand: npm install
     startCommand: node index.js
-
-databases:
-  # Managed Cloud Database
-  - name: laffah-database
-    plan: free
-    region: frankfurt
-    databaseName: laffah_db
-    user: laffah_admin
