@@ -77,6 +77,21 @@ services:
         value: "true"
       - key: ENABLE_QUEUE
         value: "true"
+      - key: WHATSAPP_SERVER_URL
+        fromService:
+          name: laffah-whatsapp
+          type: web
+          property: url
+
+  # Laffah WhatsApp OTP Microservice
+  - type: web
+    name: laffah-whatsapp
+    runtime: node
+    rootDir: whatsapp-server
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: node index.js
 
 databases:
   # Managed Cloud Database
