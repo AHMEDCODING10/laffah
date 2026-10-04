@@ -21,7 +21,6 @@ import '../../data/datasources/home_local_data_source.dart';
 import '../widgets/home_action_buttons_row.dart';
 import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_ride_status_cards.dart';
-import '../widgets/captain_on_the_way_card.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/quick_destinations_section.dart';
 import '../widgets/recent_destinations_section.dart';
@@ -271,6 +270,38 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     );
   }
 
+  void _navigateToTracking({RideBookingConfirmed? confirmedState, RideAccepted? acceptedState}) {
+    if (_isNavigatedToTracking) return;
+    _isNavigatedToTracking = true;
+
+    final String cid = (confirmedState != null)
+        ? (confirmedState.captainId ?? confirmedState.rideId ?? '1')
+        : (acceptedState?.captainId ?? '1');
+
+    context.push(
+      LaffahRoutes.passengerRideTracking,
+      extra: {
+        'captainId': cid,
+        'captainName': confirmedState?.captainName ?? acceptedState?.captainName ?? 'الكابتن',
+        'captainRating': confirmedState?.rating ?? acceptedState?.captainRating ?? 5.0,
+        'vehicleModel': confirmedState?.vehicleModel ?? acceptedState?.vehicleModel ?? 'دراجة نارية',
+        'vehiclePlate': confirmedState?.vehiclePlate ?? acceptedState?.vehiclePlate ?? '---',
+        'pickupAddress': confirmedState?.pickup ?? _pickupController.text,
+        'dropoffAddress': confirmedState?.dropoff ?? _dropoffController.text,
+        'passengerLat': _pickupLatLng.latitude,
+        'passengerLng': _pickupLatLng.longitude,
+        'dropoffLat': _dropoffLatLng?.latitude,
+        'dropoffLng': _dropoffLatLng?.longitude,
+      },
+    ).then((_) {
+      if (mounted) {
+        setState(() {
+          _isNavigatedToTracking = false;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -317,30 +348,11 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               ),
             ),
           );
-        } else if (state is RideAccepted || (state is RideBookingConfirmed &&
-            (state.status == 'accepted' || state.status == 'arrived' || state.status == 'in_transit' || state.status == 'started'))) {
-          if (!_isNavigatedToTracking) {
-            _isNavigatedToTracking = true;
-            final String cid = (state is RideBookingConfirmed)
-                ? (state.captainId ?? state.rideId ?? '1')
-                : ((state as RideAccepted).captainId ?? '1');
-            context.push(
-              LaffahRoutes.passengerRideTracking,
-              extra: {
-                'captainId': cid,
-                'captainName': (state is RideBookingConfirmed) ? state.captainName : (state as RideAccepted).captainName,
-                'captainRating': (state is RideBookingConfirmed) ? state.rating : (state as RideAccepted).captainRating,
-                'vehicleModel': (state is RideBookingConfirmed) ? state.vehicleModel : (state as RideAccepted).vehicleModel,
-                'vehiclePlate': (state is RideBookingConfirmed) ? state.vehiclePlate : (state as RideAccepted).vehiclePlate,
-                'pickupAddress': (state is RideBookingConfirmed) ? state.pickup : _pickupController.text,
-                'dropoffAddress': (state is RideBookingConfirmed) ? state.dropoff : _dropoffController.text,
-                'passengerLat': _pickupLatLng.latitude,
-                'passengerLng': _pickupLatLng.longitude,
-                'dropoffLat': _dropoffLatLng?.latitude,
-                'dropoffLng': _dropoffLatLng?.longitude,
-              },
-            );
-          }
+        } else if (state is RideAccepted) {
+          _navigateToTracking(acceptedState: state);
+        } else if (state is RideBookingConfirmed &&
+            (state.status == 'accepted' || state.status == 'arrived' || state.status == 'in_transit' || state.status == 'started')) {
+          _navigateToTracking(confirmedState: state);
         } else if ((state is RideBookingConfirmed &&
                 state.status.toLowerCase() == 'completed') ||
             state is RideCompleted) {
@@ -499,37 +511,23 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                           (state.captainName.isNotEmpty &&
                               state.captainName != 'قيد البحث' &&
                               s != 'pending')) {
+                        if (_isNavigatedToTracking) {
+                          return const SizedBox.shrink();
+                        }
                         return Align(
                           alignment: Alignment.bottomCenter,
-                          child: CaptainOnTheWayCard(state: state),
+                          child: _buildActiveRideMiniBanner(context, isDark, state),
                         );
                       } else if (s == 'pending' || state.captainName == 'قيد البحث') {
                         return const SizedBox.shrink();
                       }
                     } else if (state is RideAccepted) {
+                      if (_isNavigatedToTracking) {
+                        return const SizedBox.shrink();
+                      }
                       return Align(
                         alignment: Alignment.bottomCenter,
-                        child: CaptainOnTheWayCard(
-                          state: RideBookingConfirmed(
-                            pickup: _pickupController.text.trim(),
-                            dropoff: _dropoffController.text.trim(),
-                            selectedOption: const RideOption(
-                              id: 'laffah',
-                              titleAr: 'لَفّة',
-                              titleEn: 'Laffah',
-                              basePrice: 1250.0,
-                              etaMinutes: 5,
-                              iconKey: 'car',
-                              descriptionAr: 'لَفّة',
-                            ),
-                            captainName: state.captainName,
-                            captainPhone: '',
-                            vehicleModel: state.vehicleModel,
-                            vehiclePlate: state.vehiclePlate,
-                            rating: state.captainRating,
-                            status: 'accepted',
-                          ),
-                        ),
+                        child: _buildActiveRideMiniBanner(context, isDark, null, acceptedState: state),
                       );
                     } else if (state is ParcelSubmitted) {
                       return Align(
@@ -578,7 +576,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               ),
 
               // ==========================================
-              // LAYER 4: Interactive Top Header & Search Bar / Captain On The Way
+              // LAYER 4: Interactive Top Header & Search Bar
               // ==========================================
               Positioned(
                 top: 0,
@@ -594,36 +592,6 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
                       if (isSearching) {
                         return const SizedBox.shrink();
-                      }
-
-                      final bool isCaptainActive = (state is RideBookingConfirmed &&
-                              (state.status == 'accepted' ||
-                                  state.status == 'arrived' ||
-                                  state.status == 'in_transit' ||
-                                  state.status == 'started' ||
-                                  state.status == 'completed' ||
-                                  state.status == 'found' ||
-                                  (state.captainName.isNotEmpty &&
-                                      state.captainName != 'قيد البحث'))) ||
-                          state is RideAccepted ||
-                          state is RideCompleted;
-
-                      if (isCaptainActive) {
-                        final bool isCompleted = (state is RideBookingConfirmed &&
-                                state.status.toLowerCase() == 'completed') ||
-                            state is RideCompleted;
-                        final bool isArrived = state is RideBookingConfirmed &&
-                            state.status.toLowerCase() == 'arrived';
-                        final bool isInTransit = state is RideBookingConfirmed &&
-                            (state.status.toLowerCase() == 'in_transit' ||
-                                state.status.toLowerCase() == 'started');
-                        return _buildCaptainOnTheWayTopHeader(
-                          context,
-                          isDark,
-                          isCompleted: isCompleted,
-                          isArrived: isArrived,
-                          isInTransit: isInTransit,
-                        );
                       }
 
                       return HomeTopHeader(
@@ -870,140 +838,130 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     );
   }
 
-  /// Top floating header displayed when a captain accepts, arrives, starts, or completes trip
-  Widget _buildCaptainOnTheWayTopHeader(
+  /// Sleek floating mini-banner displayed at the bottom of the Home screen
+  /// only if an active trip is ongoing and the passenger temporarily leaves the tracking screen.
+  Widget _buildActiveRideMiniBanner(
     BuildContext context,
-    bool isDark, {
-    bool isCompleted = false,
-    bool isArrived = false,
-    bool isInTransit = false,
+    bool isDark,
+    RideBookingConfirmed? confirmedState, {
+    RideAccepted? acceptedState,
   }) {
-    Color themeColor = AppColors.primary500;
-    String title = 'الكابتن في الطريق إليك';
-    String iconTag = '🛵';
-    IconData iconData = Icons.two_wheeler_rounded;
-    String subtitle = 'يرجى التواجد في نقطة الانطلاق المحددة';
-
-    if (isCompleted) {
-      themeColor = const Color(0xFF00C853);
-      title = 'اكتمل المشوار بنجاح!';
-      iconTag = '🎉';
-      iconData = Icons.verified_rounded;
-      subtitle = 'شكراً لاختيارك لَفَّة، نتمنى لك يوماً سعيداً';
-    } else if (isArrived) {
-      themeColor = const Color(0xFF00C853);
-      title = 'وصل الكابتن إلى موقعك!';
-      iconTag = '📍';
-      iconData = Icons.where_to_vote_rounded;
-      subtitle = 'الكابتن ينتظرك الآن عند نقطة الانطلاق';
-    } else if (isInTransit) {
-      themeColor = AppColors.primary500;
-      title = 'في الطريق إلى الوجهة';
-      iconTag = '🚀';
-      iconData = Icons.navigation_rounded;
-      subtitle = 'نتمنى لك رحلة آمنة ومريحة مع لَفَّة';
-    }
+    final captainName = (confirmedState != null && confirmedState.captainName.isNotEmpty)
+        ? confirmedState.captainName
+        : ((acceptedState != null && acceptedState.captainName.isNotEmpty)
+            ? acceptedState.captainName
+            : 'الكابتن');
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1B2232) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: themeColor.withValues(alpha: isArrived ? 0.6 : 0.25),
-            width: isArrived ? 1.8 : 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isArrived
-                  ? const Color(0xFF00C853).withValues(alpha: 0.2)
-                  : Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Glowing pulsing icon
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: themeColor.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: themeColor,
-                  width: 1.5,
+      child: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _navigateToTracking(
+                confirmedState: confirmedState,
+                acceptedState: acceptedState,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1B2232) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.4),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary500.withValues(alpha: 0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary500.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.two_wheeler_rounded,
+                          color: AppColors.primary500,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF00C853),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'مشوار جارٍ مع $captainName',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : AppColors.gray900,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'انقر هنا للعودة إلى تفاصيل المشوار والتتبع 📍',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 11,
+                              color: AppColors.primary500,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF263044) : AppColors.gray100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: isDark ? Colors.white70 : AppColors.gray600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Icon(
-                iconData,
-                color: themeColor,
-                size: 22,
-              ),
             ),
-            const SizedBox(width: 12),
-            // Title & Status
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: themeColor,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(iconTag, style: const TextStyle(fontSize: 14)),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.circle,
-                        size: 8,
-                        color: themeColor,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: themeColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Notifications Shortcut
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF263044) : AppColors.gray100,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.notifications_none_rounded, size: 20),
-                color: isDark ? AppColors.white : AppColors.gray700,
-                onPressed: () => context.push(LaffahRoutes.passengerNotifications),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

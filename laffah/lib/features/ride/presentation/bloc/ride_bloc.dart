@@ -684,10 +684,6 @@ class RideBloc extends Bloc<RideEvent, RideState> {
             ? (state as RideBookingConfirmed).rideId
             : null);
 
-    if (targetTripId != null && targetTripId.isNotEmpty) {
-      await cancelRideUseCase(targetTripId, isParcel: event.isParcel);
-    }
-
     if (state is TripHistoryLoaded) {
       final currentList = (state as TripHistoryLoaded).trips;
       final nowStr = DateTime.now().toIso8601String();
@@ -703,10 +699,15 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         return t;
       }).toList();
       emit(TripHistoryLoaded(updatedList));
-      return;
+    } else {
+      emit(const RideInitial());
     }
 
-    emit(const RideInitial());
+    if (targetTripId != null && targetTripId.isNotEmpty) {
+      try {
+        await cancelRideUseCase(targetTripId, isParcel: event.isParcel);
+      } catch (_) {}
+    }
   }
 
   FutureOr<void> _onRetryRideSearchRequested(

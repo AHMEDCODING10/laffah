@@ -124,6 +124,94 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
     }
   }
 
+  void _confirmCancel(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1B2232) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.cancel_outlined, color: AppColors.danger, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'إلغاء المشوار',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'هل أنت متأكد من رغبتك في إلغاء المشوار؟',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(
+                'تراجع',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  color: isDark ? Colors.white70 : AppColors.gray600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogCtx).pop();
+                context.read<RideBloc>().add(
+                      const CancelRideRequested(reason: 'إلغاء من قبل الراكب'),
+                    );
+                if (mounted && Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'تم إلغاء المشوار بنجاح',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    backgroundColor: AppColors.danger,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text(
+                'تأكيد الإلغاء',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -145,6 +233,15 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
           _echoService.stopListeningToCaptainLocation(_activeCaptainId);
           _activeCaptainId = state.captainId!;
           _listenToLiveTracking();
+        }
+
+        if (state is RideInitial ||
+            (state is RideBookingConfirmed &&
+                state.status.toLowerCase() == 'cancelled')) {
+          if (mounted && Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+          return;
         }
 
         if ((state is RideBookingConfirmed &&
@@ -621,12 +718,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    context.read<RideBloc>().add(
-                                        const CancelRideRequested(
-                                            reason: 'إلغاء من قبل الراكب'));
-                                    context.pop();
-                                  },
+                                  onPressed: () => _confirmCancel(context),
                                   icon: const Icon(Icons.close_rounded, size: 18),
                                   label: const Text(
                                     'إلغاء الرحلة',
