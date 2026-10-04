@@ -777,64 +777,142 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
 
   void _showLogoutConfirmDialog(BuildContext context) {
     HapticFeedback.mediumImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (dialogContext) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF141822)
-                : Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(
-              AppLocalizations.of(context)!.capt_logout,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 16),
-            ),
-            content: Text(
-              AppLocalizations.of(context)!.capt_logout_confirm_msg,
-              style: const TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 13,
-                  height: 1.5),
-            ),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF161B26) : Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.gray200,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.logout_rounded,
+                      color: AppColors.error,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
 
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(AppLocalizations.of(context)!.capt_cancel,
-                    style: const TextStyle(
-                        color: AppColors.gray600,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'IBM Plex Sans Arabic')),
+                  // Title
+                  Text(
+                    AppLocalizations.of(context)!.capt_logout,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 18,
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Subtitle
+                  Text(
+                    AppLocalizations.of(context)!.capt_logout_confirm_msg,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 13,
+                      height: 1.6,
+                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 1. Confirm Logout Button (Primary, Red, Full Width)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        context.read<AuthBloc>().add(const LogoutRequested());
+                        try {
+                          context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
+                        } catch (_) {}
+                        try {
+                          context.read<RideBloc>().add(const ResetRideState());
+                        } catch (_) {}
+                        context.go(LaffahRoutes.authLanding);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.capt_confirm_logout,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          fontFamily: 'IBM Plex Sans Arabic',
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 2. Cancel Button (UNDER Confirm Logout, as requested)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.capt_cancel,
+                        style: TextStyle(
+                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          fontFamily: 'IBM Plex Sans Arabic',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  context.read<AuthBloc>().add(const LogoutRequested());
-                  try {
-                    context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
-                  } catch (_) {}
-                  try {
-                    context.read<RideBloc>().add(const ResetRideState());
-                  } catch (_) {}
-                  context.go(LaffahRoutes.authLanding);
-                },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
-                child: Text(AppLocalizations.of(context)!.capt_confirm_logout,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'IBM Plex Sans Arabic')),
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -848,66 +926,128 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
       builder: (dialogContext) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Text(
-              'حذف حساب الكابتن نهائياً',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF161B26) : Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.gray200,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_forever_rounded,
+                      color: AppColors.error,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'حذف حساب الكابتن نهائياً',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'هل أنت متأكد من رغبتك في حذف حساب الكابتن نهائياً؟ ستفقد جميع سجلات الرحلات، تقييماتك، ورصيد محفظتك ولا يمكن التراجع عن هذا الإجراء.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 13,
+                      height: 1.6,
+                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // 1. Delete Button (Red, Full Width)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        context.read<AuthBloc>().add(const DeleteAccountRequested());
+                        try {
+                          context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
+                        } catch (_) {}
+                        try {
+                          context.read<RideBloc>().add(const ResetRideState());
+                        } catch (_) {}
+                        context.go(LaffahRoutes.authLanding);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'نعم، احذف الحساب نهائياً',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // 2. Cancel Button (Underneath)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        'إلغاء والتراجع',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            content: Text(
-              'هل أنت متأكد من رغبتك في حذف حساب الكابتن نهائياً؟ ستفقد جميع سجلات الرحلات، تقييماتك، ورصيد محفظتك ولا يمكن التراجع عن هذا الإجراء.',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontSize: 13,
-                height: 1.5,
-                color: isDark ? AppColors.gray400 : AppColors.gray700,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text(
-                  'إلغاء',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    color: AppColors.gray600,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  context.read<AuthBloc>().add(const DeleteAccountRequested());
-                  try {
-                    context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
-                  } catch (_) {}
-                  try {
-                    context.read<RideBloc>().add(const ResetRideState());
-                  } catch (_) {}
-                  context.go(LaffahRoutes.authLanding);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'نعم، احذف الحساب',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
           ),
         );
       },

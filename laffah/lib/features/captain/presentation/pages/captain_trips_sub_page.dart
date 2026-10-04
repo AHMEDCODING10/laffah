@@ -46,54 +46,125 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-              SizedBox(width: 8),
-              Text(
-                'حذف السجل',
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+      builder: (dialogCtx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF161B26) : Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.gray200,
+                  width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          content: const Text(
-            'هل أنت متأكد من رغبتك في حذف هذا السجل نهائياً؟',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 13.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: const Text('إلغاء',
-                  style: TextStyle(fontFamily: 'IBM Plex Sans Arabic')),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () => Navigator.of(dialogCtx).pop(true),
-              child: const Text('حذف',
-                  style: TextStyle(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.error,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'حذف السجل',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white)),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'هل أنت متأكد من رغبتك في حذف هذا السجل نهائياً؟',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 13,
+                      height: 1.6,
+                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // 1. Delete Button (Red, Full Width)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(dialogCtx).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.danger,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'تأكيد الحذف',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // 2. Cancel Button (Underneath)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(dialogCtx).pop(false),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        'إلغاء والتراجع',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          color: isDark ? AppColors.gray400 : AppColors.gray600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
 
     if (confirmed == true && mounted) {

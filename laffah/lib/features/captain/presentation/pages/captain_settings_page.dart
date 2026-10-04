@@ -159,48 +159,137 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
               child: OutlinedButton.icon(
                 onPressed: () {
                   final l10n = AppLocalizations.of(context)!;
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   showDialog(
                     context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text(
-                        l10n.capt_delete_account_dialog_title,
-                        style: const TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontWeight: FontWeight.bold),
-                      ),
-                      content: Text(
-                        l10n.capt_delete_account_dialog_content,
-                        style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: Text(l10n.cancel_btn,
-                              style: const TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic')),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                backgroundColor: AppColors.danger,
-                                content: Text(
-                                    l10n.capt_delete_account_request_sent,
-                                    style: const TextStyle(
-                                        fontFamily: 'IBM Plex Sans Arabic')),
+                    builder: (ctx) => Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Dialog(
+                        backgroundColor: Colors.transparent,
+                        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF161B26) : Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : AppColors.gray200,
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                                blurRadius: 30,
+                                offset: const Offset(0, 10),
                               ),
-                            );
-                          },
-                          child: Text(
-                            l10n.capt_delete_account_confirm_btn,
-                            style: const TextStyle(
-                                color: AppColors.danger,
-                                fontFamily: 'IBM Plex Sans Arabic',
-                                fontWeight: FontWeight.bold),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 58,
+                                height: 58,
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.delete_forever_rounded,
+                                  color: AppColors.error,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              Text(
+                                l10n.capt_delete_account_dialog_title,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
+                                  color: isDark ? Colors.white : AppColors.gray900,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                l10n.capt_delete_account_dialog_content,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 13,
+                                  height: 1.6,
+                                  color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              // 1. Delete Button (Red, Full Width)
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: AppColors.danger,
+                                        content: Text(
+                                          l10n.capt_delete_account_request_sent,
+                                          style: const TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.error,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    l10n.capt_delete_account_confirm_btn,
+                                    style: const TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              // 2. Cancel Button (Underneath)
+                              SizedBox(
+                                width: double.infinity,
+                                height: 46,
+                                child: TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  style: TextButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    l10n.cancel_btn,
+                                    style: TextStyle(
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   );
                 },
