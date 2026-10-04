@@ -51,24 +51,36 @@ class TripService
         $rawPrice = $distanceKm * $perKm;
         $estimatedPrice = (int) ceil($rawPrice);
 
-        $radiusKm = 7; // Search radius
         $lat = (float) $data['pickup_latitude'];
         $lng = (float) $data['pickup_longitude'];
-        $haversine = "(6371 * acos(cos(radians($lat)) * cos(radians(latitude)) * cos(radians(longitude) - radians($lng)) + sin(radians($lat)) * sin(radians(latitude))))";
 
-        $nearbyCaptainsCount = \Illuminate\Support\Facades\DB::table('captain_locations')
-            ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
-            ->where('captain_profiles.is_online', true)
-            ->whereRaw("$haversine <= ?", [$radiusKm])
-            ->count();
+        // Get nearby captains sorted Nearest-First with 15-minute freshness check (max 4.5km economic limit)
+        $nearbyCaptains = $this->getNearbyCaptainsSorted($lat, $lng, 4.5, 15);
+        $nearbyCaptainsCount = $nearbyCaptains->count();
+
+        // If strict 4.5km yields 0, check active online captains in the service pool
+        if ($nearbyCaptainsCount === 0) {
+            $onlinePool = \App\Models\CaptainProfile::where('is_online', true)->count();
+            if ($onlinePool > 0) {
+                $nearbyCaptainsCount = min($onlinePool, 5);
+            }
+        }
+
+        // Dynamic ETA calculation to pickup:
+        // Nearest captain distance (km) / avg city speed 20km/h * 60 min + 1 min buffer
+        $nearestDist = $nearbyCaptains->first()?->distance_km;
+        $captainEtaMinutes = $nearestDist !== null
+            ? max(2, (int) round(($nearestDist / 20.0) * 60) + 1)
+            : 4;
 
         return [
-            'distance_km'     => round($distanceKm, 2),
-            'estimated_price' => $estimatedPrice,
-            'currency'        => 'YER',
-            'nearby_captains' => $nearbyCaptainsCount,
+            'distance_km'         => round($distanceKm, 2),
+            'estimated_price'     => $estimatedPrice,
+            'currency'            => 'YER',
+            'nearby_captains'     => $nearbyCaptainsCount,
+            'captain_eta_minutes' => $captainEtaMinutes,
             // Applied rates returned for client-side display/debug
-            'applied_rates'   => [
+            'applied_rates'       => [
                 'base_fare'      => 0.0,
                 'per_km_rate'    => $perKm,
                 'min_fare'       => 0.0,
@@ -76,6 +88,64 @@ class TripService
                 'stops_count'    => $stopsCount,
             ],
         ];
+    }
+
+    /**
+     * Get nearby online captains sorted by proximity (nearest-first)
+     * with location freshness filtering (heartbeat).
+     *
+     * @param float $lat
+     * @param float $lng
+     * @param float $radiusKm (default 4.5)
+     * @param int $freshMinutes
+     * @return \Illuminate\Support\Collection
+     */
+    public function getNearbyCaptainsSorted(float $lat, float $lng, float $radiusKm = 4.5, int $freshMinutes = 15)
+    {
+        $latDelta = $radiusKm / 111.0;
+        $lngDelta = $radiusKm / (111.0 * max(0.1, cos(deg2rad($lat))));
+        $haversine = "(6371 * acos(cos(radians($lat)) * cos(radians(captain_locations.latitude)) * cos(radians(captain_locations.longitude) - radians($lng)) + sin(radians($lat)) * sin(radians(captain_locations.latitude))))";
+
+        // Primary search: online captains with recent GPS heartbeat within radius
+        $captains = DB::table('captain_locations')
+            ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
+            ->where('captain_profiles.is_online', true)
+            ->whereBetween('captain_locations.latitude', [$lat - $latDelta, $lat + $latDelta])
+            ->whereBetween('captain_locations.longitude', [$lng - $lngDelta, $lng + $lngDelta])
+            ->where('captain_locations.last_updated_at', '>=', now()->subMinutes($freshMinutes))
+            ->whereRaw("$haversine <= ?", [$radiusKm])
+            ->select(
+                'captain_profiles.id as captain_profile_id',
+                'captain_profiles.user_id',
+                'captain_locations.latitude',
+                'captain_locations.longitude',
+                'captain_locations.last_updated_at',
+                DB::raw("$haversine as distance_km")
+            )
+            ->orderBy('distance_km', 'asc')
+            ->get();
+
+        // Fallback: If no captains updated within freshMinutes, relax freshness filter to include all online captains with coordinates
+        if ($captains->isEmpty()) {
+            $captains = DB::table('captain_locations')
+                ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
+                ->where('captain_profiles.is_online', true)
+                ->whereBetween('captain_locations.latitude', [$lat - $latDelta, $lat + $latDelta])
+                ->whereBetween('captain_locations.longitude', [$lng - $lngDelta, $lng + $lngDelta])
+                ->whereRaw("$haversine <= ?", [$radiusKm])
+                ->select(
+                    'captain_profiles.id as captain_profile_id',
+                    'captain_profiles.user_id',
+                    'captain_locations.latitude',
+                    'captain_locations.longitude',
+                    'captain_locations.last_updated_at',
+                    DB::raw("$haversine as distance_km")
+                )
+                ->orderBy('distance_km', 'asc')
+                ->get();
+        }
+
+        return $captains;
     }
 
     /**
@@ -168,6 +238,9 @@ class TripService
             }
 
             if ($trip->status !== 'pending') {
+                if ($trip->status === 'cancelled') {
+                    throw new Exception("عذراً، تم إلغاء هذا المشوار من قبل الراكب أو لانتهاء مهلة البحث.", 410);
+                }
                 throw new Exception("عذراً، تم قبول هذا المشوار بالفعل من قبل كابتن آخر.", 409);
             }
 
@@ -479,6 +552,53 @@ class TripService
         });
     }
 
+    /**
+     * Re-dispatch / retry a trip search when passenger clicks "إعادة البحث".
+     * Revives an expired or pending trip, resets 3-minute timer, and notifies nearby captains again.
+     */
+    public function retryTripSearch($tripId, User $user)
+    {
+        return DB::transaction(function () use ($tripId, $user) {
+            $trip = Trip::where('id', $tripId)->lockForUpdate()->first();
+
+            if (!$trip) {
+                throw new Exception("المشوار المطلوب غير موجود.", 404);
+            }
+
+            if ($trip->user_id !== $user->id) {
+                throw new Exception("غير مصرح لك بإعادة البحث لهذا المشوار.", 403);
+            }
+
+            if ($trip->status === 'completed' || $trip->status === 'in_progress' || $trip->status === 'accepted') {
+                throw new Exception("لا يمكن إعادة البحث، المشوار قيد التنفيذ أو تم قبوله بالفعل.", 400);
+            }
+
+            // Revive trip to pending and reset timer
+            $trip->update([
+                'status'              => 'pending',
+                'cancellation_reason' => null,
+                'cancelled_at'        => null,
+                'cancelled_by'        => null,
+                'created_at'          => now(),
+                'updated_at'          => now(),
+            ]);
+
+            $trip->load(['passenger', 'stops']);
+
+            // Re-broadcast NewTripRequested realtime WebSocket event
+            try {
+                event(new \App\Events\NewTripRequested($trip));
+            } catch (\Exception $e) {
+                Log::error("Failed to broadcast NewTripRequested on retry for trip #{$trip->id}: " . $e->getMessage());
+            }
+
+            // Re-notify captains via FCM in nearest-first order
+            $this->notifyNearbyCaptains($trip);
+
+            return $trip;
+        });
+    }
+
     public function rateTrip($tripId, User $user, $rating, $review)
     {
         $trip = Trip::findOrFail($tripId);
@@ -526,7 +646,7 @@ class TripService
     private function notifyNearbyCaptains(Trip $trip): void
     {
         try {
-            \App\Jobs\NotifyNearbyCaptainsJob::dispatchSync($trip);
+            \App\Jobs\NotifyNearbyCaptainsJob::dispatch($trip);
         } catch (Exception $e) {
             Log::error("Failed to dispatch notify nearby captains job for trip #{$trip->id}: " . $e->getMessage());
         }

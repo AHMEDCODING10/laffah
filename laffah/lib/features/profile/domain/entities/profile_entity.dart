@@ -31,6 +31,34 @@ class ProfileEntity extends Equatable {
     this.isVerified = false,
   });
 
+  ProfileEntity copyWith({
+    String? id,
+    String? name,
+    String? phone,
+    String? email,
+    String? avatarUrl,
+    String? role,
+    String? vehicleType,
+    String? vehicleModel,
+    String? plateNumber,
+    double? rating,
+    bool? isVerified,
+  }) {
+    return ProfileEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      role: role ?? this.role,
+      vehicleType: vehicleType ?? this.vehicleType,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
+      plateNumber: plateNumber ?? this.plateNumber,
+      rating: rating ?? this.rating,
+      isVerified: isVerified ?? this.isVerified,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

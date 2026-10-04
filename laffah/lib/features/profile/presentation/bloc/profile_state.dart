@@ -23,11 +23,12 @@ class ProfileLoaded extends ProfileState {
 
 class SavedPlacesLoaded extends ProfileState {
   final List<SavedPlaceEntity> places;
+  final ProfileEntity? profile;
 
-  const SavedPlacesLoaded(this.places);
+  const SavedPlacesLoaded(this.places, {this.profile});
 
   @override
-  List<Object> get props => [places];
+  List<Object> get props => [places, if (profile != null) profile!];
 }
 
 class SavedPlaceAdded extends ProfileState {

@@ -30,6 +30,7 @@ abstract class RideRemoteDataSource {
 
   Future<BaseResponseModel<RideModel>> trackRide(String rideId);
   Future<BaseResponseModel<void>> cancelRide(String rideId, {bool isParcel = false});
+  Future<BaseResponseModel<RideModel>> retryRide(String rideId);
 
   /// Returns the raw list of trip maps from the backend
   Future<List<Map<String, dynamic>>> getTripHistory();
@@ -149,6 +150,17 @@ class RideRemoteDataSourceImpl implements RideRemoteDataSource {
       },
     );
     return BaseResponseModel.fromJson(response.data, (data) {});
+  }
+
+  @override
+  Future<BaseResponseModel<RideModel>> retryRide(String rideId) async {
+    final response = await dioClient.dio.post(
+      ApiEndpoints.retryRide(rideId),
+    );
+    return BaseResponseModel.fromJson(
+      response.data,
+      (data) => RideModel.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   @override

@@ -53,6 +53,7 @@ class ConfirmUnifiedBooking extends RideEvent {
   final bool isScheduled; // For Scheduled Rides
   final DateTime? scheduledTime;
   final String paymentMethod;
+  final int? nearbyCaptainsCount;
 
   const ConfirmUnifiedBooking({
     required this.pickup,
@@ -69,6 +70,7 @@ class ConfirmUnifiedBooking extends RideEvent {
     this.isScheduled = false,
     this.scheduledTime,
     this.paymentMethod = 'cash',
+    this.nearbyCaptainsCount,
   });
 
   @override
@@ -143,6 +145,15 @@ class CancelRideRequested extends RideEvent {
 
   @override
   List<Object?> get props => [reason, tripId, isParcel];
+}
+
+class RetryRideSearchRequested extends RideEvent {
+  final String? tripId;
+
+  const RetryRideSearchRequested({this.tripId});
+
+  @override
+  List<Object?> get props => [tripId];
 }
 
 /// Load trip history from the backend

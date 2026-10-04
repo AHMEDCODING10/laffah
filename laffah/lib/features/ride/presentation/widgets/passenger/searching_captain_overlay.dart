@@ -59,6 +59,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
 
   Timer? _countdownTimer;
   int _remainingSeconds = 180; // 3 minutes
+  bool _isTimedOut = false;
 
   // Local state flag to simulate switching to Captain Found state for demo/testing
   final bool _simulatedFound = false;
@@ -75,6 +76,11 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -86,8 +92,63 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
         });
       } else {
         timer.cancel();
+        _pulseController.stop();
+        setState(() {
+          _isTimedOut = true;
+        });
       }
     });
+  }
+
+  void _retrySearching() {
+    setState(() {
+      _remainingSeconds = 180;
+      _isTimedOut = false;
+    });
+    _pulseController.repeat(reverse: true);
+    _startTimer();
+    context.read<RideBloc>().add(const RetryRideSearchRequested());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'جاري إعادة البحث وتوسيع نطاق الطلب... 🛵',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+        ),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  String get _searchStageTitle {
+    if (_remainingSeconds > 120) {
+      return 'جاري البحث عن أقرب كابتن...';
+    } else if (_remainingSeconds > 60) {
+      return 'توسيع البحث للجولات المجاورة...';
+    } else {
+      return 'البحث في أقصى نطاق اقتصادي...';
+    }
+  }
+
+  String get _searchStageSubtitle {
+    if (_remainingSeconds > 120) {
+      return 'نبحث في محيط الحي المباشر (1.5 كم) لوصول فوري 🎯';
+    } else if (_remainingSeconds > 60) {
+      return 'نوسع النطاق حتى 3.0 كم لتغطية الشوارع القريبة 🛵';
+    } else {
+      return 'نغطي حتى 4.5 كم كحد أقصى لضمان وصول سريع وغير مكلف 📡';
+    }
+  }
+
+  String get _searchRadiusBadge {
+    if (_remainingSeconds > 120) {
+      return 'نطاق 1.5 كم • محيط الحي';
+    } else if (_remainingSeconds > 60) {
+      return 'نطاق 3.0 كم • توسيع';
+    } else {
+      return 'نطاق 4.5 كم • الأقصى';
+    }
   }
 
   @override
@@ -412,8 +473,10 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                   ),
                                 ],
                               ),
-                              child: const Icon(
-                                Icons.motorcycle_rounded,
+                              child: Icon(
+                                _isTimedOut
+                                    ? Icons.search_off_rounded
+                                    : Icons.motorcycle_rounded,
                                 color: Colors.white,
                                 size: 38,
                               ),
@@ -466,13 +529,126 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                       // STATE 2: SEARCHING STATE BOTTOM CARD
                       // ==========================================
                       if (!isCaptainFound) ...[
-                        Center(
-                          child: Column(
+                        if (_isTimedOut) ...[
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary500.withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.hourglass_empty_rounded,
+                                    color: AppColors.primary500,
+                                    size: 32,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'لم نتمكن من العثور على كابتن متاح حالياً',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? AppColors.white : AppColors.gray900,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'لا يوجد كباتن متاحون في نطاق 4.5 كم حالياً.\nيمكنك إعادة البحث مجدداً أو إلغاء الطلب.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 13,
+                                    color: isDark ? AppColors.gray400 : AppColors.gray600,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed: _retrySearching,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary500,
+                                      foregroundColor: AppColors.black,
+                                      elevation: 0,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: AppSpacing.radiusMD,
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.refresh_rounded, size: 20, color: AppColors.black),
+                                        AppSpacing.w8,
+                                        Text(
+                                          'إعادة البحث مجدداً',
+                                          style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 15,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      context.read<RideBloc>().add(const CancelRideRequested());
+                                      widget.onCancel();
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.danger,
+                                      side: BorderSide(
+                                        color: AppColors.danger.withValues(alpha: 0.45),
+                                        width: 1.2,
+                                      ),
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: AppSpacing.radiusMD,
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.close_rounded, size: 18, color: AppColors.danger),
+                                        AppSpacing.w8,
+                                        Text(
+                                          'إلغاء الطلب والعودة للرئيسية',
+                                          style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: AppColors.danger,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          Center(
+                            child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'جاري البحث عن كابتن...',
+                                _searchStageTitle,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
@@ -483,9 +659,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       : AppColors.gray900,
                                 ),
                               ),
-                              const SizedBox(height: 3),
+                              const SizedBox(height: 4),
                               Text(
-                                'سنصل إليك قريبًا في صنعاء',
+                                _searchStageSubtitle,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'IBM Plex Sans Arabic',
@@ -496,23 +672,66 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              // 3-Minute Timeout Timer
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary500.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: AppColors.primary500.withValues(alpha: 0.2)),
-                                ),
-                                child: Text(
-                                  '${(_remainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(_remainingSeconds % 60).toString().padLeft(2, '0')}',
-                                  style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                    color: isDark ? Colors.white : AppColors.primary500,
+                              // 3-Minute Timeout Timer + Progressive Radius Badge
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary500.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: AppColors.primary500.withValues(alpha: 0.2)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.timer_outlined, size: 16, color: AppColors.primary500),
+                                        AppSpacing.w6,
+                                        Text(
+                                          '${(_remainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(_remainingSeconds % 60).toString().padLeft(2, '0')}',
+                                          style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w900,
+                                            color: isDark ? Colors.white : AppColors.primary500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
+                                  AppSpacing.w10,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? AppColors.white.withValues(alpha: 0.06)
+                                          : AppColors.gray100,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isDark
+                                            ? AppColors.white.withValues(alpha: 0.1)
+                                            : AppColors.gray300,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.radar_rounded, size: 15, color: AppColors.primary500),
+                                        AppSpacing.w6,
+                                        Text(
+                                          _searchRadiusBadge,
+                                          style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDark ? AppColors.gray300 : AppColors.gray700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -759,6 +978,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                           ),
                         ),
                       ],
+                    ],
 
                       // ==========================================
                       // STATE 3: CAPTAIN FOUND STATE BOTTOM CARD

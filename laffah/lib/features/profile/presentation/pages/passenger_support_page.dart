@@ -1,23 +1,86 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/laffah_glass_snackbar.dart';
 
 class PassengerSupportPage extends StatelessWidget {
   const PassengerSupportPage({super.key});
 
-  Future<void> _launchUrl(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
+  static const String _supportPhone = '967770291452';
+  static const String _supportEmail = 'support@laffah.com';
+
+  Future<void> _launchWhatsApp(BuildContext context) async {
+    HapticFeedback.lightImpact();
+    final message = Uri.encodeComponent('السلام عليكم، أحتاج مساعدة في تطبيق لَفَّة.');
+    final Uri webUrl = Uri.parse('https://wa.me/$_supportPhone?text=$message');
+    final Uri appUrl = Uri.parse('whatsapp://send?phone=$_supportPhone&text=$message');
+
+    try {
+      if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+        return;
+      }
+      if (await canLaunchUrl(appUrl)) {
+        await launchUrl(appUrl, mode: LaunchMode.externalApplication);
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback if WhatsApp is not installed
+    await Clipboard.setData(const ClipboardData(text: _supportPhone));
+    if (context.mounted) {
+      LaffahSnackBar.showSuccess(
+        context,
+        'تم نسخ رقم الدعم الفني: +$_supportPhone',
+      );
+    }
+  }
+
+  Future<void> _launchCall(BuildContext context) async {
+    HapticFeedback.lightImpact();
+    final Uri uri = Uri.parse('tel:+$_supportPhone');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    } catch (_) {}
+
+    await Clipboard.setData(const ClipboardData(text: '+$_supportPhone'));
+    if (context.mounted) {
+      LaffahSnackBar.showSuccess(
+        context,
+        'تم نسخ رقم الهاتف: +$_supportPhone',
+      );
+    }
+  }
+
+  Future<void> _launchEmail(BuildContext context) async {
+    HapticFeedback.lightImpact();
+    final subject = Uri.encodeComponent('دعم فني - تطبيق لَفَّة');
+    final Uri uri = Uri.parse('mailto:$_supportEmail?subject=$subject');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    } catch (_) {}
+
+    await Clipboard.setData(const ClipboardData(text: _supportEmail));
+    if (context.mounted) {
+      LaffahSnackBar.showSuccess(
+        context,
+        'تم نسخ البريد الإلكتروني: $_supportEmail',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.black : AppColors.gray50,
       appBar: AppBar(
@@ -74,16 +137,16 @@ class PassengerSupportPage extends StatelessWidget {
               icon: Icons.chat_outlined,
               title: 'مراسلة عبر واتساب',
               subtitle: 'أسرع طريقة للتواصل مع فريق الدعم',
-              onTap: () => _launchUrl('whatsapp://send?phone=+967770291452'),
+              onTap: () => _launchWhatsApp(context),
               isDark: isDark,
-              iconColor: Colors.green,
+              iconColor: const Color(0xFF25D366),
             ),
             AppSpacing.h16,
             _SupportOption(
               icon: Icons.phone_outlined,
               title: 'اتصال هاتفي',
               subtitle: 'للحالات الطارئة والمستعجلة',
-              onTap: () => _launchUrl('tel:+967770291452'),
+              onTap: () => _launchCall(context),
               isDark: isDark,
               iconColor: AppColors.primary,
             ),
@@ -92,7 +155,7 @@ class PassengerSupportPage extends StatelessWidget {
               icon: Icons.email_outlined,
               title: 'البريد الإلكتروني',
               subtitle: 'للاستفسارات العامة والاقتراحات',
-              onTap: () => _launchUrl('mailto:support@laffah.com'),
+              onTap: () => _launchEmail(context),
               isDark: isDark,
               iconColor: Colors.orange,
             ),

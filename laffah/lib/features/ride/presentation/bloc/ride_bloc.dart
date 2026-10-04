@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import '../../domain/usecases/request_ride_usecase.dart';
 import '../../domain/usecases/cancel_ride_usecase.dart';
+import '../../domain/usecases/retry_ride_usecase.dart';
 import '../../domain/usecases/track_ride_usecase.dart';
 import '../../domain/usecases/get_trip_history_usecase.dart';
 import '../../domain/usecases/rate_trip_use_case.dart';
@@ -114,6 +115,7 @@ class RideOption extends Equatable {
 class RideBloc extends Bloc<RideEvent, RideState> {
   final RequestRideUseCase requestRideUseCase;
   final CancelRideUseCase cancelRideUseCase;
+  final RetryRideUseCase? retryRideUseCase;
   final TrackRideUseCase trackRideUseCase;
   final SubmitParcelOrderUseCase submitParcelOrderUseCase;
   final GetTripHistoryUseCase getTripHistoryUseCase;
@@ -128,6 +130,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   RideBloc({
     required this.requestRideUseCase,
     required this.cancelRideUseCase,
+    this.retryRideUseCase,
     required this.trackRideUseCase,
     required this.submitParcelOrderUseCase,
     required this.getTripHistoryUseCase,
@@ -140,6 +143,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     on<ConfirmBooking>(_onConfirmBooking);
     on<SubmitParcelOrder>(_onSubmitParcelOrder);
     on<CancelRideRequested>(_onCancelRideRequested);
+    on<RetryRideSearchRequested>(_onRetryRideSearchRequested);
     on<SimulateRideStep>(_onSimulateRideStep);
     on<ScheduleRide>(_onScheduleRide);
     on<LoadTripHistoryEvent>(_onLoadTripHistory);
@@ -251,19 +255,26 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     ConfirmUnifiedBooking event,
     Emitter<RideState> emit,
   ) async {
+    // When waiting for a captain, ETA is time for captain to arrive (3-5 mins),
+    // while trip duration is total travel time.
+    const int captainEtaMinutes = 4;
+
     final selectedOption = RideOption(
       id: 'laffah',
       titleAr: 'لَفّة',
       titleEn: 'Laffah',
       basePrice: event.fare,
-      etaMinutes: event.duration,
+      etaMinutes: captainEtaMinutes,
       iconKey: 'car',
       descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
     );
 
-    int nearbyCaptains = 0;
-    if (state is RideOptionsLoaded) {
+    int nearbyCaptains = event.nearbyCaptainsCount ?? 0;
+    if (nearbyCaptains <= 0 && state is RideOptionsLoaded) {
       nearbyCaptains = (state as RideOptionsLoaded).nearbyCaptainsCount;
+    }
+    if (nearbyCaptains <= 0) {
+      nearbyCaptains = 4; // Fallback so it never shows 0
     }
 
     // 1. Instantly emit Searching / Pending state so user immediately sees the Searching Radar
@@ -278,6 +289,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       rating: 5.0,
       status: 'pending',
       nearbyCaptainsCount: nearbyCaptains,
+      duration: '${event.duration} د',
     ));
 
     final result = await requestRideUseCase(
@@ -325,6 +337,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           rating: rideEntity.rating ?? 5.0,
           status: rideEntity.status,
           rideId: rideEntity.id,
+          nearbyCaptainsCount: nearbyCaptains,
+          duration: '${event.duration} د',
         ));
 
         // Start Periodic Smart Polling to detect when Captain accepts
@@ -361,7 +375,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       titleAr: 'لَفّة',
       titleEn: 'Laffah',
       basePrice: calculatedPrice,
-      etaMinutes: duration,
+      etaMinutes: 4, // Realistic captain ETA to pickup
       iconKey: 'car',
       descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
     );
@@ -377,6 +391,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       vehiclePlate: '',
       rating: 5.0,
       status: 'pending',
+      nearbyCaptainsCount: 4,
+      duration: '$duration د',
     ));
 
     final result = await requestRideUseCase(
@@ -413,6 +429,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           rideId: rideEntity.id,
           distance: rideEntity.distanceString,
           duration: rideEntity.durationString,
+          nearbyCaptainsCount: 4,
         ));
 
         // Start Periodic Smart Polling to detect when Captain accepts
@@ -484,6 +501,10 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           )
         : event.option;
 
+    final int existingNearbyCaptains = state is RideBookingConfirmed
+        ? (state as RideBookingConfirmed).nearbyCaptainsCount
+        : 4;
+
     if (s == 'accepted' || s == 'arrived' || s == 'in_transit' || s == 'started') {
       if (wasSearching) {
         // Captain just accepted! Play simple discrete chime
@@ -509,6 +530,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         rideId: event.rideId,
         distance: event.distance,
         duration: event.duration,
+        nearbyCaptainsCount: existingNearbyCaptains,
       ));
     } else if (s == 'completed') {
       _stopSmartPolling();
@@ -532,6 +554,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         rideId: event.rideId,
         distance: event.distance,
         duration: event.duration,
+        nearbyCaptainsCount: existingNearbyCaptains,
       ));
     } else if (s == 'cancelled') {
       _stopSmartPolling();
@@ -644,6 +667,35 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     }
 
     emit(const RideInitial());
+  }
+
+  FutureOr<void> _onRetryRideSearchRequested(
+    RetryRideSearchRequested event,
+    Emitter<RideState> emit,
+  ) async {
+    final targetTripId = event.tripId ??
+        _currentActiveRideId ??
+        (state is RideBookingConfirmed
+            ? (state as RideBookingConfirmed).rideId
+            : null);
+
+    if (targetTripId != null && targetTripId.isNotEmpty && retryRideUseCase != null) {
+      final result = await retryRideUseCase!(targetTripId);
+      result.fold(
+        (failure) {},
+        (ride) {
+          _currentActiveRideId = ride.id;
+          _echoService.listenToTripStatus(
+            ride.id,
+            (data) => add(TripStatusUpdatedFromWebSocket(data)),
+          );
+          if (state is RideBookingConfirmed) {
+            final curr = state as RideBookingConfirmed;
+            _startSmartPolling(ride.id, curr.selectedOption, curr.pickup, curr.dropoff);
+          }
+        },
+      );
+    }
   }
 
   FutureOr<void> _onSimulateRideStep(

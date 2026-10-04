@@ -43,21 +43,8 @@ class ProfileUserHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget avatarChild;
-    if (avatarUrl != null && avatarUrl!.isNotEmpty) {
-      avatarChild = ClipOval(
-        child: Image.network(
-          avatarUrl!,
-          width: 64,
-          height: 64,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-              _buildFallbackAvatar(userName),
-        ),
-      );
-    } else {
-      avatarChild = _buildFallbackAvatar(userName);
-    }
+    // Fast, lightweight, local offline avatar - no external web network requests
+    final avatarChild = _buildFallbackAvatar(userName);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -175,17 +162,6 @@ class ProfileUserHeader extends StatelessWidget {
               ],
             ),
           ),
-
-          // 3. Edit Action
-          if (onEditPressed != null)
-            IconButton(
-              icon: const Icon(
-                Icons.edit_note_rounded,
-                color: Color(0xFFFF6B00),
-                size: 28,
-              ),
-              onPressed: onEditPressed,
-            ),
         ],
       ),
     );

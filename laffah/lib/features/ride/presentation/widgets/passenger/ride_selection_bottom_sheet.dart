@@ -46,11 +46,16 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
   double _durationMin = 0.0;
   double? _backendFare; // Authoritative fare from backend API — no local calculation
   bool _isFareLoading = true; // Show loading state until backend fare arrives
+  int _nearbyCaptains = 0;
   final OsrmService _osrmService = OsrmService();
 
   @override
   void initState() {
     super.initState();
+    final currentState = context.read<RideBloc>().state;
+    if (currentState is RideOptionsLoaded) {
+      _nearbyCaptains = currentState.nearbyCaptainsCount;
+    }
     // If parent already provides a backend fare, use it immediately
     if (widget.precomputedFare != null) {
       _backendFare = widget.precomputedFare;
@@ -185,6 +190,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
           setState(() {
             _backendFare = state.fare;
             _isFareLoading = false;
+            _nearbyCaptains = state.nearbyCaptainsCount;
             if (state.distance > 0) _distanceKm = state.distance;
             if (state.duration > 0) _durationMin = state.duration.toDouble();
           });
@@ -648,6 +654,7 @@ class _RideSelectionBottomSheetState extends State<RideSelectionBottomSheet> {
                         isScheduled: _isScheduled,
                         scheduledTime: _scheduledTime,
                         paymentMethod: _paymentMode,
+                        nearbyCaptainsCount: _nearbyCaptains > 0 ? _nearbyCaptains : null,
                       ));
                   Navigator.pop(context);
                 },

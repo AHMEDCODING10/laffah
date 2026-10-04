@@ -123,36 +123,39 @@ class AuthService
 
     public function forgotPassword(string $phone)
     {
-        $user = User::where('phone', $phone)->first();
+        $user = $this->findUserByPhone($phone);
         if (!$user) {
             throw new Exception('رقم الهاتف غير مسجل لدينا.', 404);
         }
 
+        $shortPhone = $this->normalizePhone($phone);
+
         // Generate 6-digit code
         $code = rand(100000, 999999);
         
-        // Save to cache for 10 minutes
-        Cache::put('reset_code_' . $phone, $code, now()->addMinutes(10));
+        // Save to cache for 10 minutes using normalized short phone
+        Cache::put('reset_code_' . $shortPhone, $code, now()->addMinutes(10));
         // Reset attempt counter
-        Cache::put('reset_attempts_' . $phone, 0, now()->addMinutes(10));
+        Cache::put('reset_attempts_' . $shortPhone, 0, now()->addMinutes(10));
 
-        // Format phone number for WhatsApp (must include country code without '+')
-        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-        if (strlen($cleanPhone) == 9) {
-            $cleanPhone = '967' . $cleanPhone;
-        }
+        // Format phone number for WhatsApp (always 967 + 9 digits, e.g. 967770291452)
+        $waPhone = '967' . $shortPhone;
 
-        // Send OTP via Local Baileys Node.js Microservice
+        // Send OTP via Baileys WhatsApp Microservice
         try {
-            $message = "أهلاً بك في تطبيق لَفّة 🚕!\nرمز التحقق الخاص بك هو: *$code*\nلا تشارك هذا الرمز مع أحد.";
+            $message = "🚖 *تطبيق لَفَّة - استعادة كلمة المرور*\n\n" .
+                       "رمز التحقق الخاص بك هو:\n" .
+                       "🔢 *{$code}*\n\n" .
+                       "⚠️ هذا الرمز صالح لمدة 10 دقائق فقط.\n" .
+                       "🔒 لا تشارك هذا الرمز مع أي شخص حفاظاً على أمان حسابك.";
             
-            $whatsappServerUrl = env('WHATSAPP_SERVER_URL', 'http://localhost:3000');
-            \Illuminate\Support\Facades\Http::post("{$whatsappServerUrl}/send-message", [
-                'phone' => $cleanPhone,
+            $whatsappServerUrl = rtrim(env('WHATSAPP_SERVER_URL', 'https://laffah-whatsapp.onrender.com'), '/');
+            \Illuminate\Support\Facades\Http::timeout(10)->post("{$whatsappServerUrl}/send-message", [
+                'phone' => $waPhone,
                 'message' => $message
             ]);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Local WhatsApp OTP Failed: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error("WhatsApp OTP Delivery Failed: " . $e->getMessage());
         }
 
         return $code;
@@ -160,18 +163,20 @@ class AuthService
 
     public function verifyResetCode(string $phone, string $code)
     {
+        $shortPhone = $this->normalizePhone($phone);
+
         // Check attempt limit (max 5 wrong attempts)
-        $attempts = (int) Cache::get('reset_attempts_' . $phone, 0);
+        $attempts = (int) Cache::get('reset_attempts_' . $shortPhone, 0);
         if ($attempts >= 5) {
-            Cache::forget('reset_code_' . $phone);
-            Cache::forget('reset_attempts_' . $phone);
+            Cache::forget('reset_code_' . $shortPhone);
+            Cache::forget('reset_attempts_' . $shortPhone);
             throw new Exception('تم تجاوز عدد المحاولات المسموحة. أعد طلب رمز جديد.', 429);
         }
 
-        $cachedCode = Cache::get('reset_code_' . $phone);
+        $cachedCode = Cache::get('reset_code_' . $shortPhone);
         
         if (!$cachedCode || (string) $cachedCode !== (string) $code) {
-            Cache::increment('reset_attempts_' . $phone);
+            Cache::increment('reset_attempts_' . $shortPhone);
             throw new Exception('الرمز غير صحيح أو منتهي الصلاحية.', 400);
         }
 
@@ -182,7 +187,7 @@ class AuthService
     {
         $this->verifyResetCode($phone, $code);
 
-        $user = User::where('phone', $phone)->first();
+        $user = $this->findUserByPhone($phone);
         if (!$user) {
             throw new Exception('رقم الهاتف غير مسجل لدينا.', 404);
         }
@@ -190,8 +195,40 @@ class AuthService
         $user->password = Hash::make($newPassword);
         $user->save();
 
-        Cache::forget('reset_code_' . $phone);
+        $shortPhone = $this->normalizePhone($phone);
+        Cache::forget('reset_code_' . $shortPhone);
+        Cache::forget('reset_attempts_' . $shortPhone);
 
         return true;
+    }
+
+    /**
+     * Find user by phone supporting all Yemeni phone formats:
+     * - +967770291452
+     * - 967770291452
+     * - 770291452
+     * - 0770291452
+     */
+    public function findUserByPhone(string $phone): ?User
+    {
+        $cleanDigits = preg_replace('/[^0-9]/', '', $phone);
+        $shortPhone  = substr($cleanDigits, -9);
+        $withPlus    = '+967' . $shortPhone;
+        $with967     = '967' . $shortPhone;
+
+        return User::where('phone', $phone)
+            ->orWhere('phone', $shortPhone)
+            ->orWhere('phone', $withPlus)
+            ->orWhere('phone', $with967)
+            ->first();
+    }
+
+    /**
+     * Normalize Yemeni phone number to standard 9 digits (e.g. 770291452)
+     */
+    public function normalizePhone(string $phone): string
+    {
+        $cleanDigits = preg_replace('/[^0-9]/', '', $phone);
+        return substr($cleanDigits, -9);
     }
 }

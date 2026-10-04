@@ -38,6 +38,12 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   String _currentCaptainId = '';
   final Set<String> _dismissedTripIds = {};
 
+  LatLng? _currentCaptainPosition;
+  double _currentCaptainHeading = 0.0;
+
+  LatLng? get currentCaptainPosition => _currentCaptainPosition;
+  double get currentCaptainHeading => _currentCaptainHeading;
+
   final RoutingService routingService;
   final PusherService pusherService;
 
@@ -279,15 +285,9 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     // Check if dismissed
     if (_dismissedTripIds.contains(tripId)) return;
 
-    // Reset any existing trip timer
+    // Cancel any previous trip request timer
     _tripRequestTimer?.cancel();
-
-    // Start a 15-second timer to auto-dismiss if no action taken
-    _tripRequestTimer = Timer(const Duration(seconds: 15), () {
-      if (!isClosed) {
-        add(TripNoLongerAvailableReceived(tripId));
-      }
-    });
+    _tripRequestTimer = null;
 
     // Play subtle chime / alert sound once
     alertSoundService.playSimpleTripAlert();
@@ -431,10 +431,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
   Future<void> _onUpdateCaptainLocation(
       UpdateCaptainLocation event, EmitFn emit) async {
-    emit(CaptainLocationUpdated(
-      position: LatLng(event.lat, event.lng),
-      heading: event.heading,
-    ));
+    _currentCaptainPosition = LatLng(event.lat, event.lng);
+    _currentCaptainHeading = event.heading;
 
     // Push coordinates to the backend server
     await updateLocationUseCase(
@@ -443,6 +441,21 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       lng: event.lng,
       heading: event.heading,
     );
+
+    // CRITICAL FIX: NEVER overwrite active modal / trip workflow states with a location ping!
+    // If captain is in IncomingTripRequest, TripAccepted, TripInProgress, or CaptainLoading,
+    // preserve their active screen state so the dialog never disappears!
+    if (state is IncomingTripRequest ||
+        state is TripAccepted ||
+        state is TripInProgress ||
+        state is CaptainLoading) {
+      return;
+    }
+
+    emit(CaptainLocationUpdated(
+      position: _currentCaptainPosition!,
+      heading: _currentCaptainHeading,
+    ));
   }
 
   Future<void> _onAcceptTrip(AcceptTrip event, EmitFn emit) async {
@@ -460,8 +473,9 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
       await result.fold(
         (failure) async {
-          // If rejected by server (e.g. 409 Conflict - trip already accepted by another captain)
+          // If rejected by server (e.g. 409 Conflict - trip already accepted by another captain or cancelled)
           _dismissedTripIds.add(currentState.tripId);
+          emit(CaptainFailureState(failure.message));
           emit(const CaptainOnline());
         },
         (_) async {

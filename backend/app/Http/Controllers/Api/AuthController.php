@@ -163,12 +163,17 @@ class AuthController extends Controller
             $code = $this->authService->forgotPassword($request->phone);
             Log::info("Password reset OTP generated for phone {$request->phone}");
             return response()->json([
+                'success' => true,
                 'status' => 'success',
-                'message' => __('messages.msg_6') ?: 'تم إرسال رمز استعادة كلمة المرور بنجاح.',
+                'message' => 'تم إرسال رمز التحقق بنجاح إلى رقم الواتساب الخاص بك.',
             ]);
         } catch (\Exception $e) {
-            $code = $e->getCode() == 404 ? 404 : 400;
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], $code);
+            $statusCode = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 400;
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], $statusCode);
         }
     }
 
@@ -182,11 +187,17 @@ class AuthController extends Controller
         try {
             $this->authService->verifyResetCode($request->phone, $request->code);
             return response()->json([
+                'success' => true,
                 'status' => 'success',
-                'message' => __('messages.msg_7') ?: 'تم التحقق من الرمز بنجاح.'
+                'message' => 'تم التحقق من الرمز بنجاح.'
             ]);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
+            $statusCode = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 400;
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], $statusCode);
         }
     }
 
@@ -201,11 +212,17 @@ class AuthController extends Controller
         try {
             $this->authService->resetPassword($request->phone, $request->code, $request->password);
             return response()->json([
+                'success' => true,
                 'status' => 'success',
-                'message' => __('messages.msg_8') ?: 'تم تغيير كلمة المرور بنجاح.'
+                'message' => 'تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.'
             ]);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
+            $statusCode = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 400;
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], $statusCode);
         }
     }
 }

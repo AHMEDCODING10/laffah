@@ -8,22 +8,26 @@ import '../models/saved_place_model.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource remoteDataSource;
+  ProfileEntity? _cachedProfile;
 
   ProfileRepositoryImpl({required this.remoteDataSource});
-
 
   @override
   Future<Either<Failure, ProfileEntity>> getProfile() async {
     try {
       final response = await remoteDataSource.getProfile();
       if (response.success && response.data != null) {
+        _cachedProfile = response.data!;
         return Right(response.data!);
       } else {
+        if (_cachedProfile != null) return Right(_cachedProfile!);
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (e) {
+      if (_cachedProfile != null) return Right(_cachedProfile!);
       return Left(ServerFailure('تعذر جلب بيانات الملف الشخصي: $e'));
     } catch (e) {
+      if (_cachedProfile != null) return Right(_cachedProfile!);
       return Left(ServerFailure(e.toString()));
     }
   }

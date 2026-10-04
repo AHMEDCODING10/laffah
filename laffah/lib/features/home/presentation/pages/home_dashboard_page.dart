@@ -650,6 +650,10 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
                           context
                               .read<RideBloc>()
                               .add(const CancelRideRequested());
+                          setState(() {
+                            _dropoffController.clear();
+                            _dropoffLatLng = null;
+                          });
                         },
                       );
                     }

@@ -22,21 +22,18 @@ class PassengerProfileEditPage extends StatefulWidget {
 class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile?.name ?? '');
-    _emailController = TextEditingController(text: widget.profile?.email ?? '');
     _phoneController = TextEditingController(text: widget.profile?.phone ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
@@ -46,7 +43,6 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
       context.read<ProfileBloc>().add(UpdateProfileEvent(
             name: _nameController.text,
             phone: _phoneController.text,
-            email: _emailController.text,
           ));
     }
   }
@@ -100,29 +96,15 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Stack(
-                      alignment: Alignment.bottomLeft,
-                      children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundColor:
-                              AppColors.primary500.withValues(alpha: 0.12),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            size: 55,
-                            color: AppColors.primary500,
-                          ),
-                        ),
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary500,
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: const Icon(Icons.camera_alt_rounded,
-                              color: AppColors.white, size: 20),
-                        ),
-                      ],
+                    CircleAvatar(
+                      radius: 48,
+                      backgroundColor:
+                          AppColors.primary500.withValues(alpha: 0.12),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        size: 52,
+                        color: AppColors.primary500,
+                      ),
                     ),
                     AppSpacing.h32,
                     _buildTextField(
@@ -140,15 +122,7 @@ class _PassengerProfileEditPageState extends State<PassengerProfileEditPage> {
                       icon: Icons.phone_android_rounded,
                       isDark: isDark,
                       keyboardType: TextInputType.phone,
-                      enabled: false, // Usually phone is verified and locked
-                    ),
-                    AppSpacing.h16,
-                    _buildTextField(
-                      controller: _emailController,
-                      label: AppLocalizations.of(context)!.pass_edit_email_opt,
-                      icon: Icons.email_outlined,
-                      isDark: isDark,
-                      keyboardType: TextInputType.emailAddress,
+                      enabled: false, // Phone is verified and locked
                     ),
                     AppSpacing.h40,
                     SizedBox(

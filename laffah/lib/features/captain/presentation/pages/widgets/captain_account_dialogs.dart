@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/widgets/laffah_glass_snackbar.dart';
+import '../../../../profile/presentation/widgets/faq_bottom_sheet.dart';
+import '../../../../profile/presentation/pages/legal/terms_of_service_page.dart';
+import '../../../../profile/presentation/pages/legal/privacy_policy_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Base custom glassmorphic bottom sheet wrapper for unified design aesthetics
@@ -244,8 +248,263 @@ class VehicleDetailsSheet extends StatelessWidget {
 }
 
 /// 3. Official Documents Modal Sheet
-class OfficialDocumentsSheet extends StatelessWidget {
+class OfficialDocumentsSheet extends StatefulWidget {
   const OfficialDocumentsSheet({super.key});
+
+  @override
+  State<OfficialDocumentsSheet> createState() => _OfficialDocumentsSheetState();
+}
+
+class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
+  final List<Map<String, dynamic>> _documents = [
+    {
+      'id': 'id_card',
+      'name': 'البطاقة الشخصية اليمنية',
+      'number': '01010048291',
+      'validity': 'سارية حتى 2028/11',
+      'isVerified': true,
+      'statusLabel': 'معتمد وموثق',
+      'icon': Icons.badge_outlined,
+    },
+    {
+      'id': 'vehicle_card',
+      'name': 'كرت ملكية الدراجة النارية',
+      'number': '1/ص 48291 - صنعاء',
+      'validity': 'سارية حتى 2027/08',
+      'isVerified': true,
+      'statusLabel': 'معتمد وموثق',
+      'icon': Icons.two_wheeler_rounded,
+    },
+    {
+      'id': 'license',
+      'name': 'رخصة قيادة دراجة نارية',
+      'number': 'DL-967-382910',
+      'validity': 'سارية حتى 2029/04',
+      'isVerified': true,
+      'statusLabel': 'معتمد وموثق',
+      'icon': Icons.card_membership_rounded,
+    },
+    {
+      'id': 'inspection',
+      'name': 'شهادة الفحص الفني الدوري',
+      'number': 'INSP-2026-8812',
+      'validity': 'ساري حتى 2027/01',
+      'isVerified': true,
+      'statusLabel': 'معتمد وموثق',
+      'icon': Icons.fact_check_outlined,
+    },
+  ];
+
+  void _showDocumentPreview(Map<String, dynamic> doc, bool isDark) {
+    HapticFeedback.lightImpact();
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(doc['icon'] as IconData,
+                    color: AppColors.primary500, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  doc['name'] as String,
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    color: isDark ? Colors.white : AppColors.gray900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : AppColors.gray100,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : AppColors.gray200,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.verified_user_rounded,
+                      size: 40,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'وثيقة رسمية معتمدة ومطابقة للمعايير',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.gray300 : AppColors.gray700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacing.h16,
+              _buildModalDetailRow('رقم الوثيقة:', doc['number'] as String, isDark),
+              AppSpacing.h8,
+              _buildModalDetailRow('فترة الصلاحية:', doc['validity'] as String, isDark),
+              AppSpacing.h8,
+              _buildModalDetailRow('حالة التحقق:', doc['statusLabel'] as String, isDark,
+                  valueColor: AppColors.success),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary500,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                'إغلاق',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModalDetailRow(String label, String value, bool isDark,
+      {Color? valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 12,
+            color: AppColors.gray500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 12.5,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? (isDark ? Colors.white : AppColors.gray900),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showUploadOption(Map<String, dynamic> doc) {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF141822) : Colors.white,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                AppSpacing.h16,
+                Text(
+                  'تحديث ${doc['name']}',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: isDark ? Colors.white : AppColors.gray900,
+                  ),
+                ),
+                AppSpacing.h16,
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_rounded,
+                      color: AppColors.primary500),
+                  title: const Text('التقاط صورة عبر الكاميرا',
+                      style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    LaffahSnackBar.success(
+                      context,
+                      'تم التقاط الوثيقة وجاري التحقق من مطابقتها عبر النظام',
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_rounded,
+                      color: AppColors.primary500),
+                  title: const Text('اختيار ملف من المعرض',
+                      style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    LaffahSnackBar.success(
+                      context,
+                      'تم رفع الوثيقة بنجاح وسيتم اعتمادها خلال وقت وجيز',
+                    );
+                  },
+                ),
+                AppSpacing.h12,
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -256,37 +515,90 @@ class OfficialDocumentsSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'الوثائق والأوراق الرسمية',
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.folder_shared_rounded,
+                      color: AppColors.primary500,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'الوثائق والأوراق الرسمية',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        color: AppColors.success, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'مكتملة وموثقة',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          AppSpacing.h8,
+          const Text(
+            'جميع وثائق اعتماد كابتن لَفَّة الرسمية وفق اشتراطات السلامة واللوائح في الجمهورية اليمنية.',
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 17,
-              color: isDark ? Colors.white : AppColors.gray900,
+              fontSize: 11.5,
+              color: AppColors.gray500,
+              height: 1.4,
             ),
           ),
           AppSpacing.h16,
-          _buildDocumentTile(context,
-              AppLocalizations.of(context)!.capt_yemeni_id, 'id_card', isDark),
-          _buildDocumentTile(
-              context,
-              AppLocalizations.of(context)!.capt_bike_ownership_card,
-              'vehicle_registration',
-              isDark),
-          AppSpacing.h24,
+          ..._documents.map((doc) => _buildDocumentCard(doc, isDark)),
+          AppSpacing.h20,
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary500,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: const Text(
-              'حسناً',
+              'حسناً، فهمت',
               style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontWeight: FontWeight.w900),
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
           AppSpacing.h16,
@@ -295,32 +607,125 @@ class OfficialDocumentsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDocumentTile(
-      BuildContext context, String name, String type, bool isDark) {
+  Widget _buildDocumentCard(Map<String, dynamic> doc, bool isDark) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.03)
+            : AppColors.gray50,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color:
-              isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray200,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : AppColors.gray200,
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              name,
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontSize: 12.5,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : AppColors.gray900,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  doc['icon'] as IconData,
+                  color: AppColors.primary500,
+                  size: 20,
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      doc['name'] as String,
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : AppColors.gray900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${doc['number']} • ${doc['validity']}',
+                      style: const TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11,
+                        color: AppColors.gray500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  doc['statusLabel'] as String,
+                  style: const TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.success,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () => _showDocumentPreview(doc, isDark),
+                  icon: const Icon(Icons.visibility_outlined, size: 16),
+                  label: const Text(
+                    'عرض الوثيقة',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary500,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                ),
+              ),
+              Container(width: 1, height: 18, color: AppColors.gray300),
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () => _showUploadOption(doc),
+                  icon: const Icon(Icons.file_upload_outlined, size: 16),
+                  label: const Text(
+                    'تحديث / تعديل',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: isDark ? AppColors.gray300 : AppColors.gray700,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -523,141 +928,12 @@ class HelpCenterSheet extends StatelessWidget {
 }
 
 /// 6. FAQ Modal Sheet
-class FAQSheet extends StatefulWidget {
+class FAQSheet extends StatelessWidget {
   const FAQSheet({super.key});
 
   @override
-  State<FAQSheet> createState() => _FAQSheetState();
-}
-
-class _FAQSheetState extends State<FAQSheet> {
-  int _expandedIndex = -1;
-
-  List<Map<String, String>> get _faqs => [
-        {
-          'q': AppLocalizations.of(context)!.capt_faq_q1,
-          'a': AppLocalizations.of(context)!.capt_faq_a1,
-        },
-        {
-          'q': AppLocalizations.of(context)!.capt_faq_q2,
-          'a': AppLocalizations.of(context)!.capt_faq_a2,
-        },
-        {
-          'q': AppLocalizations.of(context)!.capt_faq_q3,
-          'a': AppLocalizations.of(context)!.capt_faq_a3,
-        },
-      ];
-
-  @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return _buildGlassSheetWrapper(
-      context: context,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            AppLocalizations.of(context)!.capt_faqs_title,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 17,
-              color: isDark ? Colors.white : AppColors.gray900,
-            ),
-          ),
-          AppSpacing.h16,
-          ..._faqs.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final item = entry.value;
-            final isExpanded = _expandedIndex == idx;
-
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _expandedIndex = isExpanded ? -1 : idx;
-                });
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.03)
-                      : AppColors.gray50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isExpanded
-                        ? AppColors.primary500
-                        : (isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : AppColors.gray200),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item['q']!,
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w900,
-                              color: isExpanded
-                                  ? AppColors.primary500
-                                  : (isDark ? Colors.white : AppColors.gray900),
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          isExpanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.primary500,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                    if (isExpanded) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        item['a']!,
-                        style: const TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontSize: 11.5,
-                          color: AppColors.gray500,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            );
-          }),
-          AppSpacing.h24,
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.primary500),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-            ),
-            child: const Text('إغلاق',
-                style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    color: AppColors.primary500,
-                    fontWeight: FontWeight.bold)),
-          ),
-          AppSpacing.h16,
-        ],
-      ),
-    );
+    return const LaffahFaqBottomSheet(initialCategory: 'captain');
   }
 }
 
@@ -665,6 +941,37 @@ class _FAQSheetState extends State<FAQSheet> {
 class DirectSupportSheet extends StatelessWidget {
   const DirectSupportSheet({super.key});
 
+  static const String _supportPhone = '770291452';
+  static const String _fullPhone = '+967770291452';
+  static const String _supportEmail = 'support@laffah.com';
+
+  Future<void> _launchOrCopy(
+    BuildContext context, {
+    required String urlString,
+    required String fallbackCopyText,
+    required String fallbackMessage,
+  }) async {
+    Navigator.pop(context);
+    final uri = Uri.parse(urlString);
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: fallbackCopyText));
+        if (context.mounted) {
+          LaffahSnackBar.info(context, fallbackMessage);
+        }
+      }
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: fallbackCopyText));
+      if (context.mounted) {
+        LaffahSnackBar.info(context, fallbackMessage);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -675,7 +982,7 @@ class DirectSupportSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'تواصل معنا مباشرة',
+            'تواصل مع الدعم الفني للكباتن',
             style: TextStyle(
               fontFamily: 'IBM Plex Sans Arabic',
               fontWeight: FontWeight.w900,
@@ -683,44 +990,57 @@ class DirectSupportSheet extends StatelessWidget {
               color: isDark ? Colors.white : AppColors.gray900,
             ),
           ),
-          AppSpacing.h12,
-          Text(
-            AppLocalizations.of(context)!.capt_support_desc,
-            style: const TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontSize: 11.5,
-                color: AppColors.gray500,
-                height: 1.4),
+          AppSpacing.h8,
+          const Text(
+            'فريق دعم لَفَّة متاح لمساعدتك على مدار 24 ساعة في جميع مشاكل الرحلات، الحساب والمحفظة.',
+            style: TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 12,
+              color: AppColors.gray500,
+              height: 1.4,
+            ),
           ),
           AppSpacing.h16,
           // Phone Support
           _buildContactButton(
             isDark: isDark,
-            label: AppLocalizations.of(context)!.capt_call_support,
+            label: 'اتصال هاتفي مباشر ($_supportPhone)',
             icon: Icons.phone_in_talk_rounded,
             color: AppColors.primary500,
-            onTap: () async {
-              Navigator.pop(context);
-              final uri = Uri.parse('tel:770291452');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
-              }
-            },
+            onTap: () => _launchOrCopy(
+              context,
+              urlString: 'tel:$_fullPhone',
+              fallbackCopyText: _supportPhone,
+              fallbackMessage: 'تم نسخ رقم الهاتف للحافظة: $_supportPhone',
+            ),
           ),
           AppSpacing.h10,
           // WhatsApp Support
           _buildContactButton(
             isDark: isDark,
-            label: AppLocalizations.of(context)!.capt_whatsapp_support,
+            label: 'محادثة واتساب سريعة',
             icon: Icons.chat_rounded,
             color: const Color(0xFF25D366),
-            onTap: () async {
-              Navigator.pop(context);
-              final uri = Uri.parse('whatsapp://send?phone=967770291452');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
-              }
-            },
+            onTap: () => _launchOrCopy(
+              context,
+              urlString: 'https://wa.me/967$_supportPhone',
+              fallbackCopyText: _supportPhone,
+              fallbackMessage: 'تم نسخ رقم الواتساب للحافظة: $_supportPhone',
+            ),
+          ),
+          AppSpacing.h10,
+          // Email Support
+          _buildContactButton(
+            isDark: isDark,
+            label: 'مراسلة عبر البريد الإلكتروني',
+            icon: Icons.email_outlined,
+            color: const Color(0xFF3B82F6),
+            onTap: () => _launchOrCopy(
+              context,
+              urlString: 'mailto:$_supportEmail',
+              fallbackCopyText: _supportEmail,
+              fallbackMessage: 'تم نسخ البريد الإلكتروني للحافظة: $_supportEmail',
+            ),
           ),
           AppSpacing.h24,
         ],
@@ -741,7 +1061,7 @@ class DirectSupportSheet extends StatelessWidget {
         onTap();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(16),
@@ -807,18 +1127,58 @@ class TermsAndPrivacySheet extends StatelessWidget {
             ),
           ),
           AppSpacing.h24,
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary500,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-            ),
-            child: Text(AppLocalizations.of(context)!.capt_agree,
-                style: const TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => isPrivacy
+                            ? const PrivacyPolicyPage()
+                            : const TermsOfServicePage(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary500),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'قراءة الوثيقة الكاملة',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary500,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.capt_agree,
+                    style: const TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           AppSpacing.h16,
         ],

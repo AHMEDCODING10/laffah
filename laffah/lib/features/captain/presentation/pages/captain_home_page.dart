@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/laffah_map_view.dart';
 import '../bloc/core/captain_bloc.dart';
 import '../bloc/core/captain_event.dart';
@@ -210,8 +209,9 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           Positioned.fill(
             child: BlocBuilder<CaptainBloc, CaptainState>(
               builder: (context, state) {
-                final captainPos =
-                    state is CaptainLocationUpdated ? state.position : null;
+                final captainPos = state is CaptainLocationUpdated
+                    ? state.position
+                    : context.read<CaptainBloc>().currentCaptainPosition;
                 final routePoints =
                     (state is TripAccepted && state.routePoints.isNotEmpty)
                         ? state.routePoints
@@ -234,21 +234,28 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
             ),
           ),
 
-          // Top Status Panel (Glowing Status Indicator & Online Toggle Switch)
+          // Top Status Panel (Unified Captain Online / Offline Control)
           Positioned(
-            top: MediaQuery.of(context).padding.top + AppSpacing.s12,
-            left: AppSpacing.s16,
-            right: AppSpacing.s16,
-            child: BlocSelector<CaptainBloc, CaptainState, bool>(
-              selector: (state) => widget.isOnline && state is! CaptainOffline,
-              builder: (context, isOnlineState) {
-                final bool currentOnlineState = isOnlineState && hasInternet;
-                return Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: _buildTopStatusGlassPanel(
-                      context, isDark, currentOnlineState, hasInternet),
-                );
-              },
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            right: 16,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: BlocSelector<CaptainBloc, CaptainState, bool>(
+                  selector: (state) =>
+                      widget.isOnline && state is! CaptainOffline,
+                  builder: (context, isOnlineState) {
+                    final bool currentOnlineState =
+                        isOnlineState && hasInternet;
+                    return Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: _buildTopStatusGlassPanel(
+                          context, isDark, currentOnlineState, hasInternet),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
 
@@ -261,37 +268,6 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
               child: Directionality(
                 textDirection: TextDirection.rtl,
                 child: _buildMarkerDetailCard(isDark),
-              ),
-            ),
-
-          // Bottom Guidance Cards (Offline / Online Status Sync)
-          if (_selectedPinTitle == null)
-            Positioned(
-              bottom: 92,
-              left: 20,
-              right: 20,
-              child: BlocBuilder<CaptainBloc, CaptainState>(
-                builder: (context, state) {
-                  final bool currentOnlineState = widget.isOnline &&
-                      state is! CaptainOffline &&
-                      hasInternet;
-
-                  if (!currentOnlineState && state is! IncomingTripRequest) {
-                    return Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: _buildOfflineGuidanceCard(isDark),
-                    );
-                  }
-
-                  if (currentOnlineState && state is CaptainOnline) {
-                    return Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: _buildSearchingOrdersCard(isDark),
-                    );
-                  }
-
-                  return const SizedBox.shrink();
-                },
               ),
             ),
 
@@ -351,7 +327,6 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
       BuildContext context, bool isDark, bool isOnline, bool hasInternet) {
     if (!hasInternet) {
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 40),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.redAccent.withValues(alpha: 0.95),
@@ -364,19 +339,22 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+            const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text(
-              AppLocalizations.of(context)!.capt_no_internet,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontFamily: 'IBM Plex Sans Arabic',
+            Flexible(
+              child: Text(
+                AppLocalizations.of(context)?.capt_no_internet ??
+                    'لا يوجد اتصال بالإنترنت',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'IBM Plex Sans Arabic',
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
-
         ),
       );
     }
@@ -384,220 +362,201 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
     return GestureDetector(
       onTap: () {
         HapticFeedback.heavyImpact();
-        widget.onOnlineChanged(!isOnline);
-        context.read<CaptainBloc>().add(ToggleOnlineStatus(!isOnline));
+        final newStatus = !isOnline;
+        widget.onOnlineChanged(newStatus);
+        context.read<CaptainBloc>().add(ToggleOnlineStatus(newStatus));
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.symmetric(horizontal: 30),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isOnline
               ? const Color(0xFF00C853)
-                  .withValues(alpha: 0.95) // Vibrant Green when online
               : (isDark
-                  ? const Color(0xFF1E2330).withValues(alpha: 0.9)
-                  : Colors.white.withValues(alpha: 0.95)),
-          borderRadius: BorderRadius.circular(40),
+                  ? const Color(0xFF1E2330).withValues(alpha: 0.94)
+                  : Colors.white.withValues(alpha: 0.96)),
+          borderRadius: BorderRadius.circular(32),
           border: Border.all(
             color: isOnline
-                ? const Color(0xFF00E676).withValues(alpha: 0.5)
+                ? const Color(0xFF69F0AE).withValues(alpha: 0.6)
                 : (isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05)),
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : AppColors.gray300.withValues(alpha: 0.8)),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
               color: isOnline
-                  ? const Color(0xFF00C853).withValues(alpha: 0.4)
-                  : Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: isOnline ? 20 : 12,
-              spreadRadius: isOnline ? 4 : 0,
-              offset: const Offset(0, 6),
+                  ? const Color(0xFF00C853).withValues(alpha: 0.38)
+                  : Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+              blurRadius: isOnline ? 18 : 10,
+              spreadRadius: isOnline ? 2 : 0,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
+            // Leading Icon / Animated Status Indicator
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) =>
                   ScaleTransition(scale: anim, child: child),
-              child: Icon(
-                isOnline ? Icons.power_rounded : Icons.power_off_rounded,
-                key: ValueKey(isOnline),
-                color: isOnline
-                    ? Colors.white
-                    : (isDark ? Colors.white : AppColors.gray900),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                isOnline ? AppLocalizations.of(context)!.capt_online_searching : AppLocalizations.of(context)!.capt_tap_to_go_online,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  color: isOnline
-                      ? Colors.white
-                      : (isDark ? Colors.white : AppColors.gray900),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOfflineGuidanceCard(bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.heavyImpact();
-        context.read<CaptainBloc>().add(const ToggleOnlineStatus(true));
-        widget.onOnlineChanged(true);
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF1E2330).withValues(alpha: 0.95)
-              : Colors.white.withValues(alpha: 0.98),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.05),
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 20,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      HapticFeedback.heavyImpact();
-                      context
-                          .read<CaptainBloc>()
-                          .add(const ToggleOnlineStatus(true));
-                      widget.onOnlineChanged(true);
-                    },
-                    borderRadius: BorderRadius.circular(50),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
+              child: isOnline
+                  ? Container(
+                      key: const ValueKey('online_spinner'),
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F3F5),
+                        color: Colors.white.withValues(alpha: 0.22),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black12),
                       ),
-                      child: const Icon(
+                      child: const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      key: const ValueKey('offline_icon'),
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF263044)
+                            : const Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
                         Icons.power_settings_new_rounded,
-                        color: AppColors.gray700,
-                        size: 26,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
+                        size: 20,
                       ),
                     ),
+            ),
+            const SizedBox(width: 12),
+
+            // Middle: Search Status and Helper Subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isOnline
+                        ? 'جاري البحث عن طلبات...'
+                        : 'أنت غير متصل',
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: isOnline
+                          ? Colors.white
+                          : (isDark ? Colors.white : AppColors.gray900),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context)!.capt_you_are_offline,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          color: isDark ? Colors.white : AppColors.gray900,
+                  const SizedBox(height: 2),
+                  Text(
+                    isOnline
+                        ? 'الرادار نشط • انقر للإيقاف'
+                        : 'اضغط للاتصال وبدء البحث',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: isOnline
+                          ? Colors.white.withValues(alpha: 0.85)
+                          : AppColors.gray500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Trailing Action Badge (إيقاف when online / اتصال when offline)
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, anim) =>
+                  FadeTransition(opacity: anim, child: child),
+              child: isOnline
+                  ? Container(
+                      key: const ValueKey('badge_stop'),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.35),
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'اضغط هنا أو على الزر بالأعلى لبدء استقبال الطلبات',
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.gray500,
-                          fontFamily: 'IBM Plex Sans Arabic',
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.power_settings_new_rounded,
+                              color: Colors.white, size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            'إيقاف',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'IBM Plex Sans Arabic',
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(
+                      key: const ValueKey('badge_start'),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C853).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color:
+                              const Color(0xFF00C853).withValues(alpha: 0.4),
+                          width: 1,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.play_arrow_rounded,
+                              color: Color(0xFF00C853), size: 16),
+                          SizedBox(width: 2),
+                          Text(
+                            'اتصال',
+                            style: TextStyle(
+                              color: Color(0xFF00C853),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'IBM Plex Sans Arabic',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSearchingOrdersCard(bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E2330).withValues(alpha: 0.95)
-            : Colors.white.withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: const Color(0xFF00C853).withValues(alpha: 0.3),
-          width: 2,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 3.0,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00C853)),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              AppLocalizations.of(context)!.capt_searching_orders,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'IBM Plex Sans Arabic',
-                color: isDark ? Colors.white : AppColors.gray900,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

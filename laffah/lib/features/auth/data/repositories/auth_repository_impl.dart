@@ -192,10 +192,10 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        return const Left(ServerFailure('Phone number not registered'));
+        return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'رقم الهاتف غير مسجل لدينا'));
       }
       return Left(ServerFailure(
-          e.response?.data?['message']?.toString() ?? 'Error sending code'));
+          e.response?.data?['message']?.toString() ?? 'حدث خطأ أثناء إرسال رمز التحقق'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -213,10 +213,10 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 400) {
-        return const Left(ServerFailure('Invalid code'));
+        return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'رمز التحقق غير صحيح أو منتهي الصلاحية'));
       }
       return Left(ServerFailure(
-          e.response?.data?['message']?.toString() ?? 'Error verifying code'));
+          e.response?.data?['message']?.toString() ?? 'حدث خطأ أثناء التحقق من الرمز'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -235,10 +235,10 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 400) {
-        return const Left(ServerFailure('Invalid data'));
+        return Left(ServerFailure(e.response?.data?['message']?.toString() ?? 'بيانات إعادة التعيين غير صحيحة'));
       }
       return Left(ServerFailure(e.response?.data?['message']?.toString() ??
-          'Error setting password'));
+          'حدث خطأ أثناء إعادة تعيين كلمة المرور'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

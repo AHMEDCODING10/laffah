@@ -20,11 +20,63 @@ class TripResource extends JsonResource
         $estDuration = max(1, (int) round($dist * 2.5)); // in minutes
         $price = (float) ($this->final_price ?? $this->estimated_price ?? 0);
         
+        // Compute nearby active captains for pickup location sorted nearest-first
+        $nearbyCaptains = 0;
+        $captainEtaMinutes = 4;
+        if ($this->pickup_latitude && $this->pickup_longitude) {
+            $lat = (float) $this->pickup_latitude;
+            $lng = (float) $this->pickup_longitude;
+            $radiusKm = 4.5; // Max economic search radius for Sanaa pickup
+            $latDelta = $radiusKm / 111.0;
+            $lngDelta = $radiusKm / (111.0 * max(0.1, cos(deg2rad($lat))));
+            $haversine = "(6371 * acos(cos(radians($lat)) * cos(radians(captain_locations.latitude)) * cos(radians(captain_locations.longitude) - radians($lng)) + sin(radians($lat)) * sin(radians(captain_locations.latitude))))";
+
+            $captains = \Illuminate\Support\Facades\DB::table('captain_locations')
+                ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
+                ->where('captain_profiles.is_online', true)
+                ->whereBetween('captain_locations.latitude', [$lat - $latDelta, $lat + $latDelta])
+                ->whereBetween('captain_locations.longitude', [$lng - $lngDelta, $lng + $lngDelta])
+                ->where('captain_locations.last_updated_at', '>=', now()->subMinutes(15))
+                ->whereRaw("$haversine <= ?", [$radiusKm])
+                ->select(\Illuminate\Support\Facades\DB::raw("$haversine as distance_km"))
+                ->orderBy('distance_km', 'asc')
+                ->get();
+
+            if ($captains->isEmpty()) {
+                $captains = \Illuminate\Support\Facades\DB::table('captain_locations')
+                    ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
+                    ->where('captain_profiles.is_online', true)
+                    ->whereBetween('captain_locations.latitude', [$lat - $latDelta, $lat + $latDelta])
+                    ->whereBetween('captain_locations.longitude', [$lng - $lngDelta, $lng + $lngDelta])
+                    ->whereRaw("$haversine <= ?", [$radiusKm])
+                    ->select(\Illuminate\Support\Facades\DB::raw("$haversine as distance_km"))
+                    ->orderBy('distance_km', 'asc')
+                    ->get();
+            }
+
+            $nearbyCaptains = $captains->count();
+
+            if ($nearbyCaptains === 0) {
+                $onlinePool = \App\Models\CaptainProfile::where('is_online', true)->count();
+                if ($onlinePool > 0) {
+                    $nearbyCaptains = min($onlinePool, 5);
+                }
+            } else {
+                $nearestDist = $captains->first()->distance_km;
+                $captainEtaMinutes = max(2, (int) round(($nearestDist / 20.0) * 60) + 1);
+            }
+        }
+        
         return [
             'id' => (string) $this->id,
             'status' => $this->status,
             'type' => $this->type ?? 'ride',
             'payment_method' => $this->payment_method ?? 'cash',
+            'nearby_captains' => $nearbyCaptains,
+            'nearbyCaptains' => $nearbyCaptains,
+            'nearbyCaptainsCount' => $nearbyCaptains,
+            'captain_eta_minutes' => $captainEtaMinutes,
+            'captainEtaMinutes' => $captainEtaMinutes,
             'isParcel' => ($this->type === 'delivery'),
             'title' => $this->type === 'delivery' 
                 ? 'طلب توصيل طرد 📦' 

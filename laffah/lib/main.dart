@@ -67,6 +67,17 @@ Future<void> main() async {
     ]);
   }
 
+  // Global Crash Prevention: Catch all unhandled Flutter & Platform errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint("⚠️ [FlutterError Catcher] ${details.exceptionAsString()}");
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint("🛡️ [GlobalCrashProtector] Prevented sudden exit: $error");
+    return true; // Prevents OS from abruptly terminating the app!
+  };
+
   debugPrint("🎬 [Laffah] Running App...");
 
   runApp(

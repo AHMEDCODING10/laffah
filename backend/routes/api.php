@@ -80,6 +80,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('{id}/reject', [TripController::class, 'reject']);
         Route::post('{id}/status', [TripController::class, 'updateStatus']);
         Route::post('{id}/cancel', [TripController::class, 'cancel']);
+        Route::post('{id}/retry',  [TripController::class, 'retrySearch'])->middleware('throttle:15,1');
         Route::post('{id}/rate',   [TripController::class, 'rate']);
         Route::delete('{id}',      [TripController::class, 'destroy']);
     });

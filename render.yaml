@@ -67,5 +67,19 @@ services:
     rootDir: whatsapp-server
     plan: free
     region: frankfurt
+    healthCheckPath: /health
     buildCommand: npm install
     startCommand: node index.js
+    envVars:
+      - key: DB_HOST
+        value: gateway01.eu-central-1.prod.aws.tidbcloud.com
+      - key: DB_PORT
+        value: "4000"
+      - key: DB_DATABASE
+        value: test
+      - key: DB_USERNAME
+        value: 4LrCBJtar4EPAKf.root
+      - key: DB_PASSWORD
+        value: ttszFzgj4i1Wcg7U
+      - key: DEFAULT_PHONE
+        value: "967770291452"

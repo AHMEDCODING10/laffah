@@ -13,6 +13,11 @@ import '../../../profile/presentation/bloc/profile_state.dart';
 import 'widgets/captain_account_dialogs.dart';
 import '../../../../core/bloc/locale/locale_bloc.dart';
 import '../../../../core/bloc/locale/locale_event.dart';
+import '../../../../core/widgets/laffah_glass_snackbar.dart';
+import '../../../profile/presentation/pages/legal/terms_of_service_page.dart';
+import '../../../profile/presentation/pages/legal/privacy_policy_page.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 
 /// CaptainAccountPage - Overhauled interactive profile dashboard for Laffah Captains.
 /// Integrates all 9 modal sheets (Profile, Vehicle, Documents, Password, Help, FAQ, Support, terms, language),
@@ -68,119 +73,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
     'license': 'رخصة قيادة دراجات نارية سارية',
   };
 
-  void _showNotificationCenterSheet(BuildContext context, bool isDark) {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            color: isDark ? const Color(0xFF141822) : Colors.white,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                    width: 44,
-                    height: 4.5,
-                    decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.black12,
-                        borderRadius: BorderRadius.circular(10))),
-              ),
-              AppSpacing.h16,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(AppLocalizations.of(context)!.capt_acc_notif_center,
-                      style: const TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16)),
-                  IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context)),
-                ],
-              ),
-              AppSpacing.h16,
-              Expanded(
-                child: ListView(
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _buildNotifItem(
-                        AppLocalizations.of(context)!.capt_notif_1_title,
-                        AppLocalizations.of(context)!.capt_notif_1_desc,
-                        AppLocalizations.of(context)!.capt_notif_yesterday,
-                        isDark),
-                    _buildNotifItem(
-                        AppLocalizations.of(context)!.capt_notif_2_title,
-                        AppLocalizations.of(context)!.capt_notif_2_desc,
-                        AppLocalizations.of(context)!.capt_notif_yesterday,
-                        isDark),
-                    _buildNotifItem(
-                        AppLocalizations.of(context)!.capt_notif_3_title,
-                        AppLocalizations.of(context)!.capt_notif_3_desc,
-                        AppLocalizations.of(context)!.capt_notif_2_days_ago,
-                        isDark),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildNotifItem(String title, String desc, String time, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : AppColors.gray200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13)),
-              Text(time,
-                  style: const TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 10,
-                      color: AppColors.gray500)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(desc,
-              style: const TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 11.5,
-                  color: AppColors.gray600,
-                  height: 1.4)),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,34 +96,19 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
             color: isDark ? AppColors.white : AppColors.gray900,
           ),
         ),
-        actions: [
-          BlocListener<ProfileBloc, ProfileState>(
-            bloc: _profileBloc,
-            listener: (context, state) {
-              if (state is ProfileLoaded) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: AppColors.success,
-                    content: Text(AppLocalizations.of(context)!.capt_acc_profile_updated,
-                        style: const TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontWeight: FontWeight.bold)),
-                  ),
-                );
-              }
-            },
-            child: IconButton(
-              icon: Icon(
-                Icons.notifications_none_rounded,
-                color: isDark ? AppColors.white : AppColors.gray900,
-              ),
-              onPressed: () => _showNotificationCenterSheet(context, isDark),
-            ),
-          ),
-        ],
       ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
+      body: BlocListener<ProfileBloc, ProfileState>(
+        bloc: _profileBloc,
+        listener: (context, state) {
+          if (state is ProfileLoaded) {
+            LaffahSnackBar.success(
+              context,
+              AppLocalizations.of(context)!.capt_acc_profile_updated,
+            );
+          }
+        },
+        child: Directionality(
+          textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
               16, 8, 16, 90), // Bottom padding for floating bar
@@ -276,28 +154,14 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
 
                     String rating =
                         profile?.rating?.toStringAsFixed(1) ?? '5.0';
-                    String? avatarUrl = profile?.avatarUrl;
                     String vehicleType = profile?.vehicleType ??
                         AppLocalizations.of(context)!.capt_acc_vehicle;
                     String vehiclePlate = profile?.plateNumber ??
                         AppLocalizations.of(context)!.capt_acc_unspecified;
                     bool isVerified = profile?.isVerified ?? false;
 
-                    Widget avatarChild;
-                    if (avatarUrl != null && avatarUrl.isNotEmpty) {
-                      avatarChild = ClipOval(
-                        child: Image.network(
-                          avatarUrl,
-                          width: 64,
-                          height: 64,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _buildFallbackAvatar(name),
-                        ),
-                      );
-                    } else {
-                      avatarChild = _buildFallbackAvatar(name);
-                    }
+                    // Fast, lightweight, local offline avatar - no external web network requests
+                    final avatarChild = _buildFallbackAvatar(name);
 
                     return Row(
                       children: [
@@ -431,49 +295,7 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.edit_note_rounded,
-                              color: AppColors.primary500, size: 28),
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
 
-                            final dynamic profile = _cachedProfile ??
-                                (_profileBloc.state is ProfileLoaded
-                                    ? (_profileBloc.state as ProfileLoaded)
-                                        .profile
-                                    : null);
-                            String currentName = profile?.name ?? '';
-                            String currentPhone = profile?.phone ?? '';
-
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (context) => EditProfileSheet(
-                                currentName: currentName,
-                                currentPhone: currentPhone,
-                                onSave: (newName, newPhone) {
-                                  _profileBloc.add(UpdateProfileEvent(
-                                    name: newName,
-                                    phone: newPhone,
-                                  ));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      backgroundColor: AppColors.success,
-                                      content: Text(
-                                          AppLocalizations.of(context)!
-                                              .capt_acc_updating_profile,
-                                          style: const TextStyle(
-                                              fontFamily:
-                                                  'IBM Plex Sans Arabic',
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
                       ],
                     );
                   },
@@ -680,12 +502,11 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 title: AppLocalizations.of(context)!.capt_acc_terms,
                 subtitle: AppLocalizations.of(context)!.capt_acc_terms_desc,
                 onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) =>
-                        const TermsAndPrivacySheet(isPrivacy: false),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TermsOfServicePage(),
+                    ),
                   );
                 },
               ),
@@ -694,12 +515,11 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 title: AppLocalizations.of(context)!.capt_acc_privacy,
                 subtitle: AppLocalizations.of(context)!.capt_acc_privacy_desc,
                 onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) =>
-                        const TermsAndPrivacySheet(isPrivacy: true),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyPage(),
+                    ),
                   );
                 },
               ),
@@ -750,6 +570,27 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 ),
               ),
 
+              AppSpacing.h12,
+
+              // 7. DELETE ACCOUNT BUTTON
+              TextButton.icon(
+                onPressed: () => _showDeleteAccountDialog(context, isDark),
+                icon: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: AppColors.error,
+                  size: 18,
+                ),
+                label: const Text(
+                  'حذف حساب الكابتن نهائياً',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 12.5,
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
               AppSpacing.h24,
 
               // Footer Details
@@ -795,8 +636,9 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionTitle(String title) {
     return Align(
@@ -982,6 +824,73 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'IBM Plex Sans Arabic')),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context, bool isDark) {
+    HapticFeedback.heavyImpact();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: const Text(
+              'حذف حساب الكابتن نهائياً',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+              ),
+            ),
+            content: Text(
+              'هل أنت متأكد من رغبتك في حذف حساب الكابتن نهائياً؟ ستفقد جميع سجلات الرحلات، تقييماتك، ورصيد محفظتك ولا يمكن التراجع عن هذا الإجراء.',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontSize: 13,
+                height: 1.5,
+                color: isDark ? AppColors.gray400 : AppColors.gray700,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text(
+                  'إلغاء',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    color: AppColors.gray600,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  context.read<AuthBloc>().add(const DeleteAccountRequested());
+                  context.go(LaffahRoutes.authLanding);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'نعم، احذف الحساب',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),

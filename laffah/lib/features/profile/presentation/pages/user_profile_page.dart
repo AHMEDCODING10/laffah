@@ -22,6 +22,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import 'passenger_support_page.dart';
+import '../widgets/faq_bottom_sheet.dart';
 
 /// UserProfilePage — Passenger Profile Page connected to real backend via ProfileBloc
 class UserProfilePage extends StatelessWidget {
@@ -35,8 +36,21 @@ class UserProfilePage extends StatelessWidget {
   }
 }
 
-class _ProfileView extends StatelessWidget {
+class _ProfileView extends StatefulWidget {
   const _ProfileView();
+
+  @override
+  State<_ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<_ProfileView> {
+  ProfileEntity? _cachedProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _cachedProfile = context.read<ProfileBloc>().cachedProfile;
+  }
 
   void _showLogoutDialog(BuildContext context, bool isDark) {
     LogoutConfirmationDialog.show(context, isDark, () {
@@ -111,15 +125,26 @@ class _ProfileView extends StatelessWidget {
         bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 3),
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
-            // Show skeleton/loading while fetching
-            if (state is ProfileLoading || state is ProfileInitial) {
+            // Keep memory of cached profile across state switches (e.g. SavedPlacesLoaded)
+            if (state is ProfileLoaded) {
+              _cachedProfile = state.profile;
+            } else if (state is SavedPlacesLoaded && state.profile != null) {
+              _cachedProfile = state.profile;
+            } else if (_cachedProfile == null &&
+                context.read<ProfileBloc>().cachedProfile != null) {
+              _cachedProfile = context.read<ProfileBloc>().cachedProfile;
+            }
+
+            // Show skeleton/loading only if no cached profile exists
+            if (_cachedProfile == null &&
+                (state is ProfileLoading || state is ProfileInitial)) {
               return const Center(
                 child: CircularProgressIndicator(color: AppColors.primary500),
               );
             }
 
-            // Show error with retry
-            if (state is ProfileError) {
+            // Show error with retry only if no cached profile exists
+            if (state is ProfileError && _cachedProfile == null) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -149,9 +174,7 @@ class _ProfileView extends StatelessWidget {
               );
             }
 
-            // Extract profile from state
-            ProfileEntity? profile;
-            if (state is ProfileLoaded) profile = state.profile;
+            final profile = _cachedProfile;
 
             return ListView(
               padding: const EdgeInsets.fromLTRB(
@@ -369,16 +392,7 @@ class _ProfileView extends StatelessWidget {
                       icon: Icons.help_outline_rounded,
                       label: AppLocalizations.of(context)!.pass_profile_faq,
                       isDark: isDark,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(AppLocalizations.of(context)!.pass_profile_faq_soon,
-                                style: const TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic')),
-                            backgroundColor: AppColors.primary500,
-                          ),
-                        );
-                      },
+                      onTap: () => LaffahFaqBottomSheet.show(context),
                     ),
                     ProfileListTile(
                       icon: Icons.privacy_tip_outlined,

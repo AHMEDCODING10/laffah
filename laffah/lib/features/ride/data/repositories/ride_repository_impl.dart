@@ -99,6 +99,21 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
+  Future<Either<Failure, RideEntity>> retryRide(String rideId) async {
+    try {
+      final response = await remoteDataSource.retryRide(rideId);
+      if (response.success && response.data != null) {
+        return Right(response.data!);
+      }
+      return Left(ServerFailure(response.message));
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'فشل إعادة البحث عن كابتن'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Map<String, dynamic>>>> getTripHistory() async {
     try {
       final trips = await remoteDataSource.getTripHistory();

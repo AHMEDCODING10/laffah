@@ -25,6 +25,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/ride/domain/repositories/ride_repository.dart';
 import '../../features/ride/domain/usecases/request_ride_usecase.dart';
 import '../../features/ride/domain/usecases/cancel_ride_usecase.dart';
+import '../../features/ride/domain/usecases/retry_ride_usecase.dart';
 import '../../features/ride/domain/usecases/track_ride_usecase.dart';
 import '../../features/ride/domain/usecases/get_trip_history_usecase.dart';
 import '../../features/ride/domain/usecases/rate_trip_use_case.dart';
@@ -181,6 +182,7 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => RequestRideUseCase(sl()));
   sl.registerLazySingleton(() => CancelRideUseCase(sl()));
+  sl.registerLazySingleton(() => RetryRideUseCase(sl()));
   sl.registerLazySingleton(() => TrackRideUseCase(sl()));
   sl.registerLazySingleton(() => GetTripHistoryUseCase(sl()));
   sl.registerLazySingleton(() => RateTripUseCase(sl()));
@@ -189,6 +191,7 @@ Future<void> init() async {
     () => RideBloc(
       requestRideUseCase: sl(),
       cancelRideUseCase: sl(),
+      retryRideUseCase: sl(),
       trackRideUseCase: sl(),
       submitParcelOrderUseCase: sl(),
       getTripHistoryUseCase: sl(),

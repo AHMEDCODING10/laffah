@@ -96,14 +96,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get auth_reset_pass_desc =>
-      'أدخل رقم هاتفك المسجل في لَفَّة وسنرسل لك رمزاً لإعادة طھعيين كلمة المرور.';
+      'أدخل رقم هاتفك المسجل لاستعادة كلمة المرور.';
 
   @override
   String get auth_send_code => 'إرسال الرمز';
 
   @override
   String get auth_onboard_1_desc =>
-      'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات ظˆتوصيل الدراجات النارية.';
+      'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات وتوصيل الدراجات النارية.';
 
   @override
   String get auth_onboard_2_title => 'تجاوز الزحام';

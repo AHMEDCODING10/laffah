@@ -233,6 +233,22 @@ class TripController extends Controller
         }
     }
 
+    public function retrySearch(Request $request, $id)
+    {
+        try {
+            $trip = $this->tripService->retryTripSearch($id, $request->user());
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'تم إعادة إطلاق البحث وإشعار الكباتن القريبين بنجاح.',
+                'data'    => new TripResource($trip)
+            ]);
+        } catch (\Exception $e) {
+            $code = $e->getCode();
+            $statusCode = ($code >= 400 && $code < 600) ? $code : 400;
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], $statusCode);
+        }
+    }
+
     public function rate(Request $request, $id)
     {
         try {
