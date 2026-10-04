@@ -68,6 +68,11 @@ class TripStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
             'plate_number' => $this->trip->captain?->plate_number ?? '',
             'rating' => (float) ($this->trip->rating_by_user ?? 5.0),
             'payment_method' => $this->trip->payment_method,
+            'distance' => number_format((float) ($this->trip->distance_km ?? 1.0), 1) . ' كم',
+            'duration' => max(1, (int) round(((float) ($this->trip->distance_km ?? 1.0)) * 2.5)) . ' دقيقة',
+            'duration_minutes' => max(1, (int) round(((float) ($this->trip->distance_km ?? 1.0)) * 2.5)),
+            'price' => (float) ($this->trip->final_price ?? $this->trip->estimated_price ?? 0),
+            'fare' => (float) ($this->trip->final_price ?? $this->trip->estimated_price ?? 0),
             'trip' => (new \App\Http\Resources\TripResource($this->trip))->resolve(),
         ];
     }

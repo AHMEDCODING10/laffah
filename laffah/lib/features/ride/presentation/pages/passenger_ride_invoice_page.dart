@@ -224,7 +224,10 @@ class _PassengerRideInvoicePageState extends State<PassengerRideInvoicePage> {
                     AppSpacing.h10,
                     _buildInvoiceRow('المسافة', widget.distance),
                     AppSpacing.h10,
-                    _buildInvoiceRow('وقت الرحلة', widget.duration),
+                    _buildInvoiceRow('وقت الرحلة',
+                        widget.duration.endsWith(' د')
+                            ? widget.duration.replaceAll(' د', ' دقيقة')
+                            : widget.duration),
                     AppSpacing.h10,
                     _buildInvoiceRow('المسار',
                         'من ${pickupName.isNotEmpty ? pickupName : 'موقعك'} إلى ${dropoffName.isNotEmpty ? dropoffName : 'الوجهة'}'),

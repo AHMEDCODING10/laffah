@@ -304,7 +304,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       rating: 5.0,
       status: 'pending',
       nearbyCaptainsCount: nearbyCaptains,
-      duration: '${event.duration} د',
+      duration: '${event.duration} دقيقة',
     ));
 
     _isBookingInFlight = true;
@@ -367,7 +367,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           status: rideEntity.status,
           rideId: rideEntity.id,
           nearbyCaptainsCount: nearbyCaptains,
-          duration: '${event.duration} د',
+          duration: '${event.duration} دقيقة',
         ));
 
         // Start Periodic Smart Polling to detect when Captain accepts
@@ -792,8 +792,14 @@ class RideBloc extends Bloc<RideEvent, RideState> {
               ? (data['captain_rating'] as num).toDouble()
               : 5.0,
           status: 'accepted',
-          distance: data['distance']?.toString(),
-          duration: data['duration']?.toString(),
+          distance: data['distance']?.toString() ?? data['trip']?['distance']?.toString() ?? s.distance,
+          duration: () {
+            final raw = data['duration']?.toString() ?? data['trip']?['duration']?.toString() ?? s.duration;
+            if (raw != null && raw.endsWith(' د') && !raw.endsWith(' دقيقة')) {
+              return raw.replaceAll(' د', ' دقيقة');
+            }
+            return raw;
+          }(),
         ));
       } else {
         emit(RideAccepted(
@@ -834,8 +840,14 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         final s = state as RideBookingConfirmed;
         emit(s.copyWith(
           status: 'completed',
-          distance: data['distance']?.toString(),
-          duration: data['duration']?.toString(),
+          distance: data['distance']?.toString() ?? data['trip']?['distance']?.toString() ?? s.distance,
+          duration: () {
+            final raw = data['duration']?.toString() ?? data['trip']?['duration']?.toString() ?? s.duration;
+            if (raw != null && raw.endsWith(' د') && !raw.endsWith(' دقيقة')) {
+              return raw.replaceAll(' د', ' دقيقة');
+            }
+            return raw;
+          }(),
         ));
       } else {
         emit(const RideCompleted());

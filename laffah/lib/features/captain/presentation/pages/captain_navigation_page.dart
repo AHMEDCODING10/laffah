@@ -69,7 +69,21 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   final RoutingService _routingService = RoutingService();
   final EchoService _echoService = EchoService();
   List<LatLng> _routePoints = [];
+  LatLng? _currentCaptainLocation;
   bool _isCancellationHandled = false;
+
+  Future<void> _fetchCaptainPosition() async {
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      ).timeout(const Duration(seconds: 4));
+      if (mounted) {
+        setState(() {
+          _currentCaptainLocation = LatLng(pos.latitude, pos.longitude);
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void initState() {
@@ -195,24 +209,19 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   }
 
   Future<void> _initLiveNavigationRoute() async {
+    await _fetchCaptainPosition();
     LatLng startPoint;
     LatLng endPoint;
     
     if (_currentStep == 0 || _currentStep == 1) {
-       // Route: Captain to Pickup
-       double lat = widget.pickupLat; 
-       double lng = widget.pickupLng;
-       try {
-         final pos = await Geolocator.getCurrentPosition(
-               locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)).timeout(const Duration(seconds: 4));
-         lat = pos.latitude;
-         lng = pos.longitude;
-       } catch (_) {}
-       startPoint = LatLng(lat, lng);
+       // Phase 1: From Captain's current location -> to Passenger's pickup location!
+       startPoint = _currentCaptainLocation ??
+           LatLng(widget.pickupLat - 0.005, widget.pickupLng - 0.005);
        endPoint = LatLng(widget.pickupLat, widget.pickupLng);
     } else {
-       // Route: Pickup to Dropoff
-       startPoint = LatLng(widget.pickupLat, widget.pickupLng);
+       // Phase 2: From Pickup (or current position) -> to Final Destination!
+       startPoint = _currentCaptainLocation ??
+           LatLng(widget.pickupLat, widget.pickupLng);
        endPoint = LatLng(widget.dropoffLat, widget.dropoffLng);
     }
 
@@ -335,12 +344,18 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_currentStep == 3) {
+      final unifiedDuration = widget.duration.endsWith(' د')
+          ? widget.duration.replaceAll(' د', ' دقيقة')
+          : (widget.duration.contains('دقيقة')
+              ? widget.duration
+              : '${widget.duration} دقيقة');
+
       return CaptainTripInvoiceWidget(
         tripId: widget.tripId,
         passengerName: widget.passengerName,
         fare: widget.fare,
         distance: widget.distance,
-        duration: widget.duration,
+        duration: unifiedDuration,
         pickup: widget.pickup,
         dropoff: widget.dropoff,
         paymentMethod: widget.paymentMethod == 'wallet' ? 'محفظة' : 'نقداً',
@@ -353,9 +368,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       );
     }
 
-    String appBarTitle = 'الذهاب للراكب';
+    String appBarTitle = 'التوجه إلى الراكب 🛵';
     if (_currentStep == 1) appBarTitle = 'في انتظار الراكب ⏱️';
-    if (_currentStep == 2) appBarTitle = 'في الطريق للوجهة ';
+    if (_currentStep == 2) appBarTitle = 'في الطريق للوجهة 🏁';
 
     return Scaffold(
       backgroundColor:
@@ -445,12 +460,21 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.s12),
                       decoration: BoxDecoration(
-                        color: AppColors.primary500.withValues(alpha: 0.15),
+                        color: (_currentStep == 2
+                                ? AppColors.success
+                                : AppColors.primary500)
+                            .withValues(alpha: 0.15),
                         borderRadius: AppSpacing.borderMD,
                       ),
-                      child: const Icon(
-                        Icons.turn_left_rounded,
-                        color: AppColors.primary500,
+                      child: Icon(
+                        _currentStep == 1
+                            ? Icons.pin_drop_rounded
+                            : (_currentStep == 2
+                                ? Icons.flag_rounded
+                                : Icons.navigation_rounded),
+                        color: _currentStep == 2
+                            ? AppColors.success
+                            : AppColors.primary500,
                         size: 26,
                       ),
                     ),
@@ -460,11 +484,11 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _currentStep == 1
-                                ? 'أنت في نقطة الاستلام'
-                                : (_currentStep == 2
-                                    ? 'انعطف يساراً للوجهة'
-                                    : 'انعطف يساراً'),
+                            _currentStep == 0
+                                ? 'توجه نحو موقع الراكب 📍'
+                                : (_currentStep == 1
+                                    ? 'أنت في موقع الاستلام 📍'
+                                    : 'الملاحة نحو وجهة الوصول 🏁'),
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
@@ -472,11 +496,11 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                             ),
                           ),
                           Text(
-                            _currentStep == 1
+                            _currentStep == 0
                                 ? widget.pickup
-                                : (_currentStep == 2
-                                    ? widget.dropoff
-                                    : 'شارع حِدة - باتجاه نقطة التجمع'),
+                                : (_currentStep == 1
+                                    ? 'بانتظار صعود الراكب (${widget.pickup.split('،').first})'
+                                    : widget.dropoff),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -559,7 +583,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                '${widget.passengerRating} âک…',
+                                '${widget.passengerRating} ★',
                                 style: const TextStyle(
                                     fontSize: 8.5,
                                     fontWeight: FontWeight.bold,
@@ -744,24 +768,37 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.place_rounded,
-                                    color: AppColors.info, size: 18),
+                                Icon(
+                                  _currentStep == 2
+                                      ? Icons.flag_rounded
+                                      : Icons.pin_drop_rounded,
+                                  color: _currentStep == 2
+                                      ? AppColors.success
+                                      : AppColors.info,
+                                  size: 18,
+                                ),
                                 AppSpacing.w8,
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'الوجهة',
-                                        style: TextStyle(
+                                      Text(
+                                        _currentStep == 2
+                                            ? 'وجهة الوصول'
+                                            : 'نقطة الاستلام',
+                                        style: const TextStyle(
                                             fontSize: 9,
                                             color: AppColors.gray500,
                                             fontWeight: FontWeight.bold,
                                             fontFamily: 'IBM Plex Sans Arabic'),
                                       ),
                                       Text(
-                                        widget.dropoff.split('،').first,
+                                        (_currentStep == 2
+                                                ? widget.dropoff
+                                                : widget.pickup)
+                                            .split('،')
+                                            .first,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
@@ -991,17 +1028,20 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   Widget _buildNavigationMap(bool isDark) {
     final pickup = LatLng(widget.pickupLat, widget.pickupLng);
     final dropoff = LatLng(widget.dropoffLat, widget.dropoffLng);
-    final captain = pickup;
-
     final destination = _currentStep < 2 ? pickup : dropoff;
-    final currentCaptainPos = _currentStep == 0
-        ? captain
-        : (_currentStep == 1
-            ? pickup
-            : LatLng(
-                (pickup.latitude + dropoff.latitude) / 2,
-                (pickup.longitude + dropoff.longitude) / 2,
-              ));
+
+    // During Step 0: Captain is moving from their actual location towards pickup
+    // During Step 1: Captain is at pickup waiting for passenger
+    // During Step 2: Captain is moving from pickup towards dropoff
+    final currentCaptainPos = _currentCaptainLocation ??
+        (_currentStep == 0
+            ? LatLng(widget.pickupLat - 0.005, widget.pickupLng - 0.005)
+            : (_currentStep == 1
+                ? pickup
+                : LatLng(
+                    (pickup.latitude + dropoff.latitude) / 2,
+                    (pickup.longitude + dropoff.longitude) / 2,
+                  )));
 
     // 🟠 Step 0-1 = heading to passenger (orange)
     // 🟢 Step 2 = heading to destination (green)

@@ -48,7 +48,8 @@ class TripResource extends JsonResource
             'distance_km' => $dist,
             'distance' => number_format($dist, 1) . ' كم',
             'eta' => "~{$estDuration} دقيقة",
-            'duration' => "{$estDuration} د",
+            'duration' => "{$estDuration} دقيقة",
+            'duration_minutes' => $estDuration,
             'timeTag' => $this->created_at ? $this->created_at->diffForHumans() : 'الآن',
             'currency' => 'YER',
             

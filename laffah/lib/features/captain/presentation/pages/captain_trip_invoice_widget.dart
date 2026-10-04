@@ -145,7 +145,12 @@ class CaptainTripInvoiceWidget extends StatelessWidget {
                     AppSpacing.h12,
                     _buildInvoiceRow('المسافة', distance),
                     AppSpacing.h12,
-                    _buildInvoiceRow('وقت الرحلة', duration),
+                    _buildInvoiceRow(
+                      'وقت الرحلة',
+                      duration.endsWith(' د')
+                          ? duration.replaceAll(' د', ' دقيقة')
+                          : duration,
+                    ),
                     AppSpacing.h12,
                     _buildInvoiceRow('المسار',
                         'من ${pickup.split('،').first} إلى ${dropoff.split('،').first}'),

@@ -376,7 +376,13 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       dropoff: dropoff,
       fare: fare,
       distance: (d['distance'] ?? '2.5 كم').toString(),
-      duration: (d['duration'] ?? '6 د').toString(),
+      duration: () {
+        String dur = (d['duration'] ?? d['eta'] ?? '10 دقيقة').toString();
+        if (dur.endsWith(' د') && !dur.endsWith(' دقيقة')) {
+          dur = dur.replaceAll(' د', ' دقيقة');
+        }
+        return dur;
+      }(),
       timeTag: (d['timeTag'] ?? 'منذ ثواني').toString(),
       isParcel: isParcel,
       parcelType: parcelType,
@@ -533,6 +539,23 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
           final routeResult = await routingService.getRoute(pickupPos, dropoffPos);
 
+          // Preserve authoritative trip distance & duration from trip request/booking
+          final String finalDistance = (currentState.distance.isNotEmpty &&
+                  currentState.distance != '—' &&
+                  currentState.distance != 'غير معروف')
+              ? currentState.distance
+              : (routeResult?.distanceText ?? '—');
+
+          String rawDuration = (currentState.duration.isNotEmpty &&
+                  currentState.duration != '—' &&
+                  currentState.duration != 'غير معروف')
+              ? currentState.duration
+              : (routeResult?.durationText ?? '—');
+          if (rawDuration.endsWith(' د') && !rawDuration.endsWith(' دقيقة')) {
+            rawDuration = rawDuration.replaceAll(' د', ' دقيقة');
+          }
+          final String finalDuration = rawDuration;
+
           emit(TripAccepted(
             tripId: currentState.tripId,
             passengerName: currentState.passengerName,
@@ -543,8 +566,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             pickup: currentState.pickup,
             dropoff: currentState.dropoff,
             fare: currentState.fare,
-            distance: routeResult?.distanceText ?? currentState.distance,
-            duration: routeResult?.durationText ?? currentState.duration,
+            distance: finalDistance,
+            duration: finalDuration,
             tripProgress: 'accepted',
             routePoints: routeResult?.points ?? [pickupPos, dropoffPos],
             isParcel: currentState.isParcel,
