@@ -130,13 +130,20 @@ class AuthService
 
         $shortPhone = $this->normalizePhone($phone);
 
-        // Generate 6-digit code
-        $code = rand(100000, 999999);
+        // Enforce 60-second anti-spam cooldown per phone number
+        if (Cache::has('otp_cooldown_' . $shortPhone)) {
+            throw new Exception('تم إرسال رمز تحقق مسبقاً. يرجى الانتظار 60 ثانية قبل طلب رمز جديد.', 429);
+        }
+
+        // Generate cryptographically secure 6-digit code (CSPRNG)
+        $code = random_int(100000, 999999);
         
         // Save to cache for 10 minutes using normalized short phone
         Cache::put('reset_code_' . $shortPhone, $code, now()->addMinutes(10));
         // Reset attempt counter
         Cache::put('reset_attempts_' . $shortPhone, 0, now()->addMinutes(10));
+        // Set anti-spam cooldown for 60 seconds
+        Cache::put('otp_cooldown_' . $shortPhone, true, now()->addSeconds(60));
 
         // Format phone number for WhatsApp (always 967 + 9 digits, e.g. 967770291452)
         $waPhone = '967' . $shortPhone;

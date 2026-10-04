@@ -7,7 +7,10 @@ abstract class CaptainState {
 }
 
 /// حالة تحديث موقع الكابتن في الوقت الفعلي (GPS)
-class CaptainLocationUpdated extends CaptainState {
+/// ⚠️ CRITICAL: يرث من CaptainOnline وليس CaptainState مباشرة!
+/// السبب: عند إطلاق CaptainLocationUpdated، يجب أن يظل الشرط (state is CaptainOnline)
+/// صحيحاً حتى لا تُسقط طلبات الرحلات الواردة ولا يتوقف الفحص الدوري.
+class CaptainLocationUpdated extends CaptainOnline {
   final LatLng position;
   final double heading;
 

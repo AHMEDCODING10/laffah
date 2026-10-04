@@ -7,6 +7,8 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/di/injection_container.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_state.dart';
@@ -26,7 +28,7 @@ class LocationSearchPage extends StatefulWidget {
 
 class _LocationSearchPageState extends State<LocationSearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  final Dio _dio = Dio();
+  final Dio _dio = di.sl<DioClient>().dio;
 
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
@@ -58,9 +60,8 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
     });
 
     try {
-      final String url = '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeSearch}';
       final response = await _dio.get(
-        url,
+        ApiEndpoints.geocodeSearch,
         queryParameters: {
           'q': query,
         },

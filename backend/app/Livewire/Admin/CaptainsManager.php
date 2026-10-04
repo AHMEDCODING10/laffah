@@ -45,8 +45,12 @@ class CaptainsManager extends Component
             ->whereIn('status', ['accepted', 'started', 'on_the_way', 'arrived'])
             ->exists();
 
-        if ($hasActiveTrips) {
-            session()->flash('error', 'لا يمكن حذف الكابتن لوجود مشاوير نشطة جارية حالياً.');
+        $hasActiveParcels = \App\Models\Parcel::where('captain_profile_id', $captain->id)
+            ->whereIn('status', ['accepted', 'arrived_at_pickup', 'picked_up', 'in_transit'])
+            ->exists();
+
+        if ($hasActiveTrips || $hasActiveParcels) {
+            session()->flash('error', 'لا يمكن حذف الكابتن لوجود مشاوير أو طرود نشطة جارية حالياً.');
             return;
         }
 

@@ -36,6 +36,7 @@ class ParcelTrackingPage extends StatefulWidget {
 class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
   late ParcelEntity _currentParcel;
   late final String _targetIdentifier;
+  late final ParcelBloc _parcelBloc;
   Timer? _refreshTimer;
 
   @override
@@ -63,20 +64,24 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
         price: 1200.0,
       );
     }
+    _parcelBloc = di.sl<ParcelBloc>()
+      ..add(TrackParcelEvent(identifier: _targetIdentifier));
+    _startPolling();
   }
 
   @override
   void dispose() {
     EchoService().stopListeningToTripStatus(_targetIdentifier);
     _refreshTimer?.cancel();
+    _parcelBloc.close();
     super.dispose();
   }
 
-  void _startPolling(BuildContext context) {
+  void _startPolling() {
     // 1. Listen via WebSocket for real-time changes
     EchoService().listenToTripStatus(_targetIdentifier, (data) {
       if (mounted) {
-        context.read<ParcelBloc>().add(TrackParcelEvent(identifier: _targetIdentifier));
+        _parcelBloc.add(TrackParcelEvent(identifier: _targetIdentifier));
       }
     });
 
@@ -84,9 +89,7 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
-        context
-            .read<ParcelBloc>()
-            .add(TrackParcelEvent(identifier: _targetIdentifier));
+        _parcelBloc.add(TrackParcelEvent(identifier: _targetIdentifier));
       } else {
         timer.cancel();
       }
@@ -149,13 +152,8 @@ class _ParcelTrackingPageState extends State<ParcelTrackingPage> {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return BlocProvider<ParcelBloc>(
-      create: (ctx) {
-        final bloc = di.sl<ParcelBloc>();
-        bloc.add(TrackParcelEvent(identifier: _targetIdentifier));
-        _startPolling(ctx);
-        return bloc;
-      },
+    return BlocProvider<ParcelBloc>.value(
+      value: _parcelBloc,
       child: BlocConsumer<ParcelBloc, ParcelState>(
         listener: (context, state) {
           if (state is ParcelTrackingLoaded) {

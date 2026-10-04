@@ -44,6 +44,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     try {
       final dioClient = di.sl<DioClient>();
       final response = await dioClient.dio.get(ApiEndpoints.notifications);
+      if (!mounted) return;
       if (response.statusCode == 200 && response.data != null) {
         final dynamic rawData = response.data['data'] ?? response.data;
         final List<dynamic> list = rawData is List
@@ -62,10 +63,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
       }
     } catch (e) {
       debugPrint("⚠️ [NotificationsPage] Error fetching notifications: $e");
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'تعذر تحميل الإشعارات';
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'تعذر تحميل الإشعارات';
+        });
+      }
     }
   }
 
@@ -73,6 +76,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     try {
       final dioClient = di.sl<DioClient>();
       await dioClient.dio.post(ApiEndpoints.notificationMarkRead(id));
+      if (!mounted) return;
       // Update local state directly for instant feedback
       setState(() {
         final index = _notifications.indexWhere((n) => n.id == id);
@@ -100,6 +104,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       HapticFeedback.lightImpact();
       final dioClient = di.sl<DioClient>();
       await dioClient.dio.post(ApiEndpoints.notificationsReadAll);
+      if (!mounted) return;
       setState(() {
         _notifications = _notifications.map((n) => NotificationItemModel(
           id: n.id,
@@ -150,9 +155,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
             label: 'تراجع',
             textColor: AppColors.primary500,
             onPressed: () {
-              setState(() {
-                _notifications.insert(index, item);
-              });
+              if (mounted) {
+                setState(() {
+                  _notifications.insert(index, item);
+                });
+              }
             },
           ),
         ),

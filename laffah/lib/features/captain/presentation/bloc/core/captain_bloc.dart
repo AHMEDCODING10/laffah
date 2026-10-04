@@ -35,6 +35,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
   StreamSubscription<bool>? _networkSubscription;
   Timer? _smartPollingTimer;
   Timer? _tripRequestTimer;
+  Timer? _heartbeatTimer;
   String _currentCaptainId = '';
   final Set<String> _dismissedTripIds = {};
 
@@ -138,6 +139,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           final cid = status.captainId ?? 'captain';
           emit(const CaptainOnline());
           _startLocationTracking(cid);
+          _startHeartbeatTimer();
           _pollNearbyRequests();
           _startSmartPolling();
 
@@ -153,6 +155,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             },
           );
         } else {
+          alertSoundService.stopAlert();
+          _stopHeartbeatTimer();
           emit(const CaptainOffline());
           _stopLocationTracking();
           _stopSmartPolling();
@@ -168,6 +172,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     if (state is IncomingTripRequest) {
       final currentTrip = state as IncomingTripRequest;
       if (currentTrip.tripId == event.tripId) {
+        alertSoundService.stopAlert();
         emit(const CaptainOnline());
       }
     } else if (state is TripAccepted) {
@@ -193,6 +198,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       emit(const CaptainOnline());
       if (_currentCaptainId.isNotEmpty) {
         _startLocationTracking(_currentCaptainId);
+        _startHeartbeatTimer();
         pusherService.connect(
           captainId: _currentCaptainId,
           onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
@@ -207,11 +213,35 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       _pollNearbyRequests(); // Do one initial fetch just in case
       _startSmartPolling();
     } else {
+      alertSoundService.stopAlert();
+      _stopHeartbeatTimer();
       _stopSmartPolling();
       _stopLocationTracking();
       pusherService.disconnect();
       emit(const CaptainOffline());
     }
+  }
+
+
+  void _startHeartbeatTimer() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
+      if ((state is CaptainOnline || state is TripAccepted || state is TripInProgress) &&
+          _currentCaptainId.isNotEmpty &&
+          _currentCaptainPosition != null) {
+        add(UpdateCaptainLocation(
+          captainId: _currentCaptainId,
+          lat: _currentCaptainPosition!.latitude,
+          lng: _currentCaptainPosition!.longitude,
+          heading: _currentCaptainHeading,
+        ));
+      }
+    });
+  }
+
+  void _stopHeartbeatTimer() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
   }
 
   void _startSmartPolling() {
@@ -275,9 +305,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     if (d.isEmpty) return;
 
     final rawTripId = d['trip_id'] ?? d['id'] ?? d['tripId'];
-    if (rawTripId == null ||
-        rawTripId.toString().trim().isEmpty ||
-        rawTripId.toString() == 'TRIP-789') {
+    if (rawTripId == null || rawTripId.toString().trim().isEmpty) {
       return;
     }
     final tripId = rawTripId.toString();
@@ -376,7 +404,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           notificationText: "كابتن لَفَّة متصل — جاري تتبع الموقع لاستقبال المشاوير",
           notificationTitle: "لَفَّة — خدمة الكابتن النشطة",
           notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
-          enableWakeLock: true,
+          enableWakeLock: false,
         ),
       );
     } else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
@@ -423,6 +451,8 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
 
   @override
   Future<void> close() {
+    alertSoundService.stopAlert();
+    _stopHeartbeatTimer();
     _stopSmartPolling();
     _positionSubscription?.cancel();
     _networkSubscription?.cancel();
@@ -463,6 +493,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     if (state is IncomingTripRequest) {
       final currentState = state as IncomingTripRequest;
       _tripRequestTimer?.cancel();
+      alertSoundService.stopAlert();
       
       emit(const CaptainLoading());
 
@@ -488,7 +519,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
             final pos = await Geolocator.getCurrentPosition(
               locationSettings:
                   const LocationSettings(accuracy: LocationAccuracy.high),
-            );
+            ).timeout(const Duration(seconds: 4));
             currentLat = pos.latitude;
             currentLng = pos.longitude;
           } catch (_) {}
@@ -533,6 +564,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       
       _dismissedTripIds.add(req.tripId);
       _tripRequestTimer?.cancel();
+      alertSoundService.stopAlert();
       
       // Notify backend that we rejected this
       respondToTripUseCase(

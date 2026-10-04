@@ -47,8 +47,12 @@ class UsersManager extends Component
                 ->whereIn('status', ['accepted', 'arrived', 'in_transit'])
                 ->exists();
 
-            if ($hasActiveTrips) {
-                session()->flash('error', 'لا يمكن حذف المستخدم لوجود رحلات جارية ومباشرة لهذا الحساب.');
+            $hasActiveCaptainParcels = \App\Models\Parcel::where('captain_profile_id', $user->captainProfile->id)
+                ->whereIn('status', ['accepted', 'arrived_at_pickup', 'picked_up', 'in_transit'])
+                ->exists();
+
+            if ($hasActiveTrips || $hasActiveCaptainParcels) {
+                session()->flash('error', 'لا يمكن حذف المستخدم لوجود رحلات أو طرود جارية ومباشرة لهذا الحساب.');
                 return;
             }
 
@@ -58,13 +62,17 @@ class UsersManager extends Component
             $user->captainProfile->delete();
         }
 
-        // Check active passenger trips
+        // Check active passenger trips or parcel orders
         $hasActivePassengerTrips = Trip::where('user_id', $user->id)
             ->whereIn('status', ['pending', 'accepted', 'arrived', 'in_transit'])
             ->exists();
 
-        if ($hasActivePassengerTrips) {
-            session()->flash('error', 'لا يمكن حذف الراكب لوجود طلب رحلة قيد التنفيذ.');
+        $hasActivePassengerParcels = \App\Models\Parcel::where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'accepted', 'arrived_at_pickup', 'picked_up', 'in_transit'])
+            ->exists();
+
+        if ($hasActivePassengerTrips || $hasActivePassengerParcels) {
+            session()->flash('error', 'لا يمكن حذف الحساب لوجود طلب رحلة أو توصيل طرد قيد التنفيذ.');
             return;
         }
 

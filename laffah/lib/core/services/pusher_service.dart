@@ -11,12 +11,17 @@ class PusherService {
     required String captainId,
     required Function(Map<String, dynamic> data) onTripRequest,
     Function(Map<String, dynamic> data)? onTripNoLongerAvailable,
+    Function(Map<String, dynamic> data)? onForcedOffline,
   }) {
     _echoService.init().then((_) {
       _echoService.listenToAvailableTrips(
+        captainId: captainId,
         onNewTrip: onTripRequest,
         onTripNoLongerAvailable: onTripNoLongerAvailable,
       );
+      if (onForcedOffline != null) {
+        _echoService.listenToForcedOffline(onForcedOffline);
+      }
     });
   }
 

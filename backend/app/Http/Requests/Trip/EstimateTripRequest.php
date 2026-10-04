@@ -16,6 +16,19 @@ class EstimateTripRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation (normalize promo codes).
+     */
+     protected function prepareForValidation(): void
+     {
+         if ($this->filled('promo_code') && !$this->filled('promo_code_id')) {
+             $promoId = \App\Models\PromoCode::where('code', trim($this->input('promo_code')))->value('id');
+             if ($promoId) {
+                 $this->merge(['promo_code_id' => $promoId]);
+             }
+         }
+     }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -30,6 +43,8 @@ class EstimateTripRequest extends FormRequest
             'stops' => 'nullable|array',
             'stops.*.latitude' => 'required_with:stops|numeric|between:12.0,19.5',
             'stops.*.longitude' => 'required_with:stops|numeric|between:41.5,54.5',
+            'promo_code_id' => 'nullable|integer|exists:promo_codes,id',
+            'promo_code' => 'nullable|string|max:50',
         ];
     }
 }

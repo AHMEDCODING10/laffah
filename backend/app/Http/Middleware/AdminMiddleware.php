@@ -18,6 +18,11 @@ class AdminMiddleware
             abort(403, 'غير مصرح لك بالدخول.');
         }
 
+        if (isset(auth()->user()->is_active) && !auth()->user()->is_active) {
+            auth()->logout();
+            abort(403, 'تم تعطيل هذا الحساب الإداري. يرجى التواصل مع الإدارة العليا.');
+        }
+
         return $next($request);
     }
 }

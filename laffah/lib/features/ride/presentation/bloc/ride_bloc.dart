@@ -11,7 +11,9 @@ import '../../domain/usecases/rate_trip_use_case.dart';
 import '../../../parcel/domain/usecases/submit_parcel_order_usecase.dart';
 import '../../../../core/services/echo_service.dart';
 import '../../../../core/services/captain_trip_alert_sound_service.dart';
-import '../../data/datasources/ride_remote_data_source.dart';
+import '../../domain/usecases/estimate_trip_fare_usecase.dart';
+import '../../domain/usecases/delete_trip_usecase.dart';
+import '../../../../core/bloc/bloc_transformers.dart';
 
 export 'ride_event.dart';
 export 'ride_state.dart';
@@ -121,11 +123,14 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   final GetTripHistoryUseCase getTripHistoryUseCase;
   final RateTripUseCase? rateTripUseCase;
   final CaptainTripAlertSoundService alertSoundService;
-  final RideRemoteDataSource remoteDataSource;
+  final EstimateTripFareUseCase estimateTripFareUseCase;
+  final DeleteTripUseCase? deleteTripUseCase;
   final EchoService _echoService = EchoService();
 
   String? _currentActiveRideId;
   Timer? _smartPollingTimer;
+  bool _isBookingInFlight = false;
+  bool _cancelRequestedDuringFlight = false;
 
   RideBloc({
     required this.requestRideUseCase,
@@ -136,12 +141,13 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     required this.getTripHistoryUseCase,
     this.rateTripUseCase,
     required this.alertSoundService,
-    required this.remoteDataSource,
+    required this.estimateTripFareUseCase,
+    this.deleteTripUseCase,
   }) : super(const RideInitial()) {
     on<CalculateSingleTripFare>(_onCalculateSingleTripFare);
-    on<ConfirmUnifiedBooking>(_onConfirmUnifiedBooking);
-    on<ConfirmBooking>(_onConfirmBooking);
-    on<SubmitParcelOrder>(_onSubmitParcelOrder);
+    on<ConfirmUnifiedBooking>(_onConfirmUnifiedBooking, transformer: droppable());
+    on<ConfirmBooking>(_onConfirmBooking, transformer: droppable());
+    on<SubmitParcelOrder>(_onSubmitParcelOrder, transformer: droppable());
     on<CancelRideRequested>(_onCancelRideRequested);
     on<RetryRideSearchRequested>(_onRetryRideSearchRequested);
     on<SimulateRideStep>(_onSimulateRideStep);
@@ -159,7 +165,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     Emitter<RideState> emit,
   ) async {
     try {
-      await remoteDataSource.deleteTrip(event.tripId, isParcel: event.isParcel);
+      await deleteTripUseCase?.call(event.tripId, isParcel: event.isParcel);
     } catch (_) {}
 
     if (state is TripHistoryLoaded) {
@@ -188,6 +194,8 @@ class RideBloc extends Bloc<RideEvent, RideState> {
   }
 
   void _onResetRideState(ResetRideState event, Emitter<RideState> emit) {
+    _isBookingInFlight = false;
+    _cancelRequestedDuringFlight = false;
     _stopSmartPolling();
     if (_currentActiveRideId != null) {
       _echoService.stopListeningToTripStatus(_currentActiveRideId!);
@@ -211,7 +219,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       return;
     }
 
-    final result = await remoteDataSource.estimateFare(
+    final resultEither = await estimateTripFareUseCase(
       pickupLatitude: event.pickupLatitude!,
       pickupLongitude: event.pickupLongitude!,
       dropoffLatitude: event.dropoffLatitude!,
@@ -219,36 +227,43 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       stops: event.stops,
     );
 
-    if (result.isEmpty) {
-      emit(const RideError('تعذر حساب تكلفة الرحلة. يرجى التحقق من الإنترنت والمحاولة مجدداً'));
-      return;
-    }
+    resultEither.fold(
+      (failure) {
+        emit(const RideError('تعذر حساب تكلفة الرحلة. يرجى التحقق من الإنترنت والمحاولة مجدداً'));
+      },
+      (result) {
+        if (result.isEmpty) {
+          emit(const RideError('تعذر حساب تكلفة الرحلة. يرجى التحقق من الإنترنت والمحاولة مجدداً'));
+          return;
+        }
 
-    // Backend returns integer YER price (already min-floored & ceil-rounded)
-    final int estimatedPrice = (result['estimated_price'] as num?)?.toInt() ?? 0;
-    final double distanceKm = (result['distance_km'] as num?)?.toDouble() ?? 0.0;
-    final int durationMin = ((distanceKm / 25.0) * 60).ceil().clamp(3, 120);
-    final int nearbyCaptains = (result['nearby_captains'] as num?)?.toInt() ?? 0;
+        // Backend returns integer YER price (already min-floored & ceil-rounded)
+        final int estimatedPrice = (result['estimated_price'] as num?)?.toInt() ?? 0;
+        final double distanceKm = (result['distance_km'] as num?)?.toDouble() ?? 0.0;
+        final int durationMin = ((distanceKm / 25.0) * 60).ceil().clamp(3, 120);
+        final int nearbyCaptains = (result['nearby_captains'] as num?)?.toInt() ?? 0;
 
-    emit(RideOptionsLoaded(
-      pickup: event.pickup,
-      dropoff: event.dropoff,
-      options: [
-        RideOption(
-          id: 'laffah',
-          titleAr: 'لَفّة',
-          titleEn: 'Laffah',
-          basePrice: estimatedPrice.toDouble(),
-          etaMinutes: durationMin,
-          iconKey: 'car',
-          descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
-        )
-      ],
-      distance: distanceKm,
-      duration: durationMin,
-      fare: estimatedPrice.toDouble(),
-      nearbyCaptainsCount: nearbyCaptains,
-    ));
+        emit(RideOptionsLoaded(
+          pickup: event.pickup,
+          dropoff: event.dropoff,
+          options: [
+            RideOption(
+              id: 'laffah',
+              titleAr: 'لَفّة',
+              titleEn: 'Laffah',
+              basePrice: estimatedPrice.toDouble(),
+              etaMinutes: durationMin,
+              iconKey: 'car',
+              descriptionAr: 'الخيار الوحيد المتاح: لَفّة',
+            )
+          ],
+          distance: distanceKm,
+          duration: durationMin,
+          fare: estimatedPrice.toDouble(),
+          nearbyCaptainsCount: nearbyCaptains,
+        ));
+      },
+    );
   }
 
   FutureOr<void> _onConfirmUnifiedBooking(
@@ -292,6 +307,9 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       duration: '${event.duration} د',
     ));
 
+    _isBookingInFlight = true;
+    _cancelRequestedDuringFlight = false;
+
     final result = await requestRideUseCase(
       pickupLocation: event.pickup,
       dropoffLocation: event.dropoff,
@@ -306,6 +324,17 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       scheduledTime: event.scheduledTime,
       paymentMethod: event.paymentMethod,
     );
+
+    _isBookingInFlight = false;
+    if (_cancelRequestedDuringFlight) {
+      result.fold((_) => null, (rideEntity) async {
+        try {
+          await cancelRideUseCase(rideEntity.id);
+        } catch (_) {}
+      });
+      emit(const RideInitial());
+      return;
+    }
 
     result.fold(
       (failure) {
@@ -356,17 +385,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
 
     if ((event.pickupLatitude ?? 0) != 0 && (event.dropoffLatitude ?? 0) != 0) {
       try {
-        final estimate = await remoteDataSource.estimateFare(
+        final estimateEither = await estimateTripFareUseCase(
           pickupLatitude: event.pickupLatitude!,
           pickupLongitude: event.pickupLongitude ?? 0,
           dropoffLatitude: event.dropoffLatitude!,
           dropoffLongitude: event.dropoffLongitude ?? 0,
           stops: null,
         );
-        if (estimate['estimated_price'] != null) {
-          calculatedPrice = (estimate['estimated_price'] as num).toDouble();
-          duration = ((estimate['distance_km'] as num? ?? 5.0) / 25.0 * 60).ceil().clamp(3, 120);
-        }
+        estimateEither.fold((_) {}, (estimate) {
+          if (estimate['estimated_price'] != null) {
+            calculatedPrice = (estimate['estimated_price'] as num).toDouble();
+            duration = ((estimate['distance_km'] as num? ?? 5.0) / 25.0 * 60).ceil().clamp(3, 120);
+          }
+        });
       } catch (_) {}
     }
 
@@ -456,6 +487,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
           }
           add(ActiveRidePolledStatusUpdated(
             status: ride.status,
+            captainId: ride.captainId,
             captainName: ride.captainName,
             captainPhone: ride.captainPhone,
             vehicleModel: ride.vehicleModel,
@@ -515,6 +547,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         pickup: event.pickup,
         dropoff: event.dropoff,
         selectedOption: effectiveOption,
+        captainId: event.captainId,
         captainName: (event.captainName != null && event.captainName!.isNotEmpty)
             ? event.captainName!
             : 'كابتن لَفَّة',
@@ -539,6 +572,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         pickup: event.pickup,
         dropoff: event.dropoff,
         selectedOption: effectiveOption,
+        captainId: event.captainId,
         captainName: (event.captainName != null && event.captainName!.isNotEmpty)
             ? event.captainName!
             : 'كابتن لَفَّة',
@@ -633,6 +667,12 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     CancelRideRequested event,
     Emitter<RideState> emit,
   ) async {
+    if (_isBookingInFlight) {
+      _cancelRequestedDuringFlight = true;
+      _stopSmartPolling();
+      emit(const RideInitial());
+      return;
+    }
     _stopSmartPolling();
     if (_currentActiveRideId != null) {
       _echoService.stopListeningToTripStatus(_currentActiveRideId!);
@@ -702,24 +742,7 @@ class RideBloc extends Bloc<RideEvent, RideState> {
     SimulateRideStep event,
     Emitter<RideState> emit,
   ) {
-    final stepStr = event.step.toString();
-    if (stepStr == 'found' || stepStr == '1') {
-      emit(const RideAccepted(
-        tripId: 'LF-8492',
-        captainName: 'أحمد محمد',
-        captainPhone: '+967 777 000 000',
-        vehicleModel: 'تويوتا كورولا • أبيض',
-        vehiclePlate: '77213',
-        captainRating: 4.9,
-        eta: '4 دقائق',
-      ));
-    } else if (stepStr == 'in_progress' || stepStr == '2') {
-      emit(const RideInProgress(etaToDestination: '10 دقائق'));
-    } else if (stepStr == 'completed' || stepStr == '3') {
-      emit(const RideCompleted());
-    } else if (stepStr == 'finding' || stepStr == '0') {
-      emit(const RideSearching());
-    }
+    // Disabled in production
   }
 
   Future<void> _onScheduleRide(
@@ -754,13 +777,17 @@ class RideBloc extends Bloc<RideEvent, RideState> {
 
     if (status == 'accepted') {
       alertSoundService.playSimpleTripAlert();
+      final captainId = (data['captain_id'] ?? data['captainId'] ?? data['captain']?['id'])?.toString();
+      final plate = (data['vehicle_plate'] ?? data['plate_number'])?.toString() ?? '---';
+
       if (state is RideBookingConfirmed) {
         final s = state as RideBookingConfirmed;
         emit(s.copyWith(
+          captainId: captainId,
           captainName: data['captain_name']?.toString() ?? 'كابتن لَفَّة',
           captainPhone: data['captain_phone']?.toString() ?? '',
           vehicleModel: data['vehicle_model']?.toString() ?? 'دراجة نارية',
-          vehiclePlate: data['plate_number']?.toString() ?? '---',
+          vehiclePlate: plate,
           rating: (data['captain_rating'] is num)
               ? (data['captain_rating'] as num).toDouble()
               : 5.0,
@@ -771,10 +798,11 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       } else {
         emit(RideAccepted(
           tripId: (data['trip_id'] ?? data['id'] ?? '').toString(),
+          captainId: captainId,
           captainName: data['captain_name']?.toString() ?? 'كابتن لَفَّة',
           captainPhone: data['captain_phone']?.toString() ?? '',
           vehicleModel: data['vehicle_model']?.toString() ?? 'دراجة نارية',
-          vehiclePlate: data['plate_number']?.toString() ?? '---',
+          vehiclePlate: plate,
           captainRating: (data['captain_rating'] is num)
               ? (data['captain_rating'] as num).toDouble()
               : 5.0,

@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../config/app_env.dart';
+import '../storage/secure_storage_service.dart';
 
 /// Centralized Real-time WebSocket Service for Laffah.
 /// Manages subscriptions safely for:
@@ -20,6 +24,7 @@ class EchoService {
   final Map<String, List<Function(Map<String, dynamic>)>> _tripAvailableListeners = {};
   final Map<String, List<Function(Map<String, dynamic>)>> _tripStatusListeners = {};
   final Map<String, List<Function(double, double, double?)>> _captainLocationListeners = {};
+  final List<Function(Map<String, dynamic>)> _forcedOfflineListeners = [];
   
   String _currentCaptainId = '';
 
@@ -49,6 +54,39 @@ class EchoService {
         apiKey: key,
         cluster: cluster,
         useTLS: true,
+        // [REALTIME FIX ISSUE-1.5]: Authorizer callback for private channels authorization
+        onAuthorizer: (String channelName, String socketId, dynamic options) async {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final storage = SecureStorageService(const FlutterSecureStorage(), prefs);
+            final token = await storage.getToken();
+
+            final authUrl = "${AppEnv.apiBaseUrl}/broadcasting/auth";
+            final dio = Dio(BaseOptions(
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            ));
+
+            final response = await dio.post(
+              authUrl,
+              data: {
+                'socket_id': socketId,
+                'channel_name': channelName,
+              },
+              options: Options(
+                headers: {
+                  'Authorization': 'Bearer $token',
+                  'Accept': 'application/json',
+                },
+                contentType: Headers.formUrlEncodedContentType,
+              ),
+            );
+            return response.data;
+          } catch (e) {
+            debugPrint("❌ [EchoService] Channel authorizer error on $channelName: $e");
+            return null;
+          }
+        },
         onConnectionStateChange: (currentState, previousState) {
           debugPrint("📡 [EchoService] Pusher state: $previousState -> $currentState");
           _isConnected = (currentState == 'CONNECTED');
@@ -86,8 +124,8 @@ class EchoService {
     if (channelName.startsWith('private-captain-location.')) {
       final captainId = channelName.replaceFirst('private-captain-location.', '');
       final listeners = _captainLocationListeners[captainId] ?? [];
-      final lat = (data['latitude'] as num?)?.toDouble();
-      final lng = (data['longitude'] as num?)?.toDouble();
+      final lat = (data['latitude'] as num?)?.toDouble() ?? (data['lat'] as num?)?.toDouble();
+      final lng = (data['longitude'] as num?)?.toDouble() ?? (data['lng'] as num?)?.toDouble();
       final heading = (data['heading'] as num?)?.toDouble();
       if (lat != null && lng != null) {
         for (final callback in List.from(listeners)) {
@@ -97,6 +135,14 @@ class EchoService {
         }
       }
     } else if (channelName == 'private-trips.available' || channelName.startsWith('private-captain.')) {
+      if (eventName == 'CaptainForcedOffline' || data['event'] == 'CaptainForcedOffline' || data['reason'] == 'inactivity_timeout') {
+        for (final callback in List.from(_forcedOfflineListeners)) {
+          try {
+            callback(data);
+          } catch (_) {}
+        }
+        return;
+      }
       // Must contain a valid trip ID or payload
       if (data['id'] == null && data['trip_id'] == null && data['tripId'] == null) {
         return;
@@ -153,7 +199,12 @@ class EchoService {
           debugPrint("📡 [EchoService] Subscribed to targeted channel: private-captain.$captainProfileId");
           _tripAvailableListeners.putIfAbsent('private-captain.$captainProfileId', () => []);
           _tripAvailableListeners['private-captain.$captainProfileId']!.add((data) {
-             onNewTrip(data);
+            final eventType = data['event_type'] ?? data['type'];
+            if (eventType == 'trip_cancelled' || eventType == 'trip_accepted' || eventType == 'trip_no_longer_available') {
+              onTripNoLongerAvailable?.call(data);
+            } else {
+              onNewTrip(data);
+            }
           });
       }
     } catch (e) {
@@ -236,6 +287,16 @@ class EchoService {
     } catch (e) {
       debugPrint("⚠️ [EchoService] Error leaving private-captain-location.$captainId: $e");
     }
+  }
+
+  void listenToForcedOffline(Function(Map<String, dynamic> data) onForcedOffline) {
+    if (!_forcedOfflineListeners.contains(onForcedOffline)) {
+      _forcedOfflineListeners.add(onForcedOffline);
+    }
+  }
+
+  void stopListeningToForcedOffline(Function(Map<String, dynamic> data) onForcedOffline) {
+    _forcedOfflineListeners.remove(onForcedOffline);
   }
 
   Map<String, dynamic> _parseEventData(dynamic event) {

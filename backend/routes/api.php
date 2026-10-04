@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\CaptainController;
@@ -40,6 +41,9 @@ Route::prefix('auth')->middleware('throttle:60,1')->group(function () {
 
 // Protected API Routes
 Route::middleware('auth:api')->group(function () {
+    // [REALTIME FIX ISSUE-1.5]: API Broadcasting Authentication for Private Channels (Pusher / Reverb)
+    Broadcast::routes(['middleware' => ['auth:api']]);
+
     // User / Profile
     Route::prefix('user')->group(function () {
         Route::get('profile',              [AuthController::class, 'profile']);
@@ -52,19 +56,20 @@ Route::middleware('auth:api')->group(function () {
 
     // Captain Specific Endpoints
     Route::prefix('captain')->group(function () {
-        Route::post('update-location',  [CaptainController::class, 'updateLocation'])->middleware('throttle:120,1');
+        Route::post('update-location',  [CaptainController::class, 'updateLocation'])->middleware('throttle:captain_location');
         Route::post('toggle-online',    [CaptainController::class, 'toggleOnlineStatus']);
         Route::post('documents',        [CaptainController::class, 'uploadDocuments']);
+        Route::get('documents/{id}',    [CaptainController::class, 'showDocument']);
         Route::get('bonus',             [CaptainController::class, 'getBonus']);
         Route::get('notifications',     [NotificationController::class, 'index']);
-        Route::get('requests/nearby',   [TripController::class, 'nearbyRequests'])->middleware('throttle:60,1');
+        Route::get('requests/nearby',   [TripController::class, 'nearbyRequests'])->middleware('throttle:nearby_requests');
     });
 
     // Parcels Delivery
     Route::prefix('parcel')->group(function () {
         Route::post('request',          [ParcelController::class, 'requestParcel'])->middleware('throttle:10,1');
         Route::get('history',           [ParcelController::class, 'myParcels']);
-        Route::get('requests/nearby',   [ParcelController::class, 'nearbyRequests'])->middleware('throttle:60,1');
+        Route::get('requests/nearby',   [ParcelController::class, 'nearbyRequests'])->middleware('throttle:nearby_requests');
         Route::get('{id}/track',        [ParcelController::class, 'trackParcel']);
         Route::post('{id}/accept',      [ParcelController::class, 'acceptParcel'])->middleware('throttle:30,1');
         Route::post('{id}/status',      [ParcelController::class, 'updateStatus']);

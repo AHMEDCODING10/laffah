@@ -49,7 +49,7 @@ class WalletController extends Controller
             );
             return response()->json([
                 'status'  => 'success',
-                'message' => 'تم شحن رصيد المحفظة بنجاح!',
+                'message' => $result['message'] ?? 'تم تسجيل طلب شحن الرصيد بنجاح وهو قيد المراجعة والاعتماد المالي.',
                 'data'    => [
                     'wallet'      => $result['wallet'],
                     'transaction' => $result['transaction'],

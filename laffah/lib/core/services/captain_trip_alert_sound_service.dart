@@ -1,40 +1,68 @@
+import 'dart:async';
 import 'package:flutter/services.dart';
 
-/// CaptainTripAlertSoundService — Simple, elegant notification sound & haptic alert
-/// for incoming trip requests. Emits a discrete pleasant chime and haptic feedback
-/// without repeating sirens or annoying alarms.
+/// CaptainTripAlertSoundService — Persistent, audible alert sound & rhythmic vibration
+/// for incoming trip requests, ensuring captains never miss rides while riding or in traffic.
 class CaptainTripAlertSoundService {
   static final CaptainTripAlertSoundService _instance =
       CaptainTripAlertSoundService._internal();
   factory CaptainTripAlertSoundService() => _instance;
   CaptainTripAlertSoundService._internal();
 
-  DateTime? _lastAlertTime;
+  Timer? _alertLoopTimer;
+  Timer? _autoStopTimer;
+  bool _isPlaying = false;
 
-  /// Play a simple, pleasant alert chime and subtle haptic feedback for new trip requests
+  bool get isPlaying => _isPlaying;
+
+  /// Start persistent looped alarm & heavy vibration until captain responds or 30s timeout
+  Future<void> startTripAlarm() async {
+    if (_isPlaying) return;
+    _isPlaying = true;
+
+    // Immediately trigger initial chime & haptic burst
+    _playChimeAndVibrate();
+
+    // Loop loud chime + vibration every 1200ms
+    _alertLoopTimer?.cancel();
+    _alertLoopTimer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
+      if (!_isPlaying) {
+        timer.cancel();
+        return;
+      }
+      _playChimeAndVibrate();
+    });
+
+    // Safety timeout: auto-stop after 30 seconds (matching ride acceptance window)
+    _autoStopTimer?.cancel();
+    _autoStopTimer = Timer(const Duration(seconds: 30), () {
+      stopAlert();
+    });
+  }
+
+  /// Backward-compatible alias for starting the trip alert
   Future<void> playSimpleTripAlert() async {
-    final now = DateTime.now();
-    // Throttle to prevent multiple rapid alerts within 2 seconds
-    if (_lastAlertTime != null &&
-        now.difference(_lastAlertTime!).inMilliseconds < 2000) {
-      return;
-    }
-    _lastAlertTime = now;
+    await startTripAlarm();
+  }
 
+  void _playChimeAndVibrate() {
     try {
-      // 1. Play standard system alert sound / chime
-      await SystemSound.play(SystemSoundType.alert);
-
-      // 2. Add single crisp haptic feedback
-      await HapticFeedback.mediumImpact();
+      SystemSound.play(SystemSoundType.alert);
+      HapticFeedback.heavyImpact();
+      HapticFeedback.vibrate();
     } catch (_) {
-      // Fallback
-      await HapticFeedback.vibrate();
+      try {
+        HapticFeedback.vibrate();
+      } catch (_) {}
     }
   }
 
-  /// Stop / clear any active alert state
+  /// Stop the active alert and vibration loop immediately
   void stopAlert() {
-    // No ongoing loop to cancel; clean reset
+    _isPlaying = false;
+    _alertLoopTimer?.cancel();
+    _alertLoopTimer = null;
+    _autoStopTimer?.cancel();
+    _autoStopTimer = null;
   }
 }

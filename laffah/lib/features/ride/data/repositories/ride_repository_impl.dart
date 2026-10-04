@@ -156,12 +156,37 @@ class RideRepositoryImpl implements RideRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteTrip(String tripId) async {
+  Future<Either<Failure, void>> deleteTrip(String tripId, {bool isParcel = false}) async {
     try {
-      await remoteDataSource.deleteTrip(tripId);
+      await remoteDataSource.deleteTrip(tripId, isParcel: isParcel);
       return const Right(null);
     } on DioException catch (e) {
       final errorMsg = e.response?.data?['message'] ?? 'فشل حذف الرحلة من السجل';
+      return Left(ServerFailure(errorMsg.toString()));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> estimateFare({
+    required double pickupLatitude,
+    required double pickupLongitude,
+    required double dropoffLatitude,
+    required double dropoffLongitude,
+    List<Map<String, dynamic>>? stops,
+  }) async {
+    try {
+      final res = await remoteDataSource.estimateFare(
+        pickupLatitude: pickupLatitude,
+        pickupLongitude: pickupLongitude,
+        dropoffLatitude: dropoffLatitude,
+        dropoffLongitude: dropoffLongitude,
+        stops: stops,
+      );
+      return Right(res);
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['message'] ?? 'فشل حساب تكلفة الرحلة';
       return Left(ServerFailure(errorMsg.toString()));
     } catch (e) {
       return Left(ServerFailure(e.toString()));

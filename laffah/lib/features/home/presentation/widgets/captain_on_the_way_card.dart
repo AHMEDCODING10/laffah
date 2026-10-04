@@ -161,11 +161,11 @@ class _CaptainOnTheWayCardState extends State<CaptainOnTheWayCard>
     final captainName =
         state.captainName.isNotEmpty && state.captainName != 'قيد البحث'
             ? state.captainName
-            : 'علي صالح صالح';
+            : 'الكابتن';
     final vehicleModel =
-        state.vehicleModel.isNotEmpty ? state.vehicleModel : 'غير محدد';
+        state.vehicleModel.isNotEmpty ? state.vehicleModel : 'دراجة نارية';
     final vehiclePlate =
-        state.vehiclePlate.isNotEmpty ? state.vehiclePlate : 'ا ب ج';
+        state.vehiclePlate.isNotEmpty ? state.vehiclePlate : '---';
 
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 

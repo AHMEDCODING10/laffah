@@ -152,7 +152,7 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                       return PrimaryGradientButton(
                         text: AppLocalizations.of(context)!.auth_confirm,
                         isLoading: state is AuthLoading,
-                        onPressed: state is AuthLoading ? () {} : _verifyOtp,
+                        onPressed: state is AuthLoading ? null : _verifyOtp,
                       );
                     },
                   ),

@@ -22,15 +22,15 @@ class SavedPlaceController extends Controller
         $lng = $request->lng ?? $request->longitude;
         $request->merge(['lat' => $lat, 'lng' => $lng]);
 
-        $request->validate([
-            'name' => 'required|string',
-            'address' => 'required|string',
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
-            'type' => 'nullable|string',
+        $validated = $request->validate([
+            'name'    => 'required|string|max:100',
+            'address' => 'required|string|max:255',
+            'lat'     => 'required|numeric',
+            'lng'     => 'required|numeric',
+            'type'    => 'nullable|string|max:50',
         ]);
 
-        $place = $request->user()->savedPlaces()->create($request->all());
+        $place = $request->user()->savedPlaces()->create($validated);
 
         return response()->json([
             'status' => 'success',

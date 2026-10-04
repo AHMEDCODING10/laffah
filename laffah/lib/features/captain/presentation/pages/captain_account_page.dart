@@ -18,6 +18,9 @@ import '../../../profile/presentation/pages/legal/terms_of_service_page.dart';
 import '../../../profile/presentation/pages/legal/privacy_policy_page.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import '../bloc/core/captain_bloc.dart';
+import '../bloc/core/captain_event.dart';
+import '../../../ride/presentation/bloc/ride_bloc.dart';
 
 /// CaptainAccountPage - Overhauled interactive profile dashboard for Laffah Captains.
 /// Integrates all 9 modal sheets (Profile, Vehicle, Documents, Password, Help, FAQ, Support, terms, language),
@@ -32,6 +35,7 @@ class CaptainAccountPage extends StatefulWidget {
 class _CaptainAccountPageState extends State<CaptainAccountPage> {
   late ProfileBloc _profileBloc;
   dynamic _cachedProfile;
+  bool _isProfileUpdating = false;
 
   @override
   void initState() {
@@ -100,11 +104,15 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
       body: BlocListener<ProfileBloc, ProfileState>(
         bloc: _profileBloc,
         listener: (context, state) {
-          if (state is ProfileLoaded) {
+          if (_isProfileUpdating && state is ProfileLoaded) {
+            _isProfileUpdating = false;
             LaffahSnackBar.success(
               context,
               AppLocalizations.of(context)!.capt_acc_profile_updated,
             );
+          } else if (_isProfileUpdating && state is ProfileError) {
+            _isProfileUpdating = false;
+            LaffahSnackBar.error(context, state.message);
           }
         },
         child: Directionality(
@@ -326,19 +334,13 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                       currentName: currentName,
                       currentPhone: currentPhone,
                       onSave: (newName, newPhone) {
+                        setState(() {
+                          _isProfileUpdating = true;
+                        });
                         _profileBloc.add(UpdateProfileEvent(
                           name: newName,
                           phone: newPhone,
                         ));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            backgroundColor: AppColors.success,
-                            content: Text('جاري تحديث الملف الشخصي... ⏳',
-                                style: TextStyle(
-                                    fontFamily: 'IBM Plex Sans Arabic',
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        );
                       },
                     ),
                   );
@@ -813,6 +815,13 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
+                  context.read<AuthBloc>().add(const LogoutRequested());
+                  try {
+                    context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
+                  } catch (_) {}
+                  try {
+                    context.read<RideBloc>().add(const ResetRideState());
+                  } catch (_) {}
                   context.go(LaffahRoutes.authLanding);
                 },
                 style: ElevatedButton.styleFrom(
@@ -875,6 +884,12 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 onPressed: () {
                   Navigator.pop(dialogContext);
                   context.read<AuthBloc>().add(const DeleteAccountRequested());
+                  try {
+                    context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
+                  } catch (_) {}
+                  try {
+                    context.read<RideBloc>().add(const ResetRideState());
+                  } catch (_) {}
                   context.go(LaffahRoutes.authLanding);
                 },
                 style: ElevatedButton.styleFrom(

@@ -12,6 +12,7 @@ class RideModel extends RideEntity {
     super.dropoffLatitude,
     super.dropoffLongitude,
     super.distanceKm,
+    super.captainId,
     super.captainName,
     super.captainPhone,
     super.rating,
@@ -32,6 +33,9 @@ class RideModel extends RideEntity {
     final String pickup = (json['pickup_address'] ?? json['pickup_location'] ?? json['pickup'] ?? '').toString();
     final String dropoff = (json['dropoff_address'] ?? json['dropoff_location'] ?? json['dropoff'] ?? '').toString();
 
+    final String? captainId = (json['captain_id'] ?? json['captainId'])?.toString() ??
+        (json['captain'] is Map ? json['captain']['id']?.toString() : null);
+
     final String? captainName = json['captain_name'] ??
         (json['captain'] is Map && json['captain']['user'] is Map
             ? json['captain']['user']['name']
@@ -45,7 +49,7 @@ class RideModel extends RideEntity {
     final String? vehicleModel = json['vehicle_model'] ??
         (json['captain'] is Map ? json['captain']['vehicle_model'] : null);
 
-    final String? vehiclePlate = json['vehicle_plate'] ??
+    final String? vehiclePlate = json['vehicle_plate'] ?? json['plate_number'] ??
         (json['captain'] is Map ? json['captain']['plate_number'] : null);
 
     return RideModel(
@@ -59,6 +63,7 @@ class RideModel extends RideEntity {
       dropoffLatitude: json['dropoff_latitude'] != null ? double.tryParse(json['dropoff_latitude'].toString()) : null,
       dropoffLongitude: json['dropoff_longitude'] != null ? double.tryParse(json['dropoff_longitude'].toString()) : null,
       distanceKm: json['distance_km'] != null ? double.tryParse(json['distance_km'].toString()) : null,
+      captainId: captainId,
       captainName: captainName,
       captainPhone: captainPhone,
       rating: json['rating'] != null ? double.tryParse(json['rating'].toString()) : null,

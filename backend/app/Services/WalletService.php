@@ -46,7 +46,7 @@ class WalletService
     {
         $wallet = Wallet::firstOrCreate(
             ['user_id' => $userId],
-            ['balance' => 0.0, 'currency' => 'YER']
+            ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']
         );
         $transactions = $wallet->transactions()->orderBy('created_at', 'desc')->take(20)->get();
         $captainProfile = CaptainProfile::where('user_id', $userId)->first();
@@ -57,21 +57,31 @@ class WalletService
         $completedTripsToday = 0;
 
         if ($captainProfile) {
-            $today = Carbon::today();
-            $startOfWeek = Carbon::now()->startOfWeek();
+            $startOfToday        = Carbon::today()->startOfDay();
+            $endOfToday          = Carbon::today()->endOfDay();
+            $startOfWeek         = Carbon::now()->startOfWeek();
             $startOfPreviousWeek = Carbon::now()->subWeek()->startOfWeek();
             $endOfPreviousWeek   = Carbon::now()->subWeek()->endOfWeek();
 
-            $todayTrips = Trip::where('captain_profile_id', $captainProfile->id)
-                ->where('status', 'completed')->whereDate('created_at', $today)->get();
-            $completedTripsToday = $todayTrips->count();
-            $todayEarnings = (double) $todayTrips->sum('captain_earnings');
+            $todayQuery = Trip::where('captain_profile_id', $captainProfile->id)
+                ->where('status', 'completed')
+                ->where('created_at', '>=', $startOfToday)
+                ->where('created_at', '<=', $endOfToday);
 
-            $weeklyEarnings = (double) Trip::where('captain_profile_id', $captainProfile->id)
-                ->where('status', 'completed')->whereBetween('created_at', [$startOfWeek, Carbon::now()])->sum('captain_earnings');
+            $completedTripsToday = $todayQuery->count();
+            $todayEarnings       = (double) ($todayQuery->sum('captain_earnings') ?? 0.0);
 
-            $previousWeekEarnings = (double) Trip::where('captain_profile_id', $captainProfile->id)
-                ->where('status', 'completed')->whereBetween('created_at', [$startOfPreviousWeek, $endOfPreviousWeek])->sum('captain_earnings');
+            $weeklyEarnings = (double) (Trip::where('captain_profile_id', $captainProfile->id)
+                ->where('status', 'completed')
+                ->where('created_at', '>=', $startOfWeek)
+                ->where('created_at', '<=', Carbon::now())
+                ->sum('captain_earnings') ?? 0.0);
+
+            $previousWeekEarnings = (double) (Trip::where('captain_profile_id', $captainProfile->id)
+                ->where('status', 'completed')
+                ->where('created_at', '>=', $startOfPreviousWeek)
+                ->where('created_at', '<=', $endOfPreviousWeek)
+                ->sum('captain_earnings') ?? 0.0);
         }
 
         $formattedTransactions = $transactions->map(function ($tx) {
@@ -90,9 +100,14 @@ class WalletService
             ];
         });
 
+        $availableBalance = max(0.0, (float) ($wallet->balance - ($wallet->held_balance ?? 0.0)));
+
         return [
             'balance'                 => (double) $wallet->balance,
-            'availableBalance'        => (double) $wallet->balance,
+            'availableBalance'        => (double) $availableBalance,
+            'available_balance'       => (double) $availableBalance,
+            'held_balance'            => (double) ($wallet->held_balance ?? 0.0),
+            'heldBalance'             => (double) ($wallet->held_balance ?? 0.0),
             'currency'                => $wallet->currency ?? 'YER',
             'today_earnings'          => (double) $todayEarnings,
             'todayEarnings'           => (double) $todayEarnings,
@@ -113,7 +128,8 @@ class WalletService
     }
 
     /**
-     * Instant Wallet Recharge via Yemeni Payment Channels.
+     * Wallet Recharge via Yemeni Payment Channels.
+     * Records the transaction as 'pending' awaiting verification/admin approval to prevent fraud.
      */
     public function recharge($userId, float $amount, string $referenceId, string $paymentMethod = 'cash', ?string $senderAccount = null)
     {
@@ -131,7 +147,7 @@ class WalletService
 
         $methodName = self::YEMENI_CHANNELS[$paymentMethod] ?? $paymentMethod;
         $senderInfo = $senderAccount ? " (من حساب: $senderAccount)" : '';
-        $desc = "شحن رصيد فوري عبر $methodName - رقم السند: $cleanRef$senderInfo";
+        $desc = "طلب شحن رصيد عبر $methodName - رقم السند: $cleanRef$senderInfo - قيد المراجعة";
 
         try {
             return DB::transaction(function () use ($userId, $amount, $cleanRef, $desc) {
@@ -140,20 +156,26 @@ class WalletService
                     throw new Exception('رقم الحوالة أو المرجع هذا تم استخدامه مسبقاً! لا يمكن تكرار عملية الشحن.', 409);
                 }
 
-                $wallet = Wallet::firstOrCreate(['user_id' => $userId], ['balance' => 0.0, 'currency' => 'YER']);
-                $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
-                $wallet->balance += $amount;
-                $wallet->save();
+                $wallet = Wallet::firstOrCreate(['user_id' => $userId], ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']);
 
+                // [FINANCIAL FIX]: Do NOT auto-credit immediately without bank confirmation / admin approval!
+                // The transaction is logged as 'pending'. Balance is credited only upon approval.
                 $transaction = Transaction::create([
                     'wallet_id'    => $wallet->id,
                     'type'         => 'deposit',
                     'amount'       => $amount,
+                    'status'       => 'pending',
                     'description'  => $desc,
                     'reference_id' => $cleanRef,
                 ]);
 
-                return ['wallet' => $wallet, 'transaction' => $transaction, 'new_balance' => (double) $wallet->balance];
+                return [
+                    'wallet'      => $wallet,
+                    'transaction' => $transaction,
+                    'new_balance' => (double) $wallet->balance,
+                    'status'      => 'pending',
+                    'message'     => 'تم رفع طلب الشحن بنجاح وهو قيد التحقق والاعتماد المالي.',
+                ];
             });
         } catch (\Illuminate\Database\QueryException $qe) {
             if (str_contains($qe->getMessage(), 'UNIQUE') || str_contains($qe->getMessage(), 'Duplicate') || $qe->getCode() == 23000) {
@@ -161,6 +183,59 @@ class WalletService
             }
             throw $qe;
         }
+    }
+
+    /**
+     * Admin approves a pending recharge transaction and credits the wallet balance.
+     */
+    public function approveRecharge(int $transactionId, ?int $adminId = null): array
+    {
+        return DB::transaction(function () use ($transactionId, $adminId) {
+            $transaction = Transaction::where('id', $transactionId)->lockForUpdate()->firstOrFail();
+
+            if ($transaction->status !== 'pending') {
+                throw new Exception("لا يمكن اعتماد هذه المعاملة لأنها بحالة: {$transaction->status}", 422);
+            }
+
+            $wallet = Wallet::where('id', $transaction->wallet_id)->lockForUpdate()->firstOrFail();
+            $wallet->balance += $transaction->amount;
+            $wallet->save();
+
+            $transaction->update([
+                'status'      => 'completed',
+                'description' => str_replace(' - قيد المراجعة', ' - معتمد بنجاح', $transaction->description),
+            ]);
+
+            return [
+                'wallet'      => $wallet,
+                'transaction' => $transaction,
+                'new_balance' => (double) $wallet->balance,
+            ];
+        });
+    }
+
+    /**
+     * Admin rejects a pending recharge transaction.
+     */
+    public function rejectRecharge(int $transactionId, ?int $adminId = null, ?string $reason = null): array
+    {
+        return DB::transaction(function () use ($transactionId, $adminId, $reason) {
+            $transaction = Transaction::where('id', $transactionId)->lockForUpdate()->firstOrFail();
+
+            if ($transaction->status !== 'pending') {
+                throw new Exception("لا يمكن رفض هذه المعاملة لأنها بحالة: {$transaction->status}", 422);
+            }
+
+            $transaction->update([
+                'status'      => 'rejected',
+                'description' => $transaction->description . ($reason ? " (سبب الرفض: $reason)" : ' (مرفوض)'),
+            ]);
+
+            return [
+                'transaction' => $transaction,
+                'status'      => 'rejected',
+            ];
+        });
     }
 
     /**
@@ -188,8 +263,9 @@ class WalletService
                 throw new Exception('لا يمكن طلب السحب ورصيدك صفر أو سالب. يرجى شحن الرصيد أولاً.', 422);
             }
 
-            if ($wallet->balance < $amount) {
-                throw new Exception('رصيد المحفظة غير كافٍ لإتمام عملية السحب.', 422);
+            $availableBalance = max(0.0, (float) $wallet->balance - (float) ($wallet->held_balance ?? 0));
+            if ($availableBalance < $amount) {
+                throw new Exception('رصيد المحفظة المتاح غير كافٍ لإتمام عملية السحب لوجود مبالغ معلقة في مشاوير نشطة.', 422);
             }
 
             // 1. Deduct balance immediately (locked/reserved)
@@ -292,6 +368,56 @@ class WalletService
             ]);
 
             return $req;
+        });
+    }
+
+    /**
+     * Apply cancellation compensation when passenger cancels after captain has arrived or accepted > 2 mins.
+     * Credits captain wallet and deducts from passenger wallet.
+     * [FINANCIAL FIX ISSUE-3.7]
+     */
+    public function applyCancellationCompensation(int $passengerUserId, int $captainUserId, float $fee, int $tripId): void
+    {
+        if ($fee <= 0) return;
+
+        DB::transaction(function () use ($passengerUserId, $captainUserId, $fee, $tripId) {
+            // 1. Credit Captain Wallet with compensation
+            $captainWallet = Wallet::firstOrCreate(
+                ['user_id' => $captainUserId],
+                ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']
+            );
+            $captainWallet = Wallet::where('id', $captainWallet->id)->lockForUpdate()->first();
+            $captainWallet->balance += $fee;
+            $captainWallet->save();
+
+            Transaction::create([
+                'wallet_id'    => $captainWallet->id,
+                'trip_id'      => $tripId,
+                'type'         => 'deposit',
+                'amount'       => $fee,
+                'status'       => 'completed',
+                'description'  => "تعويض إلغاء المشوار #{$tripId} من قبل الراكب",
+                'reference_id' => 'CAN-CAP-' . $tripId . '-' . strtoupper(bin2hex(random_bytes(2))),
+            ]);
+
+            // 2. Charge Passenger Wallet
+            $passengerWallet = Wallet::firstOrCreate(
+                ['user_id' => $passengerUserId],
+                ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']
+            );
+            $passengerWallet = Wallet::where('id', $passengerWallet->id)->lockForUpdate()->first();
+            $passengerWallet->balance -= $fee;
+            $passengerWallet->save();
+
+            Transaction::create([
+                'wallet_id'    => $passengerWallet->id,
+                'trip_id'      => $tripId,
+                'type'         => 'deduction',
+                'amount'       => $fee,
+                'status'       => 'completed',
+                'description'  => "رسوم إلغاء المشوار #{$tripId} بعد وصول أو تحرك الكابتن",
+                'reference_id' => 'CAN-PAS-' . $tripId . '-' . strtoupper(bin2hex(random_bytes(2))),
+            ]);
         });
     }
 }

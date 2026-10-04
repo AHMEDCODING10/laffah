@@ -39,8 +39,8 @@ class TransactionsManager extends Component
                   ->orWhereHas('wallet.user', fn($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('phone', 'like', "%{$this->search}%"));
             })
             ->when($this->typeFilter, fn($q) => $q->where('type', $this->typeFilter))
-            ->when($this->startDate, fn($q) => $q->whereDate('created_at', '>=', $this->startDate))
-            ->when($this->endDate, fn($q) => $q->whereDate('created_at', '<=', $this->endDate))
+            ->when($this->startDate, fn($q) => $q->where('created_at', '>=', \Carbon\Carbon::parse($this->startDate)->startOfDay()))
+            ->when($this->endDate, fn($q) => $q->where('created_at', '<=', \Carbon\Carbon::parse($this->endDate)->endOfDay()))
             ->latest()
             ->paginate(15);
 
@@ -83,22 +83,24 @@ class TransactionsManager extends Component
             $user = User::findOrFail($this->targetUserId);
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $user->id],
-                ['balance' => 0.0, 'currency' => 'YER']
+                ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']
             );
 
+            // Acquire pessimistic row lock on wallet
+            $lockedWallet = Wallet::where('id', $wallet->id)->lockForUpdate()->firstOrFail();
             $amount = (float) $this->adjustAmount;
 
             if ($this->adjustType === 'deposit') {
-                $wallet->balance += $amount;
+                $lockedWallet->balance += $amount;
                 $ref = 'ADM-DEP-' . strtoupper(bin2hex(random_bytes(3)));
                 $desc = 'شحن يدوي من الإدارة: ' . $this->adjustReason;
             } else {
-                $wallet->balance -= $amount;
+                $lockedWallet->balance -= $amount;
                 $ref = 'ADM-DED-' . strtoupper(bin2hex(random_bytes(3)));
                 $desc = 'خصم يدوي من الإدارة: ' . $this->adjustReason;
             }
 
-            $wallet->save();
+            $lockedWallet->save();
 
             Transaction::create([
                 'wallet_id'    => $wallet->id,
@@ -122,8 +124,8 @@ class TransactionsManager extends Component
                   ->orWhereHas('wallet.user', fn($u) => $u->where('name', 'like', "%{$this->search}%")->orWhere('phone', 'like', "%{$this->search}%"));
             })
             ->when($this->typeFilter, fn($q) => $q->where('type', $this->typeFilter))
-            ->when($this->startDate, fn($q) => $q->whereDate('created_at', '>=', $this->startDate))
-            ->when($this->endDate, fn($q) => $q->whereDate('created_at', '<=', $this->endDate))
+            ->when($this->startDate, fn($q) => $q->where('created_at', '>=', \Carbon\Carbon::parse($this->startDate)->startOfDay()))
+            ->when($this->endDate, fn($q) => $q->where('created_at', '<=', \Carbon\Carbon::parse($this->endDate)->endOfDay()))
             ->latest()
             ->get();
 

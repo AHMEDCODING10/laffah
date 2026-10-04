@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/di/injection_container.dart' as di;
 import '../../../../core/widgets/cached_tile_provider.dart';
 
 import '../../../../core/widgets/laffah_map_view.dart';
@@ -33,7 +35,7 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
   String _currentStreetName = 'حرك الخريطة لتحديد الموقع';
   bool _isLoadingAddress = false;
   Timer? _debounce;
-  final Dio _dio = Dio();
+  final Dio _dio = di.sl<DioClient>().dio;
 
 
   @override
@@ -45,7 +47,6 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
   @override
   void dispose() {
     _debounce?.cancel();
-    _dio.close();
     _mapController.dispose();
     super.dispose();
   }
@@ -77,10 +78,10 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
 
   Future<void> _fetchAddress(double lat, double lon) async {
     try {
-      final String url =
-          '${ApiEndpoints.baseUrl}${ApiEndpoints.geocodeReverse}';
-      final response =
-          await _dio.get(url, queryParameters: {'lat': lat, 'lon': lon});
+      final response = await _dio.get(
+        ApiEndpoints.geocodeReverse,
+        queryParameters: {'lat': lat, 'lon': lon},
+      );
 
       if (response.statusCode == 200 && mounted) {
         final data = response.data;

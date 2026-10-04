@@ -35,7 +35,7 @@ class AutoOfflineInactiveCaptains extends Command
         // Find all online captains whose location was not updated recently
         $inactiveCaptains = CaptainProfile::where('is_online', true)
             ->whereHas('location', function ($query) use ($threshold) {
-                $query->where('updated_at', '<', $threshold);
+                $query->where('last_updated_at', '<', $threshold);
             })
             ->orWhere(function ($query) use ($threshold) {
                 $query->where('is_online', true)
@@ -54,8 +54,11 @@ class AutoOfflineInactiveCaptains extends Command
         foreach ($inactiveCaptains as $captain) {
             $captain->update(['is_online' => false]);
 
-            CaptainLocation::where('captain_profile_id', $captain->id)
-                ->update(['is_online' => false]);
+            try {
+                broadcast(new \App\Events\CaptainForcedOffline($captain->id));
+            } catch (\Throwable $e) {
+                Log::warning("Could not broadcast CaptainForcedOffline event: {$e->getMessage()}");
+            }
 
             Log::info("Captain #{$captain->id} (User #{$captain->user_id}) automatically set to offline due to {$minutes}+ minutes of inactivity.");
         }

@@ -20,52 +20,9 @@ class TripResource extends JsonResource
         $estDuration = max(1, (int) round($dist * 2.5)); // in minutes
         $price = (float) ($this->final_price ?? $this->estimated_price ?? 0);
         
-        // Compute nearby active captains for pickup location sorted nearest-first
-        $nearbyCaptains = 0;
-        $captainEtaMinutes = 4;
-        if ($this->pickup_latitude && $this->pickup_longitude) {
-            $lat = (float) $this->pickup_latitude;
-            $lng = (float) $this->pickup_longitude;
-            $radiusKm = 4.5; // Max economic search radius for Sanaa pickup
-            $latDelta = $radiusKm / 111.0;
-            $lngDelta = $radiusKm / (111.0 * max(0.1, cos(deg2rad($lat))));
-            $haversine = "(6371 * acos(cos(radians($lat)) * cos(radians(captain_locations.latitude)) * cos(radians(captain_locations.longitude) - radians($lng)) + sin(radians($lat)) * sin(radians(captain_locations.latitude))))";
-
-            $captains = \Illuminate\Support\Facades\DB::table('captain_locations')
-                ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
-                ->where('captain_profiles.is_online', true)
-                ->whereBetween('captain_locations.latitude', [$lat - $latDelta, $lat + $latDelta])
-                ->whereBetween('captain_locations.longitude', [$lng - $lngDelta, $lng + $lngDelta])
-                ->where('captain_locations.last_updated_at', '>=', now()->subMinutes(15))
-                ->whereRaw("$haversine <= ?", [$radiusKm])
-                ->select(\Illuminate\Support\Facades\DB::raw("$haversine as distance_km"))
-                ->orderBy('distance_km', 'asc')
-                ->get();
-
-            if ($captains->isEmpty()) {
-                $captains = \Illuminate\Support\Facades\DB::table('captain_locations')
-                    ->join('captain_profiles', 'captain_locations.captain_profile_id', '=', 'captain_profiles.id')
-                    ->where('captain_profiles.is_online', true)
-                    ->whereBetween('captain_locations.latitude', [$lat - $latDelta, $lat + $latDelta])
-                    ->whereBetween('captain_locations.longitude', [$lng - $lngDelta, $lng + $lngDelta])
-                    ->whereRaw("$haversine <= ?", [$radiusKm])
-                    ->select(\Illuminate\Support\Facades\DB::raw("$haversine as distance_km"))
-                    ->orderBy('distance_km', 'asc')
-                    ->get();
-            }
-
-            $nearbyCaptains = $captains->count();
-
-            if ($nearbyCaptains === 0) {
-                $onlinePool = \App\Models\CaptainProfile::where('is_online', true)->count();
-                if ($onlinePool > 0) {
-                    $nearbyCaptains = min($onlinePool, 5);
-                }
-            } else {
-                $nearestDist = $captains->first()->distance_km;
-                $captainEtaMinutes = max(2, (int) round(($nearestDist / 20.0) * 60) + 1);
-            }
-        }
+        // Zero-DB-queries pure transform: uses model properties or defaults
+        $nearbyCaptains = $this->nearby_captains_count ?? 3;
+        $captainEtaMinutes = $this->captain_eta_minutes ?? max(2, (int) round(($dist / 20.0) * 60) + 1);
         
         return [
             'id' => (string) $this->id,
@@ -111,7 +68,7 @@ class TripResource extends JsonResource
             // Passenger Details
             'passengerName' => $this->passenger?->name ?? 'عميل',
             'passengerPhone' => $this->passenger?->phone ?? '',
-            'passengerRating' => (float) ($this->passenger?->passengerTrips()->whereNotNull('rating_by_captain')->avg('rating_by_captain') ?? 5.0),
+            'passengerRating' => (float) ($this->passenger?->rating ?? 5.0),
             'passenger' => [
                 'id' => $this->passenger?->id,
                 'name' => $this->passenger?->name ?? 'عميل',
@@ -119,6 +76,8 @@ class TripResource extends JsonResource
             ],
             
             // Captain Details
+            'captain_id' => $this->captain_profile_id ? (string) $this->captain_profile_id : null,
+            'captainId' => $this->captain_profile_id ? (string) $this->captain_profile_id : null,
             'captain_name' => $captainUser?->name,
             'captain_phone' => $captainUser?->phone,
             'captain' => $this->captain ? [

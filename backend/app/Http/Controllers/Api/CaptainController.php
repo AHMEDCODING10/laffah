@@ -178,7 +178,7 @@ class CaptainController extends Controller
             return response()->json(['status' => 'error', 'message' => 'لم يتم العثور على ملف الكابتن.'], 404);
         }
 
-        $path = $request->file('file')->store('captain_documents', 'public');
+        $path = $request->file('file')->store('captain_documents', 'local');
 
         $doc = Document::updateOrCreate(
             [
@@ -199,6 +199,35 @@ class CaptainController extends Controller
     }
 
     /**
+     * Authenticated preview/download for captain documents.
+     */
+    public function showDocument(Request $request, $id)
+    {
+        $user = $request->user();
+        $captainProfile = $user?->captainProfile;
+
+        $doc = Document::findOrFail($id);
+
+        $isOwner = $captainProfile && $doc->captain_profile_id == $captainProfile->id;
+        $isAdmin = $user && ($user->hasRole('admin') || !empty($user->is_admin));
+
+        if (!$isOwner && !$isAdmin) {
+            return response()->json(['status' => 'error', 'message' => 'غير مصرح لك بالاطلاع على هذه الوثيقة.'], 403);
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('local')->exists($doc->file_path)) {
+            return response()->file(\Illuminate\Support\Facades\Storage::disk('local')->path($doc->file_path));
+        }
+
+        // Backward compatibility for legacy public files
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($doc->file_path)) {
+            return response()->file(\Illuminate\Support\Facades\Storage::disk('public')->path($doc->file_path));
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'ملف الوثيقة غير موجود.'], 404);
+    }
+
+    /**
      * Get captain bonus and achievements data.
      */
     public function getBonus(Request $request)
@@ -210,9 +239,13 @@ class CaptainController extends Controller
             return response()->json(['status' => 'error', 'message' => 'لم يتم العثور على ملف تعريف الكابتن.'], 404);
         }
 
+        $startOfToday = \Carbon\Carbon::today()->startOfDay();
+        $endOfToday   = \Carbon\Carbon::today()->endOfDay();
+
         $completedToday = Trip::where('captain_profile_id', $captainProfile->id)
             ->where('status', 'completed')
-            ->whereDate('completed_at', today())
+            ->where('completed_at', '>=', $startOfToday)
+            ->where('completed_at', '<=', $endOfToday)
             ->count();
 
         $dailyTarget = (int) (Setting::where('key', 'daily_trip_target')->value('value') ?? 10);

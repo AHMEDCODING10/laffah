@@ -21,6 +21,9 @@ import '../../../../core/bloc/locale/locale_state.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../ride/presentation/bloc/ride_bloc.dart';
+import '../../../captain/presentation/bloc/core/captain_bloc.dart';
+import '../../../captain/presentation/bloc/core/captain_event.dart';
 import 'passenger_support_page.dart';
 import '../widgets/faq_bottom_sheet.dart';
 
@@ -54,6 +57,13 @@ class _ProfileViewState extends State<_ProfileView> {
 
   void _showLogoutDialog(BuildContext context, bool isDark) {
     LogoutConfirmationDialog.show(context, isDark, () {
+      context.read<AuthBloc>().add(const LogoutRequested());
+      try {
+        context.read<RideBloc>().add(const ResetRideState());
+      } catch (_) {}
+      try {
+        context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
+      } catch (_) {}
       context.go(LaffahRoutes.authLanding);
     });
   }
@@ -93,6 +103,12 @@ class _ProfileViewState extends State<_ProfileView> {
               onPressed: () {
                 Navigator.pop(dialogContext);
                 context.read<AuthBloc>().add(const DeleteAccountRequested());
+                try {
+                  context.read<RideBloc>().add(const ResetRideState());
+                } catch (_) {}
+                try {
+                  context.read<CaptainBloc>().add(const ResetCaptainState(keepOnline: false));
+                } catch (_) {}
                 context.go(LaffahRoutes.authLanding);
               },
               style: ElevatedButton.styleFrom(

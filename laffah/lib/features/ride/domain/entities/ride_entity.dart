@@ -11,6 +11,7 @@ class RideEntity extends Equatable {
   final double? dropoffLatitude;
   final double? dropoffLongitude;
   final double? distanceKm;
+  final String? captainId;
   final String? captainName;
   final String? captainPhone;
   final double? rating;
@@ -31,6 +32,7 @@ class RideEntity extends Equatable {
     this.dropoffLatitude,
     this.dropoffLongitude,
     this.distanceKm,
+    this.captainId,
     this.captainName,
     this.captainPhone,
     this.rating,
@@ -53,6 +55,7 @@ class RideEntity extends Equatable {
         dropoffLatitude,
         dropoffLongitude,
         distanceKm,
+        captainId,
         captainName,
         captainPhone,
         rating,

@@ -29,6 +29,8 @@ import '../../features/ride/domain/usecases/retry_ride_usecase.dart';
 import '../../features/ride/domain/usecases/track_ride_usecase.dart';
 import '../../features/ride/domain/usecases/get_trip_history_usecase.dart';
 import '../../features/ride/domain/usecases/rate_trip_use_case.dart';
+import '../../features/ride/domain/usecases/estimate_trip_fare_usecase.dart';
+import '../../features/ride/domain/usecases/delete_trip_usecase.dart';
 import '../../features/ride/data/datasources/ride_remote_data_source.dart';
 import '../../features/ride/data/repositories/ride_repository_impl.dart';
 import '../../features/ride/presentation/bloc/ride_bloc.dart';
@@ -186,6 +188,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => TrackRideUseCase(sl()));
   sl.registerLazySingleton(() => GetTripHistoryUseCase(sl()));
   sl.registerLazySingleton(() => RateTripUseCase(sl()));
+  sl.registerLazySingleton(() => EstimateTripFareUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteTripUseCase(sl()));
 
   sl.registerFactory<RideBloc>(
     () => RideBloc(
@@ -197,7 +201,8 @@ Future<void> init() async {
       getTripHistoryUseCase: sl(),
       rateTripUseCase: sl(),
       alertSoundService: sl(),
-      remoteDataSource: sl<RideRemoteDataSource>(), // ✅ Required for backend-driven fare estimation
+      estimateTripFareUseCase: sl(),
+      deleteTripUseCase: sl(),
     ),
   );
 

@@ -195,11 +195,20 @@ class CaptainRemoteDataSourceImpl implements CaptainRemoteDataSource {
           'lng': lng,
           'heading': heading,
         },
+        // ⚠️ ISSUE-0.3 FIX: GPS pings are fire-and-forget telemetry.
+        // Strict 2s timeout + no_retry prevents stale coordinates from
+        // flooding the connection pool via RetryInterceptor on weak 3G.
+        options: Options(
+          sendTimeout: const Duration(seconds: 2),
+          receiveTimeout: const Duration(seconds: 2),
+          extra: {'no_retry': true},
+        ),
       );
-    } catch (e) {
-      // Non-blocking location update failure
+    } catch (_) {
+      // Non-blocking: next GPS tick arrives in seconds; silently discard failure.
     }
   }
+
 
   @override
   Future<BaseResponseModel<Map<String, dynamic>>> uploadDocument(

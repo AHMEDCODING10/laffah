@@ -22,8 +22,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
-        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => route('admin.login'));
+        // [API ARCHITECTURE FIX ISSUE-2.7]: Never redirect API or broadcasting requests to HTML login page!
+        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => ($request->is('api/*') || $request->is('broadcasting/*') || $request->expectsJson()) ? null : route('admin.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*') || $request->is('broadcasting/*') || $request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'انتهت صلاحية الجلسة أو غير مصرح بالدخول.',
+                ], 401);
+            }
+        });
     })->create();
+

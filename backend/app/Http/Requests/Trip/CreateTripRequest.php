@@ -32,6 +32,11 @@ class CreateTripRequest extends FormRequest
 
         $type = $this->input('type') ?? ($this->input('ride_type') === 'delivery' ? 'delivery' : 'ride');
 
+        $promoId = $this->input('promo_code_id');
+        if (!$promoId && $this->filled('promo_code')) {
+            $promoId = \App\Models\PromoCode::where('code', trim($this->input('promo_code')))->value('id');
+        }
+
         $this->merge([
             'pickup_address' => $pickupAddress,
             'dropoff_address' => $dropoffAddress,
@@ -40,6 +45,7 @@ class CreateTripRequest extends FormRequest
             'dropoff_latitude' => (float) $dropoffLat,
             'dropoff_longitude' => (float) $dropoffLng,
             'type' => in_array($type, ['ride', 'delivery']) ? $type : 'ride',
+            'promo_code_id' => $promoId,
         ]);
     }
 
@@ -59,6 +65,7 @@ class CreateTripRequest extends FormRequest
             'dropoff_latitude' => 'required|numeric|between:12.0,19.5',
             'dropoff_longitude' => 'required|numeric|between:41.5,54.5',
             'promo_code_id' => 'nullable|integer|exists:promo_codes,id',
+            'promo_code' => 'nullable|string|max:50',
             'stops' => 'nullable|array',
             'stops.*.address' => 'required_with:stops|string|max:255',
             'stops.*.latitude' => 'required_with:stops|numeric|between:12.0,19.5',

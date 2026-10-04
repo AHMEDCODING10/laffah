@@ -7,13 +7,20 @@ use Illuminate\Http\Request;
 use App\Models\Parcel;
 use App\Models\Wallet;
 use App\Models\Transaction;
-use App\Models\Setting;
 use App\Services\NotificationService;
+use App\Services\ParcelService;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
 class ParcelController extends Controller
 {
+    protected $parcelService;
+
+    public function __construct(ParcelService $parcelService)
+    {
+        $this->parcelService = $parcelService;
+    }
+
     /**
      * Request a new parcel delivery.
      */
@@ -203,43 +210,38 @@ class ParcelController extends Controller
             return response()->json(['status' => 'error', 'message' => 'الحساب ليس مسجلاً ككابتن.'], 403);
         }
 
-        // Use DB transaction to prevent race conditions
-        $parcels = DB::transaction(function () {
-            // 1. Auto-expire pending parcels older than 3 minutes
-            $expiredParcels = Parcel::where('status', 'pending')
-                ->whereNull('captain_profile_id')
-                ->where('created_at', '<', now()->subMinutes(3))
-                ->get();
-            
-            if ($expiredParcels->isNotEmpty()) {
-                Parcel::whereIn('id', $expiredParcels->pluck('id'))
-                    ->update([
-                        'status' => 'cancelled',
-                        'notes' => 'انتهت مهلة انتظار الكابتن (3 دقائق)',
-                    ]);
-            }
-
-            // 2. Query only fresh, pending, unassigned parcels
-            return Parcel::where('status', 'pending')
-                ->whereNull('captain_profile_id')
-                ->where('created_at', '>=', now()->subMinutes(3))
-                ->with('user')
-                ->latest()
-                ->take(30) // Get more since we will filter in PHP
-                ->get();
-        });
-
-        // 3. Filter by distance (15km radius)
         $lat = $request->input('lat') ?? $request->input('latitude') ?? $captainProfile->latitude;
         $lng = $request->input('lng') ?? $request->input('longitude') ?? $captainProfile->longitude;
 
+        if (!$lat || !$lng) {
+            $location = \App\Models\CaptainLocation::where('captain_profile_id', $captainProfile->id)->first();
+            if ($location) {
+                $lat = $location->latitude;
+                $lng = $location->longitude;
+            }
+        }
+
+        $radiusKm = 15.0;
+        $query = Parcel::where('status', 'pending')
+            ->whereNull('captain_profile_id')
+            ->where('created_at', '>=', now()->subMinutes(3))
+            ->with('user')
+            ->latest();
+
         if ($lat && $lng) {
-            $parcels = $parcels->filter(function ($parcel) use ($lat, $lng) {
+            $latDelta = $radiusKm / 111.045;
+            $lngDelta = $radiusKm / (111.045 * max(0.1, cos(deg2rad((float)$lat))));
+            $query->whereBetween('pickup_latitude', [(float)$lat - $latDelta, (float)$lat + $latDelta])
+                  ->whereBetween('pickup_longitude', [(float)$lng - $lngDelta, (float)$lng + $lngDelta]);
+        }
+
+        $parcels = $query->take(30)->get();
+
+        if ($lat && $lng) {
+            $parcels = $parcels->filter(function ($parcel) use ($lat, $lng, $radiusKm) {
                 if (!$parcel->pickup_latitude || !$parcel->pickup_longitude) return true;
-                
-                $dist = \App\Helpers\GeoHelper::haversineDistance($parcel->pickup_latitude, $parcel->pickup_longitude, $lat, $lng);
-                
-                return $dist <= 15.0; 
+                $dist = \App\Helpers\GeoHelper::haversineDistance((float)$parcel->pickup_latitude, (float)$parcel->pickup_longitude, (float)$lat, (float)$lng);
+                return $dist <= $radiusKm; 
             })->values();
         }
 
@@ -261,11 +263,11 @@ class ParcelController extends Controller
                   ->orWhere('tracking_code', $id);
             })
             ->where(function ($q) use ($user) {
-                // Must be the owner or the assigned captain
-                $q->where('user_id', $user->id);
-                
-                if ($user->captainProfile) {
-                    $q->orWhere('captain_profile_id', $user->captainProfile->id);
+                if ($user) {
+                    $q->where('user_id', $user->id);
+                    if ($user->captainProfile) {
+                        $q->orWhere('captain_profile_id', $user->captainProfile->id);
+                    }
                 }
             })
             ->with(['captain.user', 'user'])
@@ -296,60 +298,21 @@ class ParcelController extends Controller
             return response()->json(['status' => 'error', 'message' => 'الحساب ليس مسجلاً ككابتن.'], 403);
         }
 
-        return DB::transaction(function () use ($id, $captainProfile, $user) {
-            $parcel = Parcel::where(function ($q) use ($id) {
-                $q->where('id', $id)
-                  ->orWhere('tracking_code', $id);
-            })->lockForUpdate()->first();
-
-            if (!$parcel) {
-                return response()->json(['status' => 'error', 'message' => 'الطرد غير موجود.'], 404);
-            }
-
-            if ($parcel->status !== 'pending') {
-                return response()->json(['status' => 'error', 'message' => 'تم قبول هذا الطرد مسبقاً من كابتن آخر.'], 409);
-            }
-
-            $parcel->update([
-                'captain_profile_id' => $captainProfile->id,
-                'status'             => 'accepted',
-                'accepted_at'        => now(),
-            ]);
-
-            try {
-                event(new \App\Events\ParcelStatusUpdated($parcel));
-            } catch (\Exception $e) {}
-
-            // Notify parcel owner
-            if ($parcel->user) {
-                try {
-                    $notificationService = app(NotificationService::class);
-                    $notificationService->sendToUser(
-                        $parcel->user,
-                        'تم قبول طلب توصيل الطرد 📦',
-                        "وافق الكابتن {$user->name} على توصيل طردك #{$parcel->tracking_code}.",
-                        ['type' => 'parcel', 'parcel_id' => (string) $parcel->id]
-                    );
-                } catch (\Exception $e) {}
-            }
-
-            // Notify captain
-            try {
-                $notificationService = app(NotificationService::class);
-                $notificationService->sendToUser(
-                    $user,
-                    'تم قبول توصيل الطرد 📦',
-                    "مشوار توصيل طرد جديد #{$parcel->tracking_code} بقيمة " . number_format($parcel->price) . " ر.ي.",
-                    ['type' => 'parcel', 'parcel_id' => (string) $parcel->id]
-                );
-            } catch (\Exception $e) {}
-
+        try {
+            $parcel = $this->parcelService->acceptParcel($id, $captainProfile);
             return response()->json([
                 'status'  => 'success',
                 'message' => 'تم قبول توصيل الطرد بنجاح!',
-                'data'    => $parcel->fresh(['captain.user', 'user']),
+                'data'    => $parcel,
             ]);
-        });
+        } catch (\Exception $e) {
+            $code = $e->getCode();
+            $statusCode = ($code >= 400 && $code < 600) ? $code : 400;
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage()
+            ], $statusCode);
+        }
     }
 
     /**
@@ -368,132 +331,20 @@ class ParcelController extends Controller
             return response()->json(['status' => 'error', 'message' => 'غير مصرح بهذا الإجراء.'], 403);
         }
 
-        return DB::transaction(function () use ($id, $captainProfile, $request, $user) {
-            $parcel = Parcel::where(function ($q) use ($id) {
-                    $q->where('id', $id)
-                      ->orWhere('tracking_code', $id);
-                })
-                ->where(function ($q) use ($captainProfile) {
-                    $q->where('captain_profile_id', $captainProfile->id)
-                      ->orWhereNull('captain_profile_id');
-                })
-                ->lockForUpdate()
-                ->first();
-
-            if (!$parcel) {
-                return response()->json(['status' => 'error', 'message' => 'الطرد غير مخصص لهذا الكابتن أو غير موجود.'], 404);
-            }
-
-            $status = $request->status;
-            if ($status === 'arrived') {
-                $status = 'arrived_at_pickup';
-            }
-
-            $updates = [
-                'status' => $status,
-                'captain_profile_id' => $captainProfile->id,
-            ];
-
-            if ($status === 'arrived_at_pickup') {
-                $updates['arrived_at_pickup_at'] = now();
-            } elseif ($status === 'picked_up') {
-                $updates['picked_up_at'] = now();
-            } elseif ($status === 'delivered') {
-                $updates['delivered_at'] = now();
-
-                // Deduct platform commission from captain wallet (read from settings)
-                $commissionPercent = (float) \Illuminate\Support\Facades\Cache::remember('setting_commission_percent', 3600, fn() => \App\Models\Setting::where('key', 'commission_percent')->value('value') ?? 15);
-                $commission = round($parcel->price * ($commissionPercent / 100), 2);
-                $wallet = Wallet::firstOrCreate(['user_id' => $captainProfile->user_id], ['balance' => 0, 'currency' => 'YER']);
-                $wallet->balance -= $commission;
-                $wallet->save();
-
-                Transaction::create([
-                    'wallet_id'   => $wallet->id,
-                    'type'        => 'withdrawal',
-                    'amount'      => $commission,
-                    'description' => "عمولة لَفَّة عن توصيل طرد #{$parcel->tracking_code}",
-                ]);
-            }
-
-            $parcel->update($updates);
-
-            try {
-                event(new \App\Events\ParcelStatusUpdated($parcel));
-            } catch (\Exception $e) {}
-
-            // Notify parcel owner of status transition
-            if ($parcel->user) {
-                try {
-                    $statusMessages = [
-                        'arrived_at_pickup' => [
-                            'title' => 'الكابتن وصل إلى موقع الاستلام 📍',
-                            'body'  => "وصل الكابتن {$user->name} إلى موقع الاستلام وبانتظار تسليم الطرد #{$parcel->tracking_code}."
-                        ],
-                        'picked_up' => [
-                            'title' => 'تم استلام الطرد بنجاح 📦',
-                            'body'  => "قام الكابتن {$user->name} بفحص واستلام طردك #{$parcel->tracking_code} وجاري تجهيز الانطلاق."
-                        ],
-                        'in_transit' => [
-                            'title' => 'الشحنة في الطريق إلى الوجهة 🛵',
-                            'body'  => "الكابتن في طريقه الآن إلى موقع التسليم ({$parcel->dropoff_address})."
-                        ],
-                        'delivered' => [
-                            'title' => 'تم تسليم الطرد بنجاح 🎉',
-                            'body'  => "تم تسليم الشحنة #{$parcel->tracking_code} بنجاح إلى المستلم ({$parcel->receiver_name}). شكراً لاختيارك لَفَّة!"
-                        ],
-                        'cancelled' => [
-                            'title' => 'تم إلغاء توصيل الطرد ❌',
-                            'body'  => "تم إلغاء طلب توصيل الطرد #{$parcel->tracking_code}."
-                        ],
-                    ];
-
-                    $msg = $statusMessages[$status] ?? [
-                        'title' => 'تحديث حالة الطرد 📦',
-                        'body'  => "طردك رقم #{$parcel->tracking_code} أصبح الآن في حالة: {$status}"
-                    ];
-
-                    // Send FCM for all parcel status updates to ensure passenger is kept informed
-                    $shouldSendFcm = in_array($status, ['arrived_at_pickup', 'picked_up', 'in_transit', 'delivered', 'cancelled']);
-
-                    if ($shouldSendFcm) {
-                        $notificationService = app(NotificationService::class);
-                        $notificationService->sendToUser(
-                            $parcel->user,
-                            $msg['title'],
-                            $msg['body'],
-                            [
-                                'type' => 'parcel',
-                                'parcel_id' => (string) $parcel->id,
-                                'status' => $status,
-                                'tracking_code' => (string) $parcel->tracking_code,
-                            ]
-                        );
-                    }
-
-                    // If delivered, notify captain of earnings
-                    if ($status === 'delivered') {
-                        $captainEarning = number_format($parcel->price * 0.85);
-                        $notificationService->sendToUser(
-                            $user,
-                            'تم تسليم الطرد بنجاح 🎉',
-                            "أحسنت! تم تسليم الطرد #{$parcel->tracking_code} بنجاح وإيداع صافي أرباحك ({$captainEarning} ر.ي) في محفظتك.",
-                            [
-                                'type' => 'parcel_delivered',
-                                'status' => 'delivered',
-                                'parcel_id' => (string) $parcel->id,
-                                'tracking_code' => (string) $parcel->tracking_code,
-                            ]
-                        );
-                    }
-                } catch (\Exception $e) {}
-            }
-
+        try {
+            $parcel = $this->parcelService->updateStatus($id, $captainProfile, $request->status, $request->all());
             return response()->json([
                 'status'  => 'success',
                 'message' => 'تم تحديث حالة الطرد بنجاح.',
-                'data'    => $parcel->fresh(['captain.user', 'user']),
+                'data'    => $parcel,
             ]);
-        });
+        } catch (\Exception $e) {
+            $code = $e->getCode();
+            $statusCode = ($code >= 400 && $code < 600) ? $code : 400;
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage()
+            ], $statusCode);
+        }
     }
 }

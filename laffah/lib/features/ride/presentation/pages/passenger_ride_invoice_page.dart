@@ -258,7 +258,7 @@ class _PassengerRideInvoicePageState extends State<PassengerRideInvoicePage> {
                               Text(
                                 widget.captainName.isNotEmpty
                                     ? widget.captainName
-                                    : 'علي صالح صالح',
+                                    : 'الكابتن',
                                 style: const TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w900,

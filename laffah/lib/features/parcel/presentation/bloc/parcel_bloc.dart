@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/bloc/bloc_transformers.dart';
 import '../../domain/usecases/submit_parcel_order_usecase.dart';
 import '../../domain/usecases/track_parcel_usecase.dart';
 import 'parcel_event.dart';
@@ -12,7 +13,7 @@ class ParcelBloc extends Bloc<ParcelEvent, ParcelState> {
     required this.submitParcelOrder,
     required this.trackParcelUseCase,
   }) : super(ParcelInitial()) {
-    on<SubmitParcelEvent>(_onSubmitParcel);
+    on<SubmitParcelEvent>(_onSubmitParcel, transformer: droppable());
     on<TrackParcelEvent>(_onTrackParcel);
   }
 

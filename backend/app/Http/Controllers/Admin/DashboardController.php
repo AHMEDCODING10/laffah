@@ -41,14 +41,15 @@ class DashboardController extends Controller
         ];
         
         for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->format('Y-m-d');
+            $dayStart = now()->subDays($i)->startOfDay();
+            $dayEnd   = now()->subDays($i)->endOfDay();
             $chartData['labels'][] = now()->subDays($i)->locale('ar')->translatedFormat('D');
             
-            $dayTrips = Trip::whereDate('created_at', $date)->count();
+            $dayTrips = Trip::where('created_at', '>=', $dayStart)->where('created_at', '<=', $dayEnd)->count();
             $chartData['trips'][] = $dayTrips;
             
-            $dayEarnings = Trip::whereDate('created_at', $date)->where('status', 'completed')->sum('final_price');
-            $chartData['earnings'][] = $dayEarnings;
+            $dayEarnings = Trip::where('created_at', '>=', $dayStart)->where('created_at', '<=', $dayEnd)->where('status', 'completed')->sum('final_price');
+            $chartData['earnings'][] = (double) ($dayEarnings ?? 0.0);
         }
 
         return view('admin.dashboard', compact('stats', 'latest_trips', 'chartData'));

@@ -208,6 +208,16 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
           // This widget NO LONGER rebuilds on every bloc state change! (Huge performance gain)
           Positioned.fill(
             child: BlocBuilder<CaptainBloc, CaptainState>(
+              buildWhen: (previous, current) {
+                // Prevent rebuild of the entire map widget tree on periodic GPS location pings
+                if (current is CaptainLocationUpdated && previous is CaptainLocationUpdated) {
+                  return false;
+                }
+                if (current is CaptainLocationUpdated && previous is CaptainOnline) {
+                  return false;
+                }
+                return previous.runtimeType != current.runtimeType;
+              },
               builder: (context, state) {
                 final captainPos = state is CaptainLocationUpdated
                     ? state.position

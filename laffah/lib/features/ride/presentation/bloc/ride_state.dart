@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:collection/collection.dart';
 import 'ride_bloc.dart'; // For ParcelData and RideOption DTOs
 
 /// RideState — Base class for all states emitted by RideBloc.
@@ -32,6 +33,7 @@ class RideSearching extends RideState {
 
 class RideAccepted extends RideState {
   final String tripId;
+  final String? captainId;
   final String captainName;
   final String captainPhone;
   final String vehicleModel;
@@ -41,6 +43,7 @@ class RideAccepted extends RideState {
 
   const RideAccepted({
     this.tripId = '',
+    this.captainId,
     required this.captainName,
     this.captainPhone = '',
     required this.vehicleModel,
@@ -52,6 +55,7 @@ class RideAccepted extends RideState {
   @override
   List<Object?> get props => [
         tripId,
+        captainId,
         captainName,
         captainPhone,
         vehicleModel,
@@ -102,6 +106,7 @@ class RideBookingConfirmed extends RideState {
   final String pickup;
   final String dropoff;
   final RideOption selectedOption;
+  final String? captainId;
   final String captainName;
   final String captainPhone;
   final String vehicleModel;
@@ -118,6 +123,7 @@ class RideBookingConfirmed extends RideState {
     required this.pickup,
     required this.dropoff,
     required this.selectedOption,
+    this.captainId,
     required this.captainName,
     required this.captainPhone,
     required this.vehicleModel,
@@ -135,6 +141,7 @@ class RideBookingConfirmed extends RideState {
     String? pickup,
     String? dropoff,
     RideOption? selectedOption,
+    String? captainId,
     String? captainName,
     String? captainPhone,
     String? vehicleModel,
@@ -151,6 +158,7 @@ class RideBookingConfirmed extends RideState {
       pickup: pickup ?? this.pickup,
       dropoff: dropoff ?? this.dropoff,
       selectedOption: selectedOption ?? this.selectedOption,
+      captainId: captainId ?? this.captainId,
       captainName: captainName ?? this.captainName,
       captainPhone: captainPhone ?? this.captainPhone,
       vehicleModel: vehicleModel ?? this.vehicleModel,
@@ -170,6 +178,7 @@ class RideBookingConfirmed extends RideState {
         pickup,
         dropoff,
         selectedOption,
+        captainId,
         captainName,
         captainPhone,
         vehicleModel,
@@ -221,11 +230,13 @@ class TripHistoryLoading extends RideState {
 
 class TripHistoryLoaded extends RideState {
   final List<Map<String, dynamic>> trips;
+  final int timestamp;
 
-  const TripHistoryLoaded(this.trips);
+  TripHistoryLoaded(this.trips, [int? timestamp])
+      : timestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch;
 
   @override
-  List<Object?> get props => [trips];
+  List<Object?> get props => [const DeepCollectionEquality().hash(trips), timestamp];
 }
 
 class TripHistoryError extends RideState {

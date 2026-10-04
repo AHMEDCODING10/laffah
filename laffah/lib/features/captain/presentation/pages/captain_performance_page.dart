@@ -47,9 +47,9 @@ class CaptainPerformancePage extends StatelessWidget {
         ),
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
-            String rating = '4.8';
-            if (state is ProfileLoaded) {
-              // rating from profile
+            String rating = '5.0';
+            if (state is ProfileLoaded && state.profile.rating != null) {
+              rating = state.profile.rating!.toStringAsFixed(1);
             }
             return RefreshIndicator(
               onRefresh: () async {
@@ -179,23 +179,52 @@ class CaptainPerformancePage extends StatelessWidget {
                     ),
                   ),
                   AppSpacing.h16,
-                  _buildReviewItem(
-                    rating: 5,
-                    comment: 'دراجة نظيفة وقيادة آمنة جداً. شكراً للكابتن.',
-                    date: 'منذ يومين',
-                    isDark: isDark,
-                  ),
-                  _buildReviewItem(
-                    rating: 4,
-                    comment: 'وصل في الوقت المحدد تماماً.',
-                    date: 'منذ 3 أيام',
-                    isDark: isDark,
-                  ),
-                  _buildReviewItem(
-                    rating: 5,
-                    comment: 'تعامل راقي ومحترم.',
-                    date: 'منذ أسبوع',
-                    isDark: isDark,
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s24,
+                      horizontal: AppSpacing.s16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.white.withValues(alpha: 0.04)
+                          : AppColors.white,
+                      borderRadius: AppSpacing.radiusMD,
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.white.withValues(alpha: 0.05)
+                            : AppColors.gray200,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.rate_review_outlined,
+                          size: 40,
+                          color: isDark ? AppColors.gray400 : AppColors.gray500,
+                        ),
+                        AppSpacing.h12,
+                        Text(
+                          'لا توجد تعليقات مكتوبة حتى الآن',
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? AppColors.gray300 : AppColors.gray700,
+                          ),
+                        ),
+                        AppSpacing.h4,
+                        Text(
+                          'تقييمات وملاحظات الركاب ستظهر هنا فور اكتمال رحلاتك القادمة.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontSize: 12,
+                            color: isDark ? AppColors.gray500 : AppColors.gray500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -261,65 +290,6 @@ class CaptainPerformancePage extends StatelessWidget {
               fontFamily: 'IBM Plex Sans Arabic',
               fontSize: 12,
               color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewItem({
-    required int rating,
-    required String comment,
-    required String date,
-    required bool isDark,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: AppSpacing.radiusMD,
-        border: Border.all(
-          color: isDark
-              ? AppColors.white.withValues(alpha: 0.05)
-              : AppColors.gray200,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: List.generate(5, (index) {
-                  return Icon(
-                    index < rating
-                        ? Icons.star_rounded
-                        : Icons.star_border_rounded,
-                    color: AppColors.primary500,
-                    size: 16,
-                  );
-                }),
-              ),
-              Text(
-                date,
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  fontSize: 11,
-                  color: isDark ? AppColors.gray500 : AppColors.gray400,
-                ),
-              ),
-            ],
-          ),
-          AppSpacing.h8,
-          Text(
-            comment,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontSize: 13,
-              color: isDark ? AppColors.gray300 : AppColors.gray700,
             ),
           ),
         ],

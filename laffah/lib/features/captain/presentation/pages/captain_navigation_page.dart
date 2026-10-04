@@ -204,7 +204,7 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
        double lng = widget.pickupLng;
        try {
          final pos = await Geolocator.getCurrentPosition(
-               locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+               locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)).timeout(const Duration(seconds: 4));
          lat = pos.latitude;
          lng = pos.longitude;
        } catch (_) {}

@@ -23,6 +23,14 @@ abstract class RideRepository {
   Future<Either<Failure, void>> cancelRide(String rideId, {bool isParcel = false});
   Future<Either<Failure, RideEntity>> retryRide(String rideId);
 
+  Future<Either<Failure, Map<String, dynamic>>> estimateFare({
+    required double pickupLatitude,
+    required double pickupLongitude,
+    required double dropoffLatitude,
+    required double dropoffLongitude,
+    List<Map<String, dynamic>>? stops,
+  });
+
   /// Fetches all trips for the current authenticated user (passenger or captain)
   Future<Either<Failure, List<Map<String, dynamic>>>> getTripHistory();
 
@@ -34,7 +42,7 @@ abstract class RideRepository {
   });
 
   /// Deletes a trip from history and database
-  Future<Either<Failure, void>> deleteTrip(String tripId);
+  Future<Either<Failure, void>> deleteTrip(String tripId, {bool isParcel = false});
 
   // For web-sockets / polling
   Stream<Either<Failure, RideEntity>> trackRideStatus(String rideId);

@@ -44,11 +44,20 @@ class DocumentsManager extends Component
 
         $captain = $doc->captainProfile;
         if ($captain) {
-            // Check if all captain documents are approved
+            // Check if all captain documents are approved and all mandatory documents exist
             $pendingCount = Document::where('captain_profile_id', $captain->id)
                 ->where('status', '!=', 'approved')
                 ->count();
-            if ($pendingCount === 0) {
+
+            $approvedTypes = Document::where('captain_profile_id', $captain->id)
+                ->where('status', 'approved')
+                ->pluck('type')
+                ->toArray();
+
+            $hasId = in_array('id_card', $approvedTypes) || in_array('identity', $approvedTypes);
+            $hasVehicle = in_array('vehicle_registration', $approvedTypes) || in_array('bike_license', $approvedTypes) || in_array('driving_license', $approvedTypes);
+
+            if ($pendingCount === 0 && $hasId && $hasVehicle) {
                 $captain->update(['is_verified' => true]);
             }
 

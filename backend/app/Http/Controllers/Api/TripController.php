@@ -16,10 +16,12 @@ use Illuminate\Support\Facades\DB;
 class TripController extends Controller
 {
     protected $tripService;
+    protected $parcelService;
 
-    public function __construct(TripService $tripService)
+    public function __construct(TripService $tripService, \App\Services\ParcelService $parcelService)
     {
         $this->tripService = $tripService;
+        $this->parcelService = $parcelService;
     }
 
     public function estimate(EstimateTripRequest $request)
@@ -56,8 +58,23 @@ class TripController extends Controller
     public function show(Request $request, $id)
     {
         try {
+            $user = $request->user();
+            $captainProfileId = $user?->captainProfile?->id;
+
             $trip = Trip::with(['stops', 'passenger', 'captain.user'])->find($id);
             if ($trip) {
+                $isOwner = $user && $trip->user_id == $user->id;
+                $isAssignedCaptain = $captainProfileId && $trip->captain_profile_id == $captainProfileId;
+                $isPendingAvailable = $trip->status === 'pending' && is_null($trip->captain_profile_id) && $captainProfileId;
+                $isAdmin = $user && ($user->hasRole('admin') || !empty($user->is_admin));
+
+                if (!$isOwner && !$isAssignedCaptain && !$isPendingAvailable && !$isAdmin) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'غير مصرح لك بالاطلاع على تفاصيل هذا المشوار.'
+                    ], 403);
+                }
+
                 return response()->json([
                     'status' => 'success',
                     'data' => new TripResource($trip)
@@ -67,6 +84,18 @@ class TripController extends Controller
             // Fallback: Check if it's a parcel
             $parcel = \App\Models\Parcel::with(['captain.user'])->find($id);
             if ($parcel) {
+                $isOwner = $user && $parcel->user_id == $user->id;
+                $isAssignedCaptain = $captainProfileId && $parcel->captain_profile_id == $captainProfileId;
+                $isPendingAvailable = $parcel->status === 'pending' && is_null($parcel->captain_profile_id) && $captainProfileId;
+                $isAdmin = $user && ($user->hasRole('admin') || !empty($user->is_admin));
+
+                if (!$isOwner && !$isAssignedCaptain && !$isPendingAvailable && !$isAdmin) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'غير مصرح لك بالاطلاع على تفاصيل هذا الطرد.'
+                    ], 403);
+                }
+
                 $captainUser = $parcel->captain?->user;
                 return response()->json([
                     'status' => 'success',
@@ -132,7 +161,12 @@ class TripController extends Controller
                 // Check if it is a parcel request
                 $parcel = \App\Models\Parcel::where('id', $id)->first();
                 if ($parcel) {
-                    return app(\App\Http\Controllers\Api\ParcelController::class)->acceptParcel($request, $id);
+                    $acceptedParcel = $this->parcelService->acceptParcel($id, $request->user()->captainProfile);
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'تم قبول توصيل الطرد بنجاح!',
+                        'data' => $acceptedParcel,
+                    ]);
                 }
             }
 
@@ -316,19 +350,22 @@ class TripController extends Controller
             }
         }
 
-        // Load up to 500 of each to support deeper pagination without memory exhaustion
-        $trips = $tripQuery->limit(500)->get();
-        $parcels = $parcelQuery->limit(500)->get();
+        $tripCount = (clone $tripQuery)->count();
+        $parcelCount = (clone $parcelQuery)->count();
+        $total = $tripCount + $parcelCount;
+
+        // Efficient windowed pagination: fetch only the necessary slice instead of 1,000 models
+        $offset = max(0, ($page - 1) * $perPage);
+        $trips = $tripQuery->skip($offset)->take($perPage)->get();
+        $parcels = $parcelQuery->skip($offset)->take($perPage)->get();
 
         $tripData = TripResource::collection($trips)->resolve();
-
         $parcelData = $parcels->map(function ($p) {
             return $this->formatParcelForApp($p);
         })->toArray();
 
         $merged = collect($tripData)->concat($parcelData)->sortByDesc('created_at')->values();
-        $total = $merged->count();
-        $paginated = $merged->forPage($page, $perPage)->values();
+        $paginated = $merged->slice(0, $perPage)->values();
 
         return response()->json([
             'status' => 'success',
@@ -359,47 +396,68 @@ class TripController extends Controller
         }
 
         // Debt limit check
-        $wallet = \App\Models\Wallet::where('user_id', $user->id)->first();
-        if ($wallet && $wallet->balance < \App\Services\TripService::MAX_CAPTAIN_DEBT) {
-            return response()->json([
-                'status' => 'success',
-                'data'   => [],
-                'message'=> 'لقد تجاوزت سقف المديونية المسموح به. يرجى سداد المديونية لتتمكن من استقبال طلبات جديدة.'
-            ]);
+        if ($user) {
+            $wallet = \App\Models\Wallet::where('user_id', $user->id)->first();
+            if ($wallet && $wallet->balance < \App\Services\TripService::MAX_CAPTAIN_DEBT) {
+                return response()->json([
+                    'status' => 'success',
+                    'data'   => [],
+                    'message'=> 'لقد تجاوزت سقف المديونية المسموح به. يرجى سداد المديونية لتتمكن من استقبال طلبات جديدة.'
+                ]);
+            }
         }
 
-        // Expiration is now handled by ExpirePendingRequestsCommand (CRON Job)
-        $trips = DB::transaction(function () {
-            // Query only fresh, pending, unassigned trips within the last 3 minutes
-            $query = Trip::where('status', 'pending')
-                ->whereNull('captain_profile_id')
-                ->where('created_at', '>=', now()->subMinutes(3))
-                ->with(['stops', 'passenger'])
-                ->orderBy('created_at', 'desc');
+        // Query fresh, pending, unassigned trips within the last 3 minutes using Spatial Bounding Box
+        $tripRadius = 30.0;
+        $tripQuery = Trip::where('status', 'pending')
+            ->whereNull('captain_profile_id')
+            ->where('created_at', '>=', now()->subMinutes(3))
+            ->with(['stops', 'passenger'])
+            ->orderBy('created_at', 'desc');
 
-            return $query->take(20)->get();
-        });
+        if ($lat && $lng) {
+            $latDelta = $tripRadius / 111.045;
+            $lngDelta = $tripRadius / (111.045 * max(0.1, cos(deg2rad((float)$lat))));
+            $tripQuery->whereBetween('pickup_latitude', [(float)$lat - $latDelta, (float)$lat + $latDelta])
+                      ->whereBetween('pickup_longitude', [(float)$lng - $lngDelta, (float)$lng + $lngDelta]);
+        }
 
-        $captainProfileId = $request->user()->captainProfile?->id;
+        $trips = $tripQuery->take(30)->get();
 
-        $trips = $trips->filter(function ($trip) use ($lat, $lng, $captainProfileId) {
-            if (!$trip->pickup_latitude || !$trip->pickup_longitude) return true;
-            $dist = \App\Helpers\GeoHelper::haversineDistance((float)$lat, (float)$lng, (float)$trip->pickup_latitude, (float)$trip->pickup_longitude);
-            return $dist <= 30.0; // within 30km radius
-        })->values();
+        if ($lat && $lng) {
+            $trips = $trips->filter(function ($trip) use ($lat, $lng, $tripRadius) {
+                if (!$trip->pickup_latitude || !$trip->pickup_longitude) return true;
+                $dist = \App\Helpers\GeoHelper::haversineDistance((float)$lat, (float)$lng, (float)$trip->pickup_latitude, (float)$trip->pickup_longitude);
+                return $dist <= $tripRadius;
+            })->values();
+        }
 
         $tripData = TripResource::collection($trips)->resolve();
 
-        // Expiration for parcels is now handled by CRON job as well.
-
-        // Also fetch fresh pending parcels within last 3 minutes
-        $parcels = \App\Models\Parcel::where('status', 'pending')
+        // Also fetch fresh pending parcels within last 3 minutes using Spatial Bounding Box (15km radius)
+        $parcelRadius = 15.0;
+        $parcelQuery = \App\Models\Parcel::where('status', 'pending')
             ->whereNull('captain_profile_id')
             ->where('created_at', '>=', now()->subMinutes(3))
             ->with('user')
-            ->latest()
-            ->take(10)
-            ->get();
+            ->latest();
+
+        if ($lat && $lng) {
+            $pLatDelta = $parcelRadius / 111.045;
+            $pLngDelta = $parcelRadius / (111.045 * max(0.1, cos(deg2rad((float)$lat))));
+            $parcelQuery->whereBetween('pickup_latitude', [(float)$lat - $pLatDelta, (float)$lat + $pLatDelta])
+                        ->whereBetween('pickup_longitude', [(float)$lng - $pLngDelta, (float)$lng + $pLngDelta]);
+        }
+
+        $parcels = $parcelQuery->take(20)->get();
+
+        if ($lat && $lng) {
+            $parcels = $parcels->filter(function ($p) use ($lat, $lng, $parcelRadius) {
+                if (!$p->pickup_latitude || !$p->pickup_longitude) return true;
+                $dist = \App\Helpers\GeoHelper::haversineDistance((float)$lat, (float)$lng, (float)$p->pickup_latitude, (float)$p->pickup_longitude);
+                return $dist <= $parcelRadius;
+            })->values();
+        }
 
         $parcelData = $parcels->map(function ($p) {
             return $this->formatParcelForApp($p);
@@ -494,53 +552,38 @@ class TripController extends Controller
     {
         try {
             $user = $request->user();
+
+            // Strict IDOR & Financial Audit Protection: Prevent hard delete of financial records
+            if (!$user->hasRole('admin') && empty($user->is_admin)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'غير مصرح بحذف أو تصفية سجلات الرحلات أو الطرود. تخضع كافة المشاوير للتدقيق المالي المحمي.'
+                ], 403);
+            }
+
             $type = $request->query('type', 'trip');
 
             if ($type === 'parcel') {
-                $parcel = \App\Models\Parcel::where('id', $id)
-                    ->where(function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                        if ($user->captainProfile) {
-                            $q->orWhere('captain_profile_id', $user->captainProfile->id);
-                        }
-                    })
-                    ->first();
+                $parcel = \App\Models\Parcel::findOrFail($id);
+                $parcel->delete(); // Soft delete if enabled
 
-                if ($parcel) {
-                    $parcel->delete();
-                    return response()->json([
-                        'status' => 'success',
-                        'message' => 'تم حذف سجل الطرد بنجاح.'
-                    ]);
-                }
-            } else {
-                $trip = Trip::where('id', $id)
-                    ->where(function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                        if ($user->captainProfile) {
-                            $q->orWhere('captain_profile_id', $user->captainProfile->id);
-                        }
-                    })
-                    ->first();
-
-                if ($trip) {
-                    $trip->stops()->delete();
-                    $trip->delete();
-                    return response()->json([
-                        'status' => 'success',
-                        'message' => 'تم حذف الرحلة بنجاح.'
-                    ]);
-                }
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'تم نقل سجل الطرد إلى الأرشيف بأمان.'
+                ]);
             }
 
+            $trip = Trip::findOrFail($id);
+            $trip->delete(); // Soft delete
+
             return response()->json([
-                'status' => 'error',
-                'message' => 'السجل غير موجود أو غير مصرح بحذفه.'
-            ], 404);
+                'status' => 'success',
+                'message' => 'تم نقل سجل المشوار إلى الأرشيف بأمان.'
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'فشل حذف السجل: ' . $e->getMessage()
+                'message' => 'فشلت معالجة الطلب: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -44,13 +44,19 @@ if [ "$ENABLE_REVERB" != "false" ]; then
     nohup php artisan reverb:start --host=0.0.0.0 --port=8080 > /var/www/html/storage/logs/reverb.log 2>&1 &
 fi
 
-# 6. Launch Queue Worker in Background with Auto-Restart (Self-Healing)
+# 6. Launch Queue Worker in Background with Auto-Restart (Self-Healing & Memory Bounds)
 if [ "$ENABLE_QUEUE" != "false" ]; then
     echo "⏳ [Laffah] Starting Queue Worker with Auto-Restart..."
-    nohup bash -c 'while true; do php artisan queue:work --sleep=3 --tries=3; echo "Queue crashed. Restarting in 5s..."; sleep 5; done' > /var/www/html/storage/logs/queue.log 2>&1 &
+    nohup bash -c 'while true; do php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --memory=256; echo "Queue crashed or recycled. Restarting in 5s..."; sleep 5; done' > /var/www/html/storage/logs/queue.log 2>&1 &
+fi
+
+# 7. Launch Laravel Scheduler in Background for Periodic Tasks (Auto-Expire Escrows, Captain Offline, Scheduled Trips)
+if [ "$ENABLE_SCHEDULE" != "false" ]; then
+    echo "⏰ [Laffah] Starting Laravel Schedule Worker..."
+    nohup bash -c 'while true; do php artisan schedule:work; echo "Schedule worker stopped. Restarting in 5s..."; sleep 5; done' > /var/www/html/storage/logs/schedule.log 2>&1 &
 fi
 
 echo "✅ [Laffah] Startup completed successfully. Launching Web Server..."
 
-# 7. Start Apache Web Server in Foreground
+# 8. Start Apache Web Server in Foreground
 exec apache2-foreground

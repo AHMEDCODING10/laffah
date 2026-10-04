@@ -9,8 +9,10 @@ class Transaction extends Model
     protected $fillable = [
         'wallet_id',
         'trip_id',
+        'parcel_id',
         'type',
         'amount',
+        'status',
         'description',
         'reference_id',
     ];
@@ -23,5 +25,10 @@ class Transaction extends Model
     public function trip()
     {
         return $this->belongsTo(Trip::class);
+    }
+
+    public function parcel()
+    {
+        return $this->belongsTo(Parcel::class);
     }
 }

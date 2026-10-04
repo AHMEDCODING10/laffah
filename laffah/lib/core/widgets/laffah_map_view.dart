@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 import '../config/app_env.dart';
@@ -49,7 +50,7 @@ class LaffahMapView extends StatefulWidget {
     this.routeColor,
     this.dropoffLocation,
     this.followCaptain = false,
-    this.showDefaultMockData = true,
+    this.showDefaultMockData = false,
     this.onMarkerTap,
   });
 
@@ -92,8 +93,10 @@ class _LaffahMapViewState extends State<LaffahMapView>
   late Animation<double> _headingAnim;
 
   /// Displayed captain position (animated, not raw GPS)
-  LatLng _displayedCaptainPos = const LatLng(0, 0);
-  double _displayedHeading = 0.0;
+  /// ⚠️ PERF FIX: Using ValueNotifier instead of setState to avoid
+  /// rebuilding the entire FlutterMap + TileLayer + PolylineLayer 60 times/sec.
+  late final ValueNotifier<LatLng> _captainPosNotifier;
+  late final ValueNotifier<double> _captainHeadingNotifier;
 
   /// True when user has manually panned/zoomed — pauses auto-follow.
   bool _userInteracted = false;
@@ -118,7 +121,6 @@ class _LaffahMapViewState extends State<LaffahMapView>
     );
     _latAnim = Tween<double>(begin: 0, end: 0).animate(_positionController);
     _lngAnim = Tween<double>(begin: 0, end: 0).animate(_positionController);
-    _positionController.addListener(_onPositionAnimationTick);
 
     // Heading smooth animation controller
     _headingController = AnimationController(
@@ -128,15 +130,24 @@ class _LaffahMapViewState extends State<LaffahMapView>
     _headingAnim = Tween<double>(begin: 0, end: 0).animate(
       CurvedAnimation(parent: _headingController, curve: Curves.easeOut),
     );
-    _headingController.addListener(() {
-      if (mounted) setState(() => _displayedHeading = _headingAnim.value);
-    });
 
     // Initialise displayed position
-    if (widget.captainLocation != null) {
-      _displayedCaptainPos = widget.captainLocation!;
-    }
-    _displayedHeading = widget.captainHeading;
+    final initialPos = widget.captainLocation ?? const LatLng(0, 0);
+    final initialHeading = widget.captainHeading;
+
+    // ⚠️ PERF FIX (ISSUE-0.1): ValueNotifiers replace setState for 60fps animation.
+    // Only the captain Marker widget rebuilds via ValueListenableBuilder,
+    // NOT the entire FlutterMap + TileLayer + PolylineLayer.
+    _captainPosNotifier = ValueNotifier<LatLng>(initialPos);
+    _captainHeadingNotifier = ValueNotifier<double>(initialHeading);
+
+    // Connect animation controllers to ValueNotifiers (NOT setState)
+    _positionController.addListener(() {
+      _captainPosNotifier.value = LatLng(_latAnim.value, _lngAnim.value);
+    });
+    _headingController.addListener(() {
+      _captainHeadingNotifier.value = _headingAnim.value;
+    });
   }
 
   @override
@@ -145,27 +156,20 @@ class _LaffahMapViewState extends State<LaffahMapView>
     _pulseController.dispose();
     _positionController.dispose();
     _headingController.dispose();
+    _captainPosNotifier.dispose();
+    _captainHeadingNotifier.dispose();
     super.dispose();
-  }
-
-  // ── Position animation tick ────────────────────────────────────────────────
-  void _onPositionAnimationTick() {
-    if (!mounted) return;
-    setState(() {
-      _displayedCaptainPos = LatLng(_latAnim.value, _lngAnim.value);
-    });
   }
 
   // ── Smooth movement: animate to new captain location ──────────────────────
   void _animateCaptainTo(LatLng newPos) {
-    final oldLat = _displayedCaptainPos.latitude;
-    final oldLng = _displayedCaptainPos.longitude;
+    final oldPos = _captainPosNotifier.value;
 
     _positionController.stop();
-    _latAnim = Tween<double>(begin: oldLat, end: newPos.latitude).animate(
+    _latAnim = Tween<double>(begin: oldPos.latitude, end: newPos.latitude).animate(
       CurvedAnimation(parent: _positionController, curve: Curves.easeInOut),
     );
-    _lngAnim = Tween<double>(begin: oldLng, end: newPos.longitude).animate(
+    _lngAnim = Tween<double>(begin: oldPos.longitude, end: newPos.longitude).animate(
       CurvedAnimation(parent: _positionController, curve: Curves.easeInOut),
     );
     _positionController.forward(from: 0);
@@ -174,14 +178,14 @@ class _LaffahMapViewState extends State<LaffahMapView>
   // ── Smooth heading rotation ───────────────────────────────────────────────
   void _animateHeadingTo(double newHeading) {
     // Shortest rotation path
-    double diff = newHeading - _displayedHeading;
+    double diff = newHeading - _captainHeadingNotifier.value;
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
 
     _headingController.stop();
     _headingAnim = Tween<double>(
-      begin: _displayedHeading,
-      end: _displayedHeading + diff,
+      begin: _captainHeadingNotifier.value,
+      end: _captainHeadingNotifier.value + diff,
     ).animate(
       CurvedAnimation(parent: _headingController, curve: Curves.easeOut),
     );
@@ -281,71 +285,84 @@ class _LaffahMapViewState extends State<LaffahMapView>
     final markers = <Marker>[];
 
     // Captain marker — animated position + heading + pulse ring
+    // ⚠️ PERF FIX (ISSUE-0.1): The captain marker uses ValueListenableBuilder
+    // so animation ticks (60fps) ONLY rebuild this marker widget,
+    // NOT the entire FlutterMap + TileLayer + PolylineLayer tree.
     if (widget.captainLocation != null) {
       markers.add(
         Marker(
-          point: _displayedCaptainPos,
+          point: _captainPosNotifier.value,
           width: 80,
           height: 80,
-          child: AnimatedBuilder(
-            animation: _pulseAnim,
-            builder: (context, _) {
-              final pulseVal = _pulseAnim.value;
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  // ── Outer accuracy pulse ring ──────────────────────────
-                  Container(
-                    width: 70 + (pulseVal * 12),
-                    height: 70 + (pulseVal * 12),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary500
-                          .withValues(alpha: 0.08 + pulseVal * 0.06),
-                      border: Border.all(
-                        color: AppColors.primary500
-                            .withValues(alpha: 0.2 + pulseVal * 0.15),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  // ── Inner pulsing glow ─────────────────────────────────
-                  Container(
-                    width: 48 + (pulseVal * 6),
-                    height: 48 + (pulseVal * 6),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary500
-                          .withValues(alpha: 0.15 + pulseVal * 0.1),
-                    ),
-                  ),
-                  // ── Captain icon with heading rotation ─────────────────
-                  Transform.rotate(
-                    angle: _displayedHeading * (math.pi / 180),
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary500,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary500
-                                .withValues(alpha: 0.45 + pulseVal * 0.25),
-                            blurRadius: 16 + pulseVal * 8,
-                            spreadRadius: 2 + pulseVal * 3,
+          child: ValueListenableBuilder<LatLng>(
+            valueListenable: _captainPosNotifier,
+            builder: (context, currentPos, _) {
+              return ValueListenableBuilder<double>(
+                valueListenable: _captainHeadingNotifier,
+                builder: (context, currentHeading, _) {
+                  return AnimatedBuilder(
+                    animation: _pulseAnim,
+                    builder: (context, _) {
+                      final pulseVal = _pulseAnim.value;
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // ── Outer accuracy pulse ring ──────────────────────────
+                          Container(
+                            width: 70 + (pulseVal * 12),
+                            height: 70 + (pulseVal * 12),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primary500
+                                  .withValues(alpha: 0.08 + pulseVal * 0.06),
+                              border: Border.all(
+                                color: AppColors.primary500
+                                    .withValues(alpha: 0.2 + pulseVal * 0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          // ── Inner pulsing glow ─────────────────────────────────
+                          Container(
+                            width: 48 + (pulseVal * 6),
+                            height: 48 + (pulseVal * 6),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primary500
+                                  .withValues(alpha: 0.15 + pulseVal * 0.1),
+                            ),
+                          ),
+                          // ── Captain icon with heading rotation ─────────────────
+                          Transform.rotate(
+                            angle: currentHeading * (math.pi / 180),
+                            child: Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary500,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary500
+                                        .withValues(alpha: 0.45 + pulseVal * 0.25),
+                                    blurRadius: 16 + pulseVal * 8,
+                                    spreadRadius: 2 + pulseVal * 3,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.navigation_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                      child: const Icon(
-                        Icons.navigation_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
+                      );
+                    },
+                  );
+                },
               );
             },
           ),
@@ -431,71 +448,12 @@ class _LaffahMapViewState extends State<LaffahMapView>
       );
     }
 
-    // Mock markers
-    if (widget.showDefaultMockData && widget.captainLocation == null) {
-      markers.add(_buildMockMarker(
-        const LatLng(15.3605, 44.1852),
-        const Color(0xFF4CAF50),
-        'نقطة الالتقاء',
-        'موقع الانطلاق',
-        Icons.trip_origin_rounded,
-      ));
-      markers.add(_buildMockMarker(
-        const LatLng(15.3782, 44.1804),
-        const Color(0xFFF44336),
-        'الوجهة',
-        'نقطة الوصول',
-        Icons.location_on_rounded,
-      ));
-    }
-
     return markers;
-  }
-
-  Marker _buildMockMarker(
-    LatLng point,
-    Color color,
-    String title,
-    String snippet,
-    IconData icon,
-  ) {
-    return Marker(
-      point: point,
-      width: 44,
-      height: 44,
-      child: GestureDetector(
-        onTap: () => widget.onMarkerTap?.call(title, snippet, point),
-        child: Container(
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2.5),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 10,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-          child: Icon(icon, color: Colors.white, size: 18),
-        ),
-      ),
-    );
   }
 
   // ── Polylines with border (shadow) for depth ──────────────────────────────
   List<Polyline> _buildPolylines() {
-    final List<LatLng> points = widget.routePoints ??
-        (widget.showDefaultMockData
-            ? const [
-                LatLng(15.3605, 44.1852),
-                LatLng(15.3650, 44.1840),
-                LatLng(15.3688, 44.1824),
-                LatLng(15.3730, 44.1815),
-                LatLng(15.3782, 44.1804),
-              ]
-            : []);
+    final List<LatLng> points = widget.routePoints ?? const [];
 
     if (points.isEmpty) return [];
 
@@ -545,19 +503,23 @@ class _LaffahMapViewState extends State<LaffahMapView>
             onMapEvent: _onMapEvent,
           ),
           children: [
-            // ── HiDPI tile layer with caching ──────────────────────────
+            // ── Tile layer with CancellableNetworkTileProvider ──────────
             TileLayer(
               urlTemplate: _tileUrl,
               userAgentPackageName: 'com.laffah.app',
+              tileProvider: CancellableNetworkTileProvider(),
               maxZoom: 19,
-              retinaMode: true,
+              // ⚠️ ISSUE-0.2 FIX: retinaMode disabled — tile URL already uses
+              // @2x HiDPI tiles. Enabling retinaMode on top of that quadruples
+              // data usage, causing OOM crashes on Yemen's slow 3G/4G networks.
+              retinaMode: false,
               tileDisplay: const TileDisplay.fadeIn(
-                duration: Duration(milliseconds: 250),
+                duration: Duration(milliseconds: 150),
                 startOpacity: 0.0,
               ),
-              // Keep 2 extra zoom level tiles in memory for smooth transitions
-              keepBuffer: 4,
-              panBuffer: 2,
+              // Reduced from 3→1 to prevent memory bloat from off-screen tiles
+              keepBuffer: 1,
+              panBuffer: 1,
             ),
 
             // ── Route with border effect ───────────────────────────────

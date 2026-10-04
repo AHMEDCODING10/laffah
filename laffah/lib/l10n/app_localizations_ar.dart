@@ -110,7 +110,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get auth_onboard_2_desc =>
-      'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز ط§لاختناقات المرورية.';
+      'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز الاختناقات المرورية.';
 
   @override
   String get auth_onboard_3_title => 'توصيل سريع وأمانات';

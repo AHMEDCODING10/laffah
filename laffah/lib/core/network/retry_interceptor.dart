@@ -26,7 +26,12 @@ class RetryInterceptor extends Interceptor {
     final extra = err.requestOptions.extra;
     final int retryCount = (extra['retry_count'] as int?) ?? 0;
 
-    if (_shouldRetry(err) && retryCount < maxRetries) {
+    // ⚠️ ISSUE-0.3 FIX: Requests flagged with no_retry (e.g. GPS location pings)
+    // must NEVER be retried — they are fire-and-forget telemetry.
+    // Retrying stale coordinates on slow 3G floods the connection pool.
+    final bool noRetry = (extra['no_retry'] as bool?) ?? false;
+
+    if (!noRetry && _shouldRetry(err) && retryCount < maxRetries) {
       final delay = retryCount < retryDelays.length
           ? retryDelays[retryCount]
           : retryDelays.last;

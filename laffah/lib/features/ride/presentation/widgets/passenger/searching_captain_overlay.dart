@@ -58,11 +58,9 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
   late Animation<double> _pulseAnimation;
 
   Timer? _countdownTimer;
-  int _remainingSeconds = 180; // 3 minutes
+  final ValueNotifier<int> _remainingSecondsNotifier = ValueNotifier<int>(180);
+  int get _remainingSeconds => _remainingSecondsNotifier.value;
   bool _isTimedOut = false;
-
-  // Local state flag to simulate switching to Captain Found state for demo/testing
-  final bool _simulatedFound = false;
 
   @override
   void initState() {
@@ -86,10 +84,13 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
         timer.cancel();
         return;
       }
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
+      if (_remainingSecondsNotifier.value > 0) {
+        final prevVal = _remainingSecondsNotifier.value;
+        _remainingSecondsNotifier.value = prevVal - 1;
+        // Rebuild only when search radius/status stage transitions occur
+        if (prevVal == 121 || prevVal == 61) {
+          setState(() {});
+        }
       } else {
         timer.cancel();
         _pulseController.stop();
@@ -101,8 +102,8 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
   }
 
   void _retrySearching() {
+    _remainingSecondsNotifier.value = 180;
     setState(() {
-      _remainingSeconds = 180;
       _isTimedOut = false;
     });
     _pulseController.repeat(reverse: true);
@@ -155,6 +156,7 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
   void dispose() {
     _pulseController.dispose();
     _countdownTimer?.cancel();
+    _remainingSecondsNotifier.dispose();
     super.dispose();
   }
 
@@ -313,30 +315,28 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
               (blocState is RideBookingConfirmed &&
                   blocState.status == 'found');
 
-          final bool isCaptainFound = widget.forceCaptainFound == true ||
-              _simulatedFound ||
-              isAcceptedFromBloc;
+          final bool isCaptainFound = widget.forceCaptainFound == true || isAcceptedFromBloc;
 
-          // Default fields for mock data if state is missing details
           final String displayCaptainName = widget.captainName ??
-              (blocState is RideAccepted ? blocState.captainName : 'أحمد محمد');
+              (blocState is RideAccepted ? blocState.captainName : 'كابتن لَفَّة');
           final String displayMotorcycle = widget.motorcycleModel ??
-              (blocState is RideAccepted
-                  ? blocState.vehicleModel
-                  : 'دراجة هوندا - أحمر');
+              (blocState is RideAccepted ? blocState.vehicleModel : 'دراجة نارية');
           final String displayPlate = widget.licensePlate ??
-              (blocState is RideAccepted
-                  ? blocState.vehiclePlate
-                  : '10293 صنعاء');
+              (blocState is RideAccepted ? blocState.vehiclePlate : '---');
           final double displayRating = widget.captainRating ??
-              (blocState is RideAccepted ? blocState.captainRating : 4.9);
+              (blocState is RideAccepted ? blocState.captainRating : 5.0);
           final String displayEta = widget.eta ??
-              (blocState is RideAccepted ? blocState.eta : '4 دقائق');
-          final String displayPhone = widget.captainPhone ?? '+967777123456';
+              (blocState is RideAccepted ? blocState.eta : 'قريب منك');
+          final String displayPhone = widget.captainPhone ??
+              (blocState is RideAccepted ? blocState.captainPhone : '');
 
-          final double displayPriceValue = widget.price ?? 2500.0;
-          final String priceStr =
-              '${displayPriceValue.toStringAsFixed(0)} ريال';
+          final double displayPriceValue = widget.price ??
+              (blocState is RideBookingConfirmed
+                  ? blocState.selectedOption.basePrice
+                  : 0.0);
+          final String priceStr = displayPriceValue > 0
+              ? '${displayPriceValue.toStringAsFixed(0)} ريال'
+              : '';
 
           return Stack(
             children: [
@@ -688,14 +688,19 @@ class _SearchingCaptainOverlayState extends State<SearchingCaptainOverlay>
                                       children: [
                                         const Icon(Icons.timer_outlined, size: 16, color: AppColors.primary500),
                                         AppSpacing.w6,
-                                        Text(
-                                          '${(_remainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(_remainingSeconds % 60).toString().padLeft(2, '0')}',
-                                          style: TextStyle(
-                                            fontFamily: 'IBM Plex Sans Arabic',
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w900,
-                                            color: isDark ? Colors.white : AppColors.primary500,
-                                          ),
+                                        ValueListenableBuilder<int>(
+                                          valueListenable: _remainingSecondsNotifier,
+                                          builder: (context, seconds, _) {
+                                            return Text(
+                                              '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}',
+                                              style: TextStyle(
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w900,
+                                                color: isDark ? Colors.white : AppColors.primary500,
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),

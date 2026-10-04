@@ -21,6 +21,7 @@ class LiveMap extends Component
         // Get captains with real-time location from CaptainLocation table
         // (updated by the mobile app via /api/captain/update-location)
         $captains = CaptainLocation::with('profile.user')
+                        ->whereHas('profile', fn($p) => $p->where('is_online', true))
                         ->where('updated_at', '>=', now()->subMinutes(30))
                         ->get()
                         ->map(function ($loc) {

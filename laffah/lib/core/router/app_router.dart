@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -27,10 +28,9 @@ import '../../features/ride/presentation/pages/passenger_ride_invoice_page.dart'
 import '../../features/ride/presentation/pages/passenger_ride_details_page.dart';
 
 // Captain core features
-import '../../features/captain/presentation/pages/captain_trip_history_page.dart';
+import '../../features/captain/presentation/pages/captain_trips_sub_page.dart';
 import '../../features/captain/presentation/pages/captain_performance_page.dart';
 import '../../features/captain/presentation/pages/captain_settings_page.dart';
-import '../../features/captain/presentation/pages/captain_ride_invoice_page.dart';
 import '../../features/captain/presentation/pages/captain_parcel_details_page.dart';
 import '../../features/captain/presentation/pages/captain_bonus_page.dart';
 import '../../features/captain/presentation/pages/captain_support_page.dart';
@@ -299,8 +299,18 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.passengerHome,
         name: 'passenger-home',
-        builder: (BuildContext context, GoRouterState state) =>
-            const HomeDashboardPage(),
+        builder: (BuildContext context, GoRouterState state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final dropoff = extra?['dropoff'] as String?;
+          final lat = extra?['lat'] as double?;
+          final lng = extra?['lng'] as double?;
+          final initialLatLng =
+              (lat != null && lng != null) ? LatLng(lat, lng) : null;
+          return HomeDashboardPage(
+            initialDropoff: dropoff,
+            initialDropoffLatLng: initialLatLng,
+          );
+        },
       ),
 
       // ══════════════════════════════════════════
@@ -370,16 +380,16 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return PassengerRideInvoicePage(
-            fare: (extra['fare'] as num?)?.toDouble() ?? 1083.0,
+            fare: (extra['fare'] as num?)?.toDouble() ?? 0.0,
             tripId: (extra['tripId'] ?? extra['rideId'] ?? 'N/A').toString(),
-            captainName: extra['captainName'] as String? ?? 'علي صالح صالح',
+            captainName: extra['captainName'] as String? ?? 'الكابتن',
             captainPhone: extra['captainPhone'] as String? ?? '',
             vehicleModel: extra['vehicleModel'] as String? ?? 'دراجة نارية',
-            vehiclePlate: extra['vehiclePlate'] as String? ?? 'صنعاء',
-            pickup: extra['pickup'] as String? ?? 'موقعك الحالي',
-            dropoff: extra['dropoff'] as String? ?? 'شارع الزبيري',
-            distance: extra['distance'] as String? ?? '6.3 كم',
-            duration: extra['duration'] as String? ?? '7 دقيقة',
+            vehiclePlate: extra['vehiclePlate'] as String? ?? '---',
+            pickup: extra['pickup'] as String? ?? 'نقطة الانطلاق',
+            dropoff: extra['dropoff'] as String? ?? 'وجهة الوصول',
+            distance: extra['distance'] as String? ?? '',
+            duration: extra['duration'] as String? ?? '',
             paymentMethod: extra['paymentMethod'] as String? ?? 'نقداً (Cash)',
             discount: (extra['discount'] as num?)?.toDouble() ?? 0.0,
             rating: (extra['rating'] as num?)?.toDouble() ?? 5.0,
@@ -558,8 +568,35 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.captainHistory,
         name: 'captain-history',
-        builder: (BuildContext context, GoRouterState state) =>
-            const CaptainTripHistoryPage(),
+        builder: (BuildContext context, GoRouterState state) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(LaffahRoutes.captainHome);
+                  }
+                },
+              ),
+              title: const Text(
+                'سجل الرحلات',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            body: const CaptainTripsSubPage(),
+          ),
+        ),
       ),
 
       GoRoute(
@@ -579,8 +616,8 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.captainRideInvoice,
         name: 'captain-ride-invoice',
-        builder: (BuildContext context, GoRouterState state) =>
-            const CaptainRideInvoicePage(),
+        redirect: (BuildContext context, GoRouterState state) =>
+            LaffahRoutes.captainHome,
       ),
 
       GoRoute(

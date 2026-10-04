@@ -246,7 +246,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             AppLocalizations.of(context)!.auth_change_password,
                         isLoading: state is AuthLoading,
                         onPressed:
-                            state is AuthLoading ? () {} : _resetPassword,
+                            state is AuthLoading ? null : _resetPassword,
                       );
                     },
                   ),

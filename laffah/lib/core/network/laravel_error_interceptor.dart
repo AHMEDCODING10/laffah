@@ -10,12 +10,24 @@ class LaravelErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      await secureStorage.clearToken();
+      final isLogin = err.requestOptions.path.contains('login');
+      final data = err.response?.data;
+      String errorMsg = 'انتهت جلسة الاستخدام، يرجى إعادة تسجيل الدخول';
+      if (data is Map && data['message'] != null) {
+        errorMsg = data['message'].toString();
+      } else if (isLogin) {
+        errorMsg = 'رقم الهاتف أو كلمة المرور غير صحيحة';
+      }
+
+      // [SECURITY FIX ISSUE-0.5]: Do NOT clear token on login attempts or unauthenticated checks!
+      if (!isLogin && err.requestOptions.headers.containsKey('Authorization')) {
+        await secureStorage.clearToken();
+      }
+
       return handler.reject(
         DioException(
           requestOptions: err.requestOptions,
-          error: const UnauthorizedException(
-              'جلسة العمل انتهت، يرجى إعادة تسجيل الدخول'),
+          error: UnauthorizedException(errorMsg),
           response: err.response,
           type: err.type,
         ),

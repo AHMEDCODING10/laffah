@@ -1,5 +1,6 @@
 import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -33,8 +34,9 @@ class _PromoCodePageState extends State<PromoCodePage> {
     super.dispose();
   }
 
-  void _applyPromoCode(String code) {
-    if (code.trim().isEmpty) {
+  void _applyPromoCode(String code) async {
+    final cleanCode = code.trim();
+    if (cleanCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -48,14 +50,17 @@ class _PromoCodePageState extends State<PromoCodePage> {
       return;
     }
 
+    await Clipboard.setData(ClipboardData(text: cleanCode));
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          AppLocalizations.of(context)!.pass_promo_activated(code),
+          'تم نسخ الكود ($cleanCode)! يمكنك لصقه في شاشة حجز المشوار لتطبيق الخصم مباشرة.',
           textAlign: TextAlign.right,
-          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
+          style: const TextStyle(fontFamily: 'IBM Plex Sans Arabic', fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.primary500,
       ),
     );
     _codeController.clear();
@@ -171,26 +176,71 @@ class _PromoCodePageState extends State<PromoCodePage> {
 
             AppSpacing.h24,
 
-            // Active Promos Title
-            Text(
-              AppLocalizations.of(context)!.pass_available_offers,
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontWeight: FontWeight.w900,
-                fontSize: 15,
-                color: isDark ? AppColors.white : AppColors.gray900,
+            if (_promos.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary500.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.local_offer_outlined,
+                          size: 48,
+                          color: AppColors.primary500,
+                        ),
+                      ),
+                      AppSpacing.h16,
+                      Text(
+                        'لا توجد عروض خصم نشطة حالياً',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: isDark ? AppColors.white : AppColors.gray800,
+                        ),
+                      ),
+                      AppSpacing.h8,
+                      Text(
+                        'تابع إشعارات التطبيق لمعرفة أحدث العروض والخصومات فور إطلاقها.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 13,
+                          color: isDark ? AppColors.gray400 : AppColors.gray500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else ...[
+              // Active Promos Title
+              Text(
+                AppLocalizations.of(context)!.pass_available_offers,
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  color: isDark ? AppColors.white : AppColors.gray900,
+                ),
               ),
-            ),
 
-            AppSpacing.h12,
+              AppSpacing.h12,
 
-            // Active Promos List
-            for (final promo in _promos)
-              PromoCard(
-                isDark: isDark,
-                promo: promo,
-                onApply: () => _applyPromoCode(promo.code),
-              ),
+              // Active Promos List
+              for (final promo in _promos)
+                PromoCard(
+                  isDark: isDark,
+                  promo: promo,
+                  onApply: () => _applyPromoCode(promo.code),
+                ),
+            ],
           ],
         ),
       ),

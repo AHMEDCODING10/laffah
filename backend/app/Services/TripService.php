@@ -21,10 +21,14 @@ class TripService
     const MAX_CAPTAIN_DEBT = -3000; // Maximum allowed negative balance before blocking
 
     protected $notificationService;
+    protected $walletService;
 
-    public function __construct(?NotificationService $notificationService = null)
-    {
+    public function __construct(
+        ?NotificationService $notificationService = null,
+        ?WalletService $walletService = null
+    ) {
         $this->notificationService = $notificationService ?? app(NotificationService::class);
+        $this->walletService = $walletService ?? app(WalletService::class);
     }
 
     /**
@@ -32,24 +36,60 @@ class TripService
      */
     public function estimate(array $data)
     {
-        $distanceKm = isset($data['distance']) && is_numeric($data['distance']) 
-            ? (float) $data['distance']
-            : $this->calculateDistance(
-                (float) $data['pickup_latitude'],
-                (float) $data['pickup_longitude'],
-                (float) $data['dropoff_latitude'],
-                (float) $data['dropoff_longitude']
-            );
-
         $stopsCount = isset($data['stops']) && is_array($data['stops']) ? count($data['stops']) : 0;
+
+        // [PERFORMANCE FIX P0-04]: Calculate distance via single multi-point OSRM call with caching
+        if (!isset($data['distance']) || !is_numeric($data['distance'])) {
+            $waypoints = [
+                ['lat' => (float) $data['pickup_latitude'], 'lng' => (float) $data['pickup_longitude']]
+            ];
+
+            if ($stopsCount > 0) {
+                foreach ($data['stops'] as $stop) {
+                    $waypoints[] = [
+                        'lat' => (float) ($stop['latitude'] ?? $data['pickup_latitude']),
+                        'lng' => (float) ($stop['longitude'] ?? $data['pickup_longitude']),
+                    ];
+                }
+            }
+
+            $waypoints[] = [
+                'lat' => (float) $data['dropoff_latitude'],
+                'lng' => (float) $data['dropoff_longitude']
+            ];
+
+            $osrmService = app(\App\Services\OSRMService::class);
+            $routeDetails = $osrmService->getMultiPointRouteDetails($waypoints);
+            $distanceKm = max(1.0, (float) ($routeDetails['distance'] ?? 1.0));
+        } else {
+            $distanceKm = max(1.0, (float) $data['distance']);
+        }
 
         // --- All pricing pulled exclusively from the settings cache ---
         $perKm = (float) Cache::remember('setting_price_per_km', self::PRICING_CACHE_TTL,
             fn() => Setting::where('key', 'price_per_km')->value('value') ?? 150);
+        $stopFeePerStop = (float) Cache::remember('setting_multi_stop_fee', self::PRICING_CACHE_TTL,
+            fn() => Setting::where('key', 'multi_stop_fee')->value('value') ?? 200.0);
+        $totalStopFees = $stopsCount * $stopFeePerStop;
 
-        // Calculate clean price purely based on exact distance (including decimals/meters) and rate per km
-        $rawPrice = $distanceKm * $perKm;
-        $estimatedPrice = (int) ceil($rawPrice);
+        // Calculate clean price based on exact distance, rate per km, and multi-stop fee
+        $rawPrice = ($distanceKm * $perKm) + $totalStopFees;
+        $grossPrice = (int) max(500, ceil($rawPrice)); // Standard minimum fare 500 YER
+        $estimatedPrice = $grossPrice;
+
+        // [BUSINESS LOGIC FIX ISSUE-3.5]: Optional promo code discount estimation
+        $discountAmount = 0;
+        $promoCodeId = $data['promo_code_id'] ?? null;
+        if (!$promoCodeId && !empty($data['promo_code'])) {
+            $promoCodeId = \App\Models\PromoCode::where('code', trim($data['promo_code']))->value('id');
+        }
+        if ($promoCodeId) {
+            $promo = \App\Models\PromoCode::find($promoCodeId);
+            if ($promo && $promo->isValid()) {
+                $discountAmount = (int) round($promo->calculateDiscount($grossPrice));
+                $estimatedPrice = max(0, $grossPrice - $discountAmount);
+            }
+        }
 
         $lat = (float) $data['pickup_latitude'];
         $lng = (float) $data['pickup_longitude'];
@@ -75,17 +115,20 @@ class TripService
 
         return [
             'distance_km'         => round($distanceKm, 2),
+            'gross_price'         => $grossPrice,
+            'discount_amount'     => $discountAmount,
             'estimated_price'     => $estimatedPrice,
             'currency'            => 'YER',
             'nearby_captains'     => $nearbyCaptainsCount,
             'captain_eta_minutes' => $captainEtaMinutes,
             // Applied rates returned for client-side display/debug
             'applied_rates'       => [
-                'base_fare'      => 0.0,
-                'per_km_rate'    => $perKm,
-                'min_fare'       => 0.0,
-                'multi_stop_fee' => 0.0,
-                'stops_count'    => $stopsCount,
+                'base_fare'       => 0.0,
+                'per_km_rate'     => $perKm,
+                'min_fare'        => 500.0,
+                'multi_stop_fee'  => $stopFeePerStop,
+                'stops_count'     => $stopsCount,
+                'total_stop_fees' => $totalStopFees,
             ],
         ];
     }
@@ -154,21 +197,37 @@ class TripService
     public function createTrip($userId, array $data)
     {
         return DB::transaction(function () use ($userId, $data) {
+            // [BUSINESS LOGIC FIX ISSUE-3.5]: Validate promo code if provided
+            $promoCodeId = $data['promo_code_id'] ?? null;
+            if (!$promoCodeId && !empty($data['promo_code'])) {
+                $promoCodeId = \App\Models\PromoCode::where('code', trim($data['promo_code']))->value('id');
+            }
+            if ($promoCodeId) {
+                $promo = \App\Models\PromoCode::find($promoCodeId);
+                if (!$promo || !$promo->isValid()) {
+                    throw new \Exception("كود الخصم المحدد غير صالح أو منتهي الصلاحية أو تم استنفاد الحد الأقصى لاستخدامه.", 422);
+                }
+            }
+
             $estimate = $this->estimate($data);
             
             $paymentMethod = $data['payment_method'] ?? 'cash';
             
-            // If payment method is wallet, check balance
+            // If payment method is wallet, check balance & hold escrow (ISSUE-3.2)
             if ($paymentMethod === 'wallet') {
-                $wallet = \App\Models\Wallet::where('user_id', $userId)->first();
-                if (!$wallet || $wallet->balance < $estimate['estimated_price']) {
-                    throw new \Exception("رصيد المحفظة غير كافٍ. يرجى الشحن أو اختيار الدفع نقداً.", 402);
+                $wallet = \App\Models\Wallet::where('user_id', $userId)->lockForUpdate()->first();
+                $available = $wallet ? ($wallet->balance - ($wallet->held_balance ?? 0.0)) : 0.0;
+                if (!$wallet || $available < $estimate['estimated_price']) {
+                    throw new \Exception("رصيد المحفظة المتاح غير كافٍ لتغطية المشوار (" . number_format($available) . " ريال). يرجى شحن الرصيد أو اختيار الدفع نقداً.", 402);
                 }
+                // Escrow hold to prevent double-spending
+                $wallet->held_balance = ($wallet->held_balance ?? 0.0) + $estimate['estimated_price'];
+                $wallet->save();
             }
 
             $trip = Trip::create([
                 'user_id' => $userId,
-                'promo_code_id' => $data['promo_code_id'] ?? null,
+                'promo_code_id' => $promoCodeId,
                 'type' => $data['type'] ?? 'ride',
                 'payment_method' => $paymentMethod,
                 'is_multi_stop' => isset($data['stops']) && count($data['stops']) > 0,
@@ -204,11 +263,18 @@ class TripService
                 return $trip;
             }
 
-            // Broadcast realtime Pusher WebSocket event first for zero delay
-            event(new \App\Events\NewTripRequested($trip));
+            // [PERFORMANCE FIX ISSUE-1.7]: Run broadcasting and notifications AFTER transaction commit
+            DB::afterCommit(function () use ($trip) {
+                try {
+                    // Broadcast realtime Pusher WebSocket event first for zero delay
+                    event(new \App\Events\NewTripRequested($trip));
 
-            // Notify all online captains about the new trip (FCM)
-            $this->notifyNearbyCaptains($trip);
+                    // Notify all online captains about the new trip (FCM)
+                    $this->notifyNearbyCaptains($trip);
+                } catch (\Throwable $e) {
+                    \Log::error('Trip created broadcast/notification error: ' . $e->getMessage());
+                }
+            });
 
             return $trip;
         });
@@ -254,34 +320,41 @@ class TripService
 
             $trip->load(['captain.user', 'passenger', 'stops']);
 
-            // Notify passenger and active channels that captain accepted
-            try {
-                event(new \App\Events\TripStatusUpdated($trip));
-            } catch (\Exception $e) {}
+            // [PERFORMANCE FIX ISSUE-1.7]: Run broadcasting and notifications AFTER transaction commit
+            DB::afterCommit(function () use ($trip) {
+                try {
+                    // Notify passenger and active channels that captain accepted
+                    event(new \App\Events\TripStatusUpdated($trip));
+                } catch (\Throwable $e) {}
 
-            // Send FCM push to passenger
-            if ($trip->passenger) {
-                $captainName = $trip->captain?->user?->name ?? 'الكابتن';
-                $captainPhone = $trip->captain?->user?->phone ?? '';
-                $vehicleModel = $trip->captain?->vehicle_model ?? 'دراجة نارية';
-                $vehiclePlate = $trip->captain?->plate_number ?? '';
+                // Send FCM push to passenger
+                if ($trip->passenger) {
+                    $captainName = $trip->captain?->user?->name ?? 'الكابتن';
+                    $captainPhone = $trip->captain?->user?->phone ?? '';
+                    $vehicleModel = $trip->captain?->vehicle_model ?? 'دراجة نارية';
+                    $vehiclePlate = $trip->captain?->plate_number ?? '';
 
-                $this->notificationService->sendToUser(
-                    $trip->passenger,
-                    'تم قبول المشوار! 🛵',
-                    "الكابتن {$captainName} في طريقه إليك الآن.",
-                    [
-                        'type' => 'trip_accepted',
-                        'status' => 'accepted',
-                        'trip_id' => (string) $trip->id,
-                        'captain_name' => $captainName,
-                        'captain_phone' => $captainPhone,
-                        'vehicle_model' => $vehicleModel,
-                        'vehicle_plate' => $vehiclePlate,
-                        'captain_rating' => (string) ($trip->captain?->rating ?? 5.0),
-                    ]
-                );
-            }
+                    try {
+                        $this->notificationService->sendToUser(
+                            $trip->passenger,
+                            'تم قبول المشوار! 🛵',
+                            "الكابتن {$captainName} في طريقه إليك الآن.",
+                            [
+                                'type' => 'trip_accepted',
+                                'status' => 'accepted',
+                                'trip_id' => (string) $trip->id,
+                                'captain_name' => $captainName,
+                                'captain_phone' => $captainPhone,
+                                'vehicle_model' => $vehicleModel,
+                                'vehicle_plate' => $vehiclePlate,
+                                'captain_rating' => (string) ($trip->captain?->rating ?? 5.0),
+                            ]
+                        );
+                    } catch (\Throwable $e) {
+                        \Log::error('AcceptTrip FCM error: ' . $e->getMessage());
+                    }
+                }
+            });
 
             return $trip;
         });
@@ -345,87 +418,99 @@ class TripService
             } elseif ($status === 'completed') {
                 $updates['completed_at'] = now();
 
-                // Calculate final price strictly based on exact DB settings and distance
+                // Calculate gross price strictly based on exact DB settings, distance, and multi-stop fee (ISSUE-3.4)
                 $perKm = (float) Cache::remember('setting_price_per_km', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'price_per_km')->value('value') ?? 150);
+                $stopFeePerStop = (float) Cache::remember('setting_multi_stop_fee', self::PRICING_CACHE_TTL, fn() => Setting::where('key', 'multi_stop_fee')->value('value') ?? 200.0);
+                $stopsCount = $trip->stops()->count();
+                $totalStopFees = $stopsCount * $stopFeePerStop;
 
-                $rawPrice = $trip->distance_km * $perKm;
-                $finalPrice = (int) ceil($rawPrice);
+                $rawPrice = ($trip->distance_km * $perKm) + $totalStopFees;
+                $grossPrice = (int) max(500, ceil($rawPrice)); // Standard minimum fare
 
-                // Apply promo code discount if any
-                if ($trip->promoCode) {
-                    if ($trip->promoCode->discount_type === 'percentage') {
-                        $discount = $finalPrice * ($trip->promoCode->discount_value / 100);
-                        if ($trip->promoCode->max_discount_amount) {
-                            $discount = min($discount, $trip->promoCode->max_discount_amount);
-                        }
-                        $finalPrice -= $discount;
-                    } else {
-                        $finalPrice -= $trip->promoCode->discount_value;
+                // Calculate platform commission from cached settings based on GROSS price
+                $commissionPercent = (float) Cache::remember('setting_commission_percent', self::PRICING_CACHE_TTL,
+                    fn() => Setting::where('key', 'commission_percent')->value('value') ?? 15.0);
+                $commissionAmount = (int) ceil($grossPrice * ($commissionPercent / 100));
+
+                // [FINANCIAL FIX ISSUE-3.3]: Captain earnings are calculated on GROSS fare, NOT penalized by promos!
+                $captainEarnings = (int) max(0, $grossPrice - $commissionAmount);
+
+                // Apply promo code discount to passenger's bill [FINANCIAL FIX ISSUE-3.5]
+                $finalPrice = $grossPrice;
+                if ($trip->promo_code_id) {
+                    $promo = \App\Models\PromoCode::where('id', $trip->promo_code_id)->lockForUpdate()->first();
+                    if ($promo && $promo->isValid()) {
+                        $discount = $promo->calculateDiscount($grossPrice);
+                        $finalPrice = (int) max(0, round($grossPrice - $discount));
+                        $promo->increment('used_count');
                     }
-                    $finalPrice = max(0, $finalPrice);
                 }
 
                 $updates['final_price'] = $finalPrice;
-
-                // Calculate commission from cached settings
-                $commissionPercent = (float) Cache::remember('setting_commission_percent', self::PRICING_CACHE_TTL,
-                    fn() => Setting::where('key', 'commission_percent')->value('value') ?? 15.0);
-                $updates['commission_amount'] = (int) ceil($finalPrice * ($commissionPercent / 100));
-                $updates['captain_earnings'] = (int) max(0, floor($finalPrice - $updates['commission_amount']));
+                $updates['commission_amount'] = $commissionAmount;
+                $updates['captain_earnings'] = $captainEarnings;
 
                 // Handle Payments
                 if ($trip->payment_method === 'wallet') {
-                    // 1. Deduct full price from passenger's wallet
-                    $passengerWallet = Wallet::firstOrCreate(
-                        ['user_id' => $trip->user_id],
-                        ['balance' => 0, 'currency' => 'YER']
-                    );
-                    $passengerWallet->balance -= $finalPrice;
-                    $passengerWallet->save();
+                    // [ESCROW SETTLEMENT FIX ISSUE-3.2]: Deduct passenger wallet & release held_balance
+                    $passengerWallet = Wallet::where('user_id', $trip->user_id)->lockForUpdate()->first();
+                    if ($passengerWallet) {
+                        $heldToRelease = min((float) ($passengerWallet->held_balance ?? 0.0), (float) ($trip->estimated_price ?? $grossPrice));
+                        $passengerWallet->held_balance = max(0.0, (float) ($passengerWallet->held_balance ?? 0.0) - $heldToRelease);
+                        $passengerWallet->balance -= $finalPrice;
+                        $passengerWallet->save();
 
-                    if ($finalPrice > 0) {
-                        Transaction::create([
-                            'wallet_id' => $passengerWallet->id,
-                            'type' => 'withdrawal',
-                            'amount' => $finalPrice,
-                            'description' => "دفع قيمة المشوار رقم #{$trip->id}"
-                        ]);
+                        if ($finalPrice > 0) {
+                            Transaction::create([
+                                'wallet_id'   => $passengerWallet->id,
+                                'trip_id'     => $trip->id,
+                                'type'        => 'withdrawal',
+                                'amount'      => $finalPrice,
+                                'status'      => 'completed',
+                                'description' => "دفع قيمة المشوار رقم #{$trip->id}" . ($trip->promoCode ? " (بعد خصم ترويجي)" : ""),
+                            ]);
+                        }
                     }
 
                     // 2. Add net earnings to Captain's wallet
                     if ($trip->captain && $trip->captain->user_id) {
                         $captainWallet = Wallet::firstOrCreate(
                             ['user_id' => $trip->captain->user_id],
-                            ['balance' => 0, 'currency' => 'YER']
+                            ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']
                         );
-                        $captainWallet->balance += $updates['captain_earnings'];
+                        $captainWallet = Wallet::where('id', $captainWallet->id)->lockForUpdate()->first();
+                        $captainWallet->balance += $captainEarnings;
                         $captainWallet->save();
 
-                        if ($updates['captain_earnings'] > 0) {
+                        if ($captainEarnings > 0) {
                             Transaction::create([
-                                'wallet_id' => $captainWallet->id,
-                                'type' => 'deposit',
-                                'amount' => $updates['captain_earnings'],
+                                'wallet_id'   => $captainWallet->id,
+                                'trip_id'     => $trip->id,
+                                'type'        => 'deposit',
+                                'amount'      => $captainEarnings,
+                                'status'      => 'completed',
                                 'description' => "أرباح المشوار رقم #{$trip->id} (محفظة)"
                             ]);
                         }
                     }
                 } else {
-                    // Default Cash flow: Captain took the cash, we just deduct commission
+                    // Default Cash flow: Captain took the cash, platform deducts commission
                     if ($trip->captain && $trip->captain->user_id) {
                         $captainWallet = Wallet::firstOrCreate(
                             ['user_id' => $trip->captain->user_id],
-                            ['balance' => 0, 'currency' => 'YER']
+                            ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']
                         );
-
-                        $captainWallet->balance -= $updates['commission_amount'];
+                        $captainWallet = Wallet::where('id', $captainWallet->id)->lockForUpdate()->first();
+                        $captainWallet->balance -= $commissionAmount;
                         $captainWallet->save();
 
-                        if ($updates['commission_amount'] > 0) {
+                        if ($commissionAmount > 0) {
                             Transaction::create([
-                                'wallet_id' => $captainWallet->id,
-                                'type' => 'withdrawal',
-                                'amount' => $updates['commission_amount'],
+                                'wallet_id'   => $captainWallet->id,
+                                'trip_id'     => $trip->id,
+                                'type'        => 'commission',
+                                'amount'      => $commissionAmount,
+                                'status'      => 'completed',
                                 'description' => "عمولة لَفَّة عن المشوار رقم #{$trip->id} (نقداً)"
                             ]);
                         }
@@ -436,43 +521,47 @@ class TripService
             $trip->update($updates);
             $trip->load(['captain.user', 'passenger', 'stops']);
 
-            // Broadcast status update
-            try {
-                event(new \App\Events\TripStatusUpdated($trip));
-            } catch (\Exception $e) {}
+            // [PERFORMANCE FIX ISSUE-1.7]: Run broadcasting and notifications AFTER transaction commit
+            DB::afterCommit(function () use ($trip, $status) {
+                try {
+                    event(new \App\Events\TripStatusUpdated($trip));
+                } catch (\Throwable $e) {}
 
-            // Send FCM notifications based on status
-            if ($trip->passenger) {
-                if ($status === 'completed') {
-                    $this->notificationService->sendToUser(
-                        $trip->passenger,
-                        'اكتمل المشوار بنجاح 🎉',
-                        "المبلغ المطلوب: " . number_format($trip->final_price) . " ريال. لا تنسَ تقييم الكابتن!",
-                        [
-                            'type' => 'trip_completed',
-                            'status' => 'completed',
-                            'trip_id' => (string) $trip->id,
-                            'final_price' => (string) $trip->final_price,
-                        ]
-                    );
+                if ($trip->passenger) {
+                    if ($status === 'completed') {
+                        try {
+                            $this->notificationService->sendToUser(
+                                $trip->passenger,
+                                'اكتمل المشوار بنجاح 🎉',
+                                "المبلغ المطلوب: " . number_format($trip->final_price) . " ريال. لا تنسَ تقييم الكابتن!",
+                                [
+                                    'type'        => 'trip_completed',
+                                    'status'      => 'completed',
+                                    'trip_id'     => (string) $trip->id,
+                                    'final_price' => (string) $trip->final_price,
+                                ]
+                            );
+                        } catch (\Throwable $e) {}
+                    }
                 }
-            }
 
-            // Send completion notification to Captain
-            if ($status === 'completed' && $trip->captain && $trip->captain->user) {
-                $earning = number_format($trip->captain_earnings ?? 0);
-                $this->notificationService->sendToUser(
-                    $trip->captain->user,
-                    'تم إنهاء المشوار بنجاح 🏁',
-                    "أحسنت! تم إكمال المشوار #{$trip->id} وإيداع صافي أرباحك ({$earning} ر.ي) في محفظتك.",
-                    [
-                        'type' => 'trip_completed',
-                        'status' => 'completed',
-                        'trip_id' => (string) $trip->id,
-                        'final_price' => (string) $trip->final_price,
-                    ]
-                );
-            }
+                if ($status === 'completed' && $trip->captain && $trip->captain->user) {
+                    $earning = number_format($trip->captain_earnings ?? 0);
+                    try {
+                        $this->notificationService->sendToUser(
+                            $trip->captain->user,
+                            'تم إنهاء المشوار بنجاح 🏁',
+                            "أحسنت! تم إكمال المشوار #{$trip->id} وإيداع صافي أرباحك ({$earning} ر.ي) في محفظتك.",
+                            [
+                                'type'        => 'trip_completed',
+                                'status'      => 'completed',
+                                'trip_id'     => (string) $trip->id,
+                                'final_price' => (string) $trip->final_price,
+                            ]
+                        );
+                    } catch (\Throwable $e) {}
+                }
+            });
 
             return $trip;
         });
@@ -491,12 +580,48 @@ class TripService
                 throw new Exception("لا يمكن إلغاء هذه الرحلة لأنها مكتملة أو ملغية مسبقاً.", 400);
             }
 
+            // [SECURITY FIX ISSUE-3.6]: Prevent mid-transit cancellation!
+            if ($trip->status === 'in_transit') {
+                throw new Exception("لا يمكن إلغاء الرحلة أثناء السير على الطريق. يرجى إكمال المشوار أو التواصل مع الدعم الفني.", 400);
+            }
+
             // [SECURITY FIX]: Prevent IDOR - Only the passenger or the assigned captain can cancel the trip.
             $isPassenger = $trip->user_id === $user->id;
             $isAssignedCaptain = $user->captainProfile && $trip->captain_profile_id === $user->captainProfile->id;
             
             if (!$isPassenger && !$isAssignedCaptain) {
                 throw new Exception("غير مصرح لك بإلغاء هذه الرحلة.", 403);
+            }
+
+            // [ESCROW RELEASE FIX ISSUE-3.2]: If passenger paid with wallet, release held balance
+            if ($trip->payment_method === 'wallet' && $trip->user_id) {
+                $passengerWallet = Wallet::where('user_id', $trip->user_id)->lockForUpdate()->first();
+                if ($passengerWallet && ($passengerWallet->held_balance ?? 0) > 0) {
+                    $heldToRelease = min((float) $passengerWallet->held_balance, (float) ($trip->estimated_price ?? 0));
+                    $passengerWallet->held_balance = max(0.0, (float) $passengerWallet->held_balance - $heldToRelease);
+                    $passengerWallet->save();
+                }
+            }
+
+            // [FINANCIAL COMPENSATION FIX ISSUE-3.7]: Cancellation fee after arrival or > 2 minutes after acceptance
+            $hasAssignedCaptain = $trip->captain_profile_id && $trip->captain && $trip->captain->user_id;
+            $minutesSinceAcceptance = $trip->accepted_at ? now()->diffInMinutes($trip->accepted_at) : 0;
+            $feeApplied = false;
+            $cancellationFee = 0.0;
+
+            if ($isPassenger && $hasAssignedCaptain && ($trip->status === 'arrived' || $minutesSinceAcceptance >= 2)) {
+                $cancellationFee = (float) Cache::remember('setting_cancellation_fee', self::PRICING_CACHE_TTL,
+                    fn() => Setting::where('key', 'cancellation_fee')->value('value') ?? 400.0);
+
+                if ($cancellationFee > 0) {
+                    $this->walletService->applyCancellationCompensation(
+                        $trip->user_id,
+                        $trip->captain->user_id,
+                        $cancellationFee,
+                        $trip->id
+                    );
+                    $feeApplied = true;
+                }
             }
 
             $trip->update([
@@ -508,45 +633,61 @@ class TripService
 
             $trip->load(['captain.user', 'passenger', 'stops']);
 
-            // Broadcast cancellation
-            try {
-                event(new \App\Events\TripStatusUpdated($trip));
-            } catch (\Exception $e) {}
+            // [PERFORMANCE FIX ISSUE-1.7]: Run broadcasting and notifications AFTER transaction commit
+            DB::afterCommit(function () use ($trip, $user, $feeApplied, $cancellationFee) {
+                try {
+                    event(new \App\Events\TripStatusUpdated($trip));
+                } catch (\Throwable $e) {}
 
-            // Send cancellation notification to Captain or Passenger
-            try {
-                if ($trip->captain && $trip->captain->user) {
-                    // If passenger cancelled, notify captain
-                    if ($user->id === $trip->user_id) {
-                        $this->notificationService->sendToUser(
-                            $trip->captain->user,
-                            'تم إلغاء المشوار 🚫',
-                            "قام الراكب بإلغاء المشوار #{$trip->id}.",
-                            [
-                                'type' => 'trip_cancelled',
-                                'status' => 'cancelled',
-                                'trip_id' => (string) $trip->id,
-                            ]
-                        );
-                    }
-                }
+                try {
+                    if ($trip->captain && $trip->captain->user) {
+                        if ($user->id === $trip->user_id) {
+                            $capMsg = $feeApplied 
+                                ? "قام الراكب بإلغاء المشوار #{$trip->id}. تم إيداع تعويض الإلغاء (" . number_format($cancellationFee) . " ر.ي) في محفظتك."
+                                : "قام الراكب بإلغاء المشوار #{$trip->id}.";
 
-                if ($trip->passenger) {
-                    // If captain cancelled, notify passenger
-                    if ($user->id !== $trip->user_id) {
-                        $this->notificationService->sendToUser(
-                            $trip->passenger,
-                            'تم إلغاء المشوار 🚫',
-                            "قام الكابتن بإلغاء المشوار #{$trip->id}. يمكنك طلب كابتن آخر.",
-                            [
-                                'type' => 'trip_cancelled',
-                                'status' => 'cancelled',
-                                'trip_id' => (string) $trip->id,
-                            ]
-                        );
+                            $this->notificationService->sendToUser(
+                                $trip->captain->user,
+                                'تم إلغاء المشوار 🚫',
+                                $capMsg,
+                                [
+                                    'type' => 'trip_cancelled',
+                                    'status' => 'cancelled',
+                                    'trip_id' => (string) $trip->id,
+                                    'compensation' => (string) $cancellationFee,
+                                ]
+                            );
+                        }
                     }
-                }
-            } catch (\Exception $e) {}
+
+                    if ($trip->passenger) {
+                        if ($user->id !== $trip->user_id) {
+                            $this->notificationService->sendToUser(
+                                $trip->passenger,
+                                'تم إلغاء المشوار 🚫',
+                                "قام الكابتن بإلغاء المشوار #{$trip->id}. يمكنك طلب كابتن آخر.",
+                                [
+                                    'type' => 'trip_cancelled',
+                                    'status' => 'cancelled',
+                                    'trip_id' => (string) $trip->id,
+                                ]
+                            );
+                        } else if ($feeApplied) {
+                            $this->notificationService->sendToUser(
+                                $trip->passenger,
+                                'رسوم إلغاء المشوار ⚠️',
+                                "تم تطبيق رسوم إلغاء بقيمة (" . number_format($cancellationFee) . " ر.ي) لتعويض الكابتن بعد وصوله أو تحركه.",
+                                [
+                                    'type' => 'cancellation_fee_applied',
+                                    'status' => 'cancelled',
+                                    'trip_id' => (string) $trip->id,
+                                    'fee' => (string) $cancellationFee,
+                                ]
+                            );
+                        }
+                    }
+                } catch (\Throwable $e) {}
+            });
 
             return $trip;
         });

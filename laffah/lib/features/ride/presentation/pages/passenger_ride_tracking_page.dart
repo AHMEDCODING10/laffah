@@ -44,8 +44,7 @@ class PassengerRideTrackingPage extends StatefulWidget {
       _PassengerRideTrackingPageState();
 }
 
-class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
-    with SingleTickerProviderStateMixin {
+class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
   final OsrmService _osrmService = OsrmService();
   final EchoService _echoService = EchoService();
   List<LatLng> _routePoints = [];
@@ -55,10 +54,6 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
   double _captainHeading = 0.0;
   late String _activeCaptainId;
 
-  late AnimationController _animController;
-  late Animation<double> _latTween;
-  late Animation<double> _lngTween;
-
   @override
   void initState() {
     super.initState();
@@ -66,24 +61,6 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
     _captainLocation = LatLng(widget.captainLat, widget.captainLng);
     _passengerLocation = LatLng(widget.passengerLat, widget.passengerLng);
     _fetchRoute();
-
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-
-    _latTween = Tween<double>(
-            begin: _captainLocation.latitude, end: _captainLocation.latitude)
-        .animate(_animController);
-    _lngTween = Tween<double>(
-            begin: _captainLocation.longitude, end: _captainLocation.longitude)
-        .animate(_animController);
-
-    _animController.addListener(() {
-      setState(() {
-        _captainLocation = LatLng(_latTween.value, _lngTween.value);
-      });
-    });
 
     _listenToLiveTracking();
   }
@@ -93,27 +70,20 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
       _echoService.listenToCaptainLocation(_activeCaptainId, (lat, lng, heading) {
         if (!mounted) return;
 
-        _latTween = Tween<double>(begin: _captainLocation.latitude, end: lat)
-            .animate(CurvedAnimation(
-                parent: _animController, curve: Curves.easeInOut));
-        _lngTween =
-            Tween<double>(begin: _captainLocation.longitude, end: lng)
-                .animate(CurvedAnimation(
-                    parent: _animController, curve: Curves.easeInOut));
-
         setState(() {
-          _captainHeading = heading ?? 0.0;
+          _captainLocation = LatLng(lat, lng);
+          if (heading != null) {
+            _captainHeading = heading;
+          }
         });
 
-        _animController.forward(from: 0.0);
-        _fetchRoute(); // Recalculate route to passenger
+        _fetchRoute(); // Recalculate route to destination/passenger
       });
     });
   }
 
   @override
   void dispose() {
-    _animController.dispose();
     _echoService.stopListeningToCaptainLocation(_activeCaptainId);
     super.dispose();
   }
@@ -145,7 +115,8 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
         ? LatLng(widget.dropoffLat!, widget.dropoffLng!)
         : _passengerLocation;
 
-    final data = await _osrmService.getRoute(dest, _captainLocation);
+    // Start with captain's real-time position and navigate towards destination
+    final data = await _osrmService.getRoute(_captainLocation, dest);
     if (data != null && mounted) {
       setState(() {
         _routePoints = data.points;
@@ -159,6 +130,23 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
 
     return BlocListener<RideBloc, RideState>(
       listener: (context, state) {
+        // Dynamically re-subscribe to captain location channel if captain ID resolves or changes
+        if (state is RideBookingConfirmed &&
+            state.captainId != null &&
+            state.captainId!.isNotEmpty &&
+            state.captainId != _activeCaptainId) {
+          _echoService.stopListeningToCaptainLocation(_activeCaptainId);
+          _activeCaptainId = state.captainId!;
+          _listenToLiveTracking();
+        } else if (state is RideAccepted &&
+            state.captainId != null &&
+            state.captainId!.isNotEmpty &&
+            state.captainId != _activeCaptainId) {
+          _echoService.stopListeningToCaptainLocation(_activeCaptainId);
+          _activeCaptainId = state.captainId!;
+          _listenToLiveTracking();
+        }
+
         if ((state is RideBookingConfirmed &&
                 state.status.toLowerCase() == 'completed') ||
             state is RideCompleted) {
@@ -167,22 +155,22 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
               : 'TRIP';
           final fare = (state is RideBookingConfirmed)
               ? state.selectedOption.basePrice
-              : 1083.0;
-          final captainName = (state is RideBookingConfirmed)
+              : 0.0;
+          final captainName = (state is RideBookingConfirmed && state.captainName.isNotEmpty)
               ? state.captainName
-              : 'علي صالح صالح';
+              : 'الكابتن';
           final captainPhone =
               (state is RideBookingConfirmed) ? state.captainPhone : '';
           final vehicleModel =
-              (state is RideBookingConfirmed) ? state.vehicleModel : 'دراجة نارية';
+              (state is RideBookingConfirmed && state.vehicleModel.isNotEmpty) ? state.vehicleModel : 'دراجة نارية';
           final vehiclePlate =
-              (state is RideBookingConfirmed) ? state.vehiclePlate : 'صنعاء';
-          final pickup = (state is RideBookingConfirmed)
+              (state is RideBookingConfirmed && state.vehiclePlate.isNotEmpty) ? state.vehiclePlate : '---';
+          final pickup = (state is RideBookingConfirmed && state.pickup.isNotEmpty)
               ? state.pickup
-              : 'موقعك الحالي';
-          final dropoff = (state is RideBookingConfirmed)
+              : (widget.pickupAddress.isNotEmpty ? widget.pickupAddress : 'نقطة الانطلاق');
+          final dropoff = (state is RideBookingConfirmed && state.dropoff.isNotEmpty)
               ? state.dropoff
-              : 'شارع الزبيري';
+              : (widget.dropoffAddress.isNotEmpty ? widget.dropoffAddress : 'وجهة الوصول');
           final rating = (state is RideBookingConfirmed) ? state.rating : 5.0;
           final distance = (state is RideBookingConfirmed && state.distance != null) 
               ? state.distance 
@@ -599,12 +587,24 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildActionButton(Icons.message_rounded, AppColors.primary500, isDark, () async {
-                                      final Uri smsUri = Uri(scheme: 'sms', path: captainPhone.isNotEmpty ? captainPhone : '+967700000000');
+                                      if (captainPhone.trim().isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('رقم هاتف الكابتن غير متوفر حالياً')),
+                                        );
+                                        return;
+                                      }
+                                      final Uri smsUri = Uri(scheme: 'sms', path: captainPhone);
                                       if (await canLaunchUrl(smsUri)) await launchUrl(smsUri);
                                     }),
                                     const SizedBox(width: 10),
                                     _buildActionButton(Icons.call_rounded, AppColors.success, isDark, () async {
-                                      final Uri telUri = Uri(scheme: 'tel', path: captainPhone.isNotEmpty ? captainPhone : '+967700000000');
+                                      if (captainPhone.trim().isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('رقم هاتف الكابتن غير متوفر حالياً')),
+                                        );
+                                        return;
+                                      }
+                                      final Uri telUri = Uri(scheme: 'tel', path: captainPhone);
                                       if (await canLaunchUrl(telUri)) await launchUrl(telUri);
                                     }),
                                   ],

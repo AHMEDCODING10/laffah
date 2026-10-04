@@ -54,7 +54,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   }
 
   void _onBookToPlace(SavedPlaceEntity place) {
-    context.push(
+    context.go(
       LaffahRoutes.passengerHome,
       extra: {
         'dropoff': place.name,

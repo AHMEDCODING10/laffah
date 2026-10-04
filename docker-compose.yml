@@ -77,7 +77,7 @@ services:
       dockerfile: Dockerfile
     container_name: laffah_queue_worker
     restart: unless-stopped
-    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3"]
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--memory=256", "--max-time=3600"]
     environment:
       - APP_NAME=لَفَّة
       - APP_ENV=production
@@ -90,6 +90,33 @@ services:
       - CACHE_STORE=redis
       - REDIS_HOST=redis
       - QUEUE_CONNECTION=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - laffah_network
+
+  # 4. Dedicated Laravel Schedule Worker (Escrow Releases & Auto-Offline)
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laffah_scheduler
+    restart: unless-stopped
+    command: ["php", "artisan", "schedule:work"]
+    environment:
+      - APP_NAME=لَفَّة
+      - APP_ENV=production
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=laffah_db
+      - DB_USERNAME=laffah_user
+      - DB_PASSWORD=laffah_secret_pass_2026
+      - CACHE_STORE=redis
+      - REDIS_HOST=redis
     depends_on:
       db:
         condition: service_healthy

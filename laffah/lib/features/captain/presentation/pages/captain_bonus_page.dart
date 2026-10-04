@@ -55,7 +55,8 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
             final completed = state.completedTrips;
             final target = state.targetTrips;
             final bonus = state.bonusAmount;
-            final progress = completed / target;
+            final progress = target > 0 ? (completed / target).clamp(0.0, 1.0) : 0.0;
+            final remaining = target > completed ? target - completed : 0;
 
             return RefreshIndicator(
               onRefresh: () async {
@@ -132,7 +133,7 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
                                   ),
                                 ),
                                 Text(
-                                  'المتبقي: ${target - completed}',
+                                  'المتبقي: $remaining',
                                   style: const TextStyle(
                                     fontFamily: 'IBM Plex Sans Arabic',
                                     fontWeight: FontWeight.bold,
@@ -172,18 +173,18 @@ class _CaptainBonusPageState extends State<CaptainBonusPage> {
                   ),
                   AppSpacing.h16,
                   _buildBonusCard(
-                    title: 'التارجت الأسبوعي (50 رحلة)',
-                    subtitle: 'أنجزت 25 رحلة حتى الآن',
-                    reward: '15,000 ريال',
-                    progress: 0.5,
+                    title: 'تارجت المشاوير ($target رحلة)',
+                    subtitle: 'أنجزت $completed رحلة حتى الآن',
+                    reward: '${bonus.toInt()} ريال',
+                    progress: progress,
                     isDark: isDark,
                   ),
                   AppSpacing.h16,
                   _buildBonusCard(
-                    title: 'بونص التقييم العالي (4.9+)',
-                    subtitle: 'تقييمك الحالي: 4.95',
+                    title: 'بونص التقييم العالي (4.8+)',
+                    subtitle: 'حافظ على تقييم مرتفع لتأهيل بونص التميز',
                     reward: '5,000 ريال',
-                    progress: 1.0,
+                    progress: progress > 0.8 ? 1.0 : progress,
                     isDark: isDark,
                   ),
                 ],

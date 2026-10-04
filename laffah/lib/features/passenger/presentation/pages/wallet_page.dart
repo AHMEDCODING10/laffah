@@ -239,6 +239,12 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    context.read<WalletBloc>().add(GetCompanyAccountsEvent());
+  }
+
+  @override
   void dispose() {
     _amountController.dispose();
     _refController.dispose();
@@ -322,8 +328,24 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
   Widget build(BuildContext context) {
     final selectedWallet = _wallets[_selectedMethodIndex];
 
-    return Container(
-      padding: EdgeInsets.only(
+    return BlocListener<WalletBloc, WalletState>(
+      listener: (context, state) {
+        if (state is CompanyAccountsLoaded && state.accounts.isNotEmpty) {
+          setState(() {
+            for (final acc in state.accounts) {
+              final idx = _wallets.indexWhere((w) => w['id'] == acc['id']);
+              if (idx != -1) {
+                _wallets[idx]['account'] =
+                    acc['account_number'] ?? _wallets[idx]['account'];
+                _wallets[idx]['accountName'] =
+                    acc['account_name'] ?? _wallets[idx]['accountName'];
+              }
+            }
+          });
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.only(
         left: AppSpacing.s20,
         right: AppSpacing.s20,
         top: AppSpacing.s16,
@@ -623,6 +645,7 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
           ],
         ),
       ),
+    ),
     );
   }
 }

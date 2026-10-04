@@ -4,13 +4,12 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class TripRejectedByCaptain
+class TripRejectedByCaptain implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -22,8 +21,8 @@ class TripRejectedByCaptain
      */
     public function __construct($tripId, $captainProfileId)
     {
-        $this->tripId = $tripId;
-        $this->captainProfileId = $captainProfileId;
+        $this->tripId = (string) $tripId;
+        $this->captainProfileId = (string) $captainProfileId;
     }
 
     /**
@@ -34,7 +33,28 @@ class TripRejectedByCaptain
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('channel-name'),
+            new PrivateChannel('captain.' . $this->captainProfileId),
+        ];
+    }
+
+    /**
+     * Broadcast event name matching Flutter EchoService.
+     */
+    public function broadcastAs(): string
+    {
+        return 'TripNoLongerAvailable';
+    }
+
+    /**
+     * Broadcast payload.
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'trip_id' => $this->tripId,
+            'id' => $this->tripId,
+            'event_type' => 'trip_no_longer_available',
+            'reason' => 'rejected_by_captain',
         ];
     }
 }

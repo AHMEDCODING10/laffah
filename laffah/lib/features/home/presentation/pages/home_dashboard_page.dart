@@ -30,7 +30,14 @@ import 'location_search_page.dart';
 /// HomeDashboardPage — Refactored Passenger Home Dashboard for Laffah (لَفّة).
 /// Clean Architecture & Modular Widget Composition.
 class HomeDashboardPage extends StatefulWidget {
-  const HomeDashboardPage({super.key});
+  final String? initialDropoff;
+  final LatLng? initialDropoffLatLng;
+
+  const HomeDashboardPage({
+    super.key,
+    this.initialDropoff,
+    this.initialDropoffLatLng,
+  });
 
   @override
   State<HomeDashboardPage> createState() => _HomeDashboardPageState();
@@ -60,6 +67,17 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
     _loadRecentDestinations();
     _fetchCurrentLocation();
     context.read<ProfileBloc>().add(GetSavedPlacesEvent());
+
+    if (widget.initialDropoff != null && widget.initialDropoffLatLng != null) {
+      _dropoffController.text = widget.initialDropoff!;
+      _dropoffLatLng = widget.initialDropoffLatLng;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _calculateRouteIfNeeded();
+        if (mounted) {
+          _showRideSelection();
+        }
+      });
+    }
   }
 
   Future<void> _fetchCurrentLocation() async {
@@ -86,7 +104,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-      );
+      ).timeout(const Duration(seconds: 4));
       if (mounted) {
         setState(() {
           _pickupLatLng = LatLng(pos.latitude, pos.longitude);
@@ -303,7 +321,9 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
             (state.status == 'accepted' || state.status == 'arrived' || state.status == 'in_transit' || state.status == 'started'))) {
           if (!_isNavigatedToTracking) {
             _isNavigatedToTracking = true;
-            final String cid = (state is RideBookingConfirmed) ? (state.rideId ?? '1') : '1';
+            final String cid = (state is RideBookingConfirmed)
+                ? (state.captainId ?? state.rideId ?? '1')
+                : ((state as RideAccepted).captainId ?? '1');
             context.push(
               LaffahRoutes.passengerRideTracking,
               extra: {
@@ -324,22 +344,29 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
         } else if ((state is RideBookingConfirmed &&
                 state.status.toLowerCase() == 'completed') ||
             state is RideCompleted) {
+          final wasTracking = _isNavigatedToTracking;
           _isNavigatedToTracking = false;
+          // If passenger is currently on the tracking screen, tracking screen pushes the invoice.
+          // Prevent background HomeDashboardPage from pushing a duplicate invoice!
+          if (wasTracking) {
+            return;
+          }
+
           final tripId = (state is RideBookingConfirmed)
               ? (state.rideId ?? 'TRIP')
               : 'TRIP';
           final fare = (state is RideBookingConfirmed)
               ? state.selectedOption.basePrice
-              : 1083.0;
+              : 0.0;
           final captainName = (state is RideBookingConfirmed)
               ? state.captainName
-              : 'علي صالح صالح';
+              : 'الكابتن';
           final captainPhone =
               (state is RideBookingConfirmed) ? state.captainPhone : '';
           final vehicleModel =
               (state is RideBookingConfirmed) ? state.vehicleModel : 'دراجة نارية';
           final vehiclePlate =
-              (state is RideBookingConfirmed) ? state.vehiclePlate : 'صنعاء';
+              (state is RideBookingConfirmed) ? state.vehiclePlate : '';
           final pickup = (state is RideBookingConfirmed)
               ? state.pickup
               : _pickupController.text.trim();
@@ -347,7 +374,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
               ? state.dropoff
               : (_dropoffController.text.trim().isNotEmpty
                   ? _dropoffController.text.trim()
-                  : 'شارع الزبيري');
+                  : 'وجهة الوصول');
           final rating = (state is RideBookingConfirmed) ? state.rating : 5.0;
 
           context.push(
@@ -406,8 +433,7 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
 
                     return LaffahMapView(
                       isDark: isDark,
-                      showDefaultMockData: status != 'idle' &&
-                          (_activeRoutePoints == null || _activeRoutePoints!.isEmpty),
+                      showDefaultMockData: false,
                       initialCenter: _dropoffLatLng ?? _pickupLatLng,
                       dropoffLocation: _dropoffLatLng,
                       passengerLocation: _pickupLatLng,

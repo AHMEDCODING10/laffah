@@ -37,7 +37,7 @@ class TripsManager extends Component
                     $q->where('status', $this->statusFilter);
                 }
             })
-            ->when($this->dateFilter, fn($q) => $q->whereDate('created_at', $this->dateFilter))
+            ->when($this->dateFilter, fn($q) => $q->whereBetween('created_at', [\Carbon\Carbon::parse($this->dateFilter)->startOfDay(), \Carbon\Carbon::parse($this->dateFilter)->endOfDay()]))
             ->latest()
             ->paginate(15);
 
@@ -73,7 +73,7 @@ class TripsManager extends Component
                     $q->where('status', $this->statusFilter);
                 }
             })
-            ->when($this->dateFilter, fn($q) => $q->whereDate('created_at', $this->dateFilter))
+            ->when($this->dateFilter, fn($q) => $q->whereBetween('created_at', [\Carbon\Carbon::parse($this->dateFilter)->startOfDay(), \Carbon\Carbon::parse($this->dateFilter)->endOfDay()]))
             ->latest()
             ->get();
 

@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_reset_pass_desc.
   ///
   /// In ar, this message translates to:
-  /// **'أدخل رقم هاتفك المسجل في لَفَّة وسنرسل لك رمزاً لإعادة طھعيين كلمة المرور.'**
+  /// **'أدخل رقم هاتفك المسجل لاستعادة كلمة المرور.'**
   String get auth_reset_pass_desc;
 
   /// No description provided for @auth_send_code.
@@ -275,7 +275,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_onboard_1_desc.
   ///
   /// In ar, this message translates to:
-  /// **'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات ظˆتوصيل الدراجات النارية.'**
+  /// **'المنصة الأولى والوحيدة في صنعاء المخصصة حصرياً لطلبات وتوصيل الدراجات النارية.'**
   String get auth_onboard_1_desc;
 
   /// No description provided for @auth_onboard_2_title.
@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_onboard_2_desc.
   ///
   /// In ar, this message translates to:
-  /// **'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز ط§لاختناقات المرورية.'**
+  /// **'وفر وقتك ومالك. المواتير هي الحل الأسرع والأوفر لتجاوز الاختناقات المرورية.'**
   String get auth_onboard_2_desc;
 
   /// No description provided for @auth_onboard_3_title.
