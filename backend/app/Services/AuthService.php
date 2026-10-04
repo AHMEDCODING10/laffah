@@ -135,8 +135,8 @@ class AuthService
             throw new Exception('تم إرسال رمز تحقق مسبقاً. يرجى الانتظار 60 ثانية قبل طلب رمز جديد.', 429);
         }
 
-        // Generate cryptographically secure 6-digit code (CSPRNG)
-        $code = random_int(100000, 999999);
+        // Generate cryptographically secure 4-digit code (CSPRNG) matching mobile app input UI
+        $code = random_int(1000, 9999);
         
         // Save to cache for 10 minutes using normalized short phone
         Cache::put('reset_code_' . $shortPhone, $code, now()->addMinutes(10));
