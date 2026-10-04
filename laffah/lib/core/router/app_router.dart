@@ -268,16 +268,41 @@ class AppRouter {
       GoRoute(
         path: LaffahRoutes.forgotPassword,
         name: 'forgot-password',
-        builder: (BuildContext context, GoRouterState state) =>
-            const ForgotPasswordPage(),
+        builder: (BuildContext context, GoRouterState state) {
+          String? phone;
+          bool isChanging = false;
+          if (state.extra is Map) {
+            final m = state.extra as Map;
+            phone = m['phone']?.toString();
+            isChanging = m['isChangingPassword'] == true;
+          } else if (state.extra is String) {
+            phone = state.extra as String;
+            isChanging = true;
+          }
+          return ForgotPasswordPage(
+            initialPhone: phone,
+            isChangingPassword: isChanging,
+          );
+        },
       ),
 
       GoRoute(
         path: LaffahRoutes.forgotPasswordOtp,
         name: 'forgot-password-otp',
         builder: (BuildContext context, GoRouterState state) {
-          final phone = state.extra as String? ?? '';
-          return ForgotPasswordOtpPage(phone: phone);
+          String phone = '';
+          bool isChanging = false;
+          if (state.extra is Map) {
+            final m = state.extra as Map;
+            phone = m['phone']?.toString() ?? '';
+            isChanging = m['isChangingPassword'] == true;
+          } else if (state.extra is String) {
+            phone = state.extra as String;
+          }
+          return ForgotPasswordOtpPage(
+            phone: phone,
+            isChangingPassword: isChanging,
+          );
         },
       ),
 
@@ -285,10 +310,11 @@ class AppRouter {
         path: LaffahRoutes.resetPassword,
         name: 'reset-password',
         builder: (BuildContext context, GoRouterState state) {
-          final args = state.extra as Map<String, String>? ?? {};
+          final args = state.extra as Map? ?? {};
           return ResetPasswordPage(
-            phone: args['phone'] ?? '',
-            code: args['code'] ?? '',
+            phone: args['phone']?.toString() ?? '',
+            code: args['code']?.toString() ?? '',
+            isChangingPassword: args['isChangingPassword'] == true,
           );
         },
       ),

@@ -13,7 +13,14 @@ import '../bloc/auth_state.dart';
 /// ForgotPasswordPage — Secure password reset flow for Captains (Passengers use OTP only).
 /// Focuses on matching Laffah's dark theme and large touch targets for easy usage on the road.
 class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({super.key});
+  final String? initialPhone;
+  final bool isChangingPassword;
+
+  const ForgotPasswordPage({
+    super.key,
+    this.initialPhone,
+    this.isChangingPassword = false,
+  });
 
   @override
   State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
@@ -32,6 +39,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   @override
   void initState() {
     super.initState();
+    if (widget.initialPhone != null && widget.initialPhone!.isNotEmpty) {
+      String clean = widget.initialPhone!.replaceAll(RegExp(r'[^\d]'), '');
+      if (clean.startsWith('967') && clean.length > 9) {
+        clean = clean.substring(3);
+      }
+      _phoneController.text = clean;
+    }
+
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -120,7 +135,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                 ),
               );
               // Navigate to OTP page
-              context.push('/auth/forgot-password/otp', extra: state.phone);
+              context.push('/auth/forgot-password/otp', extra: {
+                'phone': state.phone,
+                'isChangingPassword': widget.isChangingPassword,
+              });
             }
           },
           child: SafeArea(
@@ -136,7 +154,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                     children: [
                       AppSpacing.h24,
                       Text(
-                        AppLocalizations.of(context)!.auth_forgot_password,
+                        widget.isChangingPassword
+                            ? 'تغيير كلمة المرور'
+                            : AppLocalizations.of(context)!.auth_forgot_password,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontSize: 28,
@@ -146,7 +166,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                       ),
                       AppSpacing.h12,
                       Text(
-                        AppLocalizations.of(context)!.auth_reset_pass_desc,
+                        widget.isChangingPassword
+                            ? 'أدخل رقم هاتفك لتأكيد هويتك برمز تحقق وتعيين كلمة مرور جديدة لحسابك.'
+                            : AppLocalizations.of(context)!.auth_reset_pass_desc,
                         style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontSize: 14,

@@ -391,12 +391,11 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 title: AppLocalizations.of(context)!.capt_acc_change_pass,
                 subtitle: AppLocalizations.of(context)!.capt_acc_change_pass_desc,
                 onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => const ChangePasswordSheet(),
-                  );
+                  final phone = _cachedProfile?.phone ?? '';
+                  context.push(LaffahRoutes.forgotPassword, extra: {
+                    'phone': phone,
+                    'isChangingPassword': true,
+                  });
                 },
               ),
 

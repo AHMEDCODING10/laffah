@@ -12,8 +12,13 @@ import '../bloc/auth_state.dart';
 
 class ForgotPasswordOtpPage extends StatefulWidget {
   final String phone;
+  final bool isChangingPassword;
 
-  const ForgotPasswordOtpPage({super.key, required this.phone});
+  const ForgotPasswordOtpPage({
+    super.key,
+    required this.phone,
+    this.isChangingPassword = false,
+  });
 
   @override
   State<ForgotPasswordOtpPage> createState() => _ForgotPasswordOtpPageState();
@@ -69,8 +74,11 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                 ),
               );
             } else if (state is VerifyResetCodeSuccess) {
-              context.push('/auth/reset-password',
-                  extra: {'phone': state.phone, 'code': state.code});
+              context.push('/auth/reset-password', extra: {
+                'phone': state.phone,
+                'code': state.code,
+                'isChangingPassword': widget.isChangingPassword,
+              });
             }
           },
           child: SafeArea(
@@ -81,7 +89,9 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                 children: [
                   AppSpacing.h24,
                   Text(
-                    AppLocalizations.of(context)!.auth_confirm_code,
+                    widget.isChangingPassword
+                        ? 'تأكيد رمز التحقق'
+                        : AppLocalizations.of(context)!.auth_confirm_code,
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 28,

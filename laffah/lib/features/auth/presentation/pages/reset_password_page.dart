@@ -12,8 +12,14 @@ import '../bloc/auth_state.dart';
 class ResetPasswordPage extends StatefulWidget {
   final String phone;
   final String code;
+  final bool isChangingPassword;
 
-  const ResetPasswordPage({super.key, required this.phone, required this.code});
+  const ResetPasswordPage({
+    super.key,
+    required this.phone,
+    required this.code,
+    this.isChangingPassword = false,
+  });
 
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -99,7 +105,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   backgroundColor: AppColors.success,
                 ),
               );
-              context.go('/auth'); // Back to auth landing
+              if (widget.isChangingPassword && Navigator.of(context).canPop()) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              } else {
+                context.go('/auth'); // Back to auth landing
+              }
             }
           },
           child: SafeArea(
@@ -110,7 +120,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 children: [
                   AppSpacing.h24,
                   Text(
-                    AppLocalizations.of(context)!.auth_set_password,
+                    widget.isChangingPassword
+                        ? 'تغيير كلمة المرور'
+                        : AppLocalizations.of(context)!.auth_set_password,
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 28,
@@ -120,7 +132,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   ),
                   AppSpacing.h12,
                   Text(
-                    AppLocalizations.of(context)!.auth_enter_new_pass,
+                    widget.isChangingPassword
+                        ? 'أدخل كلمة المرور الجديدة لحسابك لتسجيل الدخول بها بأمان.'
+                        : AppLocalizations.of(context)!.auth_enter_new_pass,
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 14,

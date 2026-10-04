@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../pages/widgets/captain_account_dialogs.dart';
 import 'captain_document_upload_page.dart';
 import '../../../../core/theme/theme_controller.dart';
 
@@ -145,12 +144,9 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
               icon: Icons.lock_rounded,
               isDark: isDark,
               onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (ctx) => const ChangePasswordSheet(),
-                );
+                context.push(LaffahRoutes.forgotPassword, extra: {
+                  'isChangingPassword': true,
+                });
               },
             ),
             AppSpacing.h32,

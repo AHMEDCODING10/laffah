@@ -248,7 +248,10 @@ class _ProfileViewState extends State<_ProfileView> {
                       icon: Icons.lock_outline_rounded,
                       label: AppLocalizations.of(context)!.pass_profile_change_pass,
                       isDark: isDark,
-                      onTap: () => context.push(LaffahRoutes.forgotPassword),
+                      onTap: () => context.push(LaffahRoutes.forgotPassword, extra: {
+                        'phone': _cachedProfile?.phone,
+                        'isChangingPassword': true,
+                      }),
                     ),
                     ProfileListTile(
                       icon: Icons.language_rounded,
