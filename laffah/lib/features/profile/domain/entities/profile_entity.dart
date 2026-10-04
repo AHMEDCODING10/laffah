@@ -14,6 +14,7 @@ class ProfileEntity extends Equatable {
   final String? vehicleType;
   final String? vehicleModel;
   final String? plateNumber;
+  final String? vehicleColor;
   final double? rating;
   final bool isVerified;
 
@@ -27,6 +28,7 @@ class ProfileEntity extends Equatable {
     this.vehicleType,
     this.vehicleModel,
     this.plateNumber,
+    this.vehicleColor,
     this.rating,
     this.isVerified = false,
   });
@@ -41,6 +43,7 @@ class ProfileEntity extends Equatable {
     String? vehicleType,
     String? vehicleModel,
     String? plateNumber,
+    String? vehicleColor,
     double? rating,
     bool? isVerified,
   }) {
@@ -54,6 +57,7 @@ class ProfileEntity extends Equatable {
       vehicleType: vehicleType ?? this.vehicleType,
       vehicleModel: vehicleModel ?? this.vehicleModel,
       plateNumber: plateNumber ?? this.plateNumber,
+      vehicleColor: vehicleColor ?? this.vehicleColor,
       rating: rating ?? this.rating,
       isVerified: isVerified ?? this.isVerified,
     );
@@ -70,6 +74,7 @@ class ProfileEntity extends Equatable {
         vehicleType,
         vehicleModel,
         plateNumber,
+        vehicleColor,
         rating,
         isVerified
       ];

@@ -58,6 +58,7 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('captain')->group(function () {
         Route::post('update-location',  [CaptainController::class, 'updateLocation'])->middleware('throttle:captain_location');
         Route::post('toggle-online',    [CaptainController::class, 'toggleOnlineStatus']);
+        Route::get('documents',         [CaptainController::class, 'getDocuments']);
         Route::post('documents',        [CaptainController::class, 'uploadDocuments']);
         Route::get('documents/{id}',    [CaptainController::class, 'showDocument']);
         Route::get('bonus',             [CaptainController::class, 'getBonus']);

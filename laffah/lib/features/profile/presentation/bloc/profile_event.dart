@@ -14,11 +14,31 @@ class UpdateProfileEvent extends ProfileEvent {
   final String name;
   final String? phone;
   final String? email;
+  final String? vehicleType;
+  final String? vehicleModel;
+  final String? plateNumber;
+  final String? vehicleColor;
 
-  const UpdateProfileEvent({required this.name, this.phone, this.email});
+  const UpdateProfileEvent({
+    required this.name,
+    this.phone,
+    this.email,
+    this.vehicleType,
+    this.vehicleModel,
+    this.plateNumber,
+    this.vehicleColor,
+  });
 
   @override
-  List<Object> get props => [name, phone ?? '', email ?? ''];
+  List<Object> get props => [
+        name,
+        phone ?? '',
+        email ?? '',
+        vehicleType ?? '',
+        vehicleModel ?? '',
+        plateNumber ?? '',
+        vehicleColor ?? ''
+      ];
 }
 
 class GetSavedPlacesEvent extends ProfileEvent {}

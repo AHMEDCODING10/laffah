@@ -52,6 +52,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         name: event.name,
         phone: event.phone ?? _cachedProfile!.phone,
         email: event.email ?? _cachedProfile!.email,
+        vehicleType: event.vehicleType ?? _cachedProfile!.vehicleType,
+        vehicleModel: event.vehicleModel ?? _cachedProfile!.vehicleModel,
+        plateNumber: event.plateNumber ?? _cachedProfile!.plateNumber,
+        vehicleColor: event.vehicleColor ?? _cachedProfile!.vehicleColor,
       );
       emit(ProfileLoaded(_cachedProfile!));
     } else {
@@ -59,7 +63,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
 
     final result = await repository.updateProfile(
-        name: event.name, phone: event.phone, email: event.email);
+      name: event.name,
+      phone: event.phone,
+      email: event.email,
+      vehicleType: event.vehicleType,
+      vehicleModel: event.vehicleModel,
+      plateNumber: event.plateNumber,
+      vehicleColor: event.vehicleColor,
+    );
     result.fold(
       (failure) {
         if (_cachedProfile != null) {

@@ -1,10 +1,19 @@
 import '../../../../../l10n/app_localizations.dart';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/laffah_glass_snackbar.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/network/dio_client.dart';
+import '../../../../../core/network/api_endpoints.dart';
+import '../../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../../profile/presentation/bloc/profile_event.dart';
 import '../../../../profile/presentation/widgets/faq_bottom_sheet.dart';
 import '../../../../profile/presentation/pages/legal/terms_of_service_page.dart';
 import '../../../../profile/presentation/pages/legal/privacy_policy_page.dart';
@@ -189,57 +198,332 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
 }
 
 /// 2. Vehicle Details Modal Sheet
-class VehicleDetailsSheet extends StatelessWidget {
+class VehicleDetailsSheet extends StatefulWidget {
   final Map<String, String> vehicleInfo;
+  final bool isVerified;
+  final Function(String type, String model, String plate, String color)? onSave;
 
-  const VehicleDetailsSheet({super.key, required this.vehicleInfo});
+  const VehicleDetailsSheet({
+    super.key,
+    required this.vehicleInfo,
+    this.isVerified = false,
+    this.onSave,
+  });
+
+  @override
+  State<VehicleDetailsSheet> createState() => _VehicleDetailsSheetState();
+}
+
+class _VehicleDetailsSheetState extends State<VehicleDetailsSheet> {
+  bool _isEditing = false;
+  bool _isSaving = false;
+
+  late TextEditingController _typeController;
+  late TextEditingController _modelController;
+  late TextEditingController _plateController;
+  late TextEditingController _colorController;
+
+  @override
+  void initState() {
+    super.initState();
+    final type = widget.vehicleInfo['type'];
+    final model = widget.vehicleInfo['model'];
+    final plate = widget.vehicleInfo['plate'];
+    final color = widget.vehicleInfo['color'];
+
+    _typeController = TextEditingController(text: (type != null && type != 'غير محدد') ? type : '');
+    _modelController = TextEditingController(text: (model != null && model != 'غير محدد') ? model : '');
+    _plateController = TextEditingController(text: (plate != null && plate != 'غير محدد') ? plate : '');
+    _colorController = TextEditingController(text: (color != null && color != 'غير محدد') ? color : '');
+  }
+
+  @override
+  void dispose() {
+    _typeController.dispose();
+    _modelController.dispose();
+    _plateController.dispose();
+    _colorController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSave() async {
+    final type = _typeController.text.trim();
+    final model = _modelController.text.trim();
+    final plate = _plateController.text.trim();
+    final color = _colorController.text.trim();
+
+    if (type.isEmpty && model.isEmpty && plate.isEmpty && color.isEmpty) {
+      LaffahSnackBar.error(context, 'يرجى إدخال بيانات المركبة لحفظها.');
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    if (widget.onSave != null) {
+      widget.onSave!(type, model, plate, color);
+    } else {
+      // Direct bloc fallback
+      final profileBloc = context.read<ProfileBloc>();
+      final currentProfile = profileBloc.cachedProfile;
+      profileBloc.add(UpdateProfileEvent(
+        name: currentProfile?.name ?? 'الكابتن',
+        phone: currentProfile?.phone,
+        email: currentProfile?.email,
+        vehicleType: type.isNotEmpty ? type : currentProfile?.vehicleType,
+        vehicleModel: model.isNotEmpty ? model : currentProfile?.vehicleModel,
+        plateNumber: plate.isNotEmpty ? plate : currentProfile?.plateNumber,
+        vehicleColor: color.isNotEmpty ? color : currentProfile?.vehicleColor,
+      ));
+    }
+
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+
+    setState(() {
+      _isSaving = false;
+      _isEditing = false;
+    });
+
+    LaffahSnackBar.success(context, 'تم تحديث بيانات المركبة بنجاح في النظام');
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final displayType = _typeController.text.isNotEmpty
+        ? _typeController.text
+        : (widget.vehicleInfo['type'] ?? 'غير محدد');
+    final displayModel = _modelController.text.isNotEmpty
+        ? _modelController.text
+        : (widget.vehicleInfo['model'] ?? 'غير محدد');
+    final displayPlate = _plateController.text.isNotEmpty
+        ? _plateController.text
+        : (widget.vehicleInfo['plate'] ?? 'غير محدد');
+    final displayColor = _colorController.text.isNotEmpty
+        ? _colorController.text
+        : (widget.vehicleInfo['color'] ?? 'غير محدد');
 
     return _buildGlassSheetWrapper(
       context: context,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            AppLocalizations.of(context)!.capt_bike_data,
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans Arabic',
-              fontWeight: FontWeight.w900,
-              fontSize: 17,
-              color: isDark ? Colors.white : AppColors.gray900,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.two_wheeler_rounded,
+                      color: AppColors.primary500,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    AppLocalizations.of(context)!.capt_bike_data,
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      color: isDark ? Colors.white : AppColors.gray900,
+                    ),
+                  ),
+                ],
+              ),
+              if (!_isEditing)
+                IconButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _isEditing = true;
+                    });
+                  },
+                  tooltip: 'تعديل البيانات',
+                  icon: const Icon(Icons.edit_note_rounded,
+                      color: AppColors.primary500, size: 24),
+                ),
+            ],
           ),
           AppSpacing.h16,
-          _buildInfoRow(AppLocalizations.of(context)!.capt_bike_type,
-              vehicleInfo['type'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_model_year,
-              vehicleInfo['model'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_plate_num,
-              vehicleInfo['plate'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_license_type,
-              vehicleInfo['license'] ?? '', isDark),
-          _buildInfoRow(AppLocalizations.of(context)!.capt_periodic_inspection,
-              AppLocalizations.of(context)!.capt_valid_documented, isDark,
-              color: AppColors.success),
-          AppSpacing.h24,
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.primary500),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+
+          if (_isEditing) ...[
+            // Editable Form Mode
+            _buildTextFieldLabel('نوع المركبة / الدراجة النارية'),
+            _buildInputField(
+              controller: _typeController,
+              hint: 'مثال: دراجة نارية، دباب، سيارة...',
+              icon: Icons.two_wheeler_rounded,
+              isDark: isDark,
             ),
-            child: const Text(
-              'إغلاق',
-              style: TextStyle(
-                  fontFamily: 'IBM Plex Sans Arabic',
-                  color: AppColors.primary500,
-                  fontWeight: FontWeight.bold),
+            AppSpacing.h12,
+
+            _buildTextFieldLabel('الموديل وسنة الصنع'),
+            _buildInputField(
+              controller: _modelController,
+              hint: 'مثال: دايون 150 - 2023',
+              icon: Icons.calendar_today_rounded,
+              isDark: isDark,
             ),
-          ),
+            AppSpacing.h12,
+
+            _buildTextFieldLabel('رقم لوحة الأرقام الرسمية'),
+            _buildInputField(
+              controller: _plateController,
+              hint: 'مثال: 1/ص 48291',
+              icon: Icons.pin_rounded,
+              isDark: isDark,
+            ),
+            AppSpacing.h12,
+
+            _buildTextFieldLabel('لون المركبة'),
+            _buildInputField(
+              controller: _colorController,
+              hint: 'مثال: أسود، أحمر، فضي...',
+              icon: Icons.palette_outlined,
+              isDark: isDark,
+            ),
+            AppSpacing.h20,
+
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _handleSave,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary500,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'حفظ التعديلات',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                            ),
+                          ),
+                  ),
+                ),
+                AppSpacing.w12,
+                OutlinedButton(
+                  onPressed: _isSaving
+                      ? null
+                      : () {
+                          setState(() {
+                            _isEditing = false;
+                          });
+                        },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.gray400),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: AppColors.gray500,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            // View Mode
+            _buildInfoRow(AppLocalizations.of(context)!.capt_bike_type,
+                displayType, isDark),
+            _buildInfoRow(AppLocalizations.of(context)!.capt_model_year,
+                displayModel, isDark),
+            _buildInfoRow(AppLocalizations.of(context)!.capt_plate_num,
+                displayPlate, isDark),
+            _buildInfoRow('لون المركبة', displayColor, isDark),
+            _buildInfoRow(
+              AppLocalizations.of(context)!.capt_periodic_inspection,
+              widget.isVerified ? 'سليم وموثق رسمياً' : 'بانتظار تدقيق التوثيق',
+              isDark,
+              color: widget.isVerified ? AppColors.success : AppColors.warning,
+            ),
+            AppSpacing.h20,
+
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _isEditing = true;
+                      });
+                    },
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    label: const Text(
+                      'تعديل بيانات المركبة',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary500,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+                AppSpacing.w12,
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary500),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 13, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'إغلاق',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: AppColors.primary500,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           AppSpacing.h16,
         ],
       ),
@@ -248,6 +532,26 @@ class VehicleDetailsSheet extends StatelessWidget {
 }
 
 /// 3. Official Documents Modal Sheet
+class _OfficialDocItem {
+  final String key;
+  final String name;
+  final String description;
+  final IconData icon;
+  int? backendId;
+  String status = 'empty'; // 'empty', 'pending', 'approved', 'rejected'
+  String? rejectionReason;
+  String? fileUrl;
+  String? localPath;
+  DateTime? updatedAt;
+
+  _OfficialDocItem({
+    required this.key,
+    required this.name,
+    required this.description,
+    required this.icon,
+  });
+}
+
 class OfficialDocumentsSheet extends StatefulWidget {
   const OfficialDocumentsSheet({super.key});
 
@@ -256,47 +560,193 @@ class OfficialDocumentsSheet extends StatefulWidget {
 }
 
 class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
-  final List<Map<String, dynamic>> _documents = [
-    {
-      'id': 'id_card',
-      'name': 'البطاقة الشخصية اليمنية',
-      'number': '01010048291',
-      'validity': 'سارية حتى 2028/11',
-      'isVerified': true,
-      'statusLabel': 'معتمد وموثق',
-      'icon': Icons.badge_outlined,
-    },
-    {
-      'id': 'vehicle_card',
-      'name': 'كرت ملكية الدراجة النارية',
-      'number': '1/ص 48291 - صنعاء',
-      'validity': 'سارية حتى 2027/08',
-      'isVerified': true,
-      'statusLabel': 'معتمد وموثق',
-      'icon': Icons.two_wheeler_rounded,
-    },
-    {
-      'id': 'license',
-      'name': 'رخصة قيادة دراجة نارية',
-      'number': 'DL-967-382910',
-      'validity': 'سارية حتى 2029/04',
-      'isVerified': true,
-      'statusLabel': 'معتمد وموثق',
-      'icon': Icons.card_membership_rounded,
-    },
-    {
-      'id': 'inspection',
-      'name': 'شهادة الفحص الفني الدوري',
-      'number': 'INSP-2026-8812',
-      'validity': 'ساري حتى 2027/01',
-      'isVerified': true,
-      'statusLabel': 'معتمد وموثق',
-      'icon': Icons.fact_check_outlined,
-    },
-  ];
+  bool _isLoading = true;
+  bool _isVerified = false;
+  String? _uploadingKey;
 
-  void _showDocumentPreview(Map<String, dynamic> doc, bool isDark) {
+  late List<_OfficialDocItem> _documents;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeDocuments();
+    _fetchDocuments();
+  }
+
+  void _initializeDocuments() {
+    _documents = [
+      _OfficialDocItem(
+        key: 'id_card',
+        name: 'البطاقة الشخصية اليمنية (الهوية الوطنية)',
+        description: 'صورة واضحة للوجهين الأمامي والخلفي للبطاقة الشخصية الذكية أو جواز السفر الساري.',
+        icon: Icons.badge_outlined,
+      ),
+      _OfficialDocItem(
+        key: 'bike_license',
+        name: 'كرت ملكية الدراجة النارية / المركبة',
+        description: 'صورة واضحة لكرت ملكية الدراجة أو وثيقة التمليك الرسمية للمركبة.',
+        icon: Icons.two_wheeler_rounded,
+      ),
+      _OfficialDocItem(
+        key: 'driving_license',
+        name: 'رخصة قيادة دراجة نارية / رخصة القيادة',
+        description: 'رخصة قيادة سارية المفعول صادرة من الإدارة العامة للمرور في الجمهورية اليمنية.',
+        icon: Icons.card_membership_rounded,
+      ),
+      _OfficialDocItem(
+        key: 'inspection',
+        name: 'شهادة الفحص الدوري الفني',
+        description: 'شهادة الفحص الفني المعتمدة لسلامة المركبة أو السجل الدوري.',
+        icon: Icons.fact_check_outlined,
+      ),
+    ];
+  }
+
+  Future<void> _fetchDocuments() async {
+    try {
+      final dio = sl<DioClient>().dio;
+      final response = await dio.get(ApiEndpoints.captainDocuments);
+
+      if (response.data != null && response.data['status'] == 'success') {
+        final data = response.data['data'];
+        final bool verified = data['is_verified'] == true;
+        final List docsList = (data['documents'] as List?) ?? [];
+
+        if (mounted) {
+          setState(() {
+            _isVerified = verified;
+            for (var docItem in _documents) {
+              final match = docsList.firstWhere(
+                (d) {
+                  final type = d['type']?.toString();
+                  if (docItem.key == 'id_card') {
+                    return type == 'id_card' || type == 'identity';
+                  }
+                  if (docItem.key == 'bike_license') {
+                    return type == 'bike_license' ||
+                        type == 'vehicle_card' ||
+                        type == 'vehicle_ownership' ||
+                        type == 'vehicle_registration';
+                  }
+                  if (docItem.key == 'driving_license') {
+                    return type == 'driving_license' ||
+                        type == 'drivers_license' ||
+                        type == 'license';
+                  }
+                  if (docItem.key == 'inspection') {
+                    return type == 'inspection' || type == 'criminal_record';
+                  }
+                  return type == docItem.key;
+                },
+                orElse: () => null,
+              );
+
+              if (match != null) {
+                docItem.backendId = match['id'];
+                docItem.status = match['status']?.toString() ?? 'pending';
+                docItem.rejectionReason = match['rejection_reason']?.toString();
+                docItem.fileUrl = match['file_url']?.toString();
+                if (match['updated_at'] != null) {
+                  docItem.updatedAt = DateTime.tryParse(match['updated_at'].toString());
+                }
+              }
+            }
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+    } catch (_) {
+      // Offline fallback
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _pickAndUploadImage(_OfficialDocItem doc, ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1600,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        _uploadingKey = doc.key;
+      });
+
+      final dio = sl<DioClient>().dio;
+      final formData = FormData.fromMap({
+        'document_type': doc.key,
+        'type': doc.key,
+        'file': await MultipartFile.fromFile(
+          pickedFile.path,
+          filename: pickedFile.name.isNotEmpty ? pickedFile.name : '${doc.key}.jpg',
+        ),
+      });
+
+      final response = await dio.post(
+        ApiEndpoints.captainDocuments,
+        data: formData,
+      );
+
+      if (response.data != null &&
+          (response.data['status'] == 'success' || response.statusCode == 200)) {
+        doc.localPath = pickedFile.path;
+        doc.status = 'pending';
+        doc.rejectionReason = null;
+        if (response.data['data'] != null && response.data['data']['file_url'] != null) {
+          doc.fileUrl = response.data['data']['file_url'];
+        }
+
+        if (mounted) {
+          LaffahSnackBar.success(
+            context,
+            'تم رفع وثيقة (${doc.name}) بنجاح وهي قيد التدقيق والمراجعة.',
+          );
+          // Sync captain profile so main account screen badge updates
+          context.read<ProfileBloc>().add(GetProfileEvent());
+        }
+      } else {
+        if (mounted) {
+          LaffahSnackBar.error(
+            context,
+            response.data?['message']?.toString() ?? 'تعذر رفع الوثيقة، يرجى المحاولة لاحقاً',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        LaffahSnackBar.error(context, 'فشل رفع الوثيقة: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _uploadingKey = null;
+        });
+        _fetchDocuments();
+      }
+    }
+  }
+
+  void _showDocumentPreview(_OfficialDocItem doc, bool isDark) {
     HapticFeedback.lightImpact();
+
+    if (doc.status == 'empty') {
+      LaffahSnackBar.info(
+        context,
+        'لم يتم رفع هذه الوثيقة بعد. يرجى الضغط على "رفع الوثيقة" لإرفاقها.',
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
@@ -312,17 +762,16 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
                   color: AppColors.primary500.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(doc['icon'] as IconData,
-                    color: AppColors.primary500, size: 22),
+                child: Icon(doc.icon, color: AppColors.primary500, size: 22),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  doc['name'] as String,
+                  doc.name,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.w900,
-                    fontSize: 15,
+                    fontSize: 14.5,
                     color: isDark ? Colors.white : AppColors.gray900,
                   ),
                 ),
@@ -334,56 +783,108 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                height: 120,
+                height: 180,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.04)
-                      : AppColors.gray100,
+                  color: isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.gray100,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : AppColors.gray200,
+                    color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.gray200,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.verified_user_rounded,
-                      size: 40,
-                      color: AppColors.success,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'وثيقة رسمية معتمدة ومطابقة للمعايير',
-                      style: TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.gray300 : AppColors.gray700,
-                      ),
-                    ),
-                  ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: doc.localPath != null
+                      ? Image.file(
+                          File(doc.localPath!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildPlaceholderPreview(doc),
+                        )
+                      : (doc.fileUrl != null
+                          ? FutureBuilder<Response<List<int>>>(
+                              future: sl<DioClient>().dio.get<List<int>>(
+                                    doc.fileUrl!,
+                                    options: Options(responseType: ResponseType.bytes),
+                                  ),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(AppColors.primary500),
+                                    ),
+                                  );
+                                }
+                                if (snapshot.hasData && snapshot.data?.data != null) {
+                                  return Image.memory(
+                                    Uint8List.fromList(snapshot.data!.data!),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => _buildPlaceholderPreview(doc),
+                                  );
+                                }
+                                return _buildPlaceholderPreview(doc);
+                              },
+                            )
+                          : _buildPlaceholderPreview(doc)),
                 ),
               ),
               AppSpacing.h16,
-              _buildModalDetailRow('رقم الوثيقة:', doc['number'] as String, isDark),
-              AppSpacing.h8,
-              _buildModalDetailRow('فترة الصلاحية:', doc['validity'] as String, isDark),
-              AppSpacing.h8,
-              _buildModalDetailRow('حالة التحقق:', doc['statusLabel'] as String, isDark,
-                  valueColor: AppColors.success),
+              _buildModalDetailRow(
+                'حالة الوثيقة:',
+                doc.status == 'approved'
+                    ? 'معتمد وموثق'
+                    : (doc.status == 'pending' ? 'قيد المراجعة والتدقيق' : 'مرفوض - يتطلب تعديل'),
+                isDark,
+                valueColor: doc.status == 'approved'
+                    ? AppColors.success
+                    : (doc.status == 'pending' ? AppColors.warning : AppColors.danger),
+              ),
+              if (doc.rejectionReason != null && doc.rejectionReason!.isNotEmpty) ...[
+                AppSpacing.h8,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+                  ),
+                  child: Text(
+                    'سبب الرفض: ${doc.rejectionReason}',
+                    style: const TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.danger,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showUploadOption(doc);
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary500),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text(
+                'إعادة رفع الوثيقة',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary500,
+                ),
+              ),
+            ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary500,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               child: const Text(
                 'إغلاق',
@@ -400,8 +901,32 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
     );
   }
 
-  Widget _buildModalDetailRow(String label, String value, bool isDark,
-      {Color? valueColor}) {
+  Widget _buildPlaceholderPreview(_OfficialDocItem doc) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            doc.status == 'approved' ? Icons.verified_user_rounded : Icons.file_present_rounded,
+            size: 42,
+            color: doc.status == 'approved' ? AppColors.success : AppColors.primary500,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            doc.status == 'approved' ? 'وثيقة رسمية معتمدة ومطابقة للمعايير' : 'تم استلام الملف بنجاح',
+            style: const TextStyle(
+              fontFamily: 'IBM Plex Sans Arabic',
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.gray600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModalDetailRow(String label, String value, bool isDark, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -426,7 +951,7 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
     );
   }
 
-  void _showUploadOption(Map<String, dynamic> doc) {
+  void _showUploadOption(_OfficialDocItem doc) {
     HapticFeedback.selectionClick();
     showModalBottomSheet(
       context: context,
@@ -439,8 +964,7 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF141822) : Colors.white,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -458,7 +982,7 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
                 ),
                 AppSpacing.h16,
                 Text(
-                  'تحديث ${doc['name']}',
+                  'رفع أو تحديث ${doc.name}',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans Arabic',
                     fontWeight: FontWeight.w900,
@@ -466,35 +990,52 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
                     color: isDark ? Colors.white : AppColors.gray900,
                   ),
                 ),
+                AppSpacing.h8,
+                const Text(
+                  'يرجى التأكد من وضوح الصورة وتطابق البيانات مع الهوية الرسمية.',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontSize: 11.5,
+                    color: AppColors.gray500,
+                  ),
+                ),
                 AppSpacing.h16,
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_rounded,
-                      color: AppColors.primary500),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.camera_alt_rounded, color: AppColors.primary500),
+                  ),
                   title: const Text('التقاط صورة عبر الكاميرا',
                       style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.bold)),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5)),
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    LaffahSnackBar.success(
-                      context,
-                      'تم التقاط الوثيقة وجاري التحقق من مطابقتها عبر النظام',
-                    );
+                    _pickAndUploadImage(doc, ImageSource.camera);
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_rounded,
-                      color: AppColors.primary500),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.photo_library_rounded, color: AppColors.primary500),
+                  ),
                   title: const Text('اختيار ملف من المعرض',
                       style: TextStyle(
                           fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.bold)),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5)),
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    LaffahSnackBar.success(
-                      context,
-                      'تم رفع الوثيقة بنجاح وسيتم اعتمادها خلال وقت وجيز',
-                    );
+                    _pickAndUploadImage(doc, ImageSource.gallery);
                   },
                 ),
                 AppSpacing.h12,
@@ -509,6 +1050,33 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Calculate real header badge state
+    final hasRejected = _documents.any((d) => d.status == 'rejected');
+    final hasPending = _documents.any((d) => d.status == 'pending');
+    final isAllApproved = _documents.every((d) => d.status == 'approved');
+
+    Color headerBadgeColor;
+    String headerBadgeText;
+    IconData headerBadgeIcon;
+
+    if (_isVerified || isAllApproved) {
+      headerBadgeColor = AppColors.success;
+      headerBadgeText = 'مكتملة وموثقة';
+      headerBadgeIcon = Icons.check_circle_rounded;
+    } else if (hasRejected) {
+      headerBadgeColor = AppColors.danger;
+      headerBadgeText = 'وثائق تتطلب تعديل';
+      headerBadgeIcon = Icons.error_outline_rounded;
+    } else if (hasPending) {
+      headerBadgeColor = AppColors.warning;
+      headerBadgeText = 'قيد المراجعة والتدقيق';
+      headerBadgeIcon = Icons.hourglass_top_rounded;
+    } else {
+      headerBadgeColor = AppColors.gray500;
+      headerBadgeText = 'غير مكتملة';
+      headerBadgeIcon = Icons.pending_actions_rounded;
+    }
 
     return _buildGlassSheetWrapper(
       context: context,
@@ -547,22 +1115,22 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.12),
+                  color: headerBadgeColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: headerBadgeColor.withValues(alpha: 0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_rounded,
-                        color: AppColors.success, size: 14),
-                    SizedBox(width: 4),
+                    Icon(headerBadgeIcon, color: headerBadgeColor, size: 14),
+                    const SizedBox(width: 4),
                     Text(
-                      'مكتملة وموثقة',
+                      headerBadgeText,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.success,
+                        color: headerBadgeColor,
                       ),
                     ),
                   ],
@@ -581,7 +1149,19 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
             ),
           ),
           AppSpacing.h16,
-          ..._documents.map((doc) => _buildDocumentCard(doc, isDark)),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
+                ),
+              ),
+            )
+          else ...[
+            ..._documents.map((doc) => _buildDocumentCard(doc, isDark)),
+          ],
           AppSpacing.h20,
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
@@ -607,19 +1187,48 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
     );
   }
 
-  Widget _buildDocumentCard(Map<String, dynamic> doc, bool isDark) {
+  Widget _buildDocumentCard(_OfficialDocItem doc, bool isDark) {
+    final isUploadingThis = _uploadingKey == doc.key;
+
+    Color statusColor;
+    String statusLabel;
+    IconData statusIcon;
+
+    switch (doc.status) {
+      case 'approved':
+        statusColor = AppColors.success;
+        statusLabel = 'معتمد وموثق';
+        statusIcon = Icons.check_circle_rounded;
+        break;
+      case 'pending':
+        statusColor = AppColors.warning;
+        statusLabel = 'قيد المراجعة والتدقيق';
+        statusIcon = Icons.hourglass_top_rounded;
+        break;
+      case 'rejected':
+        statusColor = AppColors.danger;
+        statusLabel = 'مرفوض - يتطلب تعديل';
+        statusIcon = Icons.error_outline_rounded;
+        break;
+      default:
+        statusColor = AppColors.gray500;
+        statusLabel = 'لم يتم الرفع بعد';
+        statusIcon = Icons.cloud_upload_outlined;
+        break;
+    }
+
+    final bool isUploaded = doc.status != 'empty';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
-            : AppColors.gray50,
+        color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.gray50,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : AppColors.gray200,
+          color: doc.status == 'rejected'
+              ? AppColors.danger.withValues(alpha: 0.3)
+              : (isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.gray200),
         ),
       ),
       child: Column(
@@ -630,12 +1239,14 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary500.withValues(alpha: 0.1),
+                  color: isUploaded
+                      ? statusColor.withValues(alpha: 0.12)
+                      : AppColors.primary500.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  doc['icon'] as IconData,
-                  color: AppColors.primary500,
+                  doc.icon,
+                  color: isUploaded ? statusColor : AppColors.primary500,
                   size: 20,
                 ),
               ),
@@ -645,7 +1256,7 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      doc['name'] as String,
+                      doc.name,
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
                         fontSize: 13,
@@ -655,10 +1266,10 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${doc['number']} • ${doc['validity']}',
+                      doc.description,
                       style: const TextStyle(
                         fontFamily: 'IBM Plex Sans Arabic',
-                        fontSize: 11,
+                        fontSize: 10.5,
                         color: AppColors.gray500,
                       ),
                     ),
@@ -668,65 +1279,133 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(
-                  doc['statusLabel'] as String,
-                  style: const TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.success,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      statusLabel,
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+          if (doc.rejectionReason != null && doc.rejectionReason!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+              ),
+              child: Text(
+                'ملاحظة الرفض من الإدارة: ${doc.rejectionReason}',
+                style: const TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.danger,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           const Divider(height: 1),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () => _showDocumentPreview(doc, isDark),
-                  icon: const Icon(Icons.visibility_outlined, size: 16),
-                  label: const Text(
-                    'عرض الوثيقة',
-                    style: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
+          if (isUploadingThis)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
                     ),
                   ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary500,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                  ),
-                ),
-              ),
-              Container(width: 1, height: 18, color: AppColors.gray300),
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () => _showUploadOption(doc),
-                  icon: const Icon(Icons.file_upload_outlined, size: 16),
-                  label: const Text(
-                    'تحديث / تعديل',
+                  SizedBox(width: 8),
+                  Text(
+                    'جاري رفع الوثيقة وتشفيرها...',
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 11.5,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.primary500,
                     ),
                   ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: isDark ? AppColors.gray300 : AppColors.gray700,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                ],
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: isUploaded ? () => _showDocumentPreview(doc, isDark) : null,
+                    icon: Icon(
+                      Icons.visibility_outlined,
+                      size: 16,
+                      color: isUploaded ? AppColors.primary500 : AppColors.gray400,
+                    ),
+                    label: Text(
+                      'عرض الوثيقة',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: isUploaded ? AppColors.primary500 : AppColors.gray400,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+                Container(width: 1, height: 18, color: AppColors.gray300),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () => _showUploadOption(doc),
+                    icon: Icon(
+                      isUploaded ? Icons.file_upload_outlined : Icons.cloud_upload_rounded,
+                      size: 16,
+                      color: isUploaded
+                          ? (isDark ? AppColors.gray300 : AppColors.gray700)
+                          : AppColors.primary500,
+                    ),
+                    label: Text(
+                      isUploaded ? 'تحديث / تعديل' : 'رفع الوثيقة',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                        color: isUploaded
+                            ? (isDark ? AppColors.gray300 : AppColors.gray700)
+                            : AppColors.primary500,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

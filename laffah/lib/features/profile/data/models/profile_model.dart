@@ -13,6 +13,7 @@ class ProfileModel extends ProfileEntity {
     super.vehicleType,
     super.vehicleModel,
     super.plateNumber,
+    super.vehicleColor,
     super.rating,
     super.isVerified,
   });
@@ -42,6 +43,7 @@ class ProfileModel extends ProfileEntity {
       vehicleType: (captain?['vehicle_type'] ?? captain?['vehicleType'])?.toString(),
       vehicleModel: (captain?['vehicle_model'] ?? captain?['vehicleModel'])?.toString(),
       plateNumber: (captain?['plate_number'] ?? captain?['plateNumber'])?.toString(),
+      vehicleColor: (captain?['vehicle_color'] ?? captain?['vehicleColor'])?.toString(),
       rating: parsedRating,
       isVerified: captain?['is_verified'] == true ||
           captain?['is_verified'] == 1 ||
@@ -61,6 +63,7 @@ class ProfileModel extends ProfileEntity {
       'vehicle_type': vehicleType,
       'vehicle_model': vehicleModel,
       'plate_number': plateNumber,
+      'vehicle_color': vehicleColor,
       'rating': rating,
       'is_verified': isVerified,
     };

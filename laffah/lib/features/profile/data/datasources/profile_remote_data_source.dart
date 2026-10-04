@@ -5,8 +5,15 @@ import '../models/profile_model.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<BaseResponseModel<ProfileModel>> getProfile();
-  Future<BaseResponseModel<ProfileModel>> updateProfile(
-      {required String name, String? phone, String? email});
+  Future<BaseResponseModel<ProfileModel>> updateProfile({
+    required String name,
+    String? phone,
+    String? email,
+    String? vehicleType,
+    String? vehicleModel,
+    String? plateNumber,
+    String? vehicleColor,
+  });
   Future<BaseResponseModel<List<SavedPlaceModel>>> getSavedPlaces();
   Future<BaseResponseModel<SavedPlaceModel>> addSavedPlace(
       SavedPlaceModel place);
@@ -28,14 +35,33 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<BaseResponseModel<ProfileModel>> updateProfile(
-      {required String name, String? phone, String? email}) async {
+  Future<BaseResponseModel<ProfileModel>> updateProfile({
+    required String name,
+    String? phone,
+    String? email,
+    String? vehicleType,
+    String? vehicleModel,
+    String? plateNumber,
+    String? vehicleColor,
+  }) async {
     final Map<String, dynamic> body = {'name': name};
     if (phone != null && phone.trim().isNotEmpty) {
       body['phone'] = phone.trim();
     }
     if (email != null && email.trim().isNotEmpty) {
       body['email'] = email.trim();
+    }
+    if (vehicleType != null && vehicleType.trim().isNotEmpty) {
+      body['vehicle_type'] = vehicleType.trim();
+    }
+    if (vehicleModel != null && vehicleModel.trim().isNotEmpty) {
+      body['vehicle_model'] = vehicleModel.trim();
+    }
+    if (plateNumber != null && plateNumber.trim().isNotEmpty) {
+      body['plate_number'] = plateNumber.trim();
+    }
+    if (vehicleColor != null && vehicleColor.trim().isNotEmpty) {
+      body['vehicle_color'] = vehicleColor.trim();
     }
 
     final response = await dioClient.dio.post(

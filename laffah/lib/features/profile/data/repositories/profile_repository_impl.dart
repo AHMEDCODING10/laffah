@@ -33,12 +33,27 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, ProfileEntity>> updateProfile(
-      {required String name, String? phone, String? email}) async {
+  Future<Either<Failure, ProfileEntity>> updateProfile({
+    required String name,
+    String? phone,
+    String? email,
+    String? vehicleType,
+    String? vehicleModel,
+    String? plateNumber,
+    String? vehicleColor,
+  }) async {
     try {
-      final response =
-          await remoteDataSource.updateProfile(name: name, phone: phone, email: email);
+      final response = await remoteDataSource.updateProfile(
+        name: name,
+        phone: phone,
+        email: email,
+        vehicleType: vehicleType,
+        vehicleModel: vehicleModel,
+        plateNumber: plateNumber,
+        vehicleColor: vehicleColor,
+      );
       if (response.success && response.data != null) {
+        _cachedProfile = response.data!;
         return Right(response.data!);
       } else {
         return Left(ServerFailure(response.message));

@@ -42,19 +42,19 @@ class CaptainProfileViewer extends Component
 
     public function verifyCaptain()
     {
-        // Require documents: id_card and vehicle_registration
-        $hasIdCard = $this->captain->documents()->where('type', 'id_card')->exists();
-        $hasVehicleRegistration = $this->captain->documents()->where('type', 'vehicle_registration')->exists();
+        // Require documents: id_card and vehicle document (bike_license / driving_license / vehicle_registration)
+        $hasIdCard = $this->captain->documents()->whereIn('type', ['id_card', 'identity'])->exists();
+        $hasVehicleRegistration = $this->captain->documents()->whereIn('type', ['bike_license', 'vehicle_registration', 'vehicle_card', 'driving_license'])->exists();
 
         if (!$hasIdCard || !$hasVehicleRegistration) {
-            $this->addError('verification', 'يجب أن يرفع الكابتن بطاقة الهوية وتسجيل المركبة ليتم توثيقه.');
+            $this->addError('verification', 'يجب أن يرفع الكابتن بطاقة الهوية ووثيقة المركبة/الرخصة ليتم توثيقه.');
             return;
         }
 
         $this->captain->update(['is_verified' => true]);
         
         // Update documents status
-        $this->captain->documents()->whereIn('type', ['id_card', 'vehicle_registration'])->update(['status' => 'approved']);
+        $this->captain->documents()->whereIn('type', ['id_card', 'identity', 'bike_license', 'vehicle_registration', 'vehicle_card', 'driving_license'])->update(['status' => 'approved']);
         
         session()->flash('success', 'تم توثيق الحساب والموافقة على المستندات بنجاح.');
         $this->captain->refresh();

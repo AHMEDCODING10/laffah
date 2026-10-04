@@ -148,6 +148,41 @@ class CaptainController extends Controller
     }
 
     /**
+     * Get captain verification documents and verification status.
+     */
+    public function getDocuments(Request $request)
+    {
+        $user = $request->user();
+        $captainProfile = $user?->captainProfile;
+
+        if (!$captainProfile) {
+            return response()->json(['status' => 'error', 'message' => 'لم يتم العثور على ملف تعريف الكابتن.'], 404);
+        }
+
+        $documents = Document::where('captain_profile_id', $captainProfile->id)->get();
+
+        $docList = $documents->map(function ($doc) {
+            return [
+                'id'               => $doc->id,
+                'type'             => $doc->type,
+                'status'           => $doc->status, // pending, approved, rejected
+                'rejection_reason' => $doc->rejection_reason,
+                'file_url'         => url('/api/v1/captain/documents/' . $doc->id),
+                'created_at'       => $doc->created_at?->toIso8601String(),
+                'updated_at'       => $doc->updated_at?->toIso8601String(),
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => [
+                'is_verified' => (bool) $captainProfile->is_verified,
+                'documents'   => $docList,
+            ]
+        ]);
+    }
+
+    /**
      * Upload captain verification documents.
      */
     public function uploadDocuments(Request $request)
@@ -158,8 +193,14 @@ class CaptainController extends Controller
             'drivers_license'      => 'driving_license',
             'license'              => 'driving_license',
             'identity'             => 'id_card',
+            'id_card'              => 'id_card',
+            'vehicle_card'         => 'bike_license',
             'vehicle_ownership'    => 'bike_license',
             'vehicle_registration' => 'bike_license',
+            'bike_license'         => 'bike_license',
+            'inspection'           => 'inspection',
+            'criminal_record'      => 'criminal_record',
+            'insurance'            => 'insurance',
         ];
         if (isset($typeMapping[$docType])) {
             $docType = $typeMapping[$docType];
@@ -167,12 +208,12 @@ class CaptainController extends Controller
         $request->merge(['document_type' => $docType]);
 
         $request->validate([
-            'document_type' => 'required|string|in:id_card,driving_license,bike_license,criminal_record,insurance',
-            'file'          => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'document_type' => 'required|string|in:id_card,driving_license,bike_license,inspection,criminal_record,insurance',
+            'file'          => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
         ]);
 
         $user = $request->user();
-        $captainProfile = $user->captainProfile;
+        $captainProfile = $user?->captainProfile;
 
         if (!$captainProfile) {
             return response()->json(['status' => 'error', 'message' => 'لم يتم العثور على ملف الكابتن.'], 404);
@@ -186,15 +227,24 @@ class CaptainController extends Controller
                 'type'               => $request->document_type,
             ],
             [
-                'file_path' => $path,
-                'status'    => 'pending',
+                'file_path'        => $path,
+                'status'           => 'pending',
+                'rejection_reason' => null,
             ]
         );
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'تم رفع الوثيقة بنجاح وهي قيد المراجعة.',
-            'data'    => $doc
+            'message' => 'تم رفع الوثيقة بنجاح وهي قيد المراجعة والتدقيق.',
+            'data'    => [
+                'id'               => $doc->id,
+                'type'             => $doc->type,
+                'status'           => $doc->status,
+                'rejection_reason' => $doc->rejection_reason,
+                'file_url'         => url('/api/v1/captain/documents/' . $doc->id),
+                'created_at'       => $doc->created_at?->toIso8601String(),
+                'updated_at'       => $doc->updated_at?->toIso8601String(),
+            ]
         ]);
     }
 
@@ -204,6 +254,11 @@ class CaptainController extends Controller
     public function showDocument(Request $request, $id)
     {
         $user = $request->user();
+        if (!$user && $request->has('token')) {
+            try {
+                $user = auth('api')->setToken($request->query('token'))->user();
+            } catch (\Exception $e) {}
+        }
         $captainProfile = $user?->captainProfile;
 
         $doc = Document::findOrFail($id);

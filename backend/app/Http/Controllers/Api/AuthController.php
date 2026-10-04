@@ -65,7 +65,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'status' => 'success',
-            'data' => $request->user()->load(['roles', 'captainProfile', 'wallet'])
+            'data' => $request->user()->load(['roles', 'captainProfile.documents', 'wallet'])
         ]);
     }
 
@@ -80,6 +80,11 @@ class AuthController extends Controller
             'fcm_token' => 'nullable|string',
             'app_language' => 'nullable|string|in:ar,en',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'vehicle_type' => 'nullable|string|max:100',
+            'vehicle_model' => 'nullable|string|max:100',
+            'plate_number' => 'nullable|string|max:50',
+            'vehicle_color' => 'nullable|string|max:50',
+            'identity_number' => 'nullable|string|max:50',
         ]);
 
         $data = $request->only(['name', 'phone', 'email', 'fcm_token', 'app_language']);
@@ -94,11 +99,19 @@ class AuthController extends Controller
             $user->update($data);
         }
 
+        if ($user->captainProfile) {
+            $captainFields = $request->only(['vehicle_type', 'vehicle_model', 'plate_number', 'vehicle_color', 'identity_number']);
+            $captainFields = array_filter($captainFields, fn($value) => !is_null($value) && $value !== '');
+            if (!empty($captainFields)) {
+                $user->captainProfile->update($captainFields);
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'success' => true,
             'message' => __('messages.msg_4') ?: 'تم تحديث الملف الشخصي بنجاح.',
-            'data' => $user->load(['roles', 'captainProfile', 'wallet'])
+            'data' => $user->load(['roles', 'captainProfile.documents', 'wallet'])
         ]);
     }
 

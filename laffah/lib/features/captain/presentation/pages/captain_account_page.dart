@@ -69,14 +69,6 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
 
   String _selectedLang = 'ar'; // Default language Arabic
 
-  // Fallback vehicle info if not available
-  final Map<String, String> _defaultVehicleInfo = {
-    'type': 'غير محدد',
-    'model': 'غير محدد',
-    'plate': 'غير محدد',
-    'license': 'رخصة قيادة دراجات نارية سارية',
-  };
-
 
 
   @override
@@ -240,7 +232,11 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                                           backgroundColor: Colors.transparent,
                                           builder: (context) =>
                                               const OfficialDocumentsSheet(),
-                                        );
+                                        ).then((_) {
+                                          if (mounted) {
+                                            _profileBloc.add(GetProfileEvent());
+                                          }
+                                        });
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -351,26 +347,42 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 title: AppLocalizations.of(context)!.capt_acc_bike_data,
                 subtitle: AppLocalizations.of(context)!.capt_acc_bike_desc,
                 onTap: () {
-                  Map<String, String> currentVehicleInfo =
-                      Map.from(_defaultVehicleInfo);
-                  if (_profileBloc.state is ProfileLoaded) {
-                    final profile =
-                        (_profileBloc.state as ProfileLoaded).profile;
-                    currentVehicleInfo['type'] =
-                        profile.vehicleType ?? 'غير محدد';
-                    currentVehicleInfo['model'] =
-                        profile.vehicleModel ?? 'غير محدد';
-                    currentVehicleInfo['plate'] =
-                        profile.plateNumber ?? 'غير محدد';
-                  }
+                  final dynamic profile = _cachedProfile ??
+                      (_profileBloc.state is ProfileLoaded
+                          ? (_profileBloc.state as ProfileLoaded).profile
+                          : null);
+                  final Map<String, String> currentVehicleInfo = {
+                    'type': profile?.vehicleType ?? 'غير محدد',
+                    'model': profile?.vehicleModel ?? 'غير محدد',
+                    'plate': profile?.plateNumber ?? 'غير محدد',
+                    'color': profile?.vehicleColor ?? 'غير محدد',
+                  };
+                  final bool isVerified = profile?.isVerified ?? false;
 
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (context) =>
-                        VehicleDetailsSheet(vehicleInfo: currentVehicleInfo),
-                  );
+                    builder: (context) => VehicleDetailsSheet(
+                      vehicleInfo: currentVehicleInfo,
+                      isVerified: isVerified,
+                      onSave: (type, model, plate, color) {
+                        _profileBloc.add(UpdateProfileEvent(
+                          name: profile?.name ?? 'الكابتن',
+                          phone: profile?.phone,
+                          email: profile?.email,
+                          vehicleType: type,
+                          vehicleModel: model,
+                          plateNumber: plate,
+                          vehicleColor: color,
+                        ));
+                      },
+                    ),
+                  ).then((_) {
+                    if (mounted) {
+                      _profileBloc.add(GetProfileEvent());
+                    }
+                  });
                 },
               ),
               _buildSettingItem(
@@ -383,7 +395,11 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (context) => const OfficialDocumentsSheet(),
-                  );
+                  ).then((_) {
+                    if (mounted) {
+                      _profileBloc.add(GetProfileEvent());
+                    }
+                  });
                 },
               ),
               _buildSettingItem(
