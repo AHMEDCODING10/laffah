@@ -56,7 +56,23 @@ if [ "$ENABLE_SCHEDULE" != "false" ]; then
     nohup bash -c 'while true; do php artisan schedule:work; echo "Schedule worker stopped. Restarting in 5s..."; sleep 5; done' > /var/www/html/storage/logs/schedule.log 2>&1 &
 fi
 
+# 8. Ensure correct permissions on storage & cache for www-data
+echo "🔒 [Laffah] Setting full permissions on storage and cache for www-data..."
+mkdir -p /var/www/html/storage/logs \
+         /var/www/html/storage/framework/cache/data \
+         /var/www/html/storage/framework/sessions \
+         /var/www/html/storage/framework/views \
+         /var/www/html/bootstrap/cache
+
+touch /var/www/html/storage/logs/laravel.log \
+      /var/www/html/storage/logs/reverb.log \
+      /var/www/html/storage/logs/queue.log \
+      /var/www/html/storage/logs/schedule.log
+
+chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
 echo "✅ [Laffah] Startup completed successfully. Launching Web Server..."
 
-# 8. Start Apache Web Server in Foreground
+# 9. Start Apache Web Server in Foreground
 exec apache2-foreground

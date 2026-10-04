@@ -23,11 +23,12 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
   final TextEditingController _otpController = TextEditingController();
 
   void _verifyOtp() {
-    if (_otpController.text.length != 4) {
+    final code = _otpController.text.trim();
+    if (code.length != 6 && code.length != 4) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.auth_enter_4_digit_code,
-              style: const TextStyle(
+        const SnackBar(
+          content: Text('الرجاء إدخال رمز التحقق المكون من 6 أرقام',
+              style: TextStyle(
                   fontFamily: 'IBM Plex Sans Arabic',
                   fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.danger,
@@ -36,7 +37,7 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
       return;
     }
     context.read<AuthBloc>().add(VerifyResetCodeRequested(
-        phone: widget.phone, code: _otpController.text));
+        phone: widget.phone, code: code));
   }
 
   @override
@@ -90,7 +91,7 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                   ),
                   AppSpacing.h12,
                   Text(
-                    '${AppLocalizations.of(context)!.auth_enter_code_sent_to} ${widget.phone}',
+                    'أدخل رمز التحقق الذي تم إرساله إلى ${widget.phone}',
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
                       fontSize: 14,
@@ -106,20 +107,20 @@ class _ForgotPasswordOtpPageState extends State<ForgotPasswordOtpPage> {
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 16.0,
+                        letterSpacing: 12.0,
                         color: isDark ? AppColors.white : AppColors.gray900,
                       ),
                       inputFormatters: [
-                        LengthLimitingTextInputFormatter(4),
+                        LengthLimitingTextInputFormatter(6),
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       decoration: InputDecoration(
-                        hintText: '----',
+                        hintText: '------',
                         hintStyle: TextStyle(
-                          fontSize: 28,
-                          letterSpacing: 16.0,
+                          fontSize: 26,
+                          letterSpacing: 12.0,
                           color: isDark ? AppColors.gray600 : AppColors.gray400,
                         ),
                         filled: true,

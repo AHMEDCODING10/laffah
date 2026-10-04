@@ -161,7 +161,11 @@ class AuthController extends Controller
         
         try {
             $code = $this->authService->forgotPassword($request->phone);
-            Log::info("Password reset OTP generated for phone {$request->phone}");
+            try {
+                Log::info("Password reset OTP generated for phone {$request->phone}");
+            } catch (\Throwable $logEx) {
+                // Ignore log write failure to never block authentication
+            }
             return response()->json([
                 'success' => true,
                 'status' => 'success',
@@ -169,10 +173,14 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             $statusCode = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 400;
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'storage/logs') || str_contains($msg, 'laravel.log') || str_contains($msg, 'Permission denied')) {
+                $msg = 'حدث خطأ في معالجة الطلب، يرجى المحاولة مرة أخرى.';
+            }
             return response()->json([
                 'success' => false,
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $msg
             ], $statusCode);
         }
     }
@@ -193,10 +201,14 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             $statusCode = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 400;
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'storage/logs') || str_contains($msg, 'laravel.log') || str_contains($msg, 'Permission denied')) {
+                $msg = 'حدث خطأ أثناء التحقق، يرجى المحاولة مرة أخرى.';
+            }
             return response()->json([
                 'success' => false,
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $msg
             ], $statusCode);
         }
     }
@@ -218,10 +230,14 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             $statusCode = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 400;
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'storage/logs') || str_contains($msg, 'laravel.log') || str_contains($msg, 'Permission denied')) {
+                $msg = 'حدث خطأ أثناء تعيين كلمة المرور، يرجى المحاولة مرة أخرى.';
+            }
             return response()->json([
                 'success' => false,
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $msg
             ], $statusCode);
         }
     }
