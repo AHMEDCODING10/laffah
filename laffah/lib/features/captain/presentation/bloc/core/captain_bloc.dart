@@ -375,6 +375,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationText: "كابتن لَفَّة متصل — جاري تتبع الموقع لاستقبال المشاوير",
           notificationTitle: "لَفَّة — خدمة الكابتن النشطة",
+          notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
           enableWakeLock: true,
         ),
       );
