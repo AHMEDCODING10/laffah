@@ -131,7 +131,7 @@ class WalletService
      * Wallet Recharge via Yemeni Payment Channels.
      * Records the transaction as 'pending' awaiting verification/admin approval to prevent fraud.
      */
-    public function recharge($userId, float $amount, string $referenceId, string $paymentMethod = 'cash', ?string $senderAccount = null)
+    public function recharge($userId, float $amount, string $referenceId, string $paymentMethod = 'cash', ?string $senderAccount = null, ?string $receiptUrl = null)
     {
         $cleanRef = trim($referenceId);
         if (empty($cleanRef)) {
@@ -150,7 +150,7 @@ class WalletService
         $desc = "طلب شحن رصيد عبر $methodName - رقم السند: $cleanRef$senderInfo - قيد المراجعة";
 
         try {
-            return DB::transaction(function () use ($userId, $amount, $cleanRef, $desc) {
+            return DB::transaction(function () use ($userId, $amount, $cleanRef, $desc, $paymentMethod, $senderAccount, $receiptUrl) {
                 $existing = Transaction::where('reference_id', $cleanRef)->lockForUpdate()->first();
                 if ($existing) {
                     throw new Exception('رقم الحوالة أو المرجع هذا تم استخدامه مسبقاً! لا يمكن تكرار عملية الشحن.', 409);
@@ -158,15 +158,17 @@ class WalletService
 
                 $wallet = Wallet::firstOrCreate(['user_id' => $userId], ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']);
 
-                // [FINANCIAL FIX]: Do NOT auto-credit immediately without bank confirmation / admin approval!
-                // The transaction is logged as 'pending'. Balance is credited only upon approval.
+                // Log as 'pending' awaiting verification/admin approval to prevent financial fraud
                 $transaction = Transaction::create([
-                    'wallet_id'    => $wallet->id,
-                    'type'         => 'deposit',
-                    'amount'       => $amount,
-                    'status'       => 'pending',
-                    'description'  => $desc,
-                    'reference_id' => $cleanRef,
+                    'wallet_id'      => $wallet->id,
+                    'type'           => 'deposit',
+                    'payment_method' => $paymentMethod,
+                    'sender_account' => $senderAccount,
+                    'amount'         => $amount,
+                    'status'         => 'pending',
+                    'description'    => $desc,
+                    'reference_id'   => $cleanRef,
+                    'receipt_url'    => $receiptUrl,
                 ]);
 
                 return [
@@ -204,7 +206,18 @@ class WalletService
             $transaction->update([
                 'status'      => 'completed',
                 'description' => str_replace(' - قيد المراجعة', ' - معتمد بنجاح', $transaction->description),
+                'approved_by' => $adminId,
+                'approved_at' => now(),
             ]);
+
+            // Broadcast real-time balance update to passenger / captain app via WebSockets
+            try {
+                event(new \App\Events\WalletBalanceUpdated(
+                    $wallet,
+                    $transaction,
+                    'تم اعتماد شحن رصيدك بنجاح بمبلغ ' . number_format($transaction->amount, 0) . ' ر.ي'
+                ));
+            } catch (\Exception $e) {}
 
             return [
                 'wallet'      => $wallet,
@@ -229,7 +242,21 @@ class WalletService
             $transaction->update([
                 'status'      => 'rejected',
                 'description' => $transaction->description . ($reason ? " (سبب الرفض: $reason)" : ' (مرفوض)'),
+                'admin_notes' => $reason,
+                'approved_by' => $adminId,
+                'rejected_at' => now(),
             ]);
+
+            $wallet = Wallet::where('id', $transaction->wallet_id)->first();
+            if ($wallet) {
+                try {
+                    event(new \App\Events\WalletBalanceUpdated(
+                        $wallet,
+                        $transaction,
+                        'تم رفض طلب شحن الرصيد: ' . ($reason ?: 'بيانات غير متطابقة')
+                    ));
+                } catch (\Exception $e) {}
+            }
 
             return [
                 'transaction' => $transaction,
@@ -418,6 +445,81 @@ class WalletService
                 'description'  => "رسوم إلغاء المشوار #{$tripId} بعد وصول أو تحرك الكابتن",
                 'reference_id' => 'CAN-PAS-' . $tripId . '-' . strtoupper(bin2hex(random_bytes(2))),
             ]);
+        });
+    }
+
+    /**
+     * Create a pending recharge transaction for online payment gateway initiation.
+     */
+    public function createPendingGatewayTransaction(int $userId, float $amount, string $gateway, ?string $senderAccount = null): Transaction
+    {
+        $cleanRef = strtoupper($gateway) . '-' . time() . '-' . strtoupper(bin2hex(random_bytes(3)));
+        $wallet = Wallet::firstOrCreate(['user_id' => $userId], ['balance' => 0.0, 'held_balance' => 0.0, 'currency' => 'YER']);
+
+        $methodName = self::YEMENI_CHANNELS[$gateway] ?? ucfirst($gateway);
+        $desc = "شحن رصيد إلكتروني عبر $methodName - مرجع: $cleanRef - قيد المعالجة";
+
+        return Transaction::create([
+            'wallet_id'      => $wallet->id,
+            'type'           => 'deposit',
+            'payment_method' => $gateway,
+            'sender_account' => $senderAccount,
+            'amount'         => $amount,
+            'status'         => 'pending',
+            'description'    => $desc,
+            'reference_id'   => $cleanRef,
+        ]);
+    }
+
+    /**
+     * Verify online OTP and credit wallet immediately if valid.
+     */
+    public function verifyGatewayOtp(string $referenceId, string $otp, \App\Services\PaymentGateways\PaymentGatewayManager $gatewayManager): array
+    {
+        return DB::transaction(function () use ($referenceId, $otp, $gatewayManager) {
+            $transaction = Transaction::where('reference_id', $referenceId)->lockForUpdate()->firstOrFail();
+
+            if ($transaction->status === 'completed') {
+                return [
+                    'status'  => 'success',
+                    'message' => 'تم شحن الرصيد بالفعل مسبقاً.',
+                ];
+            }
+
+            $driver = $gatewayManager->driver($transaction->payment_method);
+            $verifyResult = $driver->verifyPayment($referenceId, [
+                'otp'    => $otp,
+                'amount' => $transaction->amount,
+            ]);
+
+            if (!($verifyResult['success'] ?? false) || ($verifyResult['status'] ?? '') !== 'completed') {
+                throw new Exception($verifyResult['message'] ?? 'فشل التحقق من رمز التأكيد OTP.');
+            }
+
+            $wallet = Wallet::where('id', $transaction->wallet_id)->lockForUpdate()->firstOrFail();
+            $wallet->balance += $transaction->amount;
+            $wallet->save();
+
+            $transaction->update([
+                'status'      => 'completed',
+                'description' => str_replace(' - قيد المعالجة', ' - تم بنجاح عبر البوابة الإلكترونية', $transaction->description),
+                'approved_at' => now(),
+            ]);
+
+            try {
+                event(new \App\Events\WalletBalanceUpdated(
+                    $wallet,
+                    $transaction,
+                    "تم شحن رصيدك بنجاح بمبلغ " . number_format($transaction->amount, 0) . " ر.ي عبر " . ucfirst($transaction->payment_method)
+                ));
+            } catch (\Exception $e) {}
+
+            return [
+                'status'      => 'success',
+                'message'     => 'تم تأكيد الدفع وإيداع المبلغ في محفظتك بنجاح!',
+                'new_balance' => (double) $wallet->balance,
+                'transaction' => $transaction,
+            ];
         });
     }
 }

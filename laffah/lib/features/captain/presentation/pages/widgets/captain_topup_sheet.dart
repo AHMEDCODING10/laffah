@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/network/api_endpoints.dart';
@@ -47,6 +50,7 @@ class _CaptainTopUpSheetState extends State<CaptainTopUpSheet> {
   final _amountController = TextEditingController(text: '1000');
   final _refController = TextEditingController();
   final _senderAccountController = TextEditingController();
+  File? _receiptImage;
 
   int _selectedMethodIndex = 0;
   bool _isSubmitting = false;
@@ -100,6 +104,31 @@ class _CaptainTopUpSheetState extends State<CaptainTopUpSheet> {
     super.dispose();
   }
 
+  Future<void> _pickReceiptImage() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked != null) {
+        setState(() {
+          _receiptImage = File(picked.path);
+        });
+        HapticFeedback.selectionClick();
+      }
+    } catch (_) {
+      _showError('تعذر فتح معرض الصور');
+    }
+  }
+
+  void _removeReceiptImage() {
+    setState(() {
+      _receiptImage = null;
+    });
+    HapticFeedback.lightImpact();
+  }
+
   Future<void> _submitRecharge() async {
     final amountText = _amountController.text.trim();
     final refText = _refController.text.trim();
@@ -126,16 +155,33 @@ class _CaptainTopUpSheetState extends State<CaptainTopUpSheet> {
       final dio = sl<DioClient>().dio;
       final selected = _wallets[_selectedMethodIndex];
 
-      await dio.post(
-        ApiEndpoints.walletRecharge,
-        data: {
+      dynamic postData;
+      if (_receiptImage != null) {
+        postData = FormData.fromMap({
+          'amount': amount,
+          'payment_method': selected['id'],
+          'reference_id': refText,
+          if (_senderAccountController.text.trim().isNotEmpty)
+            'sender_account': _senderAccountController.text.trim(),
+          'receipt_image': await MultipartFile.fromFile(
+            _receiptImage!.path,
+            filename: 'receipt_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          ),
+        });
+      } else {
+        postData = {
           'amount': amount,
           'payment_method': selected['id'],
           'reference_id': refText,
           'sender_account': _senderAccountController.text.trim().isNotEmpty
               ? _senderAccountController.text.trim()
               : null,
-        },
+        };
+      }
+
+      await dio.post(
+        ApiEndpoints.walletRecharge,
+        data: postData,
       );
 
       if (mounted) {
@@ -682,6 +728,117 @@ class _CaptainTopUpSheetState extends State<CaptainTopUpSheet> {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
             ),
+
+            const SizedBox(height: 14),
+
+            // Receipt Image Attachment Box
+            Text(
+              '4. صورة السند / إشعار التحويل (اختياري لتسريع الاعتماد):',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontWeight: FontWeight.bold,
+                fontSize: 12.5,
+                color: widget.isDark ? AppColors.gray200 : AppColors.gray800,
+              ),
+            ),
+            AppSpacing.h8,
+            if (_receiptImage == null)
+              InkWell(
+                onTap: _pickReceiptImage,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: widget.isDark ? const Color(0xFF1E2433) : AppColors.gray50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: widget.isDark ? Colors.white12 : AppColors.gray300,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 20,
+                        color: AppColors.primary500,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'إرفاق صورة السند من الاستوديو',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: widget.isDark ? AppColors.gray300 : AppColors.gray700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        _receiptImage!,
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded, size: 14, color: AppColors.success),
+                              SizedBox(width: 4),
+                              Text(
+                                'تم إرفاق صورة السند',
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _receiptImage!.path.split(Platform.pathSeparator).last,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 10,
+                              color: widget.isDark ? AppColors.gray400 : AppColors.gray600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 20),
+                      tooltip: 'حذف الصورة',
+                      onPressed: _removeReceiptImage,
+                    ),
+                  ],
+                ),
+              ),
 
             AppSpacing.h20,
 

@@ -23,6 +23,8 @@ class RechargeRequest extends FormRequest
             'payment_method' => 'required|string|in:kuraimi,tadhamon,jeeb,cac,onecash,jawali,floosak,cash',
             'reference_id' => 'required|string|min:4|max:50',
             'sender_account' => 'nullable|string|max:100',
+            'receipt_image' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
+            'receipt_url' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
         ];
     }

@@ -13,12 +13,16 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\PaymentWebhookController;
 
 // Public Settings
 Route::get('settings', [SettingsController::class, 'index']);
 
 // Render Health Check
 Route::get('health', [HealthController::class, 'check']);
+
+// Unified Payment Gateway Webhooks (Autonomous payment callbacks from Yemeni banks/wallets)
+Route::post('payments/{gateway}/webhook', [PaymentWebhookController::class, 'handle']);
 
 // Public Geocoding — Yemen-biased, no auth required
 Route::prefix('geocode')->group(function () {
@@ -93,10 +97,13 @@ Route::middleware('auth:api')->group(function () {
 
     // Wallet & Payments
     Route::prefix('wallet')->group(function () {
-        Route::get('balance',          [WalletController::class, 'balance']);
-        Route::get('company-accounts', [WalletController::class, 'companyAccounts']);
-        Route::post('recharge',        [WalletController::class, 'recharge']);
-        Route::post('payout-request',  [WalletController::class, 'payoutRequest']);
+        Route::get('balance',            [WalletController::class, 'balance']);
+        Route::get('company-accounts',   [WalletController::class, 'companyAccounts']);
+        Route::get('gateways-report',    [WalletController::class, 'gatewaysReport']);
+        Route::post('recharge',          [WalletController::class, 'recharge']);
+        Route::post('initiate-online',   [WalletController::class, 'initiateOnlinePayment']);
+        Route::post('verify-online-otp', [WalletController::class, 'verifyOnlineOtp']);
+        Route::post('payout-request',    [WalletController::class, 'payoutRequest']);
     });
 
     // Notifications (Shared for all authenticated users)
