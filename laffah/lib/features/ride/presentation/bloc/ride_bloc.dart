@@ -14,6 +14,7 @@ import '../../../../core/services/captain_trip_alert_sound_service.dart';
 import '../../domain/usecases/estimate_trip_fare_usecase.dart';
 import '../../domain/usecases/delete_trip_usecase.dart';
 import '../../../../core/bloc/bloc_transformers.dart';
+import '../../../passenger/data/datasources/passenger_notification_local_data_source.dart';
 
 export 'ride_event.dart';
 export 'ride_state.dart';
@@ -592,6 +593,14 @@ class RideBloc extends Bloc<RideEvent, RideState> {
       ));
     } else if (s == 'cancelled') {
       _stopSmartPolling();
+      final captainName = (event.captainName != null && event.captainName!.isNotEmpty)
+          ? event.captainName!
+          : (state is RideBookingConfirmed ? (state as RideBookingConfirmed).captainName : 'الكابتن');
+      PassengerNotificationLocalDataSource.addTripCancelledNotification(
+        captainName: captainName,
+        tripId: event.rideId,
+        isCancelledByCaptain: true,
+      );
       emit(const RideInitial());
     }
   }
@@ -683,6 +692,17 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         (state is RideBookingConfirmed
             ? (state as RideBookingConfirmed).rideId
             : null);
+
+    final captainName = (state is RideBookingConfirmed)
+        ? (state as RideBookingConfirmed).captainName
+        : ((state is RideAccepted) ? (state as RideAccepted).captainName : 'الكابتن');
+
+    PassengerNotificationLocalDataSource.addTripCancelledNotification(
+      captainName: captainName,
+      tripId: targetTripId,
+      reason: event.reason,
+      isCancelledByCaptain: false,
+    );
 
     if (state is TripHistoryLoaded) {
       final currentList = (state as TripHistoryLoaded).trips;
@@ -859,6 +879,19 @@ class RideBloc extends Bloc<RideEvent, RideState> {
         _echoService.stopListeningToTripStatus(_currentActiveRideId!);
         _currentActiveRideId = null;
       }
+      final captainName = (state is RideBookingConfirmed)
+          ? (state as RideBookingConfirmed).captainName
+          : ((state is RideAccepted) ? (state as RideAccepted).captainName : 'الكابتن');
+      final tripId = data['trip_id']?.toString() ?? data['id']?.toString() ?? _currentActiveRideId;
+      final reason = data['reason']?.toString() ?? data['cancel_reason']?.toString();
+
+      PassengerNotificationLocalDataSource.addTripCancelledNotification(
+        captainName: captainName,
+        tripId: tripId,
+        reason: reason,
+        isCancelledByCaptain: true,
+      );
+
       emit(const RideInitial());
     }
   }

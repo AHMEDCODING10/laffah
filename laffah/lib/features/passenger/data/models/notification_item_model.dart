@@ -7,6 +7,7 @@ class NotificationItemModel {
   final bool isUnread;
   final String? captainName;
   final String? tripId;
+  final String? type;
 
   NotificationItemModel({
     required this.id,
@@ -17,11 +18,12 @@ class NotificationItemModel {
     this.isUnread = false,
     this.captainName,
     this.tripId,
+    this.type,
   });
 
   factory NotificationItemModel.fromJson(Map<String, dynamic> json) {
     // Map backend type to category
-    String rawType = json['type'] ?? json['category'] ?? 'system';
+    String rawType = json['type']?.toString() ?? json['category']?.toString() ?? 'system';
     String category = 'system';
     if (rawType.contains('trip') || rawType == 'rides') {
       category = 'rides';
@@ -46,6 +48,21 @@ class NotificationItemModel {
       isUnread: !isRead,
       captainName: json['captainName'] ?? json['extra']?['captain_name'],
       tripId: json['tripId']?.toString() ?? json['trip_id']?.toString(),
+      type: rawType,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'message': message,
+      'time': time,
+      'category': category,
+      'isUnread': isUnread,
+      'captainName': captainName,
+      'tripId': tripId,
+      'type': type,
+    };
   }
 }

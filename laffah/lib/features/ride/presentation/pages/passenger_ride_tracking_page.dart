@@ -240,6 +240,31 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
                 state.status.toLowerCase() == 'cancelled')) {
           if (mounted && Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.cancel_outlined, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'تم إلغاء المشوار. يمكنك طلب كابتن آخر الآن.',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: AppColors.danger,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            );
           }
           return;
         }

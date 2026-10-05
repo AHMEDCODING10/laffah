@@ -190,6 +190,44 @@ class FirebaseNotificationService {
     }
   }
 
+  /// Displays a local notification banner manually (e.g. For in-app trip cancellation or urgent alert)
+  Future<void> showNotificationBanner({
+    required String title,
+    required String body,
+    String? payload,
+    bool isUrgent = false,
+  }) async {
+    if (kIsWeb || _localNotifications == null) return;
+    try {
+      final selectedChannel = isUrgent ? _tripAlertChannel : _defaultChannel;
+      await _localNotifications!.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            selectedChannel.id,
+            selectedChannel.name,
+            channelDescription: selectedChannel.description,
+            importance: selectedChannel.importance,
+            priority: isUrgent ? Priority.max : Priority.high,
+            playSound: true,
+            enableVibration: true,
+            category: isUrgent ? AndroidNotificationCategory.alarm : AndroidNotificationCategory.message,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint("⚠️ [LocalNotification] showNotificationBanner error: $e");
+    }
+  }
+
   /// Handle user clicking on a notification banner — deep-links to the correct screen
   void _handleNotificationClick(RemoteMessage message) {
     debugPrint("🚀 [FCM Action] User clicked notification: ${message.data}");

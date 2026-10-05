@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/notification_item_model.dart';
+import '../../data/datasources/passenger_notification_local_data_source.dart';
 import '../widgets/notification_card.dart';
 
 /// NotificationsPage — Central hub for notifications with swipe-to-delete and live API integration.
@@ -42,25 +43,51 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
 
     try {
-      final dioClient = di.sl<DioClient>();
-      final response = await dioClient.dio.get(ApiEndpoints.notifications);
-      if (!mounted) return;
-      if (response.statusCode == 200 && response.data != null) {
-        final dynamic rawData = response.data['data'] ?? response.data;
-        final List<dynamic> list = rawData is List
-            ? rawData
-            : (rawData is Map && rawData['data'] is List
-                ? rawData['data'] as List<dynamic>
-                : []);
-        setState(() {
-          _notifications = list.map((item) => NotificationItemModel.fromJson(item as Map<String, dynamic>)).toList();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
+      final localList =
+          await PassengerNotificationLocalDataSource.getLocalNotifications();
+      List<NotificationItemModel> remoteList = [];
+
+      try {
+        final dioClient = di.sl<DioClient>();
+        final response = await dioClient.dio.get(ApiEndpoints.notifications);
+        if (response.statusCode == 200 && response.data != null) {
+          final dynamic rawData = response.data['data'] ?? response.data;
+          final List<dynamic> list = rawData is List
+              ? rawData
+              : (rawData is Map && rawData['data'] is List
+                  ? rawData['data'] as List<dynamic>
+                  : []);
+          remoteList = list
+              .map((item) => NotificationItemModel.fromJson(
+                  item as Map<String, dynamic>))
+              .toList();
+        }
+      } catch (e) {
+        debugPrint(
+            "⚠️ [NotificationsPage] Remote fetch error (falling back to local): $e");
       }
+
+      if (!mounted) return;
+
+      // Merge local notifications (such as cancellations) with remote ones
+      final seenIds = <String>{};
+      final merged = <NotificationItemModel>[];
+
+      for (final item in localList) {
+        if (seenIds.add(item.id)) {
+          merged.add(item);
+        }
+      }
+      for (final item in remoteList) {
+        if (seenIds.add(item.id)) {
+          merged.add(item);
+        }
+      }
+
+      setState(() {
+        _notifications = merged;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint("⚠️ [NotificationsPage] Error fetching notifications: $e");
       if (mounted) {
@@ -74,6 +101,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _markAsRead(String id) async {
     try {
+      await PassengerNotificationLocalDataSource.markAsRead(id);
       final dioClient = di.sl<DioClient>();
       await dioClient.dio.post(ApiEndpoints.notificationMarkRead(id));
       if (!mounted) return;
@@ -91,6 +119,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             isUnread: false,
             captainName: old.captainName,
             tripId: old.tripId,
+            type: old.type,
           );
         }
       });
@@ -102,6 +131,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<void> _markAllAsRead() async {
     try {
       HapticFeedback.lightImpact();
+      await PassengerNotificationLocalDataSource.markAllAsRead();
       final dioClient = di.sl<DioClient>();
       await dioClient.dio.post(ApiEndpoints.notificationsReadAll);
       if (!mounted) return;
@@ -115,6 +145,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           isUnread: false,
           captainName: n.captainName,
           tripId: n.tripId,
+          type: n.type,
         )).toList();
       });
 
@@ -136,6 +167,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _deleteNotification(NotificationItemModel item, int index) async {
     HapticFeedback.mediumImpact();
+    await PassengerNotificationLocalDataSource.deleteNotification(item.id);
     // Optimistic delete
     setState(() {
       _notifications.removeWhere((n) => n.id == item.id);
@@ -240,6 +272,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
 
     try {
+      await PassengerNotificationLocalDataSource.clearAll();
       final dioClient = di.sl<DioClient>();
       await dioClient.dio.delete(ApiEndpoints.notificationsClearAll);
     } catch (e) {

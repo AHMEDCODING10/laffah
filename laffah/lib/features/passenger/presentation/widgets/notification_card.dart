@@ -18,19 +18,32 @@ class NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isCancelled = item.type == 'trip_cancelled' ||
+        item.title.contains('إلغاء') ||
+        item.message.contains('إلغاء') ||
+        item.message.contains('ملغي');
+
     final cardColor = item.isUnread
         ? (isDark
-            ? const Color(0xFF1E2330)
-            : AppColors.primary500.withValues(alpha: 0.04))
+            ? (isCancelled
+                ? AppColors.danger.withValues(alpha: 0.08)
+                : const Color(0xFF1E2330))
+            : (isCancelled
+                ? AppColors.danger.withValues(alpha: 0.04)
+                : AppColors.primary500.withValues(alpha: 0.04)))
         : (isDark ? const Color(0xFF161B26) : Colors.white);
 
-    final borderColor = item.isUnread
-        ? AppColors.primary500.withValues(alpha: 0.4)
-        : (isDark
-            ? Colors.white.withValues(alpha: 0.07)
-            : AppColors.gray200.withValues(alpha: 0.8));
+    final borderColor = isCancelled
+        ? AppColors.danger.withValues(alpha: 0.35)
+        : (item.isUnread
+            ? AppColors.primary500.withValues(alpha: 0.4)
+            : (isDark
+                ? Colors.white.withValues(alpha: 0.07)
+                : AppColors.gray200.withValues(alpha: 0.8)));
 
-    final iconColor = _getCategoryColor(item.category);
+    final iconColor = isCancelled ? AppColors.danger : _getCategoryColor(item.category);
+    final iconData = isCancelled ? Icons.cancel_rounded : _getCategoryIcon(item.category);
+    final badgeColor = isCancelled ? AppColors.danger : AppColors.primary500;
 
     return GlassBox(
       borderRadius: BorderRadius.circular(16),
@@ -55,7 +68,7 @@ class NotificationCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    _getCategoryIcon(item.category),
+                    iconData,
                     color: iconColor,
                     size: 18,
                   ),
@@ -68,7 +81,7 @@ class NotificationCard extends StatelessWidget {
                       width: 9,
                       height: 9,
                       decoration: BoxDecoration(
-                        color: AppColors.primary500,
+                        color: badgeColor,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isDark ? const Color(0xFF161B26) : Colors.white,
@@ -97,7 +110,9 @@ class NotificationCard extends StatelessWidget {
                                 ? FontWeight.w900
                                 : FontWeight.bold,
                             fontSize: 13.5,
-                            color: isDark ? Colors.white : AppColors.gray900,
+                            color: isCancelled
+                                ? AppColors.danger
+                                : (isDark ? Colors.white : AppColors.gray900),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -130,25 +145,25 @@ class NotificationCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary500.withValues(alpha: 0.1),
+                        color: (isCancelled ? AppColors.danger : AppColors.primary500).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.person_pin_circle_rounded,
+                          Icon(
+                            isCancelled ? Icons.cancel_outlined : Icons.person_pin_circle_rounded,
                             size: 13,
-                            color: AppColors.primary500,
+                            color: isCancelled ? AppColors.danger : AppColors.primary500,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             item.captainName!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'IBM Plex Sans Arabic',
                               fontWeight: FontWeight.bold,
                               fontSize: 10.5,
-                              color: AppColors.primary500,
+                              color: isCancelled ? AppColors.danger : AppColors.primary500,
                             ),
                           ),
                         ],
