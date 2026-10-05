@@ -46,11 +46,20 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
       (failure) async => emit(WalletError(failure.message)),
       (data) async {
         final newBal = (data['new_balance'] as num?)?.toDouble() ?? 0.0;
+        final rawStatus = data['status']?.toString().toLowerCase();
+        final isApproved = rawStatus == 'approved' || rawStatus == 'completed';
+        final isPending = !isApproved;
+
+        final message = isApproved
+            ? 'تم شحن رصيد المحفظة بنجاح!'
+            : 'تم استلام طلب الشحن بنجاح وهو قيد المراجعة والمطابقة السريعة';
+
         emit(WalletRechargeSuccess(
-          message: 'تم شحن رصيد المحفظة بنجاح!',
+          message: message,
           newBalance: newBal,
+          isPending: isPending,
         ));
-        // Refresh balance automatically
+        // Refresh balance and transactions automatically
         final balanceRes = await repository.getWalletBalance();
         balanceRes.fold(
           (_) {},

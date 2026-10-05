@@ -15,22 +15,30 @@ import '../bloc/wallet_state.dart';
 import '../widgets/transaction_list_tile.dart';
 import '../widgets/wallet_balance_card.dart';
 
-/// WalletPage — يعرض رصيد الراكب الحقيقي مع نظام الشحن الفوري للمحافظ اليمنية
+/// WalletPage — يعرض محفظة الراكب بتجربة واقعية واحترافية مطابقة لأوبر وكريم
 class WalletPage extends StatelessWidget {
   const WalletPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Fire event on global singleton without creating a new BlocProvider that kills it on dispose
     context.read<WalletBloc>().add(GetWalletBalanceEvent());
     return const _WalletView();
   }
 }
 
-class _WalletView extends StatelessWidget {
+class _WalletView extends StatefulWidget {
   const _WalletView();
 
+  @override
+  State<_WalletView> createState() => _WalletViewState();
+}
+
+class _WalletViewState extends State<_WalletView> {
+  // Transaction filter: 'ALL', 'DEPOSIT', 'TRIP'
+  String _selectedFilter = 'ALL';
+
   void _showTopUpBottomSheet(BuildContext parentContext, bool isDark) {
+    HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: parentContext,
       isScrollControlled: true,
@@ -42,6 +50,131 @@ class _WalletView extends StatelessWidget {
     );
   }
 
+  void _showRechargeResultDialog(
+      BuildContext context, WalletRechargeSuccess state, bool isDark) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: (state.isPending
+                          ? const Color(0xFFF59E0B)
+                          : AppColors.success)
+                      .withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  state.isPending
+                      ? Icons.hourglass_top_rounded
+                      : Icons.check_circle_rounded,
+                  color: state.isPending
+                      ? const Color(0xFFD97706)
+                      : AppColors.success,
+                  size: 36,
+                ),
+              ),
+              AppSpacing.h16,
+              Text(
+                state.isPending
+                    ? 'تم استلام طلب الشحن بنجاح'
+                    : 'تم شحن المحفظة بنجاح!',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                  color: isDark ? Colors.white : AppColors.gray900,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.h10,
+              Text(
+                state.message,
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 13,
+                  color: isDark ? AppColors.gray400 : AppColors.gray600,
+                  height: 1.45,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.h20,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1F2430)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? Colors.white10 : AppColors.gray200,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.info_outline_rounded,
+                        size: 16, color: AppColors.primary500),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        state.isPending
+                            ? 'طلبك قيد المطابقة وسيظهر برصيدك فور اعتماد السند.'
+                            : 'الرصيد الجديد: ${state.newBalance.toStringAsFixed(0)} ريال',
+                        style: const TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacing.h24,
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary500,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'العودة للمحفظة',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -49,27 +182,7 @@ class _WalletView extends StatelessWidget {
     return BlocListener<WalletBloc, WalletState>(
       listener: (context, state) {
         if (state is WalletRechargeSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle_rounded, color: Colors.white),
-                  AppSpacing.w12,
-                  Expanded(
-                    child: Text(
-                      '${state.message} الرصيد الجديد: ${state.newBalance.toStringAsFixed(0)} ريال',
-                      style: const TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          _showRechargeResultDialog(context, state, isDark);
         } else if (state is WalletError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -91,14 +204,28 @@ class _WalletView extends StatelessWidget {
           title: AppLocalizations.of(context)!.pass_laffah_wallet,
           showMenuButton: false,
           showBackButton: false,
+          actions: [
+            IconButton(
+              tooltip: 'تحديث',
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: isDark ? AppColors.white : AppColors.gray800,
+                size: 22,
+              ),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                context.read<WalletBloc>().add(GetWalletBalanceEvent());
+              },
+            ),
+          ],
         ),
         bottomNavigationBar: HomeBottomNavBar(isDark: isDark, currentIndex: 2),
         body: BlocBuilder<WalletBloc, WalletState>(
           builder: (context, state) {
             if (state is WalletLoading && state is! WalletBalanceLoaded) {
               return const Center(
-                  child:
-                      CircularProgressIndicator(color: AppColors.primary500));
+                child: CircularProgressIndicator(color: AppColors.primary500),
+              );
             }
 
             double balance = 0;
@@ -109,54 +236,268 @@ class _WalletView extends StatelessWidget {
               transactions = state.wallet.transactions;
             }
 
+            // Filter transactions
+            final filteredTransactions = transactions.where((tx) {
+              if (_selectedFilter == 'DEPOSIT') return tx.isCredit;
+              if (_selectedFilter == 'TRIP') return !tx.isCredit;
+              return true;
+            }).toList();
+
             return RefreshIndicator(
+              color: AppColors.primary500,
               onRefresh: () async {
                 context.read<WalletBloc>().add(GetWalletBalanceEvent());
               },
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s20,
-                AppSpacing.s20,
-                AppSpacing.s20,
-                100,
-              ),
-              children: [
-                WalletBalanceCard(
-                  balance: balance,
-                  onTopUpPressed: () =>
-                      _showTopUpBottomSheet(context, isDark),
+                  AppSpacing.s20,
+                  AppSpacing.s16,
+                  AppSpacing.s20,
+                  110,
                 ),
-                AppSpacing.h24,
-                Text(
-                  'آخر المعاملات المالية',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                    color: isDark ? AppColors.white : AppColors.gray900,
+                children: [
+                  // Balance Card
+                  WalletBalanceCard(
+                    balance: balance,
+                    onTopUpPressed: () =>
+                        _showTopUpBottomSheet(context, isDark),
                   ),
-                ),
-                AppSpacing.h12,
-                if (transactions.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.s24),
-                      child: Text(
-                        'لا توجد معاملات سابقة حتى الآن',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          color:
-                              isDark ? AppColors.gray500 : AppColors.gray600,
-                        ),
+
+                  AppSpacing.h16,
+
+                  // Trust & Security Notice Banner
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E2430)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
                       ),
                     ),
-                  )
-                else
-                  for (final tx in transactions)
-                    TransactionListTile(isDark: isDark, transaction: tx),
-              ],
-            ));
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.verified_user_rounded,
+                          color: AppColors.success,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'محفظة رقمية آمنة • يتم خصم أجرة المشاوير تلقائياً من رصيدك المتاح.',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 11,
+                              color: isDark ? AppColors.gray300 : AppColors.gray700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  AppSpacing.h24,
+
+                  // Transaction History Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'سجل المعاملات المالية',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15.5,
+                          color: isDark ? AppColors.white : AppColors.gray900,
+                        ),
+                      ),
+                      Text(
+                        '${transactions.length} معاملة',
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 12,
+                          color: isDark ? AppColors.gray400 : AppColors.gray500,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  AppSpacing.h12,
+
+                  // Filter Segmented Chips (All / Deposits / Trips)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip(
+                          label: 'الكل',
+                          count: transactions.length,
+                          filterKey: 'ALL',
+                          isDark: isDark,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(
+                          label: 'عمليات الشحن (+)',
+                          count: transactions.where((t) => t.isCredit).length,
+                          filterKey: 'DEPOSIT',
+                          isDark: isDark,
+                          highlightColor: AppColors.success,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(
+                          label: 'المشاوير (-)',
+                          count: transactions.where((t) => !t.isCredit).length,
+                          filterKey: 'TRIP',
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  AppSpacing.h16,
+
+                  // Transactions List or Empty State
+                  if (filteredTransactions.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 40,
+                        horizontal: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.surfaceDark.withValues(alpha: 0.5)
+                            : AppColors.gray50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : AppColors.gray200,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.receipt_long_rounded,
+                            size: 44,
+                            color: isDark
+                                ? AppColors.gray600
+                                : AppColors.gray400,
+                          ),
+                          AppSpacing.h10,
+                          Text(
+                            _selectedFilter == 'ALL'
+                                ? 'لا توجد معاملات مالية مسجلة بعد'
+                                : (_selectedFilter == 'DEPOSIT'
+                                    ? 'لا توجد عمليات شحن سابقة'
+                                    : 'لا توجد مشاوير مدفوعة من المحفظة'),
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                              color: isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'أي عمليات شحن أو دفع مشاوير ستظهر هنا بتفاصيلها الكاملة',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.gray500
+                                  : AppColors.gray500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    for (final tx in filteredTransactions)
+                      TransactionListTile(isDark: isDark, transaction: tx),
+                ],
+              ),
+            );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required int count,
+    required String filterKey,
+    required bool isDark,
+    Color? highlightColor,
+  }) {
+    final bool isSelected = _selectedFilter == filterKey;
+    final Color activeColor = highlightColor ?? AppColors.primary500;
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedFilter = filterKey);
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor
+              : (isDark ? const Color(0xFF1E2430) : AppColors.gray100),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : (isDark ? Colors.white12 : AppColors.gray300),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans Arabic',
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? AppColors.gray300 : AppColors.gray700),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.25)
+                    : (isDark ? Colors.white10 : Colors.black12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? AppColors.gray400 : AppColors.gray600),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -181,28 +522,33 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
   int _selectedMethodIndex = 0;
   bool _isSubmitting = false;
 
+  final List<int> _presetAmounts = [500, 1000, 2000, 5000, 10000];
+
   final List<Map<String, dynamic>> _wallets = [
     {
-      'id': 'onecash',
-      'name': 'ون كاش (OneCash)',
-      'account': '777000111',
-      'accountName': 'منصة لَفَّة للنقل الذكي',
-      'scheme': 'onecash://',
-      'icon': Icons.phone_android_rounded,
-      'badge': 'فوري',
-    },
-    {
       'id': 'kuraimi',
-      'name': 'الكريمي (حاسب / M-Floos)',
+      'name': 'الكريمي (حاسب / إم فلوس)',
+      'shortName': 'الكريمي',
       'account': '3001234567',
       'accountName': 'مؤسسة لَفَّة للخدمات اللوجستية',
       'scheme': 'kuraimi://',
       'icon': Icons.account_balance_rounded,
-      'badge': 'شائع جداً',
+      'badge': 'الأكثر استخداماً',
+    },
+    {
+      'id': 'onecash',
+      'name': 'ون كاش (OneCash)',
+      'shortName': 'ون كاش',
+      'account': '777000111',
+      'accountName': 'منصة لَفَّة للنقل الذكي',
+      'scheme': 'onecash://',
+      'icon': Icons.phone_android_rounded,
+      'badge': 'مباشر',
     },
     {
       'id': 'jawali',
       'name': 'جوالي (WeCash)',
+      'shortName': 'جوالي',
       'account': '770123456',
       'accountName': 'منصة لَفَّة - صنعاء',
       'scheme': 'wecash://',
@@ -212,6 +558,7 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
     {
       'id': 'jeeb',
       'name': 'محفظة جيب (اليمن والبحرين)',
+      'shortName': 'محفظة جيب',
       'account': '500987654',
       'accountName': 'شركة لَفَّة المحدودة',
       'scheme': 'jeeb://',
@@ -221,6 +568,7 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
     {
       'id': 'tadhamon',
       'name': 'محفظتي (بنك التضامن)',
+      'shortName': 'محفظتي',
       'account': '880112233',
       'accountName': 'لَفَّة لخدمات التوصيل',
       'scheme': 'tadhamon://',
@@ -230,6 +578,7 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
     {
       'id': 'cac',
       'name': 'كاك بنك (السريع)',
+      'shortName': 'كاك بنك',
       'account': '100456789',
       'accountName': 'لَفَّة للنقل والتوصيل',
       'scheme': 'cacbank://',
@@ -268,7 +617,7 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
     }
 
     if (refText.isEmpty) {
-      _showLocalError('يرجى إدخال رقم العملية / رقم الإشعار الصادر من المحفظة');
+      _showLocalError('يرجى إدخال رقم العملية / رقم السند الصادر من المحفظة');
       return;
     }
 
@@ -291,6 +640,7 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
   }
 
   void _showLocalError(String msg) {
+    HapticFeedback.heavyImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -313,10 +663,11 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'يرجى فتح تطبيق المحفظة على هاتفك وإجراء التحويل',
+                'يرجى فتح تطبيق المحفظة على هاتفك وإجراء التحويل لحساب لَفَّة',
                 style: TextStyle(fontFamily: 'IBM Plex Sans Arabic'),
               ),
               backgroundColor: AppColors.primary500,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -324,9 +675,20 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
     } catch (_) {}
   }
 
+  Future<void> _pasteReference() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data?.text != null && data!.text!.isNotEmpty) {
+      setState(() {
+        _refController.text = data.text!.trim();
+      });
+      HapticFeedback.selectionClick();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedWallet = _wallets[_selectedMethodIndex];
+    final currentAmount = int.tryParse(_amountController.text.trim());
 
     return BlocListener<WalletBloc, WalletState>(
       listener: (context, state) {
@@ -346,306 +708,456 @@ class _RechargeModalContentState extends State<_RechargeModalContent> {
       },
       child: Container(
         padding: EdgeInsets.only(
-        left: AppSpacing.s20,
-        right: AppSpacing.s20,
-        top: AppSpacing.s16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.s24,
-      ),
-      decoration: BoxDecoration(
-        color: widget.isDark ? AppColors.surfaceDark : AppColors.white,
-        borderRadius: AppSpacing.radiusBottomSheet,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: widget.isDark ? Colors.white24 : Colors.black12,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            AppSpacing.h16,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'شحن المحفظة فورياً',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Sans Arabic',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 17,
-                    color: widget.isDark ? AppColors.white : AppColors.gray900,
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          left: AppSpacing.s20,
+          right: AppSpacing.s20,
+          top: AppSpacing.s16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.s24,
+        ),
+        decoration: BoxDecoration(
+          color: widget.isDark ? AppColors.surfaceDark : AppColors.white,
+          borderRadius: AppSpacing.radiusBottomSheet,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top drag indicator
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.bolt_rounded,
-                          color: AppColors.success, size: 14),
-                      Text(
-                        ' شحن لحظي',
-                        style: TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          color: AppColors.success,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                    color: widget.isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ],
-            ),
-            AppSpacing.h16,
-            Text(
-              '1. اختر محفظتك الإلكترونية:',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: widget.isDark ? AppColors.gray300 : AppColors.gray700,
               ),
-            ),
-            AppSpacing.h8,
-            SizedBox(
-              height: 44,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _wallets.length,
-                separatorBuilder: (_, __) => AppSpacing.w8,
-                itemBuilder: (ctx, index) {
-                  final w = _wallets[index];
-                  final isSelected = _selectedMethodIndex == index;
-                  return ChoiceChip(
-                    label: Text(w['name'].toString().split(' ').first),
-                    selected: isSelected,
-                    selectedColor: AppColors.primary500,
-                    labelStyle: TextStyle(
-                      fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 12,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Colors.white : AppColors.gray700,
-                    ),
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedMethodIndex = index);
-                    },
-                  );
-                },
-              ),
-            ),
-            AppSpacing.h16,
-            // Company Account Details Box
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.s16),
-              decoration: BoxDecoration(
-                color: AppColors.primary500.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppColors.primary500.withValues(alpha: 0.25),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              AppSpacing.h16,
+
+              // Sheet Title & Security Badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'حول لحساب لَفَّة في ${selectedWallet['name']}:',
-                        style: const TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: AppColors.primary500,
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () =>
-                            _openWalletApp(selectedWallet['scheme']),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary500,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.open_in_new_rounded,
-                                  color: Colors.white, size: 12),
-                              AppSpacing.w4,
-                              Text(
-                                'فتح التطبيق',
-                                style: TextStyle(
-                                  fontFamily: 'IBM Plex Sans Arabic',
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  AppSpacing.h8,
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        selectedWallet['account'],
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 19,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.copy_rounded,
-                            size: 18, color: AppColors.primary500),
-                        tooltip: 'نسخ رقم الحساب',
-                        onPressed: () {
-                          Clipboard.setData(
-                              ClipboardData(text: selectedWallet['account']));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('تم نسخ رقم الحساب بنجاح',
-                                  style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic')),
-                              duration: Duration(seconds: 1),
-                              backgroundColor: AppColors.success,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
                   Text(
-                    'اسم الحساب: ${selectedWallet['accountName']}',
+                    'شحن رصيد المحفظة',
                     style: TextStyle(
                       fontFamily: 'IBM Plex Sans Arabic',
-                      fontSize: 11,
-                      color:
-                          widget.isDark ? AppColors.gray400 : AppColors.gray600,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      color: widget.isDark ? AppColors.white : AppColors.gray900,
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.success.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.shield_outlined,
+                            color: AppColors.success, size: 13),
+                        SizedBox(width: 4),
+                        Text(
+                          'إيداع مباشر وآمن',
+                          style: TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            color: AppColors.success,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-            AppSpacing.h16,
-            Text(
-              '2. بيانات التحويل للتأكيد الفوري:',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans Arabic',
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: widget.isDark ? AppColors.gray300 : AppColors.gray700,
+              const SizedBox(height: 4),
+              Text(
+                'حول المبلغ لحساب لَفَّة عبر محفظتك الإلكترونية وسجل رقم السند لتأكيد الإيداع',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 11.5,
+                  color: widget.isDark ? AppColors.gray400 : AppColors.gray600,
+                ),
               ),
-            ),
-            AppSpacing.h8,
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'مبلغ الشحن (ريال)',
-                      hintText: '1000',
-                      prefixIcon: const Icon(Icons.payments_outlined, size: 20),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 12),
-                    ),
-                  ),
+
+              AppSpacing.h16,
+
+              // STEP 1: Amount Selection
+              Text(
+                '1. حدد مبلغ الشحن (ريال يمني):',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: widget.isDark ? AppColors.gray200 : AppColors.gray800,
                 ),
-                AppSpacing.w12,
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    controller: _refController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      labelText: 'رقم العملية / الإشعار *',
-                      hintText: 'مثال: 9841023',
-                      prefixIcon: const Icon(Icons.receipt_long_outlined,
-                          size: 20, color: AppColors.primary500),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            AppSpacing.h12,
-            TextField(
-              controller: _senderAccountController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'رقم حسابك المحول منه (اختياري)',
-                hintText: 'رقم هاتفك أو حسابك بالمحفظة',
-                prefixIcon: const Icon(Icons.person_outline, size: 20),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               ),
-            ),
-            AppSpacing.h20,
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitRecharge,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary500,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              AppSpacing.h8,
+
+              // Preset Quick Chips
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _presetAmounts.map((preset) {
+                    final isSelected = currentAmount == preset;
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: ChoiceChip(
+                        label: Text('$preset ريال'),
+                        selected: isSelected,
+                        selectedColor: AppColors.primary500,
+                        backgroundColor: widget.isDark
+                            ? const Color(0xFF1E2430)
+                            : AppColors.gray100,
+                        labelStyle: TextStyle(
+                          fontFamily: 'IBM Plex Sans Arabic',
+                          fontSize: 11.5,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected
+                              ? Colors.white
+                              : (widget.isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray700),
+                        ),
+                        onSelected: (val) {
+                          if (val) {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _amountController.text = preset.toString();
+                            });
+                          }
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+              AppSpacing.h8,
+
+              // Amount Custom TextField
+              TextField(
+                controller: _amountController,
+                keyboardType: TextInputType.number,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: widget.isDark ? Colors.white : AppColors.gray900,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'المبلغ المراد شحنه *',
+                  hintText: 'مثال: 1000',
+                  prefixIcon:
+                      const Icon(Icons.payments_outlined, size: 20, color: AppColors.primary500),
+                  suffixText: 'ريال يمني',
+                  suffixStyle: TextStyle(
+                    fontFamily: 'IBM Plex Sans Arabic',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: widget.isDark ? AppColors.gray400 : AppColors.gray600,
+                  ),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+
+              AppSpacing.h16,
+
+              // STEP 2: Wallet Selection
+              Text(
+                '2. اختر محفظتك الإلكترونية:',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: widget.isDark ? AppColors.gray200 : AppColors.gray800,
+                ),
+              ),
+              AppSpacing.h8,
+              SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _wallets.length,
+                  separatorBuilder: (_, __) => AppSpacing.w8,
+                  itemBuilder: (ctx, index) {
+                    final w = _wallets[index];
+                    final isSelected = _selectedMethodIndex == index;
+                    return ChoiceChip(
+                      avatar: Icon(
+                        w['icon'] as IconData,
+                        size: 16,
+                        color: isSelected ? Colors.white : AppColors.primary500,
+                      ),
+                      label: Text(w['shortName'] as String),
+                      selected: isSelected,
+                      selectedColor: AppColors.primary500,
+                      backgroundColor: widget.isDark
+                          ? const Color(0xFF1E2430)
+                          : AppColors.gray100,
+                      labelStyle: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11.5,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? Colors.white
+                            : (widget.isDark
+                                ? AppColors.gray300
+                                : AppColors.gray700),
+                      ),
+                      onSelected: (val) {
+                        if (val) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedMethodIndex = index);
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+
+              AppSpacing.h16,
+
+              // STEP 3: Company Account Details Box
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.s14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.25),
                   ),
                 ),
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.bolt_rounded),
-                          AppSpacing.w8,
-                          Text(
-                            'تأكيد وشحن الرصيد فوراً',
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'حول لحساب لَفَّة في ${selectedWallet['name']}:',
+                          style: const TextStyle(
+                            fontFamily: 'IBM Plex Sans Arabic',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AppColors.primary500,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () =>
+                              _openWalletApp(selectedWallet['scheme']),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary500,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.open_in_new_rounded,
+                                    color: Colors.white, size: 12),
+                                AppSpacing.w4,
+                                Text(
+                                  'فتح التطبيق',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    AppSpacing.h8,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          selectedWallet['account'],
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            letterSpacing: 1.5,
+                            color: widget.isDark
+                                ? Colors.white
+                                : AppColors.gray900,
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Clipboard.setData(
+                                ClipboardData(text: selectedWallet['account']));
+                            HapticFeedback.lightImpact();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('تم نسخ رقم الحساب بنجاح',
+                                    style: TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic')),
+                                duration: Duration(seconds: 1),
+                                backgroundColor: AppColors.success,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppColors.primary500,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(
+                                  color: AppColors.primary500),
+                            ),
+                          ),
+                          icon: const Icon(Icons.copy_rounded, size: 14),
+                          label: const Text(
+                            'نسخ الرقم',
+                            style: TextStyle(
+                              fontFamily: 'IBM Plex Sans Arabic',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'اسم الحساب: ${selectedWallet['accountName']}',
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans Arabic',
+                        fontSize: 11,
+                        color: widget.isDark
+                            ? AppColors.gray400
+                            : AppColors.gray600,
                       ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              AppSpacing.h16,
+
+              // STEP 4: Transfer Details Form
+              Text(
+                '3. بيانات السند للتأكيد والمطابقة:',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: widget.isDark ? AppColors.gray200 : AppColors.gray800,
+                ),
+              ),
+              AppSpacing.h8,
+
+              // Reference / Voucher ID Field
+              TextField(
+                controller: _refController,
+                keyboardType: TextInputType.text,
+                decoration: InputDecoration(
+                  labelText: 'رقم السند / رقم الإشعار *',
+                  hintText: 'مثال: 874773',
+                  prefixIcon: const Icon(Icons.receipt_long_outlined,
+                      size: 20, color: AppColors.primary500),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.content_paste_rounded,
+                        size: 18, color: AppColors.primary500),
+                    tooltip: 'لصق',
+                    onPressed: _pasteReference,
+                  ),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                ),
+              ),
+
+              AppSpacing.h10,
+
+              // Sender Account / Phone Field
+              TextField(
+                controller: _senderAccountController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'رقم حسابك أو هاتفك المحول منه (اختياري)',
+                  hintText: 'مثال: 775906034',
+                  prefixIcon: const Icon(Icons.person_outline, size: 20),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                ),
+              ),
+
+              AppSpacing.h20,
+
+              // Submit Button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submitRecharge,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary500,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.send_rounded, size: 18),
+                            AppSpacing.w8,
+                            Text(
+                              'تأكيد وإرسال طلب الشحن',
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

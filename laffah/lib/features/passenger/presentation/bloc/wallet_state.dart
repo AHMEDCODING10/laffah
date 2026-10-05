@@ -33,11 +33,16 @@ class CompanyAccountsLoaded extends WalletState {
 class WalletRechargeSuccess extends WalletState {
   final String message;
   final double newBalance;
+  final bool isPending;
 
-  const WalletRechargeSuccess({required this.message, required this.newBalance});
+  const WalletRechargeSuccess({
+    required this.message,
+    required this.newBalance,
+    this.isPending = true,
+  });
 
   @override
-  List<Object?> get props => [message, newBalance];
+  List<Object?> get props => [message, newBalance, isPending];
 }
 
 class WalletPayoutRequested extends WalletState {}
