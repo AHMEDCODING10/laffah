@@ -299,9 +299,12 @@ class _HomeMapSubPageState extends State<_HomeMapSubPage> {
                         ? state.routePoints
                         : null;
 
+                final captainHeading = context.read<CaptainBloc>().currentCaptainHeading;
+
                 return LaffahMapView(
                   isDark: isDark,
                   captainLocation: captainPos,
+                  captainHeading: captainHeading,
                   routePoints: routePoints,
                   followCaptain: true,
                   showDefaultMockData: false,

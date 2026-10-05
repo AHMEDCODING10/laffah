@@ -48,6 +48,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
   final OsrmService _osrmService = OsrmService();
   final EchoService _echoService = EchoService();
   List<LatLng> _routePoints = [];
+  List<LatLng> _destinationRoutePoints = [];
 
   late LatLng _captainLocation;
   late final LatLng _passengerLocation;
@@ -121,6 +122,17 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
       setState(() {
         _routePoints = data.points;
       });
+    }
+
+    // When captain is approaching pickup, also display destination path (Pickup -> Dropoff)
+    if (!inTransit && widget.dropoffLat != null && widget.dropoffLng != null && _destinationRoutePoints.isEmpty) {
+      final dropoff = LatLng(widget.dropoffLat!, widget.dropoffLng!);
+      final destData = await _osrmService.getRoute(_passengerLocation, dropoff);
+      if (destData != null && mounted) {
+        setState(() {
+          _destinationRoutePoints = destData.points;
+        });
+      }
     }
   }
 
@@ -359,6 +371,7 @@ class _PassengerRideTrackingPageState extends State<PassengerRideTrackingPage> {
                           : null,
                       captainHeading: _captainHeading,
                       routePoints: _routePoints.isNotEmpty ? _routePoints : null,
+                      secondaryRoutePoints: (!inTransit && _destinationRoutePoints.isNotEmpty) ? _destinationRoutePoints : null,
                       routeColor: routeColor,
                     ),
                   );

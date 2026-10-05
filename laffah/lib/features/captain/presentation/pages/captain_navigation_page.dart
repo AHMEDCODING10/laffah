@@ -69,7 +69,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
   final RoutingService _routingService = RoutingService();
   final EchoService _echoService = EchoService();
   List<LatLng> _routePoints = [];
+  List<LatLng> _secondaryRoutePoints = [];
   LatLng? _currentCaptainLocation;
+  double _captainHeading = 0.0;
   bool _isCancellationHandled = false;
 
   Future<void> _fetchCaptainPosition() async {
@@ -80,6 +82,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       if (mounted) {
         setState(() {
           _currentCaptainLocation = LatLng(pos.latitude, pos.longitude);
+          if (pos.heading > 0) {
+            _captainHeading = pos.heading;
+          }
         });
       }
     } catch (_) {}
@@ -218,11 +223,21 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
        startPoint = _currentCaptainLocation ??
            LatLng(widget.pickupLat - 0.005, widget.pickupLng - 0.005);
        endPoint = LatLng(widget.pickupLat, widget.pickupLng);
+
+       // Also fetch secondary destination leg (Pickup -> Dropoff) to display full path
+       _routingService.getRoute(endPoint, LatLng(widget.dropoffLat, widget.dropoffLng)).then((destRoute) {
+         if (destRoute != null && mounted) {
+           setState(() {
+             _secondaryRoutePoints = destRoute.points;
+           });
+         }
+       }).catchError((_) {});
     } else {
        // Phase 2: From Pickup (or current position) -> to Final Destination!
        startPoint = _currentCaptainLocation ??
            LatLng(widget.pickupLat, widget.pickupLng);
        endPoint = LatLng(widget.dropoffLat, widget.dropoffLng);
+       _secondaryRoutePoints = [];
     }
 
     // Retry up to 3 times with exponential backoff
@@ -1055,7 +1070,9 @@ class _CaptainNavigationPageState extends State<CaptainNavigationPage> {
       passengerLocation: pickup,
       dropoffLocation: dropoff,
       captainLocation: currentCaptainPos,
+      captainHeading: _captainHeading,
       routePoints: _routePoints.isNotEmpty ? _routePoints : null,
+      secondaryRoutePoints: _secondaryRoutePoints.isNotEmpty ? _secondaryRoutePoints : null,
       routeColor: routeColor,
       followCaptain: true,
       showDefaultMockData: false,

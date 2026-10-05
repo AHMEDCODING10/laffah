@@ -130,7 +130,37 @@ class RoutingService {
       return cached.result;
     }
 
-    // 2. المستوى الأساسي: LocationIQ Directions API
+    // 1. المستوى الأساسي والأدق عالمياً: Mapbox Directions API (باستخدام توكن Mapbox الرسمي)
+    final mapboxToken = AppEnv.mapboxToken;
+    if (mapboxToken.isNotEmpty) {
+      try {
+        final mapboxUrl =
+            'https://api.mapbox.com/directions/v5/mapbox/driving/'
+            '${from.longitude},${from.latitude};${to.longitude},${to.latitude}'
+            '?overview=full&geometries=geojson&steps=false&access_token=$mapboxToken';
+
+        final response = await _dio.get(mapboxUrl);
+        if (response.statusCode == 200 && response.data != null) {
+          final result = await compute(
+            _parseOsmRouteInIsolate,
+            _RouteComputePayload(
+              responseData: response.data,
+              from: from,
+              to: to,
+            ),
+          );
+
+          if (result != null && result.points.isNotEmpty) {
+            _saveToCache(cacheKey, result);
+            return result;
+          }
+        }
+      } catch (e) {
+        debugPrint('ℹ️ [RoutingService] Mapbox directions error: $e. Falling to LocationIQ.');
+      }
+    }
+
+    // 2. المستوى الاحتياطي الأول: LocationIQ Directions API
     final locationIqKey = AppEnv.locationIqKey;
     if (locationIqKey.isNotEmpty) {
       try {

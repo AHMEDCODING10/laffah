@@ -29,7 +29,9 @@ class LaffahMapView extends StatefulWidget {
   final double captainHeading;
   final LatLng? passengerLocation;
   final List<LatLng>? routePoints;
+  final List<LatLng>? secondaryRoutePoints;
   final Color? routeColor;
+  final Color? secondaryRouteColor;
   final LatLng? dropoffLocation;
   final bool followCaptain;
   final bool showDefaultMockData;
@@ -47,7 +49,9 @@ class LaffahMapView extends StatefulWidget {
     this.captainHeading = 0.0,
     this.passengerLocation,
     this.routePoints,
+    this.secondaryRoutePoints,
     this.routeColor,
+    this.secondaryRouteColor,
     this.dropoffLocation,
     this.followCaptain = false,
     this.showDefaultMockData = false,
@@ -55,9 +59,14 @@ class LaffahMapView extends StatefulWidget {
   });
 
   static String getTileUrl({required bool isDark}) {
-    // 🗺️ CartoDB Voyager (Light) & Dark Matter (Dark)
-    // 100% Free, NO API key required, crisp Retina @2x tiles, global Fastly CDN caching.
-    // Built specifically for navigation & delivery apps like Uber / Careem.
+    final mapboxToken = AppEnv.mapboxToken;
+    if (mapboxToken.isNotEmpty) {
+      // 🗺️ Official Mapbox Streets-v12 & Dark-v11 (@2x Retina High-DPI)
+      // World-class road topology with complete Arabic street names in Sana'a and Yemen.
+      final styleId = isDark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
+      return 'https://api.mapbox.com/styles/v1/$styleId/tiles/256/{z}/{x}/{y}@2x?access_token=$mapboxToken';
+    }
+    // Fallback: CartoDB Voyager (Light) & Dark Matter (Dark)
     if (isDark) {
       return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
     }
@@ -338,30 +347,70 @@ class _LaffahMapViewState extends State<LaffahMapView>
                                   .withValues(alpha: 0.15 + pulseVal * 0.1),
                             ),
                           ),
-                          // ── Captain icon with heading rotation ─────────────────
+                          // ── Motorcycle Marker with Dynamic Bearing Rotation ─────────────────
                           Transform.rotate(
                             angle: currentHeading * (math.pi / 180),
-                            child: Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary500,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 3),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary500
-                                        .withValues(alpha: 0.45 + pulseVal * 0.25),
-                                    blurRadius: 16 + pulseVal * 8,
-                                    spreadRadius: 2 + pulseVal * 3,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Bearing Direction Arrow Pointer (at top)
+                                Positioned(
+                                  top: -5,
+                                  child: Container(
+                                    width: 13,
+                                    height: 13,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary500,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 1.5),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primary500.withValues(alpha: 0.6),
+                                          blurRadius: 4,
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.keyboard_arrow_up_rounded,
+                                        color: Colors.white,
+                                        size: 10,
+                                      ),
+                                    ),
                                   ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.navigation_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
+                                ),
+                                // Main Motorcycle Circular Badge
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary500,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2.8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.28),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                      BoxShadow(
+                                        color: AppColors.primary500
+                                            .withValues(alpha: 0.45 + pulseVal * 0.25),
+                                        blurRadius: 16 + pulseVal * 8,
+                                        spreadRadius: 2 + pulseVal * 3,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.two_wheeler_rounded,
+                                      color: Colors.white,
+                                      size: 25,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -459,36 +508,67 @@ class _LaffahMapViewState extends State<LaffahMapView>
 
   // ── Polylines with border (shadow) for depth ──────────────────────────────
   List<Polyline> _buildPolylines() {
-    final List<LatLng> points = widget.routePoints ?? const [];
+    final polylines = <Polyline>[];
 
-    if (points.isEmpty) return [];
+    // 1. Secondary Route (e.g., Passenger Pickup -> Destination Dropoff when captain is still approaching)
+    final secondaryPoints = widget.secondaryRoutePoints ?? const [];
+    if (secondaryPoints.isNotEmpty) {
+      polylines.add(
+        Polyline(
+          points: secondaryPoints,
+          color: Colors.black.withValues(alpha: 0.12),
+          strokeWidth: 6.5,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        ),
+      );
+      polylines.add(
+        Polyline(
+          points: secondaryPoints,
+          color: (widget.secondaryRouteColor ?? (widget.isDark ? Colors.white38 : AppColors.gray400)),
+          strokeWidth: 4.5,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        ),
+      );
+    }
 
-    return [
-      // Shadow / border line (darker, thicker)
-      Polyline(
-        points: points,
-        color: Colors.black.withValues(alpha: 0.18),
-        strokeWidth: 8.0,
-        strokeCap: StrokeCap.round,
-        strokeJoin: StrokeJoin.round,
-      ),
-      // Main route line (color changes based on trip phase)
-      Polyline(
-        points: points,
-        color: widget.routeColor ?? AppColors.primary500,
-        strokeWidth: 5.5,
-        strokeCap: StrokeCap.round,
-        strokeJoin: StrokeJoin.round,
-      ),
-      // White center highlight
-      Polyline(
-        points: points,
-        color: Colors.white.withValues(alpha: 0.3),
-        strokeWidth: 2.0,
-        strokeCap: StrokeCap.round,
-        strokeJoin: StrokeJoin.round,
-      ),
-    ];
+    // 2. Primary Active Route (Captain to Passenger or Captain to Dropoff)
+    final points = widget.routePoints ?? const [];
+    if (points.isNotEmpty) {
+      polylines.add(
+        // Shadow / border line (darker, thicker)
+        Polyline(
+          points: points,
+          color: Colors.black.withValues(alpha: 0.22),
+          strokeWidth: 8.5,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        ),
+      );
+      polylines.add(
+        // Main route line (vibrant Uber-style primary)
+        Polyline(
+          points: points,
+          color: widget.routeColor ?? AppColors.primary500,
+          strokeWidth: 5.5,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        ),
+      );
+      polylines.add(
+        // White center highlight
+        Polyline(
+          points: points,
+          color: Colors.white.withValues(alpha: 0.35),
+          strokeWidth: 2.0,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        ),
+      );
+    }
+
+    return polylines;
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -512,7 +592,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
             // ── Tile layer with CancellableNetworkTileProvider ──────────
             TileLayer(
               urlTemplate: _tileUrl,
-              subdomains: const ['a', 'b', 'c', 'd'],
+              subdomains: AppEnv.mapboxToken.isNotEmpty ? const [] : const ['a', 'b', 'c', 'd'],
               userAgentPackageName: 'com.laffah.app',
               tileProvider: CancellableNetworkTileProvider(),
               maxZoom: 19,
@@ -521,7 +601,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
                 duration: Duration(milliseconds: 150),
                 startOpacity: 0.0,
               ),
-              keepBuffer: 2,
+              keepBuffer: 3,
               panBuffer: 1,
             ),
 
@@ -548,8 +628,11 @@ class _LaffahMapViewState extends State<LaffahMapView>
             // ── Attribution ────────────────────────────────────────────
             RichAttributionWidget(
               attributions: [
-                TextSourceAttribution('CARTO', onTap: () {}),
-                TextSourceAttribution('OSM contributors', onTap: () {}),
+                if (AppEnv.mapboxToken.isNotEmpty)
+                  TextSourceAttribution('© Mapbox', onTap: () {})
+                else
+                  TextSourceAttribution('CARTO', onTap: () {}),
+                TextSourceAttribution('© OpenStreetMap', onTap: () {}),
               ],
               alignment: AttributionAlignment.bottomLeft,
               showFlutterMapAttribution: false,

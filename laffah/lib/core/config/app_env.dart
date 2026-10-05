@@ -38,6 +38,9 @@ class AppEnv {
   /// LocationIQ Reverse Geocoding Key
   static String get locationIqKey => _getEnv('LOCATION_IQ_KEY');
 
+  /// Mapbox Public Access Token
+  static String get mapboxToken => _getEnv('MAPBOX_ACCESS_TOKEN');
+
   /// Use Reverb instead of Pusher Cloud?
   static bool get useReverb => _getEnv('USE_REVERB') == 'true';
 }
