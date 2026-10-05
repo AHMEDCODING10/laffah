@@ -14,19 +14,39 @@ class CaptainTransactionModel extends CaptainTransactionEntity {
 
   factory CaptainTransactionModel.fromJson(Map<String, dynamic> json) {
     final typeStr = json['type'] as String?;
-    final isNegative = json['isNegative'] as bool? ??
-        json['is_negative'] as bool? ??
-        (typeStr == 'withdrawal' ||
-            typeStr == 'payout' ||
-            typeStr == 'deduction' ||
-            typeStr == 'commission');
+    final titleStr = json['title'] as String? ??
+        json['description'] as String? ??
+        'معاملة مالية';
+
+    final isPositiveOverride = titleStr.contains('شحن') ||
+        titleStr.contains('إيداع') ||
+        titleStr.contains('ايداع') ||
+        titleStr.contains('مكافأة') ||
+        titleStr.contains('مكافاه') ||
+        titleStr.contains('بونص') ||
+        typeStr == 'deposit' ||
+        typeStr == 'credit' ||
+        typeStr == 'bonus' ||
+        typeStr == 'tripEarnings';
+
+    final isNegativeCalculated = typeStr == 'withdrawal' ||
+        typeStr == 'payout' ||
+        typeStr == 'deduction' ||
+        typeStr == 'commission' ||
+        titleStr.contains('عمولة') ||
+        titleStr.contains('سحب') ||
+        titleStr.contains('خصم');
+
+    final isNegative = isPositiveOverride
+        ? false
+        : (json['isNegative'] as bool? ??
+            json['is_negative'] as bool? ??
+            isNegativeCalculated);
 
     return CaptainTransactionModel(
       id: json['id']?.toString() ?? '',
-      type: _parseTransactionType(typeStr),
-      title: json['title'] as String? ??
-          json['description'] as String? ??
-          'معاملة مالية',
+      type: _parseTransactionType(typeStr, titleStr),
+      title: titleStr,
       date: json['date'] as String? ??
           json['created_at'] as String? ??
           '',
@@ -40,17 +60,23 @@ class CaptainTransactionModel extends CaptainTransactionEntity {
     );
   }
 
-  static TransactionType _parseTransactionType(String? typeStr) {
-    switch (typeStr) {
-      case 'payout':
-      case 'withdrawal':
-        return TransactionType.payout;
-      case 'tripEarnings':
-      case 'deposit':
-        return TransactionType.tripEarnings;
-      case 'deduction':
-      default:
-        return TransactionType.adjustment;
+  static TransactionType _parseTransactionType(
+      String? typeStr, String titleStr) {
+    if (typeStr == 'payout' || typeStr == 'withdrawal' || titleStr.contains('سحب')) {
+      return TransactionType.payout;
     }
+    if (typeStr == 'deposit' || titleStr.contains('شحن') || titleStr.contains('إيداع')) {
+      return TransactionType.deposit;
+    }
+    if (typeStr == 'bonus' || titleStr.contains('مكافأة') || titleStr.contains('بونص')) {
+      return TransactionType.bonus;
+    }
+    if (typeStr == 'commission' || typeStr == 'deduction' || titleStr.contains('عمولة')) {
+      return TransactionType.deduction;
+    }
+    if (typeStr == 'tripEarnings' || titleStr.contains('مشوار') || titleStr.contains('رحلة')) {
+      return TransactionType.tripEarnings;
+    }
+    return TransactionType.adjustment;
   }
 }

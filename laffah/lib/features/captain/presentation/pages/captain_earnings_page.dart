@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/captain_action_button.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../domain/entities/captain_transaction_entity.dart';
 import '../bloc/wallet/captain_wallet_bloc.dart';
 import '../bloc/wallet/captain_wallet_event.dart';
 import '../bloc/wallet/captain_wallet_state.dart';
-import '../../domain/entities/captain_transaction_entity.dart';
 import 'widgets/captain_payout_dialog.dart';
+import 'widgets/captain_topup_sheet.dart';
+import 'widgets/captain_transaction_receipt_sheet.dart';
 import 'widgets/captain_transactions_sheet.dart';
 
 /// CaptainEarningsPage - Ultra-Modern, Interactive Financial Dashboard & Wallet for Laffah Captains.
-/// Features dynamic balance state calculations, authentic Yemeni payout integration (الكريمي/جوالي/ون كاش),
-/// and comprehensive transaction history.
+/// Adheres strictly to the Uber Driver financial workflow:
+/// 1. Gross Earnings vs Cash-in-hand vs Digital Wallet Balance.
+/// 2. Transparent Commission and Ride Receipts.
+/// 3. Dual Action: Cash-out Payouts & Top-up/Settle Platform Commissions via local e-wallets.
 class CaptainEarningsPage extends StatefulWidget {
   final CaptainWalletBloc? walletBloc;
   const CaptainEarningsPage({super.key, this.walletBloc});
@@ -26,6 +30,7 @@ class CaptainEarningsPage extends StatefulWidget {
 class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
   late final CaptainWalletBloc _walletBloc;
   bool _isLocalBloc = false;
+  String _selectedTxFilter = 'ALL';
 
   @override
   void initState() {
@@ -70,6 +75,86 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
             fontFamily: 'IBM Plex Sans Arabic',
             fontSize: 13,
             fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCashInHandExplanation(
+      BuildContext context, double todayEarnings, bool isDark) {
+    HapticFeedback.lightImpact();
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF141822) : Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: const EdgeInsets.fromLTRB(22, 26, 22, 18),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.payments_outlined,
+                  color: AppColors.primary500,
+                  size: 32,
+                ),
+              ),
+              AppSpacing.h16,
+              Text(
+                'كيف تعمل الأرباح النقدية؟',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16.5,
+                  color: isDark ? Colors.white : AppColors.gray900,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.h10,
+              Text(
+                'أرباح مشاويرك الأخيرة (${todayEarnings.toStringAsFixed(0)} ريال) قمت بتحصيلها نقداً بالكامل بيدك من الركاب مباشرة عند نزولهم، لذلك لا يوجد رصيد إلكتروني معلق للسحب.\n\nالرصيد الرقمي القابل للتحويل ينشأ فقط عندما يدفع الراكب عبر المحفظة الإلكترونية أو عند حصولك على مكافآت وبونص من لَفَّة.',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans Arabic',
+                  fontSize: 12.5,
+                  color: isDark ? AppColors.gray300 : AppColors.gray700,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.h20,
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary500,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'فهمت ذلك',
+                    style: TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -129,24 +214,23 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
         ),
         AppSpacing.h24,
         ...List.generate(
-            3,
-            (index) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Container(
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                )),
+          3,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              height: 80,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
-
-  // Removed duplicated _handleConfirmPayout
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +239,8 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
     return BlocProvider.value(
       value: _walletBloc,
       child: Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -169,6 +255,20 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
               color: isDark ? AppColors.white : AppColors.gray900,
             ),
           ),
+          actions: [
+            IconButton(
+              tooltip: 'تحديث المحفظة',
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: isDark ? AppColors.white : AppColors.gray800,
+                size: 22,
+              ),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                _walletBloc.add(const FetchWalletDetails());
+              },
+            ),
+          ],
         ),
         body: Directionality(
           textDirection: TextDirection.rtl,
@@ -187,24 +287,35 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                                 .capt_wallet_err_payout
                             : state.message),
                     style: const TextStyle(
-                        fontFamily: 'IBM Plex Sans Arabic',
-                        color: AppColors.danger),
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      color: AppColors.danger,
+                    ),
                   ),
                 );
               } else if (state is CaptainWalletLoaded) {
                 final wallet = state.wallet;
                 final targetProgress = wallet.targetProgress;
+                final bool hasWithdrawableBalance = wallet.availableBalance > 0;
+
+                // Filter transactions
+                final filteredTx = wallet.recentTransactions.where((t) {
+                  if (_selectedTxFilter == 'EARNINGS') return !t.isNegative;
+                  if (_selectedTxFilter == 'COMMISSIONS') return t.isNegative;
+                  return true;
+                }).toList();
 
                 return RefreshIndicator(
+                  color: AppColors.primary500,
                   onRefresh: () async {
                     _walletBloc.add(const FetchWalletDetails());
                   },
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 95),
                     physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics()),
+                      parent: BouncingScrollPhysics(),
+                    ),
                     children: [
-                      // Premium Balance Card with Gradient
+                      // 1. Premium Balance Card
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.s20),
                         decoration: BoxDecoration(
@@ -212,7 +323,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                               ? const LinearGradient(
                                   colors: [
                                     Color(0xFF1E2433),
-                                    Color(0xFF141822)
+                                    Color(0xFF141822),
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
@@ -231,7 +342,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black
-                                  .withValues(alpha: isDark ? 0.4 : 0.03),
+                                  .withValues(alpha: isDark ? 0.4 : 0.04),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -255,14 +366,18 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                               style: TextStyle(
                                 fontSize: 38,
                                 fontWeight: FontWeight.w900,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A),
+                                color: hasWithdrawableBalance
+                                    ? AppColors.success
+                                    : (isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A)),
                                 letterSpacing: 0.5,
                                 fontFamily: 'IBM Plex Sans Arabic',
                               ),
                             ),
                             AppSpacing.h12,
+
+                            // Week over week growth chip
                             if (wallet.weekOverWeekGrowth > 0)
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -272,8 +387,9 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                                       AppColors.success.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                      color: AppColors.success
-                                          .withValues(alpha: 0.2)),
+                                    color:
+                                        AppColors.success.withValues(alpha: 0.2),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -297,7 +413,61 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                                 ),
                               ),
 
-                            AppSpacing.h24,
+                            AppSpacing.h16,
+
+                            // Honest Financial Status Banner
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: hasWithdrawableBalance
+                                    ? AppColors.success.withValues(alpha: 0.08)
+                                    : (isDark
+                                        ? Colors.white.withValues(alpha: 0.04)
+                                        : const Color(0xFFF1F5F9)),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: hasWithdrawableBalance
+                                      ? AppColors.success.withValues(alpha: 0.2)
+                                      : (isDark
+                                          ? Colors.white10
+                                          : const Color(0xFFE2E8F0)),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    hasWithdrawableBalance
+                                        ? Icons.check_circle_outline_rounded
+                                        : Icons.info_outline_rounded,
+                                    size: 16,
+                                    color: hasWithdrawableBalance
+                                        ? AppColors.success
+                                        : AppColors.primary500,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      hasWithdrawableBalance
+                                          ? 'رصيد أرباح متاح للسحب الفوري إلى محفظتك الإلكترونية أو حسابك البنكي.'
+                                          : 'أرباح اليوم استلمتها نقداً بالكامل بيدك من الركاب مباشرة.',
+                                      style: TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: hasWithdrawableBalance
+                                            ? AppColors.success
+                                            : (isDark
+                                                ? AppColors.gray300
+                                                : AppColors.gray700),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            AppSpacing.h20,
 
                             // Daily Target Dynamic Progress Bar
                             Column(
@@ -350,7 +520,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
 
                       AppSpacing.h16,
 
-                      // Bento Stats Row: Today's Earnings & Weekly Earnings
+                      // 2. Bento Stats Row: Today's Earnings & Weekly Earnings
                       Row(
                         children: [
                           Expanded(
@@ -359,70 +529,6 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? const Color(0xFF141822)
-                                        .withValues(alpha: 0.9)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.black.withValues(alpha: 0.05),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    AppLocalizations.of(context)!
-                                        .capt_wallet_weekly_earnings,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.gray500,
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                    ),
-                                  ),
-                                  AppSpacing.h4,
-                                  Text(
-                                    '${wallet.weeklyEarnings.toStringAsFixed(0)} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                      fontFamily: 'IBM Plex Sans Arabic',
-                                      color: isDark
-                                          ? Colors.white
-                                          : AppColors.gray900,
-                                    ),
-                                  ),
-                                  AppSpacing.h8,
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.calendar_today_rounded,
-                                          color: AppColors.primary500, size: 13),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        AppLocalizations.of(context)!
-                                            .capt_wallet_current_week,
-                                        style: const TextStyle(
-                                          fontSize: 10.5,
-                                          color: AppColors.gray500,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'IBM Plex Sans Arabic',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          AppSpacing.w12,
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(AppSpacing.s14),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF141822)
-                                        .withValues(alpha: 0.9)
                                     : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
@@ -448,7 +554,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                                   Text(
                                     '${wallet.todayEarnings.toStringAsFixed(0)} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 17,
                                       fontWeight: FontWeight.w900,
                                       fontFamily: 'IBM Plex Sans Arabic',
                                       color: isDark
@@ -461,15 +567,74 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                                     children: [
                                       const Icon(Icons.check_circle_rounded,
                                           color: AppColors.success, size: 13),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        '${wallet.completedTripsToday} رحلة • كاش باليد',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: AppColors.success,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'IBM Plex Sans Arabic',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          AppSpacing.w12,
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(AppSpacing.s14),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF141822)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.08)
+                                      : Colors.black.withValues(alpha: 0.05),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(context)!
+                                        .capt_wallet_weekly_earnings,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.gray500,
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                    ),
+                                  ),
+                                  AppSpacing.h4,
+                                  Text(
+                                    '${wallet.weeklyEarnings.toStringAsFixed(0)} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w900,
+                                      fontFamily: 'IBM Plex Sans Arabic',
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.gray900,
+                                    ),
+                                  ),
+                                  AppSpacing.h8,
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today_rounded,
+                                          color: AppColors.primary500, size: 12),
+                                      const SizedBox(width: 5),
                                       Text(
                                         AppLocalizations.of(context)!
-                                            .capt_wallet_completed_trips(wallet
-                                                .completedTripsToday
-                                                .toString()),
+                                            .capt_wallet_current_week,
                                         style: const TextStyle(
-                                          fontSize: 10.5,
-                                          color: AppColors.success,
+                                          fontSize: 10,
+                                          color: AppColors.gray500,
                                           fontWeight: FontWeight.bold,
                                           fontFamily: 'IBM Plex Sans Arabic',
                                         ),
@@ -485,18 +650,105 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
 
                       AppSpacing.h16,
 
-                      // Payout Request Action Button
-                      CaptainActionButton(
-                        label: AppLocalizations.of(context)!
-                            .capt_wallet_req_payout,
-                        icon: Icons.account_balance_wallet_rounded,
-                        onPressed: () {
-                          CaptainPayoutDialog.show(
-                            context: context,
-                            availableBalance: wallet.availableBalance,
-                            onConfirmPayout: _handleConfirmPayout,
-                          );
-                        },
+                      // 3. Dual Action Buttons (Payout / Settle Commissions)
+                      Row(
+                        children: [
+                          // Settle Commissions / Top up
+                          Expanded(
+                            child: SizedBox(
+                              height: 50,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  CaptainTopUpSheet.show(
+                                    context,
+                                    isDark,
+                                    () => _walletBloc
+                                        .add(const FetchWalletDetails()),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary500,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.add_circle_outline_rounded,
+                                    size: 18),
+                                label: const Text(
+                                  'شحن / سداد العمولات',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          AppSpacing.w12,
+
+                          // Cash out / Request Payout
+                          Expanded(
+                            child: SizedBox(
+                              height: 50,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  if (hasWithdrawableBalance) {
+                                    CaptainPayoutDialog.show(
+                                      context: context,
+                                      availableBalance:
+                                          wallet.availableBalance,
+                                      onConfirmPayout: _handleConfirmPayout,
+                                    );
+                                  } else {
+                                    _showCashInHandExplanation(
+                                      context,
+                                      wallet.todayEarnings,
+                                      isDark,
+                                    );
+                                  }
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: hasWithdrawableBalance
+                                      ? AppColors.success
+                                      : (isDark
+                                          ? AppColors.gray300
+                                          : AppColors.gray700),
+                                  side: BorderSide(
+                                    color: hasWithdrawableBalance
+                                        ? AppColors.success
+                                        : (isDark
+                                            ? Colors.white24
+                                            : AppColors.gray300),
+                                    width: 1.2,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                icon: Icon(
+                                  Icons.account_balance_wallet_outlined,
+                                  size: 18,
+                                  color: hasWithdrawableBalance
+                                      ? AppColors.success
+                                      : AppColors.primary500,
+                                ),
+                                label: Text(
+                                  hasWithdrawableBalance
+                                      ? 'سحب الأرباح'
+                                      : 'تحويل الأرباح',
+                                  style: const TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
 
                       AppSpacing.h8,
@@ -505,7 +757,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                           AppLocalizations.of(context)!
                               .capt_wallet_payout_methods,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 10.5,
                             color: AppColors.gray500,
                             fontFamily: 'IBM Plex Sans Arabic',
                           ),
@@ -514,7 +766,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
 
                       AppSpacing.h24,
 
-                      // Transactions Log Header
+                      // 4. Transactions Log Header
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -547,12 +799,78 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                         ],
                       ),
 
-                      AppSpacing.h12,
+                      AppSpacing.h10,
 
-                      // Display Recent 3 Transactions
-                      ...wallet.recentTransactions.take(3).map((item) {
-                        return _buildTransactionTile(context, item, isDark);
-                      }),
+                      // Filter chips row
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildPageFilterChip(
+                              'الكل (${wallet.recentTransactions.length})',
+                              'ALL',
+                              _selectedTxFilter == 'ALL',
+                              isDark,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildPageFilterChip(
+                              'أرباح المشاوير (+) (${wallet.recentTransactions.where((t) => !t.isNegative).length})',
+                              'EARNINGS',
+                              _selectedTxFilter == 'EARNINGS',
+                              isDark,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildPageFilterChip(
+                              'العمولات والمسحوبات (-) (${wallet.recentTransactions.where((t) => t.isNegative).length})',
+                              'COMMISSIONS',
+                              _selectedTxFilter == 'COMMISSIONS',
+                              isDark,
+                              color: const Color(0xFFF59E0B),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      AppSpacing.h16,
+
+                      // Transactions List
+                      if (filteredTx.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 32, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.02)
+                                : AppColors.gray50,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white10
+                                  : AppColors.gray200,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _selectedTxFilter == 'ALL'
+                                  ? 'لا توجد معاملات مسجلة حتى الآن'
+                                  : (_selectedTxFilter == 'EARNINGS'
+                                      ? 'لا توجد أرباح مشاوير مسجلة في هذا القسم'
+                                      : 'لا توجد عمولات أو مسحوبات مسجلة'),
+                              style: TextStyle(
+                                fontFamily: 'IBM Plex Sans Arabic',
+                                fontSize: 12.5,
+                                color: isDark
+                                    ? AppColors.gray400
+                                    : AppColors.gray600,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ...filteredTx.take(5).map((item) {
+                          return _buildTransactionTile(context, item, isDark);
+                        }),
                     ],
                   ),
                 );
@@ -565,54 +883,99 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
     );
   }
 
+  Widget _buildPageFilterChip(
+      String label, String value, bool isSelected, bool isDark,
+      {Color? color}) {
+    final chipColor = color ?? AppColors.primary500;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedTxFilter = value;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? chipColor.withValues(alpha: 0.15)
+              : (isDark ? const Color(0xFF1E2433) : AppColors.gray100),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? chipColor
+                : (isDark ? Colors.white12 : AppColors.gray200),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: 11.5,
+            fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+            color: isSelected
+                ? chipColor
+                : (isDark ? AppColors.gray400 : AppColors.gray600),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTransactionTile(
       BuildContext context, CaptainTransactionEntity item, bool isDark) {
     final bool isNegative = item.isNegative;
     final Color statusColor =
-        isNegative ? AppColors.warning : AppColors.success;
+        isNegative ? const Color(0xFFF59E0B) : AppColors.success;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s12),
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF141822).withValues(alpha: 0.9)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
+    return GestureDetector(
+      onTap: () {
+        CaptainTransactionReceiptSheet.show(context, item, isDark);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.s10),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E2433) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.04),
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isNegative
-                      ? AppColors.danger.withValues(alpha: 0.12)
-                      : AppColors.primary500.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isNegative
-                      ? Icons.account_balance_rounded
-                      : Icons.motorcycle_rounded,
-                  size: 20,
-                  color:
-                      isNegative ? AppColors.danger : AppColors.primary500,
-                ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: isNegative
+                    ? const Color(0xFFF59E0B).withValues(alpha: 0.12)
+                    : AppColors.success.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
               ),
-              AppSpacing.w12,
-              Column(
+              child: Icon(
+                item.categoryIcon,
+                size: 20,
+                color: isNegative
+                    ? const Color(0xFFD97706)
+                    : AppColors.success,
+              ),
+            ),
+            AppSpacing.w12,
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    item.displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -620,52 +983,70 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
                       color: isDark ? Colors.white : AppColors.gray900,
                     ),
                   ),
-                  AppSpacing.h4,
+                  const SizedBox(height: 3),
                   Text(
-                    item.date,
+                    item.displaySubtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 10.5,
                       color: AppColors.gray500,
                       fontFamily: 'IBM Plex Sans Arabic',
                     ),
                   ),
+                  if (item.date.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      item.date,
+                      style: const TextStyle(
+                        fontSize: 9.5,
+                        color: AppColors.gray500,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
                 ],
               ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${isNegative ? '-' : '+'} ${item.amount} ${AppLocalizations.of(context)!.pass_yer.replaceAll(RegExp(r" \(YER\)"), "")}',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w900,
-                  color:
-                      isNegative ? AppColors.danger : AppColors.primary500,
-                  fontFamily: 'IBM Plex Sans Arabic',
-                ),
-              ),
-              AppSpacing.h4,
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  item.status,
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${isNegative ? '-' : '+'}${item.amount.toStringAsFixed(1)} ريال',
                   style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: isNegative
+                        ? (isDark
+                            ? const Color(0xFFF87171)
+                            : AppColors.danger)
+                        : AppColors.success,
                     fontFamily: 'IBM Plex Sans Arabic',
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                AppSpacing.h4,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    item.status,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                      fontFamily: 'IBM Plex Sans Arabic',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
