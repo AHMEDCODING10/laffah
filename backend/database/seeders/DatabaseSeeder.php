@@ -49,7 +49,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($admins as $adminData) {
-            $admin = User::firstOrCreate(
+            $admin = User::updateOrCreate(
                 ['phone' => $adminData['phone']],
                 [
                     'name' => $adminData['name'],
@@ -58,8 +58,10 @@ class DatabaseSeeder extends Seeder
                     'is_active' => true,
                 ]
             );
-            if (!$admin->hasRole('admin')) {
+            if (!$admin->hasRole('admin', 'web')) {
                 try { $admin->assignRole($webAdminRole); } catch (\Exception $e) {}
+            }
+            if (!$admin->hasRole('admin', 'api')) {
                 try { $admin->assignRole($apiAdminRole); } catch (\Exception $e) {}
             }
         }
