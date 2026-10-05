@@ -14,22 +14,30 @@ class AppEnv {
   /// Backend API Base URL
   static String get apiBaseUrl => ApiEndpoints.baseUrl;
 
+  static String _getEnv(String key, [String defaultValue = '']) {
+    try {
+      if (dotenv.isInitialized) {
+        return dotenv.env[key] ?? defaultValue;
+      }
+    } catch (_) {}
+    return defaultValue;
+  }
+
   /// MapTiler Vector & Raster Tile API Key
-  static String get mapTilerKey => dotenv.env['MAPTILER_API_KEY'] ?? '';
+  static String get mapTilerKey => _getEnv('MAPTILER_API_KEY');
 
   /// Pusher / Reverb App ID
-  static String get pusherAppId => dotenv.env['PUSHER_APP_ID'] ?? '';
+  static String get pusherAppId => _getEnv('PUSHER_APP_ID');
 
   /// Pusher / Reverb App Key
-  static String get pusherAppKey => dotenv.env['PUSHER_APP_KEY'] ?? '';
+  static String get pusherAppKey => _getEnv('PUSHER_APP_KEY');
 
   /// Pusher Cluster (default: eu)
-  static String get pusherAppCluster =>
-      dotenv.env['PUSHER_APP_CLUSTER'] ?? 'eu';
+  static String get pusherAppCluster => _getEnv('PUSHER_APP_CLUSTER', 'eu');
 
   /// LocationIQ Reverse Geocoding Key
-  static String get locationIqKey => dotenv.env['LOCATION_IQ_KEY'] ?? '';
+  static String get locationIqKey => _getEnv('LOCATION_IQ_KEY');
 
   /// Use Reverb instead of Pusher Cloud?
-  static bool get useReverb => dotenv.env['USE_REVERB'] == 'true';
+  static bool get useReverb => _getEnv('USE_REVERB') == 'true';
 }
