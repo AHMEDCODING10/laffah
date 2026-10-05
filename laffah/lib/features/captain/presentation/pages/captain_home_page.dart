@@ -14,6 +14,13 @@ import 'captain_earnings_page.dart';
 import 'captain_account_page.dart';
 import 'captain_notifications_page.dart';
 import 'captain_trips_sub_page.dart';
+import '../../../../core/di/injection_container.dart' as di;
+import '../bloc/trips/captain_trips_bloc.dart';
+import '../bloc/trips/captain_trips_event.dart';
+import '../bloc/wallet/captain_wallet_bloc.dart';
+import '../bloc/wallet/captain_wallet_event.dart';
+import '../bloc/notifications/captain_notifications_bloc.dart';
+import '../bloc/notifications/captain_notifications_event.dart';
 
 /// CaptainHomePage - Overhauled dashboard & interactive map for Laffah Captains.
 /// Incorporates iOS-inspired floating glassmorphic navigation dock,
@@ -26,58 +33,123 @@ class CaptainHomePage extends StatefulWidget {
   State<CaptainHomePage> createState() => _CaptainHomePageState();
 }
 
-class _CaptainHomePageState extends State<CaptainHomePage> {
+class _CaptainHomePageState extends State<CaptainHomePage>
+    with WidgetsBindingObserver {
   int _currentIndex =
       0; // 0: Home, 1: Trips, 2: Earnings, 3: Notifications, 4: Account
   bool _isOnline = false;
 
+  late final CaptainTripsBloc _tripsBloc;
+  late final CaptainWalletBloc _walletBloc;
+  late final CaptainNotificationsBloc _notificationsBloc;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _tripsBloc = di.sl<CaptainTripsBloc>()
+      ..add(const FetchCaptainTrips(isRefresh: true));
+    _walletBloc = di.sl<CaptainWalletBloc>()..add(const FetchWalletDetails());
+    _notificationsBloc = di.sl<CaptainNotificationsBloc>()
+      ..add(FetchNotificationsAndRequests());
+
     final captainState = context.read<CaptainBloc>().state;
     _isOnline = captainState is CaptainOnline;
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tripsBloc.close();
+    _walletBloc.close();
+    _notificationsBloc.close();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshActiveData();
+    }
+  }
+
+  void _refreshActiveData() {
+    _walletBloc.add(const FetchWalletDetails(isSilent: true));
+    _tripsBloc.add(const FetchCaptainTrips(isRefresh: true, isSilent: true));
+    _notificationsBloc.add(FetchNotificationsAndRequests());
+  }
+
+  void _onTabChanged(int index) {
+    if (_currentIndex != index) {
+      if (index == 1) {
+        // Tapped Trips tab -> auto-fetch latest trips silently in background
+        _tripsBloc.add(const FetchCaptainTrips(isRefresh: true, isSilent: true));
+      } else if (index == 2) {
+        // Tapped Earnings/Wallet tab -> auto-fetch latest balance & transactions silently
+        _walletBloc.add(const FetchWalletDetails(isSilent: true));
+      } else if (index == 3) {
+        // Tapped Notifications tab
+        _notificationsBloc.add(FetchNotificationsAndRequests());
+      }
+    }
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Indexed screens stack takes full screen due to StackFit.expand
-          IndexedStack(
-            index: _currentIndex,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _tripsBloc),
+        BlocProvider.value(value: _walletBloc),
+        BlocProvider.value(value: _notificationsBloc),
+      ],
+      child: BlocListener<CaptainBloc, CaptainState>(
+        listenWhen: (previous, current) {
+          return current is TripCompleted ||
+              (previous is TripAccepted && current is CaptainOnline);
+        },
+        listener: (context, state) {
+          _refreshActiveData();
+        },
+        child: Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
             children: [
-              _HomeMapSubPage(
-                isOnline: _isOnline,
-                onOnlineChanged: (val) {
-                  setState(() {
-                    _isOnline = val;
-                  });
-                },
+              // Indexed screens stack takes full screen due to StackFit.expand
+              IndexedStack(
+                index: _currentIndex,
+                children: [
+                  _HomeMapSubPage(
+                    isOnline: _isOnline,
+                    onOnlineChanged: (val) {
+                      setState(() {
+                        _isOnline = val;
+                      });
+                    },
+                  ),
+                  CaptainTripsSubPage(tripsBloc: _tripsBloc),
+                  CaptainEarningsPage(walletBloc: _walletBloc),
+                  CaptainNotificationsPage(bloc: _notificationsBloc),
+                  const CaptainAccountPage(),
+                ],
               ),
-              const CaptainTripsSubPage(),
-              const CaptainEarningsPage(),
-              const CaptainNotificationsPage(),
-              const CaptainAccountPage(),
+
+              // Floating iOS Glassmorphic Bottom Navigation Dock
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: CaptainFloatingBottomBar(
+                  currentIndex: _currentIndex,
+                  onTap: _onTabChanged,
+                ),
+              ),
             ],
           ),
-
-          // Floating iOS Glassmorphic Bottom Navigation Dock
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: CaptainFloatingBottomBar(
-              currentIndex: _currentIndex,
-              onTap: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

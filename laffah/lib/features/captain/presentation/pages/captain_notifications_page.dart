@@ -12,7 +12,8 @@ import '../bloc/notifications/captain_notifications_state.dart';
 import 'widgets/captain_reject_reason_dialog.dart';
 
 class CaptainNotificationsPage extends StatefulWidget {
-  const CaptainNotificationsPage({super.key});
+  final CaptainNotificationsBloc? bloc;
+  const CaptainNotificationsPage({super.key, this.bloc});
 
   @override
   State<CaptainNotificationsPage> createState() =>
@@ -25,6 +26,7 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
 
   late List<String> _categories;
   late CaptainNotificationsBloc _bloc;
+  bool _isLocalBloc = false;
 
   @override
   void didChangeDependencies() {
@@ -39,13 +41,21 @@ class _CaptainNotificationsPageState extends State<CaptainNotificationsPage> {
   @override
   void initState() {
     super.initState();
-    _bloc = sl<CaptainNotificationsBloc>();
-    _bloc.add(FetchNotificationsAndRequests());
+    if (widget.bloc != null) {
+      _bloc = widget.bloc!;
+      _isLocalBloc = false;
+    } else {
+      _bloc = sl<CaptainNotificationsBloc>();
+      _isLocalBloc = true;
+      _bloc.add(FetchNotificationsAndRequests());
+    }
   }
 
   @override
   void dispose() {
-    _bloc.close();
+    if (_isLocalBloc) {
+      _bloc.close();
+    }
     super.dispose();
   }
 

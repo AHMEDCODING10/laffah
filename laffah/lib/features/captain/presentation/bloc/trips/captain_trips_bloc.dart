@@ -22,15 +22,21 @@ class CaptainTripsBloc extends Bloc<CaptainTripsEvent, CaptainTripsState> {
         !event.isRefresh &&
         currentState.statusFilter == event.statusFilter) {
       oldTrips = currentState.trips;
+    } else if (currentState is CaptainTripsLoaded && event.isSilent) {
+      oldTrips = currentState.trips;
     }
 
     if (event.isRefresh ||
         (currentState is CaptainTripsLoaded &&
             currentState.statusFilter != event.statusFilter)) {
       _currentPage = 1;
-      emit(const CaptainTripsLoading([], isFirstFetch: true));
+      if (!event.isSilent && currentState is! CaptainTripsLoaded) {
+        emit(const CaptainTripsLoading([], isFirstFetch: true));
+      }
     } else {
-      emit(CaptainTripsLoading(oldTrips, isFirstFetch: oldTrips.isEmpty));
+      if (!event.isSilent) {
+        emit(CaptainTripsLoading(oldTrips, isFirstFetch: oldTrips.isEmpty));
+      }
     }
 
     final result = await getCaptainTripsUseCase(
@@ -40,7 +46,9 @@ class CaptainTripsBloc extends Bloc<CaptainTripsEvent, CaptainTripsState> {
 
     result.fold(
       (failure) {
-        emit(CaptainTripsError(failure.message));
+        if (state is! CaptainTripsLoaded) {
+          emit(CaptainTripsError(failure.message));
+        }
       },
       (newTrips) {
         _currentPage++;

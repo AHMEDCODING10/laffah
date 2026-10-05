@@ -7,7 +7,13 @@ abstract class CaptainWalletEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class FetchWalletDetails extends CaptainWalletEvent {}
+class FetchWalletDetails extends CaptainWalletEvent {
+  final bool isSilent;
+  const FetchWalletDetails({this.isSilent = false});
+
+  @override
+  List<Object> get props => [isSilent];
+}
 
 class RequestPayoutEvent extends CaptainWalletEvent {
   final double amount;

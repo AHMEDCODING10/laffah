@@ -18,11 +18,16 @@ class CaptainWalletBloc extends Bloc<CaptainWalletEvent, CaptainWalletState> {
 
   Future<void> _onFetchWalletDetails(
       FetchWalletDetails event, Emitter<CaptainWalletState> emit) async {
-    emit(CaptainWalletLoading());
+    if (!event.isSilent && state is! CaptainWalletLoaded) {
+      emit(CaptainWalletLoading());
+    }
     final failureOrWallet = await getCaptainWalletUseCase();
     failureOrWallet.fold(
-      (failure) => emit(const CaptainWalletError(
-          message: 'capt_wallet_err_fetch')),
+      (failure) {
+        if (state is! CaptainWalletLoaded) {
+          emit(const CaptainWalletError(message: 'capt_wallet_err_fetch'));
+        }
+      },
       (wallet) => emit(CaptainWalletLoaded(wallet: wallet)),
     );
   }
@@ -38,7 +43,7 @@ class CaptainWalletBloc extends Bloc<CaptainWalletEvent, CaptainWalletState> {
           emit(const CaptainWalletError(message: 'capt_wallet_err_payout')),
       (_) {
         // After successful payout, fetch wallet details again
-        add(FetchWalletDetails());
+        add(const FetchWalletDetails());
       },
     );
   }

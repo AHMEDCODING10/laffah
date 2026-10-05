@@ -16,7 +16,8 @@ import 'widgets/captain_transactions_sheet.dart';
 /// Features dynamic balance state calculations, authentic Yemeni payout integration (الكريمي/جوالي/ون كاش),
 /// and comprehensive transaction history.
 class CaptainEarningsPage extends StatefulWidget {
-  const CaptainEarningsPage({super.key});
+  final CaptainWalletBloc? walletBloc;
+  const CaptainEarningsPage({super.key, this.walletBloc});
 
   @override
   State<CaptainEarningsPage> createState() => _CaptainEarningsPageState();
@@ -24,16 +25,25 @@ class CaptainEarningsPage extends StatefulWidget {
 
 class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
   late final CaptainWalletBloc _walletBloc;
+  bool _isLocalBloc = false;
 
   @override
   void initState() {
     super.initState();
-    _walletBloc = sl<CaptainWalletBloc>()..add(FetchWalletDetails());
+    if (widget.walletBloc != null) {
+      _walletBloc = widget.walletBloc!;
+      _isLocalBloc = false;
+    } else {
+      _walletBloc = sl<CaptainWalletBloc>()..add(const FetchWalletDetails());
+      _isLocalBloc = true;
+    }
   }
 
   @override
   void dispose() {
-    _walletBloc.close();
+    if (_isLocalBloc) {
+      _walletBloc.close();
+    }
     super.dispose();
   }
 
@@ -187,7 +197,7 @@ class _CaptainEarningsPageState extends State<CaptainEarningsPage> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    _walletBloc.add(FetchWalletDetails());
+                    _walletBloc.add(const FetchWalletDetails());
                   },
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),

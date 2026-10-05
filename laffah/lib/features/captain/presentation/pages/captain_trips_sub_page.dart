@@ -19,7 +19,8 @@ import 'widgets/captain_trip_details_sheet.dart';
 /// Features: Real-time search, animated Glassmorphism filters, Shimmer loading,
 /// interactive micro-animations, animated empty state, and modern timeline trip cards.
 class CaptainTripsSubPage extends StatefulWidget {
-  const CaptainTripsSubPage({super.key});
+  final CaptainTripsBloc? tripsBloc;
+  const CaptainTripsSubPage({super.key, this.tripsBloc});
 
   @override
   State<CaptainTripsSubPage> createState() => _CaptainTripsSubPageState();
@@ -29,6 +30,7 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late CaptainTripsBloc _tripsBloc;
+  bool _isLocalBloc = false;
 
   String _searchQuery = '';
   String _selectedStatusFilter = 'الكل';
@@ -36,8 +38,14 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   @override
   void initState() {
     super.initState();
-    _tripsBloc = di.sl<CaptainTripsBloc>();
-    _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
+    if (widget.tripsBloc != null) {
+      _tripsBloc = widget.tripsBloc!;
+      _isLocalBloc = false;
+    } else {
+      _tripsBloc = di.sl<CaptainTripsBloc>();
+      _isLocalBloc = true;
+      _tripsBloc.add(const FetchCaptainTrips(isRefresh: true));
+    }
 
     _scrollController.addListener(_onScroll);
   }
@@ -213,7 +221,9 @@ class _CaptainTripsSubPageState extends State<CaptainTripsSubPage> {
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
-    _tripsBloc.close();
+    if (_isLocalBloc) {
+      _tripsBloc.close();
+    }
     super.dispose();
   }
 
