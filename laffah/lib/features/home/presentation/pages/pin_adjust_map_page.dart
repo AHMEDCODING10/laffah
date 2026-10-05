@@ -134,14 +134,16 @@ class _PinAdjustMapPageState extends State<PinAdjustMapPage> {
             children: [
               TileLayer(
                 urlTemplate: tileUrl,
+                subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.laffah.app',
                 maxZoom: 19,
-                retinaMode: true,
+                retinaMode: false,
                 tileProvider: CachedTileProvider(),
               ),
               RichAttributionWidget(
                 attributions: [
-                  TextSourceAttribution('MapTiler', onTap: () {}),
+                  TextSourceAttribution('CARTO', onTap: () {}),
+                  TextSourceAttribution('OSM contributors', onTap: () {}),
                 ],
                 alignment: AttributionAlignment.bottomLeft,
               ),

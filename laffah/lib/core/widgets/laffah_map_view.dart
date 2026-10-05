@@ -55,20 +55,13 @@ class LaffahMapView extends StatefulWidget {
   });
 
   static String getTileUrl({required bool isDark}) {
-    final key = mapTilerKey;
-    if (key.isNotEmpty &&
-        key != 'YOUR_MAPTILER_API_KEY' &&
-        key != 'get_your_key_from_maptiler.com') {
-      if (isDark) {
-        return 'https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}@2x.png?key=$key';
-      }
-      return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=$key';
-    }
-    // High-performance, crystal-clear, keyless vector-raster tiles
+    // 🗺️ CartoDB Voyager (Light) & Dark Matter (Dark)
+    // 100% Free, NO API key required, crisp Retina @2x tiles, global Fastly CDN caching.
+    // Built specifically for navigation & delivery apps like Uber / Careem.
     if (isDark) {
-      return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
+      return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
     }
-    return 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
+    return 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
   }
 
   @override
@@ -242,6 +235,19 @@ class _LaffahMapViewState extends State<LaffahMapView>
           _mapController.camera.zoom,
         );
       }
+    } else if (widget.routePoints != null &&
+        widget.routePoints!.isNotEmpty &&
+        widget.routePoints != old.routePoints) {
+      // Auto-fit camera when a new route is loaded (Uber-style overview)
+      try {
+        final bounds = LatLngBounds.fromPoints(widget.routePoints!);
+        _mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: bounds,
+            padding: const EdgeInsets.fromLTRB(40, 140, 40, 240),
+          ),
+        );
+      } catch (_) {}
     } else if (widget.initialCenter != old.initialCenter &&
         widget.initialCenter != null) {
       _mapController.move(widget.initialCenter!, _mapController.camera.zoom);
@@ -506,19 +512,16 @@ class _LaffahMapViewState extends State<LaffahMapView>
             // ── Tile layer with CancellableNetworkTileProvider ──────────
             TileLayer(
               urlTemplate: _tileUrl,
+              subdomains: const ['a', 'b', 'c', 'd'],
               userAgentPackageName: 'com.laffah.app',
               tileProvider: CancellableNetworkTileProvider(),
               maxZoom: 19,
-              // ⚠️ ISSUE-0.2 FIX: retinaMode disabled — tile URL already uses
-              // @2x HiDPI tiles. Enabling retinaMode on top of that quadruples
-              // data usage, causing OOM crashes on Yemen's slow 3G/4G networks.
               retinaMode: false,
               tileDisplay: const TileDisplay.fadeIn(
                 duration: Duration(milliseconds: 150),
                 startOpacity: 0.0,
               ),
-              // Reduced from 3→1 to prevent memory bloat from off-screen tiles
-              keepBuffer: 1,
+              keepBuffer: 2,
               panBuffer: 1,
             ),
 
@@ -545,7 +548,7 @@ class _LaffahMapViewState extends State<LaffahMapView>
             // ── Attribution ────────────────────────────────────────────
             RichAttributionWidget(
               attributions: [
-                TextSourceAttribution('MapTiler', onTap: () {}),
+                TextSourceAttribution('CARTO', onTap: () {}),
                 TextSourceAttribution('OSM contributors', onTap: () {}),
               ],
               alignment: AttributionAlignment.bottomLeft,
