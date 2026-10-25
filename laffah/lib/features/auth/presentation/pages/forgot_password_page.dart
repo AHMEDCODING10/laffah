@@ -68,11 +68,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   }
 
   void _handleResetRequest() {
-    if (_phoneController.text.trim().length != 9) {
+    final phone = _phoneController.text.trim();
+    if (phone.length != 9 || !RegExp(r'^(77|78|73|71|70)').hasMatch(phone)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.of(context)!.auth_val_phone_9_digits,
+            AppLocalizations.of(context)!.auth_val_phone_start_7,
             style: const TextStyle(
                 fontFamily: 'IBM Plex Sans Arabic',
                 fontWeight: FontWeight.bold),
@@ -83,7 +84,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       return;
     }
 
-    final phone = _phoneController.text.trim();
     context.read<AuthBloc>().add(ForgotPasswordRequested(phone: phone));
   }
 
@@ -193,68 +193,70 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               ),
                           ],
                         ),
-                        child: TextFormField(
-                          controller: _phoneController,
-                          focusNode: _phoneFocusNode,
-                          keyboardType: TextInputType.phone,
+                        child: Directionality(
                           textDirection: TextDirection.ltr,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            letterSpacing: 1.5,
-                          ),
-                          inputFormatters: [
-                            LengthLimitingTextInputFormatter(9),
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          decoration: InputDecoration(
-                            hintText: '7XXXXXXXX',
-                            hintStyle: TextStyle(
+                          child: TextFormField(
+                            controller: _phoneController,
+                            focusNode: _phoneFocusNode,
+                            keyboardType: TextInputType.phone,
+                            style: const TextStyle(
                               fontFamily: 'monospace',
-                              letterSpacing: 1.0,
-                              fontSize: 15,
-                              color: isDark
-                                  ? AppColors.gray600
-                                  : AppColors.gray400,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              letterSpacing: 1.5,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.s16, vertical: 14),
-                            filled: true,
-                            fillColor: isDark
-                                ? AppColors.white.withValues(alpha: 0.02)
-                                : AppColors.gray50,
-                            suffixIcon: Icon(
-                              Icons.phone_iphone_rounded,
-                              color: _isPhoneFocused
-                                  ? AppColors.primary500
-                                  : AppColors.gray600,
-                              size: 20,
-                            ),
-                            prefixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const SizedBox(width: AppSpacing.s16),
-                                const Text(
-                                  '+967',
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 15,
-                                    color: AppColors.primary500,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(9),
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: InputDecoration(
+                              hintText: '7XXXXXXXX',
+                              hintStyle: TextStyle(
+                                fontFamily: 'monospace',
+                                letterSpacing: 1.0,
+                                fontSize: 15,
+                                color: isDark
+                                    ? AppColors.gray600
+                                    : AppColors.gray400,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.s16, vertical: 14),
+                              filled: true,
+                              fillColor: isDark
+                                  ? AppColors.white.withValues(alpha: 0.02)
+                                  : AppColors.gray50,
+                              prefixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(width: AppSpacing.s14),
+                                  Icon(
+                                    Icons.phone_iphone_rounded,
+                                    color: _isPhoneFocused
+                                        ? AppColors.primary500
+                                        : AppColors.gray600,
+                                    size: 20,
                                   ),
-                                ),
-                                const SizedBox(width: AppSpacing.s8),
-                                Container(
-                                  height: 22,
-                                  width: 1,
-                                  color: isDark
-                                      ? AppColors.white.withValues(alpha: 0.1)
-                                      : AppColors.gray300,
-                                ),
-                                const SizedBox(width: AppSpacing.s12),
-                              ],
-                            ),
+                                  const SizedBox(width: AppSpacing.s8),
+                                  const Text(
+                                    '+967',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15,
+                                      color: AppColors.primary500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.s8),
+                                  Container(
+                                    height: 22,
+                                    width: 1,
+                                    color: isDark
+                                        ? AppColors.white.withValues(alpha: 0.1)
+                                        : AppColors.gray300,
+                                  ),
+                                  const SizedBox(width: AppSpacing.s12),
+                                ],
+                              ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: AppSpacing.borderSM,
                               borderSide: BorderSide(
@@ -274,8 +276,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                           ),
                         ),
                       ),
+                    ),
 
-                      const Spacer(),
+                    const Spacer(),
 
                       // Submit Button
                       BlocBuilder<AuthBloc, AuthState>(

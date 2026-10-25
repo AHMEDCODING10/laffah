@@ -5,6 +5,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'captain_document_upload_page.dart';
 import '../../../../core/theme/theme_controller.dart';
+import '../../../../core/services/chatbot_service.dart';
+import '../../../../core/di/injection_container.dart' as di;
 
 import '../../../../core/router/app_router.dart';
 
@@ -87,6 +89,22 @@ class _CaptainSettingsPageState extends State<CaptainSettingsPage> {
                 setState(() {});
               },
               isDark: isDark,
+            ),
+            AnimatedBuilder(
+              animation: di.sl<ChatbotService>(),
+              builder: (context, child) {
+                final chatbotService = di.sl<ChatbotService>();
+                return _buildSwitchTile(
+                  title: 'المساعد الذكي (Chatbot)',
+                  subtitle: 'إظهار أيقونة المساعد الذكي العائمة في الشاشة.',
+                  icon: Icons.smart_toy_rounded,
+                  value: chatbotService.isEnabled,
+                  onChanged: (val) {
+                    chatbotService.toggleChatbot(val);
+                  },
+                  isDark: isDark,
+                );
+              },
             ),
             AppSpacing.h16,
             _buildSectionHeader('الملاحة والتوجيه', isDark),

@@ -503,106 +503,110 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
             ),
         ],
       ),
-      child: TextFormField(
-        controller: _phoneController,
-        focusNode: _phoneFocusNode,
-        keyboardType: TextInputType.phone,
-        textDirection: TextDirection.ltr, // Numeric digits left-to-right
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.5,
-        ),
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(9),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        decoration: InputDecoration(
-          hintText: '7XXXXXXXX',
-          hintStyle: TextStyle(
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: TextFormField(
+          controller: _phoneController,
+          focusNode: _phoneFocusNode,
+          keyboardType: TextInputType.phone,
+          style: const TextStyle(
             fontFamily: 'monospace',
-            letterSpacing: 1.0,
-            fontSize: 15,
-            color: isDark ? AppColors.gray600 : AppColors.gray400,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            letterSpacing: 1.5,
           ),
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s16, vertical: 14),
-          filled: true,
-          fillColor: isDark
-              ? AppColors.white.withValues(alpha: 0.02)
-              : AppColors.gray50,
-          suffixIcon: Icon(
-            Icons.phone_iphone_rounded,
-            color:
-                _isPhoneFocused ? AppColors.primary500 : AppColors.gray600,
-            size: 20,
-          ),
-          prefixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(width: AppSpacing.s16),
-              const Text(
-                '+967',
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                  color: AppColors.primary500,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(9),
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          decoration: InputDecoration(
+            hintText: '7XXXXXXXX',
+            hintStyle: TextStyle(
+              fontFamily: 'monospace',
+              letterSpacing: 1.0,
+              fontSize: 15,
+              color: isDark ? AppColors.gray600 : AppColors.gray400,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s16, vertical: 14),
+            filled: true,
+            fillColor: isDark
+                ? AppColors.white.withValues(alpha: 0.02)
+                : AppColors.gray50,
+            prefixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: AppSpacing.s14),
+                Icon(
+                  Icons.phone_iphone_rounded,
+                  color:
+                      _isPhoneFocused ? AppColors.primary500 : AppColors.gray600,
+                  size: 20,
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Container(
-                height: 22,
-                width: 1,
+                const SizedBox(width: AppSpacing.s8),
+                const Text(
+                  '+967',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    color: AppColors.primary500,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Container(
+                  height: 22,
+                  width: 1,
+                  color: isDark
+                      ? AppColors.white.withValues(alpha: 0.1)
+                      : AppColors.gray300,
+                ),
+                const SizedBox(width: AppSpacing.s12),
+              ],
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppSpacing.borderSM,
+              borderSide: BorderSide(
                 color: isDark
-                    ? AppColors.white.withValues(alpha: 0.1)
+                    ? AppColors.white.withValues(alpha: 0.05)
                     : AppColors.gray300,
               ),
-              const SizedBox(width: AppSpacing.s12),
-            ],
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: AppSpacing.borderSM,
-            borderSide: BorderSide(
-              color: isDark
-                  ? AppColors.white.withValues(alpha: 0.05)
-                  : AppColors.gray300,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppSpacing.borderSM,
+              borderSide: const BorderSide(
+                color: AppColors.primary500,
+                width: 1.8,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: AppSpacing.borderSM,
+              borderSide: const BorderSide(
+                color: AppColors.danger,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: AppSpacing.borderSM,
+              borderSide: const BorderSide(
+                color: AppColors.danger,
+                width: 1.8,
+              ),
             ),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: AppSpacing.borderSM,
-            borderSide: const BorderSide(
-              color: AppColors.primary500,
-              width: 1.8,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: AppSpacing.borderSM,
-            borderSide: const BorderSide(
-              color: AppColors.danger,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: AppSpacing.borderSM,
-            borderSide: const BorderSide(
-              color: AppColors.danger,
-              width: 1.8,
-            ),
-          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return AppLocalizations.of(context)!.auth_val_phone_req;
+            }
+            final phone = value.trim();
+            if (phone.length != 9) {
+              return AppLocalizations.of(context)!.auth_val_phone_yemen;
+            }
+            if (!RegExp(r'^(77|78|73|71|70)').hasMatch(phone)) {
+              return AppLocalizations.of(context)!.auth_val_phone_start;
+            }
+            return null;
+          },
         ),
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return AppLocalizations.of(context)!.auth_val_phone_req;
-          }
-          if (value.trim().length != 9) {
-            return AppLocalizations.of(context)!.auth_val_phone_yemen;
-          }
-          if (!value.trim().startsWith('7')) {
-            return AppLocalizations.of(context)!.auth_val_phone_start;
-          }
-          return null;
-        },
       ),
     );
   }
@@ -645,14 +649,14 @@ class _PhoneNumberInputPageState extends State<PhoneNumberInputPage>
           fillColor: isDark
               ? AppColors.white.withValues(alpha: 0.02)
               : AppColors.gray50,
-          suffixIcon: Icon(
+          prefixIcon: Icon(
             Icons.lock_rounded,
             color: _isPasswordFocused
                 ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
-          prefixIcon: IconButton(
+          suffixIcon: IconButton(
             icon: Icon(
               _obscurePassword
                   ? Icons.visibility_off_rounded

@@ -17,6 +17,7 @@ import 'features/passenger/presentation/bloc/wallet_bloc.dart';
 import 'features/passenger/presentation/bloc/wallet_event.dart';
 import 'core/widgets/offline_warning_wrapper.dart';
 import 'core/theme/app_colors.dart';
+import 'features/chatbot/presentation/widgets/draggable_chatbot_widget.dart';
 
 /// LaffahApp — Root Application Widget for لَفَّة
 /// =================================================
@@ -46,7 +47,7 @@ class LaffahApp extends StatelessWidget {
               child: AnnotatedRegion<SystemUiOverlayStyle>(
                 value: currentThemeMode == ThemeMode.dark ||
                         (currentThemeMode == ThemeMode.system &&
-                            MediaQuery.of(context).platformBrightness ==
+                            WidgetsBinding.instance.platformDispatcher.platformBrightness ==
                                 Brightness.dark)
                     ? const SystemUiOverlayStyle(
                         statusBarColor: Colors.transparent,
@@ -90,8 +91,10 @@ class LaffahApp extends StatelessWidget {
                         textDirection: localeState.locale.languageCode == 'ar'
                             ? TextDirection.rtl
                             : TextDirection.ltr,
-                        child: OfflineWarningWrapper(
-                          child: child ?? const SizedBox.shrink(),
+                        child: DraggableChatbotWidget(
+                          child: OfflineWarningWrapper(
+                            child: child ?? const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                     );

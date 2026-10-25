@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/captain_status_entity.dart';
 import '../../domain/entities/captain_trip_entity.dart';
 import '../../domain/entities/captain_wallet_entity.dart';
@@ -13,11 +14,16 @@ import '../datasources/captain_remote_data_source.dart';
 import '../models/captain_wallet_model.dart';
 import '../models/captain_notification_model.dart';
 import '../models/captain_trip_request_model.dart';
+import '../../../../core/services/offline_queue_service.dart';
 
 class CaptainRepositoryImpl implements CaptainRepository {
   final CaptainRemoteDataSource remoteDataSource;
+  final OfflineQueueService offlineQueueService;
 
-  CaptainRepositoryImpl({required this.remoteDataSource});
+  CaptainRepositoryImpl({
+    required this.remoteDataSource,
+    required this.offlineQueueService,
+  });
 
   @override
   Future<Either<Failure, CaptainStatusEntity>> toggleOnlineStatus({
@@ -117,6 +123,13 @@ class CaptainRepositoryImpl implements CaptainRepository {
         return Left(ServerFailure(response.message));
       }
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout || 
+          e.type == DioExceptionType.receiveTimeout || 
+          e.type == DioExceptionType.unknown) {
+        // Enqueue offline
+        await offlineQueueService.enqueueTripStatusUpdate(tripId, status);
+        return const Right(null); // Accept it locally
+      }
       final serverMsg = e.response?.data is Map && e.response?.data['message'] != null
           ? e.response?.data['message'].toString()
           : 'حدث خطأ أثناء تحديث حالة المشوار مع الخادم.';
@@ -169,25 +182,27 @@ class CaptainRepositoryImpl implements CaptainRepository {
       final response =
           await remoteDataSource.getCaptainTrips(page, statusFilter);
       if (response.success && response.data != null) {
-        final trips = response.data!
-            .map((e) => CaptainTripEntity(
-                  id: e['id']?.toString() ?? '',
-                  status: e['status'] ?? 'غير معروف',
-                  statusColor: _getStatusColor(e['status'] ?? ''),
-                  passengerName: e['passenger_name'] ?? e['passengerName'] ?? 'عميل',
-                  passengerPhone: e['passenger_phone'] ?? e['passengerPhone'] ?? '',
-                  rating: (e['passenger_rating'] as num?)?.toDouble() ?? 5.0,
-                  pickup: e['pickup_location'] ?? e['pickup_address'] ?? e['pickup'] ?? 'موقع الاستلام',
-                  dropoff: e['dropoff_location'] ?? e['dropoff_address'] ?? e['dropoff'] ?? 'موقع الوصول',
-                  price: '${e['price'] ?? 0} ر.ي',
-                  grossFare: (e['price'] as num?)?.toDouble() ?? (e['grossFare'] as num?)?.toDouble() ?? 0.0,
-                  date: e['timeTag'] ?? e['created_at'] ?? '',
-                  distance: e['distance'] != null ? e['distance'].toString() : '${e['distance_km'] ?? 0} كم',
-                  duration: e['duration'] != null ? e['duration'].toString() : '${e['duration_mins'] ?? 0} دقيقة',
-                  paymentMethod: e['payment_method'] ?? 'نقداً',
-                  isParcel: e['isParcel'] == true || e['is_parcel'] == true || e['type'] == 'delivery',
-                ))
-            .toList();
+        final trips = await compute((List<dynamic> data) {
+          return data
+              .map((e) => CaptainTripEntity(
+                    id: e['id']?.toString() ?? '',
+                    status: e['status'] ?? 'غير معروف',
+                    statusColor: _getStatusColor(e['status'] ?? ''),
+                    passengerName: e['passenger_name'] ?? e['passengerName'] ?? 'عميل',
+                    passengerPhone: e['passenger_phone'] ?? e['passengerPhone'] ?? '',
+                    rating: (e['passenger_rating'] as num?)?.toDouble() ?? 5.0,
+                    pickup: e['pickup_location'] ?? e['pickup_address'] ?? e['pickup'] ?? 'موقع الاستلام',
+                    dropoff: e['dropoff_location'] ?? e['dropoff_address'] ?? e['dropoff'] ?? 'موقع الوصول',
+                    price: '${e['price'] ?? 0} ر.ي',
+                    grossFare: (e['price'] as num?)?.toDouble() ?? (e['grossFare'] as num?)?.toDouble() ?? 0.0,
+                    date: e['timeTag'] ?? e['created_at'] ?? '',
+                    distance: e['distance'] != null ? e['distance'].toString() : '${e['distance_km'] ?? 0} كم',
+                    duration: e['duration'] != null ? e['duration'].toString() : '${e['duration_mins'] ?? 0} دقيقة',
+                    paymentMethod: e['payment_method'] ?? 'نقداً',
+                    isParcel: e['isParcel'] == true || e['is_parcel'] == true || e['type'] == 'delivery',
+                  ))
+              .toList();
+        }, response.data!);
         return Right(trips);
       } else {
         return Left(ServerFailure(response.message));
@@ -199,7 +214,7 @@ class CaptainRepositoryImpl implements CaptainRepository {
     }
   }
 
-  Color _getStatusColor(String status) {
+  static Color _getStatusColor(String status) {
     switch (status) {
       case 'completed':
       case 'delivered':
@@ -226,7 +241,7 @@ class CaptainRepositoryImpl implements CaptainRepository {
     try {
       final response = await remoteDataSource.getWalletDetails();
       if (response.success && response.data != null) {
-        final wallet = CaptainWalletModel.fromJson(response.data!);
+        final wallet = await compute((Map<String, dynamic> data) => CaptainWalletModel.fromJson(data), response.data!);
         return Right(wallet);
       } else {
         return Left(ServerFailure(response.message));
@@ -245,10 +260,13 @@ class CaptainRepositoryImpl implements CaptainRepository {
     try {
       final response = await remoteDataSource.getNotifications();
       if (response.success && response.data != null) {
-        final notifications = response.data!
-            .map((e) =>
-                CaptainNotificationModel.fromJson(e as Map<String, dynamic>))
-            .toList();
+        final notifications = await compute(
+          (List<dynamic> data) => data
+              .map((e) =>
+                  CaptainNotificationModel.fromJson(e as Map<String, dynamic>))
+              .toList(),
+          response.data!
+        );
         return Right(notifications);
       } else {
         return Left(ServerFailure(response.message));
@@ -267,10 +285,13 @@ class CaptainRepositoryImpl implements CaptainRepository {
     try {
       final response = await remoteDataSource.getNearbyRequests();
       if (response.success && response.data != null) {
-        final requests = response.data!
-            .map((e) =>
-                CaptainTripRequestModel.fromJson(e as Map<String, dynamic>))
-            .toList();
+        final requests = await compute(
+          (List<dynamic> data) => data
+              .map((e) =>
+                  CaptainTripRequestModel.fromJson(e as Map<String, dynamic>))
+              .toList(),
+          response.data!
+        );
         return Right(requests);
       } else {
         return Left(ServerFailure(response.message));

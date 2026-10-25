@@ -171,7 +171,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get auth_val_phone_start =>
-      'Phone number must start with 7 (77, 73, 71, or 70)';
+      'Phone number must start with (77, 78, 73, 71, or 70)';
 
   @override
   String get auth_enter_password => 'Enter your password';
@@ -242,7 +242,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_val_phone_9_digits_2 => 'Phone number must be 9 digits';
 
   @override
-  String get auth_val_phone_yemen_start => 'Yemeni mobile starts with 7';
+  String get auth_val_phone_yemen_start =>
+      'Yemeni mobile must start with (77, 78, 73, 71, or 70)';
 
   @override
   String get auth_val_min_6 => 'Must be at least 6 characters';
@@ -263,7 +264,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_val_pass_mismatch => 'Password mismatch';
 
   @override
-  String get auth_ex_plate => 'A B C 1234';
+  String get auth_ex_plate => '1/12345';
 
   @override
   String get auth_required => 'Required';
@@ -313,7 +314,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_val_name_surname => 'Please write at least name and surname';
 
   @override
-  String get auth_val_phone_start_7 => 'Phone must start with 7';
+  String get auth_val_phone_start_7 =>
+      'Phone must start with (77, 78, 73, 71, or 70)';
+
+  @override
+  String get auth_val_name_no_numbers =>
+      'Name must contain letters only without numbers';
+
+  @override
+  String get auth_val_bike_plate_format =>
+      'Invalid plate format, e.g. 1/12345 (max 6 digits)';
 
   @override
   String get auth_val_secure_pass =>

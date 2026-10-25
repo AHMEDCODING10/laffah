@@ -63,6 +63,7 @@ import '../../features/profile/presentation/pages/passenger_profile_edit_page.da
 import '../../features/profile/presentation/pages/legal/privacy_policy_page.dart';
 import '../../features/profile/presentation/pages/legal/terms_of_service_page.dart';
 import '../../features/profile/domain/entities/profile_entity.dart';
+import '../../features/chatbot/presentation/pages/chatbot_page.dart';
 
 // ============================================================
 // ROUTE PATH CONSTANTS
@@ -146,10 +147,11 @@ abstract class LaffahRoutes {
   static const String captainSupport = '/captain/support';
 
   // ──────────────────────────────────────────
-  // LEGAL
+  // LEGAL & CHATBOT
   // ──────────────────────────────────────────
   static const String privacyPolicy = '/legal/privacy';
   static const String termsOfService = '/legal/terms';
+  static const String chatbot = '/chatbot';
 }
 
 // ============================================================
@@ -162,6 +164,7 @@ class AppRouter {
 
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>(debugLabel: 'LaffahRootNavigator');
+  static GlobalKey<NavigatorState> get rootNavigatorKey => _rootNavigatorKey;
 
   static bool _isPublicRoute(String path) {
     if (path == LaffahRoutes.splash ||
@@ -175,6 +178,7 @@ class AppRouter {
         path == LaffahRoutes.resetPassword ||
         path == LaffahRoutes.privacyPolicy ||
         path == LaffahRoutes.termsOfService ||
+        path == LaffahRoutes.chatbot ||
         path.startsWith('/parcel/track')) {
       return true;
     }
@@ -702,6 +706,13 @@ class AppRouter {
         name: 'terms-of-service',
         builder: (BuildContext context, GoRouterState state) =>
             const TermsOfServicePage(),
+      ),
+
+      GoRoute(
+        path: LaffahRoutes.chatbot,
+        name: 'chatbot',
+        builder: (BuildContext context, GoRouterState state) =>
+            const ChatbotPage(),
       ),
     ],
 

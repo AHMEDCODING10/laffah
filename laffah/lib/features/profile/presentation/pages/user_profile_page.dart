@@ -7,6 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/widgets/laffah_app_bar.dart';
+import '../../../../core/services/chatbot_service.dart';
+import '../../../../core/di/injection_container.dart' as di;
 import '../../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_bloc.dart';
@@ -127,7 +129,8 @@ class _ProfileViewState extends State<_ProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark =
+        ThemeController.instance.isDarkMode || Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
         backgroundColor:
@@ -240,151 +243,175 @@ class _ProfileViewState extends State<_ProfileView> {
                 AppSpacing.h20,
 
                 // Section 2: Security & Preferences
-                ProfileSectionCard(
-                  isDark: isDark,
-                  sectionTitle: AppLocalizations.of(context)!.pass_profile_security_prefs,
-                  tiles: [
-                    ProfileListTile(
-                      icon: Icons.lock_outline_rounded,
-                      label: AppLocalizations.of(context)!.pass_profile_change_pass,
-                      isDark: isDark,
-                      onTap: () => context.push(LaffahRoutes.forgotPassword, extra: {
-                        'phone': _cachedProfile?.phone,
-                        'isChangingPassword': true,
-                      }),
-                    ),
-                    ProfileListTile(
-                      icon: Icons.language_rounded,
-                      label: AppLocalizations.of(context)!.pass_profile_language,
-                      isDark: isDark,
-                      trailing: BlocBuilder<LocaleBloc, LocaleState>(
-                        builder: (context, localeState) {
-                          return Text(
-                            localeState.locale.languageCode == 'ar'
-                                ? AppLocalizations.of(context)!.pass_profile_arabic
-                                : AppLocalizations.of(context)!.pass_profile_english,
-                            style: TextStyle(
-                              fontFamily: 'IBM Plex Sans Arabic',
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.gray400
-                                  : AppColors.gray500,
-                            ),
-                          );
-                        },
-                      ),
-                      onTap: () {
-                        final localeState = context.read<LocaleBloc>().state;
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor:
-                              isDark ? const Color(0xFF141822) : Colors.white,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(20)),
+                AnimatedBuilder(
+                  animation: Listenable.merge([ThemeController.instance, di.sl<ChatbotService>()]),
+                  builder: (context, child) {
+                    final chatbotService = di.sl<ChatbotService>();
+                    final currentIsDark = ThemeController.instance.isDarkMode || Theme.of(context).brightness == Brightness.dark;
+                    return ProfileSectionCard(
+                      isDark: currentIsDark,
+                      sectionTitle: AppLocalizations.of(context)!.pass_profile_security_prefs,
+                      tiles: [
+                        ProfileListTile(
+                          icon: Icons.lock_outline_rounded,
+                          label: AppLocalizations.of(context)!.pass_profile_change_pass,
+                          isDark: isDark,
+                          onTap: () => context.push(LaffahRoutes.forgotPassword, extra: {
+                            'phone': _cachedProfile?.phone,
+                            'isChangingPassword': true,
+                          }),
+                        ),
+                        ProfileListTile(
+                          icon: Icons.language_rounded,
+                          label: AppLocalizations.of(context)!.pass_profile_language,
+                          isDark: isDark,
+                          trailing: BlocBuilder<LocaleBloc, LocaleState>(
+                            builder: (context, localeState) {
+                              return Text(
+                                localeState.locale.languageCode == 'ar'
+                                    ? AppLocalizations.of(context)!.pass_profile_arabic
+                                    : AppLocalizations.of(context)!.pass_profile_english,
+                                style: TextStyle(
+                                  fontFamily: 'IBM Plex Sans Arabic',
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? AppColors.gray400
+                                      : AppColors.gray500,
+                                ),
+                              );
+                            },
                           ),
-                          builder: (BuildContext bottomSheetContext) {
-                            return SafeArea(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Text(
-                                      AppLocalizations.of(context)!.pass_profile_choose_lang,
-                                      style: TextStyle(
-                                        fontFamily: 'IBM Plex Sans Arabic',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                  ListTile(
-                                    title: Text(AppLocalizations.of(context)!.pass_profile_arabic,
-                                        style: TextStyle(
-                                            fontFamily: 'IBM Plex Sans Arabic',
-                                            color: isDark
-                                                ? Colors.white
-                                                : Colors.black)),
-                                    trailing:
-                                        localeState.locale.languageCode == 'ar'
-                                            ? const Icon(Icons.check,
-                                                color: AppColors.primary500)
-                                            : null,
-                                    onTap: () {
-                                      context.read<LocaleBloc>().add(
-                                          const ChangeLocale(Locale('ar')));
-                                      Navigator.pop(bottomSheetContext);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          backgroundColor: AppColors.primary500,
-                                          content: Text(
-                                            AppLocalizations.of(context)!.pass_profile_lang_ar_success,
-                                            style: const TextStyle(
-                                                fontFamily: 'IBM Plex Sans Arabic',
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  ListTile(
-                                    title: Text(AppLocalizations.of(context)!.pass_profile_english,
-                                        style: TextStyle(
-                                            fontFamily: 'IBM Plex Sans Arabic',
-                                            color: isDark
-                                                ? Colors.white
-                                                : Colors.black)),
-                                    trailing:
-                                        localeState.locale.languageCode == 'en'
-                                            ? const Icon(Icons.check,
-                                                color: AppColors.primary500)
-                                            : null,
-                                    onTap: () {
-                                      context.read<LocaleBloc>().add(
-                                          const ChangeLocale(Locale('en')));
-                                      Navigator.pop(bottomSheetContext);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          backgroundColor: AppColors.primary500,
-                                          content: Text(
-                                            AppLocalizations.of(context)!.pass_profile_lang_en_success,
-                                            style: const TextStyle(
-                                                fontFamily: 'IBM Plex Sans Arabic',
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                          onTap: () {
+                            final localeState = context.read<LocaleBloc>().state;
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor:
+                                  isDark ? const Color(0xFF141822) : Colors.white,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.vertical(top: Radius.circular(20)),
                               ),
+                              builder: (BuildContext bottomSheetContext) {
+                                return SafeArea(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(
+                                          AppLocalizations.of(context)!.pass_profile_choose_lang,
+                                          style: TextStyle(
+                                            fontFamily: 'IBM Plex Sans Arabic',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      ListTile(
+                                        title: Text(AppLocalizations.of(context)!.pass_profile_arabic,
+                                            style: TextStyle(
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : Colors.black)),
+                                        trailing:
+                                            localeState.locale.languageCode == 'ar'
+                                                ? const Icon(Icons.check,
+                                                    color: AppColors.primary500)
+                                                : null,
+                                        onTap: () {
+                                          context.read<LocaleBloc>().add(
+                                              const ChangeLocale(Locale('ar')));
+                                          Navigator.pop(bottomSheetContext);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              backgroundColor: AppColors.primary500,
+                                              content: Text(
+                                                AppLocalizations.of(context)!.pass_profile_lang_ar_success,
+                                                style: const TextStyle(
+                                                    fontFamily: 'IBM Plex Sans Arabic',
+                                                    fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      ListTile(
+                                        title: Text(AppLocalizations.of(context)!.pass_profile_english,
+                                            style: TextStyle(
+                                                fontFamily: 'IBM Plex Sans Arabic',
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : Colors.black)),
+                                        trailing:
+                                            localeState.locale.languageCode == 'en'
+                                                ? const Icon(Icons.check,
+                                                    color: AppColors.primary500)
+                                                : null,
+                                        onTap: () {
+                                          context.read<LocaleBloc>().add(
+                                              const ChangeLocale(Locale('en')));
+                                          Navigator.pop(bottomSheetContext);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              backgroundColor: AppColors.primary500,
+                                              content: Text(
+                                                AppLocalizations.of(context)!.pass_profile_lang_en_success,
+                                                style: const TextStyle(
+                                                    fontFamily: 'IBM Plex Sans Arabic',
+                                                    fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                    ),
-                    ProfileListTile(
-                      icon: isDark
-                          ? Icons.dark_mode_rounded
-                          : Icons.light_mode_rounded,
-                      label: AppLocalizations.of(context)!.pass_profile_dark_mode,
-                      isDark: isDark,
-                      trailing: Switch(
-                        value: isDark,
-                        activeThumbColor: AppColors.primary500,
-                        onChanged: (val) {
-                          ThemeController.instance.toggleTheme(val);
-                        },
-                      ),
-                      onTap: () {
-                        ThemeController.instance.toggleTheme(!isDark);
-                      },
-                    ),
-                  ],
+                        ),
+                        ProfileListTile(
+                          icon: ThemeController.instance.isDarkMode
+                              ? Icons.dark_mode_rounded
+                              : Icons.light_mode_rounded,
+                          label: AppLocalizations.of(context)!.pass_profile_dark_mode,
+                          isDark: currentIsDark,
+                          trailing: Switch(
+                            value: ThemeController.instance.isDarkMode,
+                            activeThumbColor: AppColors.primary500,
+                            onChanged: (val) {
+                              ThemeController.instance.toggleTheme(val);
+                              setState(() {});
+                            },
+                          ),
+                          onTap: () {
+                            ThemeController.instance.toggleTheme(!ThemeController.instance.isDarkMode);
+                            setState(() {});
+                          },
+                        ),
+                        ProfileListTile(
+                          icon: Icons.smart_toy_rounded,
+                          label: 'تفعيل المساعد الذكي (Chatbot)',
+                          isDark: isDark,
+                          trailing: Switch(
+                            value: chatbotService.isEnabled,
+                            activeThumbColor: Colors.orange,
+                            onChanged: (val) {
+                              chatbotService.toggleChatbot(val);
+                            },
+                          ),
+                          onTap: () {
+                            chatbotService.toggleChatbot(!chatbotService.isEnabled);
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
 
                 AppSpacing.h20,

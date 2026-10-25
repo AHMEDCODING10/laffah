@@ -61,8 +61,9 @@ class DioClient {
     _dio.interceptors.add(InterceptorsWrapper(
       onError: (DioException e, handler) async {
         if (e.response?.statusCode == 401) {
-          // If the request was for login, do NOT emit unauthenticated (it's just a wrong password)
-          if (e.requestOptions.path.contains(ApiEndpoints.login)) {
+          // If the request was for login or pusher auth, do NOT emit unauthenticated
+          if (e.requestOptions.path.contains(ApiEndpoints.login) || 
+              e.requestOptions.path.contains('broadcasting/auth')) {
             return handler.next(e);
           }
 
@@ -144,7 +145,8 @@ class DioClient {
     _uploadDio.interceptors.add(InterceptorsWrapper(
       onError: (DioException e, handler) async {
         if (e.response?.statusCode == 401) {
-          if (e.requestOptions.path.contains(ApiEndpoints.login)) {
+          if (e.requestOptions.path.contains(ApiEndpoints.login) || 
+              e.requestOptions.path.contains('broadcasting/auth')) {
             return handler.next(e);
           }
           final hasAuthHeader =

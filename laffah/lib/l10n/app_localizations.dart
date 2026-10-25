@@ -401,7 +401,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_val_phone_start.
   ///
   /// In ar, this message translates to:
-  /// **'يجب أن يبدأ رقم الهاتف بـ 7 (77 أو 73 أو 71 أو 70)'**
+  /// **'يجب أن يبدأ رقم الهاتف ببادئة معتمدة (77، 78، 73، 71، 70)'**
   String get auth_val_phone_start;
 
   /// No description provided for @auth_enter_password.
@@ -539,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_val_phone_yemen_start.
   ///
   /// In ar, this message translates to:
-  /// **'رقم الجوال  يبدأ بـ 7'**
+  /// **'رقم الجوال يجب أن يبدأ بـ (77، 78، 73، 71، 70)'**
   String get auth_val_phone_yemen_start;
 
   /// No description provided for @auth_val_min_6.
@@ -581,7 +581,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_ex_plate.
   ///
   /// In ar, this message translates to:
-  /// **'أ ب ج 1234'**
+  /// **'1/12345'**
   String get auth_ex_plate;
 
   /// No description provided for @auth_required.
@@ -677,8 +677,20 @@ abstract class AppLocalizations {
   /// No description provided for @auth_val_phone_start_7.
   ///
   /// In ar, this message translates to:
-  /// **'يجب أن يبدأ رقم الهاتف بـ 7'**
+  /// **'يجب أن يبدأ رقم الهاتف بـ (77، 78، 73، 71، 70)'**
   String get auth_val_phone_start_7;
+
+  /// No description provided for @auth_val_name_no_numbers.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب أن يحتوي الاسم على أحرف فقط بدون أرقام'**
+  String get auth_val_name_no_numbers;
+
+  /// No description provided for @auth_val_bike_plate_format.
+  ///
+  /// In ar, this message translates to:
+  /// **'صيغة اللوحة غير صحيحة، مثال: 1/12345 (بحد أقصى 6 أرقام)'**
+  String get auth_val_bike_plate_format;
 
   /// No description provided for @auth_val_secure_pass.
   ///

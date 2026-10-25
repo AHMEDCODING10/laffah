@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/network/api_endpoints.dart';
@@ -109,11 +110,18 @@ class _CaptainTopUpSheetState extends State<CaptainTopUpSheet> {
       final picker = ImagePicker();
       final picked = await picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
       );
       if (picked != null) {
+        final String targetPath = picked.path.replaceAll(RegExp(r'\.(png|jpg|jpeg|webp)$'), '_compressed.jpg');
+        final XFile? compressedImage = await FlutterImageCompress.compressAndGetFile(
+          picked.path,
+          targetPath,
+          quality: 70,
+          minWidth: 1200,
+          minHeight: 1200,
+        );
         setState(() {
-          _receiptImage = File(picked.path);
+          _receiptImage = File(compressedImage?.path ?? picked.path);
         });
         HapticFeedback.selectionClick();
       }
@@ -623,40 +631,52 @@ class _CaptainTopUpSheetState extends State<CaptainTopUpSheet> {
                               : AppColors.gray900,
                         ),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Clipboard.setData(
-                              ClipboardData(text: selectedWallet['account']));
-                          HapticFeedback.lightImpact();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('تم نسخ رقم الحساب بنجاح',
-                                  style: TextStyle(
-                                      fontFamily: 'IBM Plex Sans Arabic')),
-                              duration: Duration(seconds: 1),
-                              backgroundColor: AppColors.success,
-                              behavior: SnackBarBehavior.floating,
+                      Material(
+                        color: widget.isDark ? const Color(0xFF1E2433) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        child: InkWell(
+                          onTap: () {
+                            Clipboard.setData(
+                                ClipboardData(text: selectedWallet['account']));
+                            HapticFeedback.lightImpact();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('تم نسخ رقم الحساب بنجاح',
+                                    style: TextStyle(
+                                        fontFamily: 'IBM Plex Sans Arabic')),
+                                duration: Duration(seconds: 1),
+                                backgroundColor: AppColors.success,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.primary500.withValues(alpha: 0.6),
+                              ),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.primary500,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(color: AppColors.primary500),
-                          ),
-                        ),
-                        icon: const Icon(Icons.copy_rounded, size: 14),
-                        label: const Text(
-                          'نسخ الرقم',
-                          style: TextStyle(
-                            fontFamily: 'IBM Plex Sans Arabic',
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.copy_rounded,
+                                    size: 14, color: AppColors.primary500),
+                                SizedBox(width: 4),
+                                Text(
+                                  'نسخ الرقم',
+                                  style: TextStyle(
+                                    fontFamily: 'IBM Plex Sans Arabic',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

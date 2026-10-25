@@ -6,8 +6,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:laffah/core/services/pusher_service.dart';
 import 'package:laffah/core/services/routing_service.dart';
 import 'package:laffah/core/services/captain_trip_alert_sound_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../core/network/network_info.dart';
+import '../../../../../core/services/offline_queue_service.dart';
 import '../../../../../core/di/injection_container.dart' as di;
 import '../../../domain/usecases/toggle_captain_status_usecase.dart';
 import '../../../domain/usecases/respond_to_trip_usecase.dart';
@@ -79,22 +79,12 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
     on<IncomingTripRequestReceived>(_onIncomingTripRequestReceived);
   }
 
-    Future<void> _syncPendingTripStatus() async {
-    final prefs = di.sl<SharedPreferences>();
-    final pendingTripId = prefs.getString('pending_trip_id');
-    final pendingStatus = prefs.getString('pending_trip_status');
-
-    if (pendingTripId != null && pendingStatus != null) {
-      debugPrint('?? [OfflineCatch] Re-syncing trip $pendingTripId to status $pendingStatus');
-      final result = await updateTripStatusUseCase(tripId: pendingTripId, status: pendingStatus);
-      result.fold(
-        (failure) => debugPrint('? [OfflineCatch] Sync failed again: $failure.message'),
-        (_) {
-          debugPrint('? [OfflineCatch] Sync successful!');
-          prefs.remove('pending_trip_id');
-          prefs.remove('pending_trip_status');
-        }
-      );
+  Future<void> _syncPendingTripStatus() async {
+    try {
+      final offlineQueueService = di.sl<OfflineQueueService>();
+      await offlineQueueService.syncOfflineQueue();
+    } catch (e) {
+      debugPrint('?? [OfflineCatch] Sync failed: $e');
     }
   }
 
@@ -144,6 +134,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           _startSmartPolling();
 
           // Connect to real Pusher WebSocket to receive live trip requests
+          pusherService.disconnect(); // CRITICAL FIX: Prevent duplicate WebSocket listeners
           pusherService.connect(
             captainId: cid,
             onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
@@ -199,6 +190,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
       if (_currentCaptainId.isNotEmpty) {
         _startLocationTracking(_currentCaptainId);
         _startHeartbeatTimer();
+        pusherService.disconnect(); // CRITICAL FIX: Prevent duplicate WebSocket listeners
         pusherService.connect(
           captainId: _currentCaptainId,
           onTripRequest: (data) => add(IncomingTripRequestReceived(data)),
@@ -410,7 +402,7 @@ class CaptainBloc extends Bloc<CaptainEvent, CaptainState> {
           notificationText: "كابتن لَفَّة متصل — جاري تتبع الموقع لاستقبال المشاوير",
           notificationTitle: "لَفَّة — خدمة الكابتن النشطة",
           notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
-          enableWakeLock: false,
+          enableWakeLock: true,
         ),
       );
     } else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {

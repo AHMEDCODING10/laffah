@@ -171,7 +171,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get auth_val_phone_start =>
-      'يجب أن يبدأ رقم الهاتف بـ 7 (77 أو 73 أو 71 أو 70)';
+      'يجب أن يبدأ رقم الهاتف ببادئة معتمدة (77، 78، 73، 71، 70)';
 
   @override
   String get auth_enter_password => 'أدخل كلمة المرور الخاصة بحسابك';
@@ -242,7 +242,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_val_phone_9_digits_2 => 'رقم الهاتف يجب أن يتكون من 9 خانات';
 
   @override
-  String get auth_val_phone_yemen_start => 'رقم الجوال  يبدأ بـ 7';
+  String get auth_val_phone_yemen_start =>
+      'رقم الجوال يجب أن يبدأ بـ (77، 78، 73، 71، 70)';
 
   @override
   String get auth_val_min_6 => 'يجب ألا تقل عن 6 خانات';
@@ -263,7 +264,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_val_pass_mismatch => 'كلمة المرور غير مطابقة';
 
   @override
-  String get auth_ex_plate => 'أ ب ج 1234';
+  String get auth_ex_plate => '1/12345';
 
   @override
   String get auth_required => 'مطلوب';
@@ -314,7 +315,16 @@ class AppLocalizationsAr extends AppLocalizations {
       'يرجى كتابة الاسم واللقب على الأقل لتسهيل التعرف عليك';
 
   @override
-  String get auth_val_phone_start_7 => 'يجب أن يبدأ رقم الهاتف بـ 7';
+  String get auth_val_phone_start_7 =>
+      'يجب أن يبدأ رقم الهاتف بـ (77، 78، 73، 71، 70)';
+
+  @override
+  String get auth_val_name_no_numbers =>
+      'يجب أن يحتوي الاسم على أحرف فقط بدون أرقام';
+
+  @override
+  String get auth_val_bike_plate_format =>
+      'صيغة اللوحة غير صحيحة، مثال: 1/12345 (بحد أقصى 6 أرقام)';
 
   @override
   String get auth_val_secure_pass => 'يرجى تحديد كلمة مرور آمنة لحسابك';

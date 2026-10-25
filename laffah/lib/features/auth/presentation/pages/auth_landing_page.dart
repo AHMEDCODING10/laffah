@@ -264,8 +264,20 @@ class _AnimatedRoleCardState extends State<AnimatedRoleCard> {
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.s12),
+                      decoration: BoxDecoration(
+                        color: widget.iconBackgroundColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        widget.icon,
+                        color: widget.iconColor,
+                        size: 28,
+                      ),
+                    ),
+                    AppSpacing.w16,
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,19 +306,6 @@ class _AnimatedRoleCardState extends State<AnimatedRoleCard> {
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    AppSpacing.w16,
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.s12),
-                      decoration: BoxDecoration(
-                        color: widget.iconBackgroundColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        widget.icon,
-                        color: widget.iconColor,
-                        size: 28,
                       ),
                     ),
                   ],
@@ -343,6 +342,17 @@ class _AnimatedRoleCardState extends State<AnimatedRoleCard> {
                           fontFamily: 'IBM Plex Sans Arabic',
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                      Transform.scale(
+                        scaleX: Directionality.of(context) == TextDirection.rtl
+                            ? -1
+                            : 1,
+                        child: const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
                           color: AppColors.white,
                         ),
                       ),

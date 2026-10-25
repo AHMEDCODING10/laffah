@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/laffah_glass_snackbar.dart';
@@ -672,8 +673,6 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: source,
-        imageQuality: 80,
-        maxWidth: 1600,
       );
 
       if (pickedFile == null) return;
@@ -682,12 +681,23 @@ class _OfficialDocumentsSheetState extends State<OfficialDocumentsSheet> {
         _uploadingKey = doc.key;
       });
 
+      final String targetPath = pickedFile.path.replaceAll(RegExp(r'\.(png|jpg|jpeg|webp)$'), '_compressed.jpg');
+      final XFile? compressedImage = await FlutterImageCompress.compressAndGetFile(
+        pickedFile.path,
+        targetPath,
+        quality: 70,
+        minWidth: 1200,
+        minHeight: 1200,
+      );
+
+      final String finalPath = compressedImage?.path ?? pickedFile.path;
+
       final dio = sl<DioClient>().dio;
       final formData = FormData.fromMap({
         'document_type': doc.key,
         'type': doc.key,
         'file': await MultipartFile.fromFile(
-          pickedFile.path,
+          finalPath,
           filename: pickedFile.name.isNotEmpty ? pickedFile.name : '${doc.key}.jpg',
         ),
       });

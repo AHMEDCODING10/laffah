@@ -21,6 +21,8 @@ import '../../../auth/presentation/bloc/auth_event.dart';
 import '../bloc/core/captain_bloc.dart';
 import '../bloc/core/captain_event.dart';
 import '../../../ride/presentation/bloc/ride_bloc.dart';
+import '../../../../core/di/injection_container.dart' as di;
+import '../../../../core/services/chatbot_service.dart';
 
 /// CaptainAccountPage - Overhauled interactive profile dashboard for Laffah Captains.
 /// Integrates all 9 modal sheets (Profile, Vehicle, Documents, Password, Help, FAQ, Support, terms, language),
@@ -431,6 +433,22 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
                 },
                 isDark: isDark,
               ),
+              AnimatedBuilder(
+                animation: di.sl<ChatbotService>(),
+                builder: (context, _) {
+                  final chatbotService = di.sl<ChatbotService>();
+                  return _buildSwitchSettingItem(
+                    icon: Icons.smart_toy_rounded,
+                    title: 'المساعد الذكي (Chatbot)',
+                    subtitle: 'إظهار أيقونة المساعد الذكي العائمة في الشاشة',
+                    value: chatbotService.isEnabled,
+                    onChanged: (val) {
+                      chatbotService.toggleChatbot(val);
+                    },
+                    isDark: isDark,
+                  );
+                },
+              ),
               _buildSettingItem(
                 icon: Icons.translate_rounded,
                 title: AppLocalizations.of(context)!.capt_acc_change_lang,
@@ -614,20 +632,24 @@ class _CaptainAccountPageState extends State<CaptainAccountPage> {
               Column(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 52,
+                    height: 52,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                        color: AppColors.primary500.withValues(alpha: 0.08),
-                        shape: BoxShape.circle),
-                    child: Center(
-                      child: Text(
-                        AppLocalizations.of(context)!.capt_acc_laffah,
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary500,
-                            fontFamily: 'IBM Plex Sans Arabic'),
+                      color: isDark
+                          ? const Color(0xFF141822)
+                          : AppColors.primary500.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary500.withValues(alpha: 0.25),
+                        width: 1,
                       ),
+                    ),
+                    child: Image.asset(
+                      isDark
+                          ? 'assets/images/logo_clean_dark.png'
+                          : 'assets/images/logo_clean_light.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                   AppSpacing.h8,

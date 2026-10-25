@@ -20,7 +20,8 @@ class LaravelErrorInterceptor extends Interceptor {
       }
 
       // [SECURITY FIX ISSUE-0.5]: Do NOT clear token on login attempts or unauthenticated checks!
-      if (!isLogin && err.requestOptions.headers.containsKey('Authorization')) {
+      final isBroadcastingAuth = err.requestOptions.path.contains('broadcasting/auth');
+      if (!isLogin && !isBroadcastingAuth && err.requestOptions.headers.containsKey('Authorization')) {
         await secureStorage.clearToken();
       }
 

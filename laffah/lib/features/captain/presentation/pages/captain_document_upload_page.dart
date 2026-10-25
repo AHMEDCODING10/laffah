@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/glass_box.dart';
@@ -1064,7 +1065,6 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage>
 
     final XFile? image = await picker.pickImage(
       source: isCamera ? ImageSource.camera : ImageSource.gallery,
-      imageQuality: 80,
     );
 
     if (image == null) return;
@@ -1132,7 +1132,18 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage>
       apiType = 'id_card';
     }
 
-    final result = await sl<UploadDocumentUseCase>()(File(image.path), apiType);
+    final String targetPath = image.path.replaceAll(RegExp(r'\.(png|jpg|jpeg|webp)$'), '_compressed.jpg');
+    final XFile? compressedImage = await FlutterImageCompress.compressAndGetFile(
+      image.path,
+      targetPath,
+      quality: 70,
+      minWidth: 1200,
+      minHeight: 1200,
+    );
+
+    final File uploadFile = File(compressedImage?.path ?? image.path);
+
+    final result = await sl<UploadDocumentUseCase>()(uploadFile, apiType);
 
     if (!mounted) return;
 
@@ -1151,7 +1162,7 @@ class _CaptainDocumentUploadPageState extends State<CaptainDocumentUploadPage>
       (data) {
         setState(() {
           doc.status = DocumentStatus.underReview;
-          doc.filePath = image.path;
+          doc.filePath = uploadFile.path;
           doc.feedback = 'تم رفع المستند بنجاح وهو قيد المراجعة الآن.';
         });
         ScaffoldMessenger.of(context).showSnackBar(

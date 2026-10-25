@@ -11,6 +11,8 @@ import '../services/pusher_service.dart';
 import '../services/echo_service.dart';
 import '../services/routing_service.dart';
 import '../services/captain_trip_alert_sound_service.dart';
+import '../services/offline_queue_service.dart';
+import '../services/chatbot_service.dart';
 
 import '../storage/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -118,6 +120,14 @@ Future<void> init() async {
     debugPrint("⚠️ [Laffah DI] Could not preload token: $e");
   }
 
+  sl.registerLazySingleton<OfflineQueueService>(
+    () => OfflineQueueService(prefs: sl(), dioClient: sl()),
+  );
+
+  sl.registerLazySingleton<ChatbotService>(
+    () => ChatbotService(prefs: sl()),
+  );
+
   final String httpUrl = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/api$'), '');
   final String wsUrl = httpUrl.startsWith('https')
       ? httpUrl.replaceFirst('https', 'wss')
@@ -213,7 +223,10 @@ Future<void> init() async {
     () => CaptainRemoteDataSourceImpl(sl(), sl()),
   );
   sl.registerLazySingleton<CaptainRepository>(
-    () => CaptainRepositoryImpl(remoteDataSource: sl()),
+    () => CaptainRepositoryImpl(
+      remoteDataSource: sl(),
+      offlineQueueService: sl(),
+    ),
   );
   sl.registerLazySingleton(() => RoutingService());
   sl.registerLazySingleton(() => PusherService());

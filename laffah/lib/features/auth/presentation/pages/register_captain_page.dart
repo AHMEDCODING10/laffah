@@ -109,12 +109,28 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
   }
 
   void _validateForm() {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    final plate = _plateController.text.trim();
+    final plateDigitsOnly = plate.replaceAll('/', '');
+
+    final isNameValid = name.isNotEmpty &&
+        !RegExp(r'[0-9]').hasMatch(name) &&
+        name.split(' ').where((s) => s.isNotEmpty).length >= 3;
+    final isPhoneValid =
+        RegExp(r'^(77|78|73|71|70)[0-9]{7}$').hasMatch(phone);
+    final isPassValid = password.length >= 6 && password == confirmPassword;
+    final isPlateValid = plate.isNotEmpty &&
+        RegExp(r'^\d{1,2}/\d{1,5}$').hasMatch(plate) &&
+        plateDigitsOnly.length <= 6;
+
     setState(() {
-      _isFormValid = _nameController.text.trim().isNotEmpty &&
-          _phoneController.text.trim().length == 9 &&
-          _passwordController.text.length >= 6 &&
-          _passwordController.text == _confirmPasswordController.text &&
-          _plateController.text.trim().isNotEmpty &&
+      _isFormValid = isNameValid &&
+          isPhoneValid &&
+          isPassValid &&
+          isPlateValid &&
           _agreeToTerms;
     });
   }
@@ -471,6 +487,9 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
         controller: _nameController,
         focusNode: _nameFocusNode,
         textCapitalization: TextCapitalization.words,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s\u0600-\u06FF]')),
+        ],
         style: TextStyle(
           fontFamily: 'IBM Plex Sans Arabic',
           fontSize: 14,
@@ -481,7 +500,7 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           isDark: isDark,
           isFocused: _isNameFocused,
           hintText: AppLocalizations.of(context)!.auth_ex_name_4,
-          suffixIcon: Icon(
+          prefixIcon: Icon(
             Icons.person_rounded,
             color: _isNameFocused ? AppColors.primary500 : AppColors.gray600,
             size: 20,
@@ -491,7 +510,10 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           if (value == null || value.trim().isEmpty) {
             return AppLocalizations.of(context)!.auth_val_capt_name_req;
           }
-          if (value.trim().split(' ').length < 3) {
+          if (RegExp(r'[0-9]').hasMatch(value)) {
+            return AppLocalizations.of(context)!.auth_val_name_no_numbers;
+          }
+          if (value.trim().split(' ').where((s) => s.isNotEmpty).length < 3) {
             return AppLocalizations.of(context)!.auth_val_name_3_4;
           }
           return null;
@@ -514,73 +536,77 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
             ),
         ],
       ),
-      child: TextFormField(
-        controller: _phoneController,
-        focusNode: _phoneFocusNode,
-        keyboardType: TextInputType.phone,
-        textInputAction: TextInputAction.next,
-        onFieldSubmitted: (_) {
-          FocusScope.of(context).requestFocus(_passwordFocusNode);
-        },
+      child: Directionality(
         textDirection: TextDirection.ltr,
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.5,
-        ),
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(9),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        decoration: _buildInputDecoration(
-          isDark: isDark,
-          isFocused: _isPhoneFocused,
-          hintText: '7XXXXXXXX',
-          hintFontSize: 14,
-          suffixIcon: Icon(
-            Icons.phone_iphone_rounded,
-            color:
-                _isPhoneFocused ? AppColors.primary500 : AppColors.gray600,
-            size: 20,
+        child: TextFormField(
+          controller: _phoneController,
+          focusNode: _phoneFocusNode,
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) {
+            FocusScope.of(context).requestFocus(_passwordFocusNode);
+          },
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            letterSpacing: 1.5,
           ),
-          prefixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(width: AppSpacing.s16),
-              const Text(
-                '+967',
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                  color: AppColors.primary500,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(9),
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          decoration: _buildInputDecoration(
+            isDark: isDark,
+            isFocused: _isPhoneFocused,
+            hintText: '7XXXXXXXX',
+            hintFontSize: 14,
+            prefixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: AppSpacing.s14),
+                Icon(
+                  Icons.phone_iphone_rounded,
+                  color:
+                      _isPhoneFocused ? AppColors.primary500 : AppColors.gray600,
+                  size: 20,
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Container(
-                height: 22,
-                width: 1,
-                color: isDark
-                    ? AppColors.white.withValues(alpha: 0.1)
-                    : AppColors.gray300,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-            ],
+                const SizedBox(width: AppSpacing.s8),
+                const Text(
+                  '+967',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    color: AppColors.primary500,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Container(
+                  height: 22,
+                  width: 1,
+                  color: isDark
+                      ? AppColors.white.withValues(alpha: 0.1)
+                      : AppColors.gray300,
+                ),
+                const SizedBox(width: AppSpacing.s12),
+              ],
+            ),
           ),
+          validator: (String? value) {
+            if (value == null || value.trim().isEmpty) {
+              return AppLocalizations.of(context)!.auth_val_phone_req_2;
+            }
+            final phone = value.trim();
+            if (phone.length != 9) {
+              return AppLocalizations.of(context)!.auth_val_phone_9_digits_2;
+            }
+            if (!RegExp(r'^(77|78|73|71|70)').hasMatch(phone)) {
+              return AppLocalizations.of(context)!.auth_val_phone_yemen_start;
+            }
+            return null;
+          },
         ),
-        validator: (String? value) {
-          if (value == null || value.trim().isEmpty) {
-            return AppLocalizations.of(context)!.auth_val_phone_req_2;
-          }
-          if (value.trim().length != 9) {
-            return AppLocalizations.of(context)!.auth_val_phone_9_digits_2;
-          }
-          if (!value.trim().startsWith('7')) {
-            return AppLocalizations.of(context)!.auth_val_phone_yemen_start;
-          }
-          return null;
-        },
       ),
     );
   }
@@ -617,14 +643,14 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           isDark: isDark,
           isFocused: _isPasswordFocused,
           hintText: AppLocalizations.of(context)!.auth_val_min_6,
-          suffixIcon: Icon(
+          prefixIcon: Icon(
             Icons.lock_open_rounded,
             color: _isPasswordFocused
                 ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
-          prefixIcon: IconButton(
+          suffixIcon: IconButton(
             icon: Icon(
               _obscurePassword
                   ? Icons.visibility_off_rounded
@@ -682,14 +708,14 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           isDark: isDark,
           isFocused: _isConfirmPasswordFocused,
           hintText: AppLocalizations.of(context)!.auth_val_confirm_pass_prev,
-          suffixIcon: Icon(
+          prefixIcon: Icon(
             Icons.lock_rounded,
             color: _isConfirmPasswordFocused
                 ? AppColors.primary500
                 : AppColors.gray600,
             size: 20,
           ),
-          prefixIcon: IconButton(
+          suffixIcon: IconButton(
             icon: Icon(
               _obscureConfirmPassword
                   ? Icons.visibility_off_rounded
@@ -733,7 +759,12 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
       child: TextFormField(
         controller: _plateController,
         focusNode: _plateFocusNode,
+        keyboardType: TextInputType.text,
         textInputAction: TextInputAction.done,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+          LengthLimitingTextInputFormatter(7),
+        ],
         onFieldSubmitted: (_) {
           if (_isFormValid) {
             _handleRegister();
@@ -742,19 +773,30 @@ class _RegisterCaptainPageState extends State<RegisterCaptainPage>
           }
         },
         style: TextStyle(
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: 13.5,
+          fontFamily: 'monospace',
+          fontSize: 15,
           fontWeight: FontWeight.bold,
+          letterSpacing: 1.5,
           color: isDark ? AppColors.white : AppColors.gray900,
         ),
         decoration: _buildInputDecoration(
           isDark: isDark,
           isFocused: _isPlateFocused,
           hintText: AppLocalizations.of(context)!.auth_ex_plate,
+          prefixIcon: Icon(
+            Icons.two_wheeler_rounded,
+            color: _isPlateFocused ? AppColors.primary500 : AppColors.gray600,
+            size: 20,
+          ),
         ),
         validator: (String? value) {
           if (value == null || value.trim().isEmpty) {
             return AppLocalizations.of(context)!.auth_required;
+          }
+          final plate = value.trim();
+          final digitsOnly = plate.replaceAll('/', '');
+          if (digitsOnly.length > 6 || !RegExp(r'^\d{1,2}/\d{1,5}$').hasMatch(plate)) {
+            return AppLocalizations.of(context)!.auth_val_bike_plate_format;
           }
           return null;
         },
