@@ -44,13 +44,32 @@ class DraggableChatbotWidgetState extends State<DraggableChatbotWidget> {
     final chatbotService = di.sl<ChatbotService>();
 
     String currentPath = '';
+    bool isAuthRoute = false;
     try {
-      currentPath = AppRouter.router.routerDelegate.currentConfiguration.uri.path;
+      final config = AppRouter.router.routerDelegate.currentConfiguration;
+      currentPath = config.uri.path;
+      if (currentPath.isEmpty ||
+          currentPath == '/' ||
+          currentPath == LaffahRoutes.splash ||
+          currentPath == LaffahRoutes.onboarding ||
+          currentPath.startsWith('/auth')) {
+        isAuthRoute = true;
+      } else if (config.isNotEmpty) {
+        for (final match in config.matches) {
+          final loc = match.matchedLocation;
+          if (loc == '/' ||
+              loc == LaffahRoutes.splash ||
+              loc == LaffahRoutes.onboarding ||
+              loc.startsWith('/auth')) {
+            isAuthRoute = true;
+            break;
+          }
+        }
+      }
     } catch (_) {}
 
     final bool isHiddenScreen = !AppRouter.isAppInitialized ||
-        currentPath == LaffahRoutes.splash ||
-        currentPath == '/' ||
+        isAuthRoute ||
         currentPath == LaffahRoutes.chatbot;
 
     final bool shouldShow = chatbotService.shouldShowFloatingIcon && !isHiddenScreen;

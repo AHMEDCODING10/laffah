@@ -56,14 +56,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auth_create_passenger => 'Create Passenger Account';
 
   @override
-  String get auth_role_captain => 'Request a Captain (Driver)';
+  String get auth_role_captain => 'Accept Rides (Driver)';
 
   @override
   String get auth_role_captain_desc =>
       'Register your bike, be your own boss, and make daily income.';
 
   @override
-  String get auth_create_captain => 'Register as Laffah Captain';
+  String get auth_create_captain => 'Create Captain Account';
 
   @override
   String get auth_already_have_account => 'Already have an account?';

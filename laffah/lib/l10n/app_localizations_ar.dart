@@ -56,14 +56,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get auth_create_passenger => 'إنشاء حساب راكب';
 
   @override
-  String get auth_role_captain => 'إنشاء حساب كابتن (سائق)';
+  String get auth_role_captain => 'استقبل المشاوير (سائق)';
 
   @override
   String get auth_role_captain_desc =>
       'سجّل دراجتك، كُن رئيس نفسك، وحقّق عوائد يومية.';
 
   @override
-  String get auth_create_captain => 'التسجيل ككابتن لَفَّة';
+  String get auth_create_captain => 'إنشاء حساب كابتن';
 
   @override
   String get auth_already_have_account => 'لديك حساب بالفعل؟';

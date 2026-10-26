@@ -191,7 +191,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_role_captain.
   ///
   /// In ar, this message translates to:
-  /// **'إنشاء حساب كابتن (سائق)'**
+  /// **'استقبل المشاوير (سائق)'**
   String get auth_role_captain;
 
   /// No description provided for @auth_role_captain_desc.
@@ -203,7 +203,7 @@ abstract class AppLocalizations {
   /// No description provided for @auth_create_captain.
   ///
   /// In ar, this message translates to:
-  /// **'التسجيل ككابتن لَفَّة'**
+  /// **'إنشاء حساب كابتن'**
   String get auth_create_captain;
 
   /// No description provided for @auth_already_have_account.

@@ -333,30 +333,15 @@ class _AnimatedRoleCardState extends State<AnimatedRoleCard> {
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.buttonText,
-                        style: const TextStyle(
-                          fontFamily: 'IBM Plex Sans Arabic',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          color: AppColors.white,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Transform.scale(
-                        scaleX: Directionality.of(context) == TextDirection.rtl
-                            ? -1
-                            : 1,
-                        child: const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 18,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ],
+                  alignment: Alignment.center,
+                  child: Text(
+                    widget.buttonText,
+                    style: const TextStyle(
+                      fontFamily: 'IBM Plex Sans Arabic',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ],
